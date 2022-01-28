@@ -49,7 +49,19 @@ makeGrid = function(mMin, mMax, nStages) {
   
   return( list(mLower=mLower, mUpper=mUpper, z=z, mc=mc))
 }
-
+#
+# Adds another group to the system. The group is defined by its min and
+# max sizes, it's size at maturation, and the number of stages.
+#
+# In:
+#  p - a list of parameters
+#  mMin, mMax - min and max masses (lower mass of the first stage
+#               and upper mass of the last stage)
+#  nStages - number of stages
+#
+# Out:
+#  And updated parameters list
+#
 paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
   p$nGroups = p$nGroups + 1
   n = p$nGroups
@@ -73,7 +85,7 @@ paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
   #
   p$mMature[n] = mMature
   p$psiMature[ix] = ( 1 + (p$mc[ix]/mMature)^(-5) )^(-1)
-  p$psiMature[ix[length(ix)]] = 1 # Always fully mature in last stage
+  #p$psiMature[ix[length(ix)]] = 1 # Always fully mature in last stage
   
   p$u0[ix] = 1 # Initial conditiona
   
@@ -82,7 +94,7 @@ paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
   return(p)
 }
 #
-# Make a basic three-species setup based upon  Petrik et al (2019): Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in Oceanography 176, 102124. doi 10.1016/j.pocean.2019.102124.
+# Make a basic three-species setup based upon Petrik et al (2019): Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in Oceanography 176, 102124. doi 10.1016/j.pocean.2019.102124.
 #
 # Out:
 #  An updated parameter list. The list contains:
@@ -90,7 +102,7 @@ paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
 #   ixGroup - array of nGroups with indices for each group
 #   mMature(nGroups) - mass of maturation of each group
 #
-setupBasic = function(depth = 500, pprod = 1) {
+setupBasic = function(depth = 500, pprod = 100) {
   # Initialize the parameters:
   param = parametersInit(depth, pprod)
   #
@@ -136,6 +148,10 @@ setupBasic = function(depth = 500, pprod = 1) {
     param$theta[i,param$mc>param$mc[i]] = 0
   }
   param$theta[is.na(param$theta)] = 0
+  #
+  # Mortality
+  #
+  param$mort0 = 0.1
   
   return(param)
 }
@@ -146,11 +162,12 @@ setupBasic = function(depth = 500, pprod = 1) {
 # In: 
 #  p : a list of parameters
 #  u : all state variables
+#  bFullOutput : if TRUE returns all internal calculations
 #
 # Out:
 #  deriv : a vector of derivatives
 #
-calcDerivatives = function(t, u, p) {
+calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
   ix = p$ixFish
   B = u[ix]
   #
@@ -167,7 +184,7 @@ calcDerivatives = function(t, u, p) {
   mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
 
   # Total mortality
-  mort = mortpred # NEEDS ADDITIONAL COMPONENTS
+  mort = mortpred + p$mort0
   
   #
   # Derivate of fish groups
@@ -178,7 +195,8 @@ calcDerivatives = function(t, u, p) {
   vplus = pmax(0,v)
   kappa = 1-p$psiMature[ix]
   gamma = (kappa*vplus - mort[ix]) /
-    (1 - 1/p$z[ix]^(1-mort[ix]/(kappa*vplus)) )
+    (1 - (1/p$z[ix])^(1-mort[ix]/(kappa*vplus)) )
+  gamma[kappa==0] = 0 # No growth of fully mature classes
   Fout = gamma*B
   Repro = (1-kappa)*vplus*B
   
@@ -189,9 +207,8 @@ calcDerivatives = function(t, u, p) {
     ixPrev = c(ix[length(ix)], ix[1:(length(ix)-1)])
     Fin[ix] = Fout[ixPrev]
     # Reproduction:
-    Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + Repro[ix[length(ix)]])
+    Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + sum( Repro[ix] ))
   }
-  
   
   # Assemble derivatives of fish:
   dBdt = Fin - Fout + (v - mort[p$ixFish])*B - Repro
@@ -202,8 +219,19 @@ calcDerivatives = function(t, u, p) {
   R = u[p$ixR]
   dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
   
-  deriv = list(c(dRdt, dBdt))
-  return(deriv)
+  if (bFullOutput) {
+    out = list()
+    out$deriv = c(dRdt, dBdt)
+    out$f = f # Feeding level
+    out$Repro = Repro
+    out$Fin = Fin
+    out$Fout = Fout
+    out$mortpred = mortpred
+    out$mort = mort
+    return(out)
+  }
+  else
+    return( list(c(dRdt, dBdt)) )
 }
 
 #
@@ -228,15 +256,16 @@ simulate= function(p = setupBasic(), tEnd = 100) {
   #
   sim = list()
   sim$p = p
-  sim$R = u[, p$ixR]
-  sim$B = u[, p$ixFish]
+  sim$R = u[, p$ixR+1]
+  sim$B = u[, p$ixFish+1]
   sim$t = t
+  sim$nTime = length(t)
   #
   # Calculate Spawning Stock Biomass
   #
   SSB = matrix(nrow=length(t), ncol=p$nGroups)
   for (i in 1:p$nGroups)
-    for (j in t)
+    for (j in 1:length(t))
       SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
   sim$SSB = SSB
   return(sim)
