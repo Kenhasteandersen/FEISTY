@@ -17,14 +17,14 @@ ui <- fluidPage(
             sliderInput("pprod",
                         "Primary prod. (1/yr):",
                         min = 0,
-                        max = 5,
-                        step = 0.1,
-                        value = 3)
+                        max = 500,
+                        step = 5,
+                        value = 100)
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("plotSSB")
+           plotOutput("plotSimulation")
         )
     )
 )
@@ -44,7 +44,7 @@ server <- function(input, output) {
   })
   
   # Make plots
-  output$plotSSB <- renderPlot( plotSSBtime(sim()) ) 
+  output$plotSimulation <- renderPlot( plotSimulation(sim()) ) 
 }
 
 # Run the application 
