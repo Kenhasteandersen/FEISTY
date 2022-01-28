@@ -1,5 +1,5 @@
-source("R/FEISTY.R")
-source("R/plottools.R")
+source("FEISTY.R")
+source("plottools.R")
 #
 # Makes a basic plot of the adult biomass (SSB) of all functional groups
 # as a function time.
@@ -7,7 +7,8 @@ source("R/plottools.R")
 plotSSBtime = function(sim, bPlot=TRUE) {
   if (bPlot)
     defaultplot()
-
+  p = sim$p
+  
   semilogypanel(xlim=sim$t, ylim=c(1e-5, 100),
                 xlab="Time (years)", ylab = "SSB (??)")
   #
@@ -73,7 +74,7 @@ plotSimulation = function(sim) {
   defaultplot(mfcol=c(4,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
-  plotRates(p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
+  plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
 }
 #
 # Make a basic run:

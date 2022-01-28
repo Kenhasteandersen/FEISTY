@@ -4,8 +4,11 @@
 #
 
 library(shiny)
+source("Plots.R")
 
-# Define UI for application that draws a histogram
+#
+# Define UI
+#
 ui <- fluidPage(
 
     # Application title
@@ -28,8 +31,9 @@ ui <- fluidPage(
         )
     )
 )
-
-# Define server logic required to draw a histogram
+#
+# Define server logic
+#
 server <- function(input, output) {
 
   sim <- eventReactive({
@@ -46,6 +50,7 @@ server <- function(input, output) {
   # Make plots
   output$plotSimulation <- renderPlot( plotSimulation(sim()) ) 
 }
-
+#
 # Run the application 
+#
 shinyApp(ui = ui, server = server)
