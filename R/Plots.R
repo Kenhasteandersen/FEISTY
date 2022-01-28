@@ -9,7 +9,7 @@ plotSSBtime = function(sim, bPlot=TRUE) {
     defaultplot()
   p = sim$p
   
-  semilogypanel(xlim=sim$t, ylim=c(1e-5, 100),
+  semilogypanel(xlim=sim$t, ylim=c(1e-2, 100),
                 xlab="Time (years)", ylab = "SSB (??)")
   #
   # Plot fish

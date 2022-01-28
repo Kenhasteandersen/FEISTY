@@ -245,7 +245,9 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
 #  A simulation list
 # 
 simulate= function(p = setupBasic(), tEnd = 100) {
+  #
   # Integrate the equations:
+  #
   t = seq(0, tEnd,length.out=tEnd+1)
   u = ode(y = p$u0, 
             times = t, 
@@ -268,5 +270,6 @@ simulate= function(p = setupBasic(), tEnd = 100) {
     for (j in 1:length(t))
       SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
   sim$SSB = SSB
+  
   return(sim)
 }
