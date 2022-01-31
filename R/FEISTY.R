@@ -138,7 +138,7 @@ setupBasic = function(depth = 500, pprod = 100) {
   param$Cmax[ is.na(param$Cmax) ] = 0
   param$V[ is.na(param$V) ] = 0
   #
-  # Setup interaction matrix:
+  # Setup size interaction matrix:
   #
   beta = 400
   sigma = 1.3
@@ -149,6 +149,45 @@ setupBasic = function(depth = 500, pprod = 100) {
   }
   param$theta[is.na(param$theta)] = 0
   #
+  # Setup interactions between groups and resources:
+  #
+  ixSmall = ix[[1]]
+  ixLarge = ix[[2]]
+  ixDem = ix[[3]]
+  
+  mMedium = 10
+  mLarge = 5000
+  # Pelagic/demersal indices:
+  ixR = param$ixR
+  #ixDemPelagic = ixDem[(param$mc[ixDem] < 10) | (param$mc[ixDem] > 5000)]
+  #ixDemDemersal = ixDem[param$mc[ixDem] >= 10]
+  #ixLargeDemersal = ixLarge[param$mc[ixLarge] > 5000]
+  #ixPelagic = c(param$ixR[1],param$ixR[2], ixSmall, ixLarge, ixDemPelagic)
+  #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
+  # Small pelagics feed on pelagic resources:
+  for (i in ixSmall) {
+    param$theta[i,ixR[3:4]] = 0 
+    param$theta[i,ixDem] = 0
+  }
+  # Large pelagics feed on pelagic resources:
+  for (i in ixLarge) {
+    param$theta[i,ixR[3:4]] = 0 
+    param$theta[i,ixDem] = 0
+  }
+  # Small demersals feed on pelagic resources
+  for (i in ixDem[param$mc[ixDem]<mMedium])
+    param$theta[i,ixR[3:4]] = 0
+  for (i in ixDem[ (param$mc[ixDem]>mMedium) & 
+                     (param$mc[ixDem]<mLarge) ]) {
+    param$theta[i,ixR[1,2]] = 0
+    param$theta[i,ixFish] = 0
+  }
+  # LArge demersals feed on benthic resources and all fish:
+#  for (i in ixDemersal[ param$mc[ixDemersal]>mLarge ]) {
+#    param$
+#  } 
+
+    #
   # Mortality
   #
   param$mort0 = 0.1

@@ -35,7 +35,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   # Mortalities:
   #
   loglogpanel(xlim=xlim, ylim=range(rates$mortpred),
-              ylab="mort (day^{-1})", xaxis = FALSE)
+              xlab="-", ylab="mort (day^{-1})", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
   }
