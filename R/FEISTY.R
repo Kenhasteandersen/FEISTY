@@ -172,7 +172,8 @@ setupBasic = function(depth = 500, pprod = 100) {
   # Large pelagics feed on pelagic resources:
   for (i in ixLarge) {
     param$theta[i,ixR[3:4]] = 0 
-    param$theta[i,ixDem] = 0
+    param$theta[i,ixDem[ (param$mc[ixDem]>mMedium) & 
+                           (param$mc[ixDem]<mLarge) ]] = 0
   }
   # Small demersals feed on pelagic resources
   for (i in ixDem[param$mc[ixDem]<mMedium])
