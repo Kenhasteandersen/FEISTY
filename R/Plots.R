@@ -1,5 +1,6 @@
 source("FEISTY.R")
 source("plottools.R")
+
 #
 # Makes a basic plot of the adult biomass (SSB) of all functional groups
 # as a function time.
@@ -10,7 +11,7 @@ plotSSBtime = function(sim, bPlot=TRUE) {
   p = sim$p
   
   semilogypanel(xlim=sim$t, ylim=c(1e-2, 100),
-                xlab="Time (years)", ylab = "SSB (??)")
+                xlab="Time (years)", ylab = "SSB (gww  m^{-3})")
   #
   # Plot fish
   #
@@ -44,7 +45,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   # Feeding level
   # 
   semilogxpanel(xlim = xlim, ylim=c(0,1),
-                ylab="Feeding level", xlab="Mass (g)")
+                ylab="Feeding level", xlab="Mass (gww)")
   for (i in 1:p$nGroups) {
     ix = p$ix[[i]]
     lines(p$mc[ix], rates$f[ix], lwd=i)
@@ -62,7 +63,7 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   p = sim$p
   
   loglogpanel(xlim=p$mc[p$ixFish], ylim=sim$B[iTime,],
-              xlab = "Mass (gram)", ylab="Biomass (gram/??")
+              xlab = "Mass (gww)", ylab="Biomass (gww m^{-3})")
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], sim$B[iTime, p$ix[[i]]-p$ixFish[1]+1], lwd=i)
   }

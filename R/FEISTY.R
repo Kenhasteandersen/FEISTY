@@ -7,8 +7,9 @@ library('deSolve')
 #
 # In:
 #  depth : depth (meters)
-#  pprod : Primary productivity (UNITS?)
+#  pprod : Primary productivity (gww m-3 yr-1)
 #
+
 # Out:
 #  A parameters list
 #
@@ -16,6 +17,7 @@ parametersInit = function(depth, pprod) {
   param = list()
   param$depth = depth
   param$pprod = pprod
+  
   #
   # Prepare for groups to be added:
   # 
@@ -41,20 +43,21 @@ makeGrid = function(mMin, mMax, nStages) {
   #
   # Setup mass grid:
   #
-  m = exp( seq(log(mMin), log(mMax), length.out=(nStages+1)) ) # grid of lower sizes, with the last being the upper size of the last cell
+  m = exp(seq(log(mMin), log(mMax), length.out=(nStages+1)) ) # grid of lower sizes, with the last being the upper size of the last cell
   mLower = m[1:nStages]
   mUpper = m[2:(nStages+1)]
   z = mUpper / mLower # The ratio between upper and lower sizes
   mc = exp( log(mLower) + 0.5*(log(z)) ) # Geometric mean center mass
   
-  return( list(mLower=mLower, mUpper=mUpper, z=z, mc=mc))
+  return(list(mLower=mLower, mUpper=mUpper, z=z, mc=mc))
 }
-#
+
+
 # Adds another group to the system. The group is defined by its min and
 # max sizes, it's size at maturation, and the number of stages.
 #
 # In:
-#  p - a list of parameters
+#  p - a list of parameters                                                      (It is not clear what is suppose to get into the p, REMY)
 #  mMin, mMax - min and max masses (lower mass of the first stage
 #               and upper mass of the last stage)
 #  nStages - number of stages
@@ -62,13 +65,13 @@ makeGrid = function(mMin, mMax, nStages) {
 # Out:
 #  And updated parameters list
 #
-paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
-  p$nGroups = p$nGroups + 1
+paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
+  p$nGroups = p$nGroups + 1                                                     
   n = p$nGroups
   #
   # Setup mass grid:
   #
-  grid = makeGrid(mMin,mMax,nStages)
+  grid = makeGrid(mMin, mMax, nStages)
   if (n==1)
     ixStart = max(p$ixR)+1
   else
@@ -93,6 +96,8 @@ paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
   p$nStates = max(ix)
   return(p)
 }
+
+
 #
 # Make a basic three-species setup based upon Petrik et al (2019): Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in Oceanography 176, 102124. doi 10.1016/j.pocean.2019.102124.
 #
@@ -102,9 +107,11 @@ paramAddGroup = function(p,mMin, mMax, mMature, nStages) {
 #   ixGroup - array of nGroups with indices for each group
 #   mMature(nGroups) - mass of maturation of each group
 #
+
 setupBasic = function(depth = 500, pprod = 100) {
   # Initialize the parameters:
   param = parametersInit(depth, pprod)
+  
   #
   # Setup resource groups:
   #
@@ -115,12 +122,14 @@ setupBasic = function(depth = 500, pprod = 100) {
   param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
+  
   #
   # Add fish groups:
   #
   param = paramAddGroup(param, 0.001, 250, 0.5, 2) # Small pelagics
   param = paramAddGroup(param, 0.001, 125000, 250, 3) # Large pelagics
   param = paramAddGroup(param, 0.001, 20000, 250, 3) # Demersals
+  
   #
   # Setup physiology:
   #
@@ -130,13 +139,14 @@ setupBasic = function(depth = 500, pprod = 100) {
   gamma = 70 # Coef. for clearance rate
   ix = param$ixFish
   m = param$mc[ix]
-  param$Cmax[ix] = h*m^n
-  param$V[ix] = gamma*m^q
-  param$metabolism[ix] = 0.2*param$Cmax[ix]
-  param$epsRepro = rep(0.01, param$nGroups)
+  param$Cmax[ix] = h*m^n # maximum consumption rate 
+  param$V[ix] = gamma*m^q # clearance rate 
+  param$metabolism[ix] = 0.2*param$Cmax[ix] # standard metabolism 
+  param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
-  param$Cmax[ is.na(param$Cmax) ] = 0
-  param$V[ is.na(param$V) ] = 0
+  param$Cmax[is.na(param$Cmax)] = 0
+  param$V[is.na(param$V)] = 0 
+  
   #
   # Setup size interaction matrix:
   #
@@ -148,6 +158,7 @@ setupBasic = function(depth = 500, pprod = 100) {
     param$theta[i,param$mc>param$mc[i]] = 0
   }
   param$theta[is.na(param$theta)] = 0
+  
   #
   # Setup interactions between groups and resources:
   #
@@ -165,6 +176,7 @@ setupBasic = function(depth = 500, pprod = 100) {
   #ixPelagic = c(param$ixR[1],param$ixR[2], ixSmall, ixLarge, ixDemPelagic)
   #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
   # Small pelagics feed on pelagic resources:
+  
   for (i in ixSmall) {
     param$theta[i,ixR[3:4]] = 0 
     param$theta[i,ixDem] = 0
@@ -183,12 +195,13 @@ setupBasic = function(depth = 500, pprod = 100) {
     param$theta[i,ixR[1,2]] = 0
     param$theta[i,ixFish] = 0
   }
-  # LArge demersals feed on benthic resources and all fish:
+  
+# LArge demersals feed on benthic resources and all fish:
 #  for (i in ixDemersal[ param$mc[ixDemersal]>mLarge ]) {
 #    param$
 #  } 
 
-    #
+  #
   # Mortality
   #
   param$mort0 = 0.1
@@ -218,7 +231,7 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
   Enc = p$V * (p$theta %*% u)
   f = Enc / (p$Cmax + Enc) # Functional response
   f[is.na(f)] = 0
-  Eavail = p$epsAssim * p$Cmax*f - p$metabolism
+  Eavail = p$epsAssim * p$Cmax * f - p$metabolism
   
   # Predation mortality:
   mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
@@ -243,7 +256,7 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
   # Flux into the size group
   Fin = 0
   for (i in 1:p$nGroups) {
-    ix = p$ix[[i]]-p$ix[[1]][1]+1
+    ix = p$ix[[i]] - p$ix[[1]][1] +1
     ixPrev = c(ix[length(ix)], ix[1:(length(ix)-1)])
     Fin[ix] = Fout[ixPrev]
     # Reproduction:
@@ -293,6 +306,7 @@ simulate= function(p = setupBasic(), tEnd = 100) {
             times = t, 
             func = calcDerivatives, 
             parms=p)
+  
   #
   # Assemble output:
   #
@@ -302,6 +316,7 @@ simulate= function(p = setupBasic(), tEnd = 100) {
   sim$B = u[, p$ixFish+1]
   sim$t = t
   sim$nTime = length(t)
+  
   #
   # Calculate Spawning Stock Biomass
   #

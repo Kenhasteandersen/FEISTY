@@ -3,6 +3,10 @@
 # the 'Run App' button above.
 #
 
+# need this package to run : latex2exp
+# install.packages("shiny")
+# install.packages("latex2exp")
+
 library(shiny)
 source("Plots.R")
 
@@ -19,7 +23,7 @@ ui <- fluidPage(
         sidebarPanel(
             sliderInput("pprod",
                         "Primary prod. (1/yr):",
-                        min = 0,
+                        min = 1,
                         max = 500,
                         step = 5,
                         value = 100)
