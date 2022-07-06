@@ -210,6 +210,92 @@ setupBasic = function(depth = 500, pprod = 100) {
 }
 
 #
+# Make a basic setup with just small pelagic fish
+#
+# Out:
+#  An updated parameter list. The list contains:
+#   ixResources - the indices to the resources
+#   ixGroup - array of nGroups with indices for each group
+#   mMature(nGroups) - mass of maturation of each group
+#
+
+setupOnlySmallPelagics = function(depth = 500, pprod = 100, nStages=6) {
+  # Initialize the parameters:
+  param = parametersInit(depth, pprod)
+  
+  #
+  # Setup resource groups:
+  #
+  param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
+  param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
+  param$K = c(pprod, pprod, 5, 0)  # g ww/m2
+  param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
+  param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
+  param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
+  param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
+  
+  #
+  # Add fish groups:
+  #
+  param = paramAddGroup(param, 0.001, 250, 0.25*250, nStages) # Small pelagics
+  #
+  # Setup physiology:
+  #
+  h = 20; # Max. consumption coefficient
+  n = -0.25 # Metabolic exponent
+  q = -0.2 # Clearance rate exponent
+  gamma = 70 # Coef. for clearance rate
+  ix = param$ixFish
+  m = param$mc[ix]
+  param$Cmax[ix] = h*m^n # maximum consumption rate 
+  param$V[ix] = gamma*m^q # clearance rate 
+  param$metabolism[ix] = 0.2*param$Cmax[ix] # standard metabolism 
+  param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
+  param$epsAssim = 0.7 # Assimilation efficiency
+  param$Cmax[is.na(param$Cmax)] = 0
+  param$V[is.na(param$V)] = 0 
+  
+  #
+  # Setup size interaction matrix:
+  #
+  beta = 400
+  sigma = 1.3
+  param$theta = matrix(nrow=param$nStates, ncol=param$nStates)
+  for (i in param$ixFish) {
+    param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
+    param$theta[i,param$mc>param$mc[i]] = 0
+  }
+  param$theta[is.na(param$theta)] = 0
+  
+  #
+  # Setup interactions between groups and resources:
+  #
+  ixSmall = ix[[1]]
+  
+  mMedium = 10
+  mLarge = 5000
+  # Pelagic/demersal indices:
+  ixR = param$ixR
+  #ixDemPelagic = ixDem[(param$mc[ixDem] < 10) | (param$mc[ixDem] > 5000)]
+  #ixDemDemersal = ixDem[param$mc[ixDem] >= 10]
+  #ixLargeDemersal = ixLarge[param$mc[ixLarge] > 5000]
+  #ixPelagic = c(param$ixR[1],param$ixR[2], ixSmall, ixLarge, ixDemPelagic)
+  #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
+  # Small pelagics feed on pelagic resources:
+  
+  for (i in ixSmall) {
+    param$theta[i,ixR[3:4]] = 0 
+  }
+  #
+  # Mortality
+  #
+  param$mort0 = 2.5 # NOTE: set pretty high to give a stable population
+  
+  return(param)
+}
+
+
+#
 # Calculate the derivatives of all state variables
 #
 # In: 

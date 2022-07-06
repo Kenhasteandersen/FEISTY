@@ -62,7 +62,7 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
     defaultplot()
   p = sim$p
   
-  loglogpanel(xlim=p$mc[p$ixFish], ylim=sim$B[iTime,],
+  loglogpanel(xlim=p$mc[p$ixFish], ylim=pmax(1e-10,sim$B[iTime,]),
               xlab = "Mass (gww)", ylab="Biomass (gww m-3)")
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], sim$B[iTime, p$ix[[i]]-p$ixFish[1]+1], lwd=i)
