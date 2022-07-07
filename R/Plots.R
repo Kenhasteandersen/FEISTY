@@ -39,8 +39,15 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
               xlab="-", ylab="mort (1/day)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
+    lines(p$mc[p$ix[[i]]], p$mortF[p$ix[[i]]], lwd=i, col='blue')
   }
   hline(p$mort0)
+  
+  legend(x='bottomleft',
+         legend=c('Predation','Background'),
+         lty=c(1,dotted),
+         col=c('red','black'),
+         bty='n')
   #
   # Feeding level
   # 

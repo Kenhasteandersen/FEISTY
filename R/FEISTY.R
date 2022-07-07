@@ -89,6 +89,10 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
   p$mMature[n] = mMature
   p$psiMature[ix] = ( 1 + (p$mc[ix]/mMature)^(-5) )^(-1)
   #p$psiMature[ix[length(ix)]] = 1 # Always fully mature in last stage
+  #
+  # Zero fishing:
+  #
+  p$mortF[ix] = 0
   
   p$u0[ix] = 1 # Initial conditiona
   
@@ -219,7 +223,7 @@ setupBasic = function(depth = 500, pprod = 100) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupOnlySmallPelagics = function(depth = 500, pprod = 100, nStages=6) {
+setupOneSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   # Initialize the parameters:
   param = parametersInit(depth, pprod)
   
@@ -233,11 +237,11 @@ setupOnlySmallPelagics = function(depth = 500, pprod = 100, nStages=6) {
   param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
-  
+  param$mortF[param$ixR] = 0 # No fishing on resources
   #
-  # Add fish groups:
+  # Add fish group:
   #
-  param = paramAddGroup(param, 0.001, 250, 0.25*250, nStages) # Small pelagics
+  param = paramAddGroup(param, 0.001, mInf, 0.25*mInf, nStages) # Small pelagics
   #
   # Setup physiology:
   #
@@ -283,13 +287,12 @@ setupOnlySmallPelagics = function(depth = 500, pprod = 100, nStages=6) {
   #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
   # Small pelagics feed on pelagic resources:
   
-  for (i in ixSmall) {
-    param$theta[i,ixR[3:4]] = 0 
-  }
+
+    param$theta[,ixR[3:4]] = 0  # No demersal feeding
   #
   # Mortality
   #
-  param$mort0 = 2.5 # NOTE: set pretty high to give a stable population
+  param$mort0 = .5 # NOTE: set pretty high to give a stable population
   
   return(param)
 }
@@ -323,8 +326,7 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
   mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
 
   # Total mortality
-  mort = mortpred + p$mort0
-  
+  mort = mortpred + p$mort0 + p$mortF
   #
   # Derivate of fish groups
   #
