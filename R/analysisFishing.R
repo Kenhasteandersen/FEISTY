@@ -62,7 +62,7 @@ plotYield = function(nStages=20, mInf=20, p=setupOneSpecies(nStages = nStages, m
 
 setFishing = function(p, F, etaF=0.05 ) {
   
-  for (iGroup in 1:sim$p$nGroups) {
+  for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
     mFishing = 0.05*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
     psi = ( 1 + (p$mc[ix]/mFishing)^(-3) )^(-1) # Standard trawl selectivity from Andersen (2019) Fig 5.2

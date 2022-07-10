@@ -10,7 +10,7 @@ plotSSBtime = function(sim, bPlot=TRUE) {
     defaultplot()
   p = sim$p
   
-  semilogypanel(xlim=sim$t, ylim=c(1e-2, 100),
+  semilogypanel(xlim=sim$t, ylim=sim$SSB+1e-10,
                 xlab="Time (yr)", ylab = "SSB (gww  m-3)")
   #
   # Plot fish
@@ -35,7 +35,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   #
   # Mortalities:
   #
-  loglogpanel(xlim=xlim, ylim=range(rates$mortpred),
+  loglogpanel(xlim=xlim, ylim=rates$mortpred+1e-10,
               xlab="-", ylab="mort (1/day)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
@@ -84,6 +84,30 @@ plotSimulation = function(sim) {
   plotSpectra(sim, bPlot=FALSE)
   plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
 }
+#
+# Plot the interaction matrix:
+#
+plotTheta = function(p) {
+  par(mfcol=c(1,1))
+
+  image( t(p$theta[p$ixFish,]), 
+         x = seq(1,max(p$ixFish)), 
+         y = seq(1, length(p$ixFish)),
+         xlab="Prey group", ylab="Predator group" )
+  #
+  # Add a line for the resource groups
+  #
+  y = c(0,max(p$ixFish))
+  lines(x = 0.5+c(1,1)*max(p$ixR), y = y, col="red")
+  #
+  # Add a line for each fish group:
+  #
+  for (iGroup in 1:p$nGroups) {
+    lines(x = 0.5+c(1,1)*max(p$ix[[iGroup]]), y-max(p$ixR))
+    lines(x=y, y=c(1,1)*max(p$ix[[iGroup]])-max(p$ixR)+0.5)
+  }
+}
+
 #
 # Make a basic run:
 #

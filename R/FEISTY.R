@@ -214,7 +214,7 @@ setupBasic = function(depth = 500, pprod = 100) {
 }
 
 #
-# Make a basic setup with just small pelagic fish
+# Make a basic setup with just pelagic fish
 #
 # Out:
 #  An updated parameter list. The list contains:
@@ -223,8 +223,8 @@ setupBasic = function(depth = 500, pprod = 100) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupOneSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
-  # Initialize the parameters:
+setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
+  # Initialize the parameters:x
   param = parametersInit(depth, pprod)
   
   #
@@ -239,9 +239,10 @@ setupOneSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
   param$mortF[param$ixR] = 0 # No fishing on resources
   #
-  # Add fish group:
+  # Add fish groups:
   #
-  param = paramAddGroup(param, 0.001, mInf, 0.25*mInf, nStages) # Small pelagics
+  for (iGroup in 1:length(mInf))
+    param = paramAddGroup(param, 0.001, mInf[[iGroup]], 0.25*mInf[[iGroup]], nStages)
   #
   # Setup physiology:
   #
@@ -274,7 +275,6 @@ setupOneSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   #
   # Setup interactions between groups and resources:
   #
-  ixSmall = ix[[1]]
   
   mMedium = 10
   mLarge = 5000
@@ -288,7 +288,7 @@ setupOneSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   # Small pelagics feed on pelagic resources:
   
 
-    param$theta[,ixR[3:4]] = 0  # No demersal feeding
+  param$theta[,ixR[3:4]] = 0  # No demersal feeding
   #
   # Mortality
   #
@@ -409,10 +409,14 @@ simulate= function(p = setupBasic(), tEnd = 100) {
   # Calculate Spawning Stock Biomass
   #
   SSB = matrix(nrow=length(t), ncol=p$nGroups)
+  yield = SSB
   for (i in 1:p$nGroups)
-    for (j in 1:length(t))
+    for (j in 1:length(t)) {
       SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
+      yield[j,i] = sum( u[j, p$ix[[i]]] * p$mortF[p$ix[[i]]] )
+    }
   sim$SSB = SSB
+  sim$yield = yield
   
   return(sim)
 }
