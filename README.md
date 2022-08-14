@@ -2,8 +2,9 @@
 
 08/2022 Update
 - Fortran contents
-- Add a dll/R button in the app
-- Add the growth rate plot
+- Add a dll/R option in the `FEISTY.R`
+- Add the growth rate plot in the `Plots.R`
+- Add a dll/R button in the `app.R` and the growth rate plot
 
 ---
 
