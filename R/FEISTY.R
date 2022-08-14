@@ -28,6 +28,25 @@ parametersInit = function(depth, pprod) {
   return(param)
 }
 
+
+#new
+loadFEISTYmodel = function() {
+  sys=Sys.info()['sysname']
+  
+  if (sys=='Darwin') 
+    sLibname = '../lib/libFEISTY.dylib'
+  if (sys=='Linux') 
+    sLibname = '../lib/libFEISTY.so'
+  if (sys=='Windows')
+    sLibname = '../lib/libFEISTY.dll'
+  
+  dyn.load(sLibname)
+}
+
+
+
+
+
 #
 # Makes a grid.
 #
@@ -113,9 +132,9 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #
 
 setupBasic = function(depth = 500, pprod = 100) {
+  
   # Initialize the parameters:
   param = parametersInit(depth, pprod)
-  
   #
   # Setup resource groups:
   #
@@ -166,9 +185,9 @@ setupBasic = function(depth = 500, pprod = 100) {
   #
   # Setup interactions between groups and resources:
   #
-  ixSmall = ix[[1]]
-  ixLarge = ix[[2]]
-  ixDem = ix[[3]]
+  ixSmall = param$ix[[1]]
+  ixLarge = param$ix[[2]]
+  ixDem = param$ix[[3]]
   
   mMedium = 10
   mLarge = 5000
@@ -196,8 +215,8 @@ setupBasic = function(depth = 500, pprod = 100) {
     param$theta[i,ixR[3:4]] = 0
   for (i in ixDem[ (param$mc[ixDem]>mMedium) & 
                      (param$mc[ixDem]<mLarge) ]) {
-    param$theta[i,ixR[1,2]] = 0
-    param$theta[i,ixFish] = 0
+    param$theta[i,ixR[1:2]] = 0
+    param$theta[i,param$ixFish] = 0
   }
   
 # LArge demersals feed on benthic resources and all fish:
@@ -209,7 +228,12 @@ setupBasic = function(depth = 500, pprod = 100) {
   # Mortality
   #
   param$mort0 = 0.1
-  
+
+  param$metabolism[is.na(param$metabolism)]=0
+  param$mortF[is.na(param$mortF)]=0
+  param$psiMature[is.na(param$psiMature)]=0
+  param$z[is.na(param$z)]=0
+
   return(param)
 }
 
@@ -299,9 +323,9 @@ setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
 
 
 #
-# Calculate the derivatives of all state variables
+# Calculate the derivatives of all state variables by R
 #
-# In: 
+# In:
 #  p : a list of parameters
 #  u : all state variables
 #  bFullOutput : if TRUE returns all internal calculations
@@ -309,19 +333,19 @@ setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
 # Out:
 #  deriv : a vector of derivatives
 #
-calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
+calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   ix = p$ixFish
   B = u[ix]
   #
   # Calc consumption of all fish groups
   #
-  
+
   # Calc Encounter:
   Enc = p$V * (p$theta %*% u)
   f = Enc / (p$Cmax + Enc) # Functional response
   f[is.na(f)] = 0
   Eavail = p$epsAssim * p$Cmax * f - p$metabolism
-  
+
   # Predation mortality:
   mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
 
@@ -330,17 +354,18 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
   #
   # Derivate of fish groups
   #
-  
+
   # Flux out of the size group:
   v = Eavail[ix]
   vplus = pmax(0,v)
   kappa = 1-p$psiMature[ix]
+  g=kappa*vplus
   gamma = (kappa*vplus - mort[ix]) /
     (1 - (1/p$z[ix])^(1-mort[ix]/(kappa*vplus)) )
   gamma[kappa==0] = 0 # No growth of fully mature classes
   Fout = gamma*B
   Repro = (1-kappa)*vplus*B
-  
+
   # Flux into the size group
   Fin = 0
   for (i in 1:p$nGroups) {
@@ -350,16 +375,16 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
     # Reproduction:
     Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + sum( Repro[ix] ))
   }
-  
+
   # Assemble derivatives of fish:
   dBdt = Fin - Fout + (v - mort[p$ixFish])*B - Repro
-  
+
   #
   # Resources:
   #
   R = u[p$ixR]
   dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
-  
+
   if (bFullOutput) {
     out = list()
     out$deriv = c(dRdt, dBdt)
@@ -369,6 +394,7 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
     out$Fout = Fout
     out$mortpred = mortpred
     out$mort = mort
+    out$g=g
     return(out)
   }
   else
@@ -376,29 +402,75 @@ calcDerivatives = function(t, u, p, bFullOutput=FALSE) {
 }
 
 #
+# Calculate the derivatives of all state variables by Fortran dll
+#
+calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
+  derivF = .Fortran("f_calcderivatives", 
+                    u= as.numeric(y),
+                    #dt=as.numeric(0),
+                    dudt=as.numeric(y))
+  
+  dRdt = derivF$dudt[1:4]
+  dBdt= derivF$dudt[p$ixFish]
+
+   if (bFullOutput) {
+     nGrid = p$nStates
+ out = .Fortran("f_getrates", 
+                 u= as.numeric(y), # y is u last step, defined from plotSimulation
+                dudt=as.numeric(y), # in dll initially set as 0 and then runs
+                flvl_r=vector(length=nGrid, mode="numeric"),
+                mortpred_r = vector(length=nGrid, mode="numeric"),
+                g_r = vector(length=nGrid-length(p$ixR), mode="numeric")
+                )                  
+                 
+     out$f = out$flvl_r # Feeding level
+     out$mortpred = out$mortpred_r
+     out$g = out$g_r
+     return(out)
+   }
+   else
+  return(derivF$dudt)
+}
+
+
+#
 # Simulate the model.
 #
 # In: 
 #  p : fully populated set of parameters
 #  tEnd : time to simulate (years)
+#  USEdll : TRUE -> ODE solved by dll / FALSE -> ODE solved by R
 #
 # Out:
 #  A simulation list
 # 
-simulate= function(p = setupBasic(), tEnd = 100) {
+simulate= function(p = setupBasic(), tEnd = 100,USEdll=TRUE) {
   #
   # Integrate the equations:
   #
-  t = seq(0, tEnd,length.out=tEnd+1)
-  u = ode(y = p$u0, 
-            times = t, 
-            func = calcDerivatives, 
-            parms=p)
+  start_time = Sys.time()
+  t = seq(0, tEnd,length.out=tEnd+1) 
+  #Calc by R or dll
+  if (USEdll) {
+    loadFEISTYmodel()
+    dummy = .Fortran("f_setupFEISTY", pprod=as.double(p$pprod))
+    #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
+    u = ode(y=p$u0,
+            times = t,
+            func = function(t,y,parms) list(calcDerivativesF(t,y,parms)),# Run by dll
+            parms = p)
+  }else{
+    u = ode(y = p$u0,
+            times = t,
+            func = calcDerivativesR, #Run by R
+            parms = p)
+}
   
   #
   # Assemble output:
   #
   sim = list()
+  p$USEdll=USEdll
   sim$p = p
   sim$R = u[, p$ixR+1]
   sim$B = u[, p$ixFish+1]
@@ -418,5 +490,10 @@ simulate= function(p = setupBasic(), tEnd = 100) {
   sim$SSB = SSB
   sim$yield = yield
   
+  end_time = Sys.time()
+  sim$tictoc=end_time-start_time
+  print(sim$tictoc)
   return(sim)
+  
 }
+
