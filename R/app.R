@@ -2,6 +2,8 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
+# button added for selection 
+#
 
 # need this package to run : latex2exp
 # install.packages("shiny")
@@ -21,6 +23,13 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
+          
+          
+            radioButtons("USEdll", 
+                         h5("ODE solved by"),
+                         choices = list("Fortran dll" = TRUE, "R" = FALSE),
+                         selected = TRUE),
+          
             sliderInput("pprod",
                         "Primary prod. (1/yr):",
                         min = 1,
@@ -40,15 +49,15 @@ ui <- fluidPage(
 #
 server <- function(input, output) {
 
-  sim <- eventReactive({
-    input$pprod
-  },
+  sim <- eventReactive(c(
+    input$pprod,input$USEdll
+  ),
   {
     # setup simulation
     p = setupBasic(depth = 500, pprod = input$pprod)
     
     # Simulate
-    return( simulate(p) )
+    return( simulate(p, tEnd = 100, USEdll=input$USEdll) )
   })
   
   # Make plots
