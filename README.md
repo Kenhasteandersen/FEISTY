@@ -1,5 +1,12 @@
 # FEISTY
 
+08/2022 Update
+- Fortran contents
+- Add a dll/R button in the app
+- Add the growth rate plot
+
+---
+
 Implementation of the FEISTY fish model framework. Currently just barely functional.
 
 ---
