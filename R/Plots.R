@@ -27,11 +27,25 @@ plotSSBtime = function(sim, bPlot=TRUE) {
 # Plots the mortalities and feeding levels
 #
 plotRates = function(p, u=p$u0, bPlot=TRUE) {
-  rates = calcDerivatives(0, u, p, bFullOutput = TRUE)
-  
+  if (p$USEdll) {
+    rates = calcDerivativesF(0, u, p, bFullOutput = TRUE)
+  }else{
+    rates = calcDerivativesR(0, u, p, bFullOutput = TRUE)
+  }
+    
   if (bPlot)
-    defaultplot(mfcol=c(2,1))
+    defaultplot(mfcol=c(3,1))
   xlim = range(p$mc[p$ixFish])
+  
+  #
+  # Growth rate
+  # 
+  loglogpanel(xlim = xlim, ylim=rates$g+1e-10,
+                ylab="Growth rate (1/day)", xlab="-", xaxis = FALSE)
+  for (i in 1:p$nGroups) {
+    lines(p$mc[p$ix[[i]]], rates$g[p$ix[[i]]-length(p$ixR)], lwd=i, col='black')
+  }
+  
   #
   # Mortalities:
   #
@@ -79,7 +93,7 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
 # Make 4 panels of simulation
 #
 plotSimulation = function(sim) {
-  defaultplot(mfcol=c(4,1))
+  defaultplot(mfcol=c(5,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
   plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
@@ -111,10 +125,9 @@ plotTheta = function(p) {
 #
 # Make a basic run:
 #
-baserun = function() {
+baserun = function(USEdll=TRUE) {
   p = setupBasic()
-  sim = simulate(p)
+  sim = simulate(p,tEnd = 100,USEdll)
   plotSimulation(sim)
-  
   return(sim)
 }
