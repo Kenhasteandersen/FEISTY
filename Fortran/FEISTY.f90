@@ -64,7 +64,7 @@ contains
 !      call parametersAddGroup(typeResource,) ! add resources
 
 !      do
-      call parametersAddGroup(fishSmall, 2, 2.50d2, 0.5d0) ! add fishes
+      call parametersAddGroup(fishSmall, 2, 2.50d2, 0.5d0) ! add fishes  !! Do you need these "fishSmall" etc variables
       call parametersAddGroup(fishLarge, 3, 1.25d5, 2.5d2)
       call parametersAddGroup(fishDemersal, 3, 2.d4, 2.5d2)
 !      end do
