@@ -96,7 +96,9 @@ plotSimulation = function(sim) {
   defaultplot(mfcol=c(5,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
-  plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
+  rates = plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
+  
+  return(rates)
 }
 #
 # Plot the interaction matrix:
