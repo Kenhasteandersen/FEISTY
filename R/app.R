@@ -54,7 +54,7 @@ server <- function(input, output) {
   ),
   {
     # setup simulation
-    p = setupBasic(depth = 500, pprod = input$pprod)
+    p = setupBasic(pprod = input$pprod,bprod=5)
     
     # Simulate
     return( simulate(p, tEnd = 100, USEdll=input$USEdll) )
