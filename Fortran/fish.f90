@@ -62,17 +62,21 @@ contains
       allocate (this%g(n))
 
       allocate (this%psiMature(n))
-      this%psiMature = (1.d0 + (this%m/mMature)**(-5.d0))**(-1.d0)  ! Maturity level
+      !this%psiMature = (1.d0 + (this%m/mMature)**(-5.d0))**(-1.d0)  ! Maturity level
+      this%psiMature=0
+      this%psiMature(n)=0.5
 
       this%beta = beta
       this%sigma = sigma
       this%Cmax = h*(this%m**nn)         ! Maximum consumption rate
       this%V = gamma*this%m**q           ! Clearance rate
-      this%metabolism = 0.2d0*this%Cmax  ! Standard metabolism
+      !this%metabolism = 0.2d0*this%Cmax  ! Standard metabolism
+      this%metabolism = 0.011d0*365.d0*this%m**(-0.175d0)
       this%epsAssim = epsAssim           ! Assimilation efficiency
 
       this%mort0 = 0.1d0                 ! Intrinsic mortality
       this%mortF = 0.d0                  ! Fishing mortality
+      this%mortF(n) = 0.3d0              !update   Fishing mortality   Fishing only on mature stages
 
       this%typeGroup = typeGroup         ! fishSmall=1 / fishLarge=10 / fishDemersal=20
 
@@ -103,7 +107,7 @@ contains
          this%Jout(i) = ggamma(i)*u(i)                              ! Energy flow out of the current stage
          this%Repro(i) = (1 - kappa(i))*this%nupositive(i)*u(i)     ! Energy can be used for Reproduction
       end do
-
+print*,this%Jout
 !Flux in
       ixPrev = [this%n, (i, i=1, (this%n - 1))]   ! index: the flux into the current grid is the flux out from the previous grid
       do i = 1, this%n
