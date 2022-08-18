@@ -66,7 +66,7 @@ contains
 !      do
       call parametersAddGroup(fishSmall, 2, 2.50d2, 0.5d0) ! add fishes  !! Do you need these "fishSmall" etc variables
       call parametersAddGroup(fishLarge, 3, 1.25d5, 2.5d2)
-      call parametersAddGroup(fishDemersal, 3, 2.d4, 2.5d2)
+      call parametersAddGroup(fishDemersal, 3, 1.25d5, 2.5d2)
 !      end do
 
       call parametersFinalize()
@@ -154,6 +154,9 @@ contains
 
    subroutine parametersFinalize()
       integer::iGroup, jGroup, i, j
+        real(dp)::thetaS = 0.25d0 ! Medium fish pref for small zooplankton
+        real(dp)::thetaA = 0.5d0  ! Large fish pref for medium forage fish
+        real(dp)::thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 !vectors:
       allocate (V(nGrid))
       allocate (Enc(nGrid))
@@ -232,6 +235,28 @@ contains
          end select
 
       end do
+
+!--------------------update---------------
+theta=0.d0 ! reset
+  ! Small pelagics:
+  theta(5,1) = 1 ! Small ones eat only small zooplankton
+  theta(6,1:10) = [thetaS, 1.d0, 0.d0, 0.d0, 1.d0, 0.d0, 1.d0, 0.d0,0.d0, 1.d0]
+  ! Large pelagics:
+  theta(7,1) = 1
+  theta(8,1:10) = [thetaS, 1.d0, 0.d0, 0.d0, 1.d0, 0.d0, 1.d0, 0.d0,0.d0, 1.d0]
+  theta(9,6) = thetaA ! medium forage fish
+  theta(9,8) = 1 ! medium large pelagics
+  ! Demersals:
+  theta(10,1) = 1
+  theta(11,3) = 1 ! Medium demersals eat benthos
+  theta(12,6) = thetaA*thetaD  ! medium forage fish
+  theta(12,8) = thetaD ! medium large pelagics
+  theta(12,11) = 1 ! medium demersals
+
+
+
+
+
 
    end subroutine parametersFinalize
 
