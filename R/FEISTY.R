@@ -529,7 +529,11 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   Eavail = p$epsAssim * p$Cmax * f - p$metabolism
 
   # Predation mortality:
-  mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
+  #mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
+  mm = p$Cmax*p$V/(Enc+p$Cmax)*u
+  mm[ is.na(mm) ] = 0
+  mortpred = t(p$theta) %*% mm
+  
 
   # Total mortality
   mort = mortpred + p$mort0 + p$mortF
