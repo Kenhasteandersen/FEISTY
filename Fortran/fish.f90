@@ -9,30 +9,32 @@ module fish
 
    private
 !physiology:
-   real(dp) :: h
-   real(dp) :: nn
-   real(dp) :: q
-   real(dp) :: gamma
-   real(dp) :: epsAssim
-   real(dp) :: epsRepro
-!   real(dp), parameter ::  h = 20.d0            ! Max. consumption coefficient
-!   real(dp), parameter ::  nn = -0.25d0         ! Metabolic exponent
-!   real(dp), parameter ::  q = -0.2d0           ! Clearance rate exponent
-!   real(dp), parameter ::  gamma = 70.d0        ! Coef. for clearance rate
-!   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
-!   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
+!   real(dp) :: h
+!   real(dp) :: nn
+!   real(dp) :: q
+!   real(dp) :: gamma
+!   real(dp) :: epsAssim
+!   real(dp) :: epsRepro
+   real(dp), parameter ::  h = 20.d0            ! Max. consumption coefficient
+   real(dp), parameter ::  nn = -0.25d0         ! Max. consumption exponent
+   real(dp), parameter ::  q = -0.2d0           ! Clearance rate exponent
+   real(dp), parameter ::  gamma = 70.d0        ! Coef. for clearance rate
+   real(dp), parameter ::  kk = 0.011d0*365.d0        ! Metabolism coefficient
+   real(dp), parameter ::  p = -0.175d0           ! Metabolism exponent
+   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
+   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
 
-   real(dp) :: beta
-   real(dp) :: sigma
-   real(dp) :: mMin
-!   real(dp), parameter ::  beta = 400.d0
-!   real(dp), parameter ::  sigma = 1.3d0
-!   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
+!   real(dp) :: beta
+!   real(dp) :: sigma
+!   real(dp) :: mMin
+   real(dp), parameter ::  beta = 400.d0
+   real(dp), parameter ::  sigma = 1.3d0
+   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
 
-   real(dp) :: mMedium
-   real(dp) :: mLarge
-!   real(dp), parameter ::  mMedium = 10.d0      !meidum fish central mass used for feeding preference calc
-!   real(dp), parameter ::  mLarge = 5000.d0     !large fish central mass used for feeding preference calc
+!   real(dp) :: mMedium
+!   real(dp) :: mLarge
+   real(dp), parameter ::  mMedium = 10.d0      !meidum fish central mass used for feeding preference calc
+   real(dp), parameter ::  mLarge = 5000.d0     !large fish central mass used for feeding preference calc
 
    type, extends(typeSpectrum) :: spectrumFish
 
@@ -41,18 +43,18 @@ module fish
       procedure :: calcfluxfish
    end type spectrumFish
 
-   public epsAssim, beta, sigma, mMedium, mLarge, &
+   public epsAssim, beta, sigma, mMedium, mLarge, h, kk, p, &
       spectrumFish, &
       initFish, calcfluxfish
 
 contains
 
-   subroutine initFish(this, n, mMax, mMature, typeGroup)
+   subroutine initFish(this, n, mMax, mMature)
       class(spectrumFish), intent(inout) :: this
-      integer, intent(in):: n, typeGroup
+      integer, intent(in):: n
       real(dp), intent(in):: mMax, mMature
 
-      call read_namelist_fish() !input parameters
+!      call read_namelist_fish() !input parameters
 
       call this%initSpectrum(n, mMin, mMax)
 
@@ -62,24 +64,19 @@ contains
       allocate (this%g(n))
 
       allocate (this%psiMature(n))
-      !this%psiMature = (1.d0 + (this%m/mMature)**(-5.d0))**(-1.d0)  ! Maturity level
-      this%psiMature=0
-      this%psiMature(n)=0.5
+      this%psiMature = (1.d0 + (this%m/mMature)**(-5.d0))**(-1.d0)  ! Maturity level
 
       this%beta = beta
       this%sigma = sigma
+      this%epsAssim = epsAssim           ! Assimilation efficiency
       this%Cmax = h*(this%m**nn)         ! Maximum consumption rate
       this%V = gamma*this%m**q           ! Clearance rate
-      !this%metabolism = 0.2d0*this%Cmax  ! Standard metabolism
-      this%metabolism = 0.011d0*365.d0*this%m**(-0.175d0)
-      this%epsAssim = epsAssim           ! Assimilation efficiency
+      this%metabolism = 0.2d0*this%Cmax  ! Standard metabolism
 
       this%mort0 = 0.1d0                 ! Intrinsic mortality
       this%mortF = 0.d0                  ! Fishing mortality
-      this%mortF(n) = 0.3d0              !update   Fishing mortality   Fishing only on mature stages
 
-      this%typeGroup = typeGroup         ! fishSmall=1 / fishLarge=10 / fishDemersal=20
-
+      !this%typeGroup = typeGroup         ! fishSmall=1 / fishLarge=10 / fishDemersal=20
    end subroutine initFish
 
 ! calc Flux out and Flux in for each fish group
@@ -96,18 +93,18 @@ contains
       do i = 1, this%n
          this%nupositive(i) = max(0.d0, this%nu(i))
 
-         kappa(i) = 1 - this%psiMature(i)
+         kappa(i) = 1.d0 - this%psiMature(i)
          ggamma(i) = (kappa(i)*this%nupositive(i) - this%mort(i))/ &
-                     (1 - (1/this%z(i))**(1 - this%mort(i)/(kappa(i)*this%nupositive(i))))
+                     (1.d0 - (1.d0/this%z(i))**(1.d0 - this%mort(i)/(kappa(i)*this%nupositive(i))))
          this%g(i) = kappa(i)*this%nupositive(i) !growth rate
          if (kappa(i) .eq. 0) then
-            ggamma(i) = 0 ! No growth of fully mature classes
+            ggamma(i) = 0.d0 ! No growth of fully mature classes
          end if
 
          this%Jout(i) = ggamma(i)*u(i)                              ! Energy flow out of the current stage
          this%Repro(i) = (1 - kappa(i))*this%nupositive(i)*u(i)     ! Energy can be used for Reproduction
       end do
-print*,this%Jout
+
 !Flux in
       ixPrev = [this%n, (i, i=1, (this%n - 1))]   ! index: the flux into the current grid is the flux out from the previous grid
       do i = 1, this%n
@@ -117,15 +114,15 @@ print*,this%Jout
       this%Jin(1) = epsRepro*(this%Jin(1) + sum(this%Repro))    ! overwrite first grid by reproduction data
    end subroutine calcfluxfish
 
-   subroutine read_namelist_fish()
-      integer :: file_unit, io_err
-
-      namelist /input_fish/ h, nn, q, gamma, epsAssim, epsRepro, &
-                             &beta, sigma, mMin, mMedium, mLarge
-
-      call open_inputfile(file_unit, io_err)
-      read (file_unit, nml=input_fish, iostat=io_err)
-      call close_inputfile(file_unit, io_err)
-   end subroutine read_namelist_fish
+!   subroutine read_namelist_fish()
+!      integer :: file_unit, io_err
+!
+!      namelist /input_fish/ h, nn, q, gamma, epsAssim, epsRepro, &
+!                             &beta, sigma, mMin, mMedium, mLarge
+!
+!      call open_inputfile(file_unit, io_err)
+!      read (file_unit, nml=input_fish, iostat=io_err)
+!      call close_inputfile(file_unit, io_err)
+!   end subroutine read_namelist_fish
 
 end module fish
