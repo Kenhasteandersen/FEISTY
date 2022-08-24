@@ -1,15 +1,34 @@
 ! for R
-subroutine f_setupFEISTY(pprod)
-   use FEISTY !, only:setupFEISTY
+subroutine f_setupbasic(pprod,bprod)
+   use FEISTY !, only:
    use globals
 
-   real(dp), intent(in)::pprod
+   real(dp), intent(in)::pprod,bprod
 
-   call setupFEISTY(pprod)
-end subroutine f_setupFEISTY
+   call setupbasic(pprod,bprod)
+end subroutine f_setupbasic
+
+subroutine f_setupbasic2(pprod, bprod, nStages)
+   use FEISTY ! only : setupbasic2
+   use globals
+
+   real(dp), intent(in):: pprod, bprod
+   integer, intent(in):: nStages
+
+   call setupbasic2(pprod, bprod, nStages)
+end subroutine f_setupbasic2
+
+subroutine f_setupvertical(pprod)
+   use FEISTY ! only :
+   use globals
+
+   real(dp), intent(in):: pprod
+
+   call setupvertical(pprod)
+end subroutine f_setupvertical
 
 subroutine f_calcderivatives(u, dudt)
-   use FEISTY !, only: calcderivatives, nGrid
+   use FEISTY !, only:
    use globals
 
    real(dp), intent(in):: u(nGrid)
