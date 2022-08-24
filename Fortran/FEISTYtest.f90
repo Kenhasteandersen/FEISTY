@@ -5,9 +5,12 @@ program FEISTYtest
    implicit none
 
    real(dp), allocatable:: u0(:), dudt(:)
+   !real(dp),intent(out):: thetaF(nGrid,nGrid)
    !real(dp), allocatable:: flvl_r(:), mortpred_r(:), g_r(:)
 
-   call setupFEISTY(100.d0)
+   call setupbasic(100.d0,5.d0)
+  !call setupbasic2(100.d0,5.d0,9)
+   !call setupVertical(80.d0) ! ?
 
    allocate (u0(nGrid))
    allocate (dudt(nGrid))
@@ -22,10 +25,18 @@ program FEISTYtest
    u0(idxF:nGrid) = 1.d0
    dudt = 0.d0
 
-   !call getrates(u0, dudt,flvl_r,mortpred_r,g_r)
-   call calcderivatives(u0, dudt)
+!! van Denderen et al., 2020
+!   u0(1) = 0.5d0
+!   u0(2) = 0.5d0
+!   u0(3) = 0.5d0
+!   u0(4) = 0.d0
+!   u0(idxF:nGrid) = 0.0001d0
+!   dudt = 0.d0
 
-   !print *, dudt
+ call calcderivatives(u0,dudt)
+
+   !call getrates(u0, dudt,flvl_r,mortpred_r,g_r)
+
    print *, 'hello world'
 
 end program FEISTYtest
