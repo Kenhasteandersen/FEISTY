@@ -1,6 +1,7 @@
 !
 ! from NUM library
 ! subroutines of temperature may be used for further work
+! new added useful functions : linspace, diag
 !
 
 module globals
@@ -8,10 +9,8 @@ module globals
    implicit none
    integer, parameter :: dp = kind(0.d0) ! double precision
    !
-   ! Useful constants:
-   !
-
    ! Useful mathematical constants:
+   !
    real(dp), parameter :: onethird = 1.d0/3.d0
    real(dp), parameter :: twothirds = 2.d0/3.d0
    real(dp), parameter :: threequarters = 3.d0/4.d0
@@ -73,5 +72,28 @@ contains
          fTemp15 = fTemp(1.5d0, T)
       end if
    end subroutine updateTemperature
+
+
+  ! linspace function:
+      function linspace(value_start, value_end, length) result(res)
+         real(dp), intent(in)::value_start, value_end
+         integer, intent(in)::length
+         real(dp) ::dx, res(length)
+         integer::i
+
+         dx = (value_end - value_start)/(length - 1)
+         res(1:length) = [(value_start + (i - 1)*dx, i=1, length)]
+      end function linspace
+
+      ! a simple function to create diagonal matrix, only for 1-D array
+    function diag(A) result(res)
+    real(dp), intent(in) :: A(:)
+    real(dp) :: res(size(A),size(A))
+    integer :: i
+    res=0.d0
+    do i = 1, size(A)
+        res(i,i) = A(i)
+    end do
+    end function
 
 end module globals
