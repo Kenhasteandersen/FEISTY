@@ -31,7 +31,7 @@ module spectrum
       real(dp), dimension(:), allocatable:: Jin, Jout                 !
       real(dp), dimension(:), allocatable:: nu, nupositive, Repro, g  !nu = Eavail
 
-      integer:: typeGroup !
+      !integer:: typeGroup !
 
    contains
 
@@ -88,16 +88,7 @@ contains
          this%z = this%mUpper/this%mLower                       ! The ratio between upper and lower sizes
          this%m = exp(log(this%mLower) + 0.5d0*(log(this%z)))   ! Geometric mean center mass
       end subroutine calcGrid
-! linspace function:
-      function linspace(value_start, value_end, length) result(res)
-         real(dp), intent(in)::value_start, value_end
-         integer, intent(in)::length
-         real(dp) ::dx, res(length)
-         integer::i
 
-         dx = (value_end - value_start)/(length - 1)
-         res(1:length) = [(value_start + (i - 1)*dx, i=1, length)]
-      end function linspace
    end subroutine initSpectrum
 
 ! calc for each fish group
@@ -110,6 +101,7 @@ contains
       this%Enc = this%V*F                                ! Encounter rate
       this%flvl = this%Enc/(this%Cmax + this%Enc)        ! feeding level
       this%Eavail = this%epsAssim*this%flvl*this%Cmax - this%metabolism ! available energy
+
    end subroutine calcFeeding
 
 end module spectrum
