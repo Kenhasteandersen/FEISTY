@@ -230,7 +230,7 @@ contains
    end subroutine setupbasic2
 !------------------------------------------------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------------------------------------------------
-   subroutine setupVertical(pprod) ! Vertical overlap from MATLAB  van Denderen et al., 2020
+   subroutine setupVertical(pprod) ! Vertical overlap from MATLAB  van Denderen et al., 2021
       real(dp), intent(in) :: pprod !
 
 ! for theta calc
@@ -660,13 +660,14 @@ contains
          end if
       end do
 ! Calc available food:
-      do i = 1, nGrid                               !all components  R and Fish
-         F(i) = 0.d0                             ! overwritten latter
-         do j = 1, nGrid
-            F(i) = F(i) + theta(i, j)*upositive(j) ! matrix multiplication    use upositive
-         end do
-      end do
-!F=matmul(theta,upositive) ! totally same as above
+!      do i = 1, nGrid                               !all components  R and Fish
+!         F(i) = 0.d0                             ! overwritten latter
+!         do j = 1, nGrid
+!            F(i) = F(i) + theta(i, j)*upositive(j) ! matrix multiplication    use upositive
+!         end do
+!      end do
+    F = 0.d0
+    F = matmul(theta,upositive) ! totally same as above
 
 !Calc Encounter/feeding:
 !return Enc flvl  Eavail for each group
@@ -676,12 +677,9 @@ contains
 
 ! Mortality:
 ! Predation mortality, including all resources and fish grids    (different from NUM subroutine calcDerivativesUnicellulars)
-      ! mortpred = matmul(transpose(theta), (flvl*Cmax/epsAssim*upositive/mc)) ! Petrik et al., 2019
-
-      !if (allocated(vertover))then ! overwritten  van Denderen et al., 2020
       mortpred = (Cmax*V/(Enc + Cmax)*upositive) ! temporarily store
       do i = 1, nGrid
-         if (isnan(mortpred(i))) then            ! because some are nan?
+         if (isnan(mortpred(i))) then            ! because some denominator are 0
             mortpred(i) = 0.d0
          end if
       end do
