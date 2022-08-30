@@ -38,8 +38,14 @@ Module FEISTY
    real(dp), allocatable:: K(:), rr(:)   ! Carrying capacity of resources and growth rate of resources
 
 contains
+! ======================================
+!  Different Setups
+! ======================================
 
-   subroutine setupbasic(pprod, bprod) ! Petrik et al., 2019
+! --------------------------------------
+! Setup according to Petrik et al., 2019
+! --------------------------------------
+   subroutine setupbasic(pprod, bprod)
       real(dp), intent(in)::pprod, bprod
       integer :: iGroup
 ! predation preference coefficient
@@ -52,9 +58,9 @@ contains
 
       call read_namelist_setupbasic()
       call parametersInit(3, 2 + 3 + 3, 4, pprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
-      call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishSmall,
-      call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishLarge,
-      call parametersAddGroup(3, 1.25d5, 2.5d2)   ! fishDemersal,
+      call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishSmall
+      call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishLarge
+      call parametersAddGroup(3, 1.25d5, 2.5d2)   ! fishDemersal
 
       ! vectors:
       allocate (V(nGrid))
@@ -130,8 +136,10 @@ contains
    end subroutine read_namelist_setupbasic
 
    end subroutine setupbasic
-!------------------------------------------------------------------------------------------------------------------------------
 
+! --------------------------------------
+! Setup by Ken.
+! --------------------------------------
    subroutine setupbasic2(pprod, bprod, nStages) !
       real(dp), intent(in) :: pprod, bprod
       integer, intent(in) :: nStages
@@ -143,8 +151,8 @@ contains
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
       call read_namelist_setupbasic2()    !
-      call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, pprod, bprod)! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall    nint: Returns the nearest integer to the argument.
+      call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, pprod, bprod) ! (fish groups, total fish stages, 4 resources, pprod, bprod)
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall   nint: Returns the nearest integer to the argument.
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge (stages, max mass, mature mass)
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal
 
@@ -164,10 +172,10 @@ contains
 
 ! Overwrite
       do iGroup = 1, nGroups
-         group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p)!overwrite matabolism
+         group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p)!overwrite metabolism
       end do
 
-! Feeding preference matrix:    different from NUM theta & calcPhi
+! Feeding preference matrix:
 ! assemble vectors
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
@@ -240,8 +248,10 @@ contains
    end subroutine read_namelist_setupbasic2
 
    end subroutine setupbasic2
-!------------------------------------------------------------------------------------------------------------------------------
-   subroutine setupVertical(pprod) ! Vertical overlap from MATLAB  van Denderen et al., 2021
+! --------------------------------------
+! Setup of vertical overlap from MATLAB (van Denderen et al., 2021)
+! --------------------------------------
+   subroutine setupVertical(pprod)
       real(dp), intent(in) :: pprod !
 
 ! for theta calc
@@ -596,21 +606,32 @@ contains
 
    end subroutine setupVertical
 
+! =============================
+! Initialization
+! =============================
+
+!--------------------------------
+! Initialize
+! input:
 ! nnGroups: Fish group numbers
-! nnGrid: all fish grids
+! nnGrid: all fish grids (no resources)
+! nnResources: resource numbers
+! pprod: small & large zooplankton carrying capacity
+! bprod: small benthos carrying capacity
+! -------------------------------
    subroutine parametersInit(nnGroups, nnGrid, nnResources, pprod, bprod)
       integer, intent(in):: nnGroups, nnGrid, nnResources
       real(dp), intent(in):: pprod, bprod
 
       nGroups = nnGroups                   ! fish size spectrum group numbers (species)
-      iCurrentGroup = 0                    !
+      iCurrentGroup = 0
       nResources = nnResources             ! resource numbers
       nGrid = nnGrid + nnResources         ! total grid numbers   resources + total fish stages
       idxF = nResources + 1                ! fish grid begins at...
 
-      !
-      ! Allocate variables:
-      !
+!
+! Allocate/deallocate variables:
+!
       if (allocated(upositive)) then
          deallocate (group)
          deallocate (ixStart)
@@ -645,19 +666,25 @@ contains
       !
 
       ! define resources:
-      K = [pprod, pprod, bprod, lbenk]    ! Carrying capacity of resources
-      rr = [szoog, lzoog, sbeng, lbeng]   ! growth rate of resources
+      K = [pprod, pprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
+      rr = [szoog, lzoog, sbeng, lbeng]   ! growth rate of resources       [yr-1]
    end subroutine parametersInit
 
-!n:stages of a fish species
-   subroutine parametersAddGroup(n, mMax, mMature) ! parametersAddGroup(typeGroup, n, mMax, mMature)
+! --------------------------
+! Add a size spectrum group of fish
+! input:
+! n: stages of a fish species
+! mMax: max fish size the of the species (boundary of the grid)
+! mMature: mature size (middle point of the grid)
+! --------------------------
+   subroutine parametersAddGroup(n, mMax, mMature)
       integer, intent(in) :: n      !number of stages
       real(dp), intent(in) :: mMax, mMature
 
       type(spectrumFish) :: specFish
-      !
-      ! Find the group number and grid location:
-      !
+!
+! define idx for different fish size group:
+!
       iCurrentGroup = iCurrentGroup + 1
 
       if (iCurrentGroup .eq. 1) then
@@ -672,12 +699,18 @@ contains
       allocate (group(iCurrentGroup)%spec, source=specFish)
 
    end subroutine parametersAddGroup
-!----------------------------------------------------------------------
+
+!
+! =====================================
+! derivative calculation
+! =====================================
+!
+! ----------------------------------------------------------------------
 !  Calculate the derivatives for all groups:
 !  In:
 !  u: the vector of state variables (all resources and all fish grids)
 !  dudt: vector to hold the derivative (input and output)
-!----------------------------------------------------------------------
+! ----------------------------------------------------------------------
    subroutine calcderivatives(u, dudt)
       real(dp), intent(in) :: u(nGrid)
       real(dp), intent(inout) :: dudt(nGrid)
@@ -714,7 +747,7 @@ contains
       end do
 
 ! Mortality:
-! Predation mortality, including all resources and fish grids    (different from NUM subroutine calcDerivativesUnicellulars)
+! Predation mortality, including all resources and fish grids
       mortpred = (Cmax*V/(Enc + Cmax)*upositive) ! temporarily store
       do i = 1, nGrid
          if (isnan(mortpred(i))) then            ! because some denominator are 0
@@ -722,7 +755,6 @@ contains
          end if
       end do
       mortpred = matmul(transpose(theta), mortpred)
-      !end if
 
 ! Total mortality, only for each fish group
       do iGroup = 1, nGroups
@@ -737,7 +769,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call calcfluxfish(spec, upositive(ixStart(iGroup):ixEnd(iGroup)))     ! Flux out and Flux in  Petrik et al., 2019
+            call calcfluxfish(spec, upositive(ixStart(iGroup):ixEnd(iGroup)))     ! Flux out and Flux in
             call calcderiv(spec, upositive(1:nResources), upositive(ixStart(iGroup):ixEnd(iGroup)), &  ! Assemble derivatives
                            dudt(1:nResources), dudt(ixStart(iGroup):ixEnd(iGroup)))
          end select
@@ -746,11 +778,11 @@ contains
    contains
 !-------------------------------------------------------------------------
 !  Assemble derivatives of resources and fish:
-!  In:
+!  input:
 !  R: the vector of state variables (all resources)
 !  B: the vector of state variables (all fish grids)
-!  dRdt: vector to hold the derivative of resources (input and output)
-!  dBdt: vector to hold the derivative of fish (input and output)
+!  dRdt: vector to hold the derivative of resources (input as a part of dudt and output)
+!  dBdt: vector to hold the derivative of fish (input as a part of dudt and output)
 !-------------------------------------------------------------------------
       subroutine calcderiv(this, R, B, dRdt, dBdt)
          class(spectrumfish)::this
@@ -769,9 +801,10 @@ contains
       end subroutine calcderiv
 
    end subroutine calcderivatives
-!----------------------------------------------------------------------------------------------------------
 
-   subroutine formvector(this, iGroup, V, Cmax, mc, mL, mU) ! return assembled vectors containing values for all fish grid (no resources)
+!-------------------------------------------------------------
+! return assembled vectors containing values for all fish grid (no resources)
+   subroutine formvector(this, iGroup, V, Cmax, mc, mL, mU)
       integer, intent(in)::iGroup
       class(spectrumfish)::this
       real(dp), intent(out)::V(nGrid), Cmax(nGrid), mc(nGrid), mL(nGrid), mU(nGrid)
@@ -782,6 +815,11 @@ contains
       mL(ixStart(iGroup):ixEnd(iGroup)) = this%mLower
       mU(ixStart(iGroup):ixEnd(iGroup)) = this%mUpper
    end subroutine formvector
+
+
+! =========================
+! rates
+! =========================
 
 ! Get rates from last step of calcderivatives
 ! in:
@@ -797,7 +835,7 @@ contains
       real(dp), intent(out) :: flvl_r(nGrid)
       real(dp), intent(out) :: mortpred_r(nGrid)
       real(dp), intent(out) :: g_r(nGrid - nResources)
-      integer::iGroup
+      integer :: iGroup
 
       call calcderivatives(u, dudt) ! get flvl mortpred
       flvl_r = flvl
