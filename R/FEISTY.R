@@ -404,8 +404,7 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
    
    # Medium-sized large demersals feed only on benthos:
    param$theta[ixMediumSizeDem, 1:2] = 0 
-   param$theta[ixMediumSizeDem, ixSmall] = 0
-   param$theta[ixMediumSizeDem, ix] = 0
+   param$theta[ixMediumSizeDem, param$ixFish] = 0 
    
    # Large demersals feed have reduced feeding effiiency on pelagic species:
    param$theta[ixDem, ixSmall] = thetaA * thetaD * param$theta[ixDem,ixSmall] 
