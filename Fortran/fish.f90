@@ -8,7 +8,7 @@ module fish
    implicit none
 
    private
-!physiology:
+! fish physiology:
    real(dp) :: h
    real(dp) :: nn
    real(dp) :: q
@@ -26,6 +26,7 @@ module fish
 !   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
 !   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
 
+! for size spectrum
    real(dp) :: beta
    real(dp) :: sigma
    real(dp) :: mMin
@@ -33,6 +34,7 @@ module fish
 !   real(dp), parameter ::  sigma = 1.3d0
 !   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
 
+! for feeding preference calc
    real(dp) :: mMedium
    real(dp) :: mLarge
 !   real(dp), parameter ::  mMedium = 10.d0      !meidum fish central mass used for feeding preference calc
@@ -64,12 +66,13 @@ module fish
 
 contains
 
+! initialize fish groups
    subroutine initFish(this, n, mMax, mMature)
       class(spectrumFish), intent(inout) :: this
       integer, intent(in):: n
       real(dp), intent(in):: mMax, mMature
 
-      call this%initSpectrum(n, mMin, mMax)
+      call this%initSpectrum(n, mMin, mMax) ! create mass spectrum
 
       allocate (this%nu(n))
       allocate (this%nupositive(n))
