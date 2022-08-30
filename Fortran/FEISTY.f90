@@ -36,38 +36,22 @@ Module FEISTY
 
 ! resource parameters    input from input file
    real(dp), allocatable:: K(:), rr(:)   ! Carrying capacity of resources and growth rate of resources
-!   real(dp) :: sbenk
-!   real(dp) :: lbenk
-!   real(dp) :: szoog
-!   real(dp) :: lzoog
-!   real(dp) :: sbeng
-!   real(dp) :: lbeng
-!   real(dp), parameter ::     sbenk = 5.d0               ! small benthos carry capacity
-!   real(dp), parameter ::     lbenk = 0.d0              ! large benthos carry capacity
-!   real(dp), parameter ::     szoog = 1.d0              ! small zooplankton growth rate
-!   real(dp), parameter ::     lzoog = 1.d0               ! large zooplankton growth rate
-!   real(dp), parameter ::     sbeng = 1.d0              ! small benthos growth rate
-!   real(dp), parameter ::     lbeng = 0.d0               ! large benthos growth rate
-
-! van Denderen et al., 2020
-
-   real(dp), parameter ::     lbenk = 0.d0
-   real(dp), parameter ::     szoog = 1.d0
-   real(dp), parameter ::     lzoog = 1.d0
-   real(dp), parameter ::     sbeng = 1.d0
-   real(dp), parameter ::     lbeng = 0.d0
 
 contains
 
    subroutine setupbasic(pprod, bprod) ! Petrik et al., 2019
       real(dp), intent(in)::pprod, bprod
-      integer :: iGroup ! , i, j
-      real(dp),parameter ::   thetaS = 0.25d0 ! Medium fish pref for small zooplankton
-      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
-      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+      integer :: iGroup
+! predation preference coefficient
+      real(dp) :: thetaS
+      real(dp) :: thetaA
+      real(dp) :: thetaD
+!      real(dp),parameter ::   thetaS = 0.25d0 ! Medium fish pref for small zooplankton
+!      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
+!      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
-      ! call read_namelist_resources()    !load resources
-      call parametersInit(3, 2 + 3 + 3, 4, pprod, bprod)! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
+      call read_namelist_setupbasic()
+      call parametersInit(3, 2 + 3 + 3, 4, pprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
       call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishSmall,
       call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishLarge,
       call parametersAddGroup(3, 1.25d5, 2.5d2)   ! fishDemersal,
@@ -130,6 +114,21 @@ contains
       theta(12, 8) = thetaD         ! medium large pelagics
       theta(12, 11) = 1.d0          ! medium demersals
 
+contains
+   subroutine read_namelist_setupbasic()
+      integer :: file_unit, io_err
+
+      namelist /input_setupbasic/ h, nn, q, gamma, kk, p, epsAssim, epsRepro, &
+                                  & beta, sigma, mMin, &
+                                  & mMedium, mLarge, &
+                                  & lbenk, szoog, lzoog, sbeng, lbeng, &
+                                  & thetaS, thetaA, thetaD
+
+      call open_inputfile(file_unit, io_err)
+      read (file_unit, nml=input_setupbasic, iostat=io_err)
+      call close_inputfile(file_unit, io_err)
+   end subroutine read_namelist_setupbasic
+
    end subroutine setupbasic
 !------------------------------------------------------------------------------------------------------------------------------
 
@@ -137,10 +136,13 @@ contains
       real(dp), intent(in) :: pprod, bprod
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
-      real(dp), parameter :: thetaA = 0.5d0  ! Large fish pref for medium forage fish
-      real(dp), parameter :: thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+! predation preference coefficient
+      real(dp) :: thetaA
+      real(dp) :: thetaD
+!      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
+!      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
-      ! call read_namelist_resources()    !load resources
+      call read_namelist_setupbasic2()    !
       call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, pprod, bprod)! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall    nint: Returns the nearest integer to the argument.
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge (stages, max mass, mature mass)
@@ -211,15 +213,10 @@ contains
 !         if (group(3)%spec%m(i) < mMedium) then
 !            theta(ixStart(3) + i - 1, 3:4) = 0.d0             !Small demersals has not feeding on benthos
 !         end if
-!         if (group(3)%spec%m(i) > mMedium .AND. &
-!             group(3)%spec%m(i) < mLarge) then
-!            theta(ixStart(3) + i - 1, 1:2) = 0.d0             ! Medium demersals has not feeding on zooplankton
-!            theta(ixStart(3) + i - 1, idxF:nGrid) = 0.d0      ! Medium demersals has not feeding on all fish (only eat benthos)
-!         end if
          if (group(3)%spec%m(i) > mMedium .AND. &
              group(3)%spec%m(i) < mLarge) then
-            theta(ixStart(3) + i - 1, ixStart(1):ixEnd(1)) = 0.d0    ! perhaps not correct ?
-            theta(ixStart(3) + i - 1, ixStart(2):ixEnd(2)) = 0.d0    !
+            theta(ixStart(3) + i - 1, 1:2) = 0.d0          ! Medium demersals has not feeding on zooplankton
+            theta(ixStart(3) + i - 1, idxF:nGrid) = 0.d0   ! Medium demersals has not feeding on all fish (only eat benthos)
          end if
 
       end do
@@ -227,24 +224,44 @@ contains
       theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1)) = thetaA*thetaD*theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1))
       theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2)) = thetaD*theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2))
 
+contains
+   subroutine read_namelist_setupbasic2()
+      integer :: file_unit, io_err
+
+      namelist /input_setupbasic2/ h, nn, q, gamma, kk, p, epsAssim, epsRepro, &
+                                  & beta, sigma, mMin, &
+                                  & mMedium, mLarge, &
+                                  & lbenk, szoog, lzoog, sbeng, lbeng, &
+                                  & thetaA, thetaD
+
+      call open_inputfile(file_unit, io_err)
+      read (file_unit, nml=input_setupbasic2, iostat=io_err)
+      call close_inputfile(file_unit, io_err)
+   end subroutine read_namelist_setupbasic2
+
    end subroutine setupbasic2
-!------------------------------------------------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------------------------------------------------
    subroutine setupVertical(pprod) ! Vertical overlap from MATLAB  van Denderen et al., 2021
       real(dp), intent(in) :: pprod !
 
 ! for theta calc
-      real(dp) :: ssigma = 10.d0
-      real(dp) :: tau = 10.d0
+       real(dp) :: ssigma
+       real(dp) :: tau
+       real(dp) :: bottom
+       real(dp) :: photic
+       real(dp) :: mesop
+       real(dp) :: visual
+!      real(dp) :: ssigma = 10.d0
+!      real(dp) :: tau = 10.d0
+!      real(dp), parameter :: bottom = 1500.d0 ! total depth meter
+!      real(dp), parameter :: photic = 150.d0  ! photic zone depth
+!      real(dp), parameter :: mesop = 250.d0   ! depth ?
+!      real(dp), parameter :: visual = 1.5d0 ! scalar; >1 visual predation primarily during the day, = 1 equal day and night
       real(dp), allocatable :: sigmap(:) ! width for each size class
-      real(dp), parameter :: bottom = 1500.d0 ! total depth meter
-      real(dp), parameter :: photic = 150.d0  ! photic zone depth
-      real(dp), parameter :: mesop = 250.d0   ! depth ?
-      real(dp), parameter :: bent = 150.d0  ! ?
+      real(dp) :: bent ! for bprod calc
       real(dp) :: bprod
-      real(dp), parameter :: visual = 1.5d0 ! scalar; >1 visual predation primarily during the day, = 1 equal day and night
-      real(dp), dimension(int(bottom) + 1) :: xrange
-      real(dp) :: dvm  ! vertical migration depth 650
+      real(dp), dimension(:), allocatable :: xrange
+      real(dp) :: dvm  ! vertical migration depth photic + 500.d0
       real(dp) :: xloc ! vertical location    will be overwritten again and again
       real(dp), allocatable :: xlocvec(:) ! vertical location vector used for some species
       real(dp), allocatable :: zp_n(:, :), zp_d(:, :), & ! zooplankton day / night
@@ -260,6 +277,11 @@ contains
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
       integer :: iGroup, i, j, ixjuv, ixadult
 
+
+      call read_namelist_setupvertical()
+      allocate(xrange(int(bottom) + 1))
+
+! calc bprod before initialization
       bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
       if (bprod .ge. bent*0.1d0) then
          bprod = bent*0.1d0
@@ -556,6 +578,22 @@ contains
       idx_predat = [pred1, pred2, pred3]
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
+
+contains
+   subroutine read_namelist_setupvertical()
+      integer :: file_unit, io_err
+
+      namelist /input_setupvertical/ h, nn, q, gamma, kk, p, epsAssim, epsRepro, &
+                                  & beta, sigma, mMin, &
+                                  & mMedium, mLarge, &
+                                  & bent, lbenk, szoog, lzoog, sbeng, lbeng,&
+                                  & ssigma, tau, bottom, photic, mesop, visual
+
+      call open_inputfile(file_unit, io_err)
+      read (file_unit, nml=input_setupvertical, iostat=io_err)
+      call close_inputfile(file_unit, io_err)
+   end subroutine read_namelist_setupvertical
+
    end subroutine setupVertical
 
 ! nnGroups: Fish group numbers
@@ -643,7 +681,7 @@ contains
    subroutine calcderivatives(u, dudt)
       real(dp), intent(in) :: u(nGrid)
       real(dp), intent(inout) :: dudt(nGrid)
-      integer :: i, j, iGroup!, jGroup, ixi, ixj
+      integer :: i, iGroup
 
       dudt = 0.d0 ! overwritten latter
 
@@ -783,16 +821,5 @@ contains
 
       g_r(ixStart(iGroup) - nResources:ixEnd(iGroup) - nResources) = this%g
    end subroutine assembleg
-
-!   subroutine read_namelist_resources()
-!      integer :: file_unit, io_err
-!
-!      namelist /input_resources/ sbenk, lbenk,&
-!                                  &szoog, lzoog, sbeng, lbeng
-!
-!      call open_inputfile(file_unit, io_err)
-!      read (file_unit, nml=input_resources, iostat=io_err)
-!      call close_inputfile(file_unit, io_err)
-!   end subroutine read_namelist_resources
 
 end module FEISTY

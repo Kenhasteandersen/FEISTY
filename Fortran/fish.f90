@@ -9,32 +9,46 @@ module fish
 
    private
 !physiology:
-!   real(dp) :: h
-!   real(dp) :: nn
-!   real(dp) :: q
-!   real(dp) :: gamma
-!   real(dp) :: epsAssim
-!   real(dp) :: epsRepro
-   real(dp), parameter ::  h = 20.d0            ! Max. consumption coefficient
-   real(dp), parameter ::  nn = -0.25d0         ! Max. consumption exponent
-   real(dp), parameter ::  q = -0.2d0           ! Clearance rate exponent
-   real(dp), parameter ::  gamma = 70.d0        ! Coef. for clearance rate
-   real(dp), parameter ::  kk = 0.011d0*365.d0        ! Metabolism coefficient
-   real(dp), parameter ::  p = -0.175d0           ! Metabolism exponent
-   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
-   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
+   real(dp) :: h
+   real(dp) :: nn
+   real(dp) :: q
+   real(dp) :: gamma
+   real(dp) :: kk
+   real(dp) :: p
+   real(dp) :: epsAssim
+   real(dp) :: epsRepro
+!   real(dp), parameter ::  h = 20.d0            ! Max. consumption coefficient
+!   real(dp), parameter ::  nn = -0.25d0         ! Max. consumption exponent
+!   real(dp), parameter ::  q = -0.2d0           ! Clearance rate exponent
+!   real(dp), parameter ::  gamma = 70.d0        ! Coef. for clearance rate
+!   real(dp), parameter ::  kk = 0.011d0*365.d0  ! Metabolism coefficient   4.0150 in input file
+!   real(dp), parameter ::  p = -0.175d0         ! Metabolism exponent
+!   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
+!   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
 
-!   real(dp) :: beta
-!   real(dp) :: sigma
-!   real(dp) :: mMin
-   real(dp), parameter ::  beta = 400.d0
-   real(dp), parameter ::  sigma = 1.3d0
-   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
+   real(dp) :: beta
+   real(dp) :: sigma
+   real(dp) :: mMin
+!   real(dp), parameter ::  beta = 400.d0
+!   real(dp), parameter ::  sigma = 1.3d0
+!   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
 
-!   real(dp) :: mMedium
-!   real(dp) :: mLarge
-   real(dp), parameter ::  mMedium = 10.d0      !meidum fish central mass used for feeding preference calc
-   real(dp), parameter ::  mLarge = 5000.d0     !large fish central mass used for feeding preference calc
+   real(dp) :: mMedium
+   real(dp) :: mLarge
+!   real(dp), parameter ::  mMedium = 10.d0      !meidum fish central mass used for feeding preference calc
+!   real(dp), parameter ::  mLarge = 5000.d0     !large fish central mass used for feeding preference calc
+
+!resources:
+   real(dp) :: lbenk
+   real(dp) :: szoog
+   real(dp) :: lzoog
+   real(dp) :: sbeng
+   real(dp) :: lbeng
+!   real(dp), parameter ::     lbenk = 0.d0              ! large benthos carry capacity
+!   real(dp), parameter ::     szoog = 1.d0              ! small zooplankton growth rate
+!   real(dp), parameter ::     lzoog = 1.d0               ! large zooplankton growth rate
+!   real(dp), parameter ::     sbeng = 1.d0              ! small benthos growth rate
+!   real(dp), parameter ::     lbeng = 0.d0               ! large benthos growth rate
 
    type, extends(typeSpectrum) :: spectrumFish
 
@@ -43,9 +57,10 @@ module fish
       procedure :: calcfluxfish
    end type spectrumFish
 
-   public epsAssim, beta, sigma, mMedium, mLarge, h, kk, p, &
-      spectrumFish, &
-      initFish, calcfluxfish
+   public h, nn, q, gamma, kk, p, epsAssim, epsRepro, beta, sigma, mMin, mMedium, mLarge,  &
+          spectrumFish, &
+          initFish, calcfluxfish, &
+          lbenk, szoog, lzoog, sbeng, lbeng
 
 contains
 
@@ -53,8 +68,6 @@ contains
       class(spectrumFish), intent(inout) :: this
       integer, intent(in):: n
       real(dp), intent(in):: mMax, mMature
-
-!      call read_namelist_fish() !input parameters
 
       call this%initSpectrum(n, mMin, mMax)
 
@@ -76,7 +89,6 @@ contains
       this%mort0 = 0.1d0                 ! Intrinsic mortality
       this%mortF = 0.d0                  ! Fishing mortality
 
-      !this%typeGroup = typeGroup         ! fishSmall=1 / fishLarge=10 / fishDemersal=20
    end subroutine initFish
 
 ! calc Flux out and Flux in for each fish group
@@ -113,16 +125,6 @@ contains
       ! Reproduction:
       this%Jin(1) = epsRepro*(this%Jin(1) + sum(this%Repro))    ! overwrite first grid by reproduction data
    end subroutine calcfluxfish
-
-!   subroutine read_namelist_fish()
-!      integer :: file_unit, io_err
 !
-!      namelist /input_fish/ h, nn, q, gamma, epsAssim, epsRepro, &
-!                             &beta, sigma, mMin, mMedium, mLarge
-!
-!      call open_inputfile(file_unit, io_err)
-!      read (file_unit, nml=input_fish, iostat=io_err)
-!      call close_inputfile(file_unit, io_err)
-!   end subroutine read_namelist_fish
 
 end module fish
