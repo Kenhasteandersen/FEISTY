@@ -1,4 +1,4 @@
-! debug tool only works without input things?
+! for debug
 program FEISTYtest
    use FEISTY
    use globals
@@ -25,7 +25,7 @@ program FEISTYtest
    u0(idxF:nGrid) = 1.d0
    dudt = 0.d0
 
-!! van Denderen et al., 2020
+!! van Denderen et al., 2021
 !   u0(1) = 0.5d0
 !   u0(2) = 0.5d0
 !   u0(3) = 0.5d0
