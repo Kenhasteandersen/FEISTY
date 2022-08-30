@@ -31,8 +31,6 @@ module spectrum
       real(dp), dimension(:), allocatable:: Jin, Jout                 !
       real(dp), dimension(:), allocatable:: nu, nupositive, Repro, g  !nu = Eavail
 
-      !integer:: typeGroup !
-
    contains
 
       procedure, pass :: initSpectrum
@@ -45,7 +43,7 @@ module spectrum
 
 !---------------------------------------------------------------------------
 contains
-
+! create mass spectrum
    subroutine initSpectrum(this, n, mMin, mMax)
       class(typeSpectrum) :: this
       integer, intent(in):: n
