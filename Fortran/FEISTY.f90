@@ -361,9 +361,9 @@ contains
       !  from matlab
       if (bottom .lt. (photic + 500.d0)) then
          dvm = bottom     ! migration to bottom in intermediate habitats
-      else if (bottom .le. mesop) then
+      end if
+      if (bottom .le. mesop) then
          dvm = 0.d0                   ! no migration in shallow habitats
-      else
       end if
 
 ! first stages as juvenile/adult for predators
@@ -491,9 +491,9 @@ contains
       demmig = dvm ! ??? from matlab
       if ((bottom - dvm) .ge. 1200.d0) then
          demmig = dvm + (bottom - dvm - 1200.d0)
-      else if ((bottom - dvm) .ge. 1500.d0) then
+      end if
+      if ((bottom - dvm) .ge. 1500.d0) then
          demmig = bottom
-      else
       end if
       allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
       xlocvec(ixadult:size(xlocvec)) = dvm ! larvae at surface/ juvenile at bottom/ adult and middle
