@@ -523,9 +523,9 @@ setupVertical = function(pprod = 80) {
   #  from matlab
   if (param$bottom < (param$photic + 500)) {
     param$dvm = param$bottom   # migration to bottom in intermediate habitats
-  }else if (param$bottom <= param$mesop) {
+  }
+  if (param$bottom <= param$mesop) {
     param$dvm = 0              # no migration in shallow habitats
-  }else{
   }
                 
   ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
@@ -638,9 +638,9 @@ setupVertical = function(pprod = 80) {
   demmig = param$dvm # ? from matlab
   if ((param$bottom - param$dvm) >= 1200){
   demmig = param$dvm + (param$bottom-param$dvm-1200)
-  }else if ((param$bottom - param$dvm) >= 1500){
+  }
+  if ((param$bottom - param$dvm) >= 1500){
   demmig = param$bottom
-  }else{
   }
   dem_d= matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
   xlocvec[ixadult:length(xlocvec)] = param$dvm # larvae at surface/ juvenile at bottom/ adult and middle
