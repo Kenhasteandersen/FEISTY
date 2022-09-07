@@ -10,6 +10,7 @@ module fish
    private
 ! fish physiology:
    real(dp) :: h
+   real(dp) :: hCepha   ! Note in input.nlm
    real(dp) :: nn
    real(dp) :: q
    real(dp) :: gamma
@@ -17,6 +18,7 @@ module fish
    real(dp) :: p
    real(dp) :: epsAssim
    real(dp) :: epsRepro
+   real(dp) :: epst
 !   real(dp), parameter ::  h = 20.d0            ! Max. consumption coefficient
 !   real(dp), parameter ::  nn = -0.25d0         ! Max. consumption exponent
 !   real(dp), parameter ::  q = -0.2d0           ! Clearance rate exponent
@@ -25,14 +27,18 @@ module fish
 !   real(dp), parameter ::  p = -0.175d0         ! Metabolism exponent
 !   real(dp), parameter ::  epsAssim = 0.7d0     ! Assimilation efficiency
 !   real(dp), parameter ::  epsRepro = 0.01d0    ! reproduction * recruitment efficiency
+!   real(dp), parameter ::  epst = 0.1d0         ! efficiency of benthos community
+!   real(dp), parameter ::  hCepha = 28.d0 / (epsAssim * (0.6d0 - 0.4d0)) ! Max. consumption coefficient of squid
 
 ! for size spectrum
    real(dp) :: beta
+   real(dp) :: betaCepha
    real(dp) :: sigma
    real(dp) :: mMin
 !   real(dp), parameter ::  beta = 400.d0
+!   real(dp), parameter ::  betaCepha = 50.d0 ! squid
 !   real(dp), parameter ::  sigma = 1.3d0
-!   real(dp), parameter ::  mMin = 0.001d0       !min fish mass (boundary of the grid) used for discretization
+!   real(dp) ::  mMin = 0.001d0       ! min fish mass (boundary of the grid) used for discretization
 
 ! for feeding preference calc
    real(dp) :: mMedium
@@ -48,9 +54,9 @@ module fish
    real(dp) :: lbeng
 !   real(dp), parameter ::     lbenk = 0.d0              ! large benthos carry capacity
 !   real(dp), parameter ::     szoog = 1.d0              ! small zooplankton growth rate
-!   real(dp), parameter ::     lzoog = 1.d0               ! large zooplankton growth rate
+!   real(dp), parameter ::     lzoog = 1.d0              ! large zooplankton growth rate
 !   real(dp), parameter ::     sbeng = 1.d0              ! small benthos growth rate
-!   real(dp), parameter ::     lbeng = 0.d0               ! large benthos growth rate
+!   real(dp), parameter ::     lbeng = 0.d0              ! large benthos growth rate
 
    type, extends(typeSpectrum) :: spectrumFish
 
@@ -59,7 +65,7 @@ module fish
       procedure :: calcfluxfish
    end type spectrumFish
 
-   public h, nn, q, gamma, kk, p, epsAssim, epsRepro, beta, sigma, mMin, mMedium, mLarge,  &
+   public h, hCepha , nn, q, gamma, kk, p, epsAssim, epsRepro, epst, beta, betaCepha, sigma, mMin, mMedium, mLarge,  &
           spectrumFish, &
           initFish, calcfluxfish, &
           lbenk, szoog, lzoog, sbeng, lbeng
@@ -127,6 +133,7 @@ contains
       end do
       ! Reproduction:
       this%Jin(1) = epsRepro*(this%Jin(1) + sum(this%Repro))    ! overwrite first grid by reproduction data
+
    end subroutine calcfluxfish
 !
 
