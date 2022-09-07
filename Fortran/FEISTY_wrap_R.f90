@@ -27,6 +27,16 @@ subroutine f_setupvertical(pprod)
    call setupvertical(pprod)
 end subroutine f_setupvertical
 
+subroutine f_setupsquid(pprod, bottom, nStages)
+   use FEISTY ! only :
+   use globals
+
+   real(dp), intent(in):: pprod, bottom
+   integer, intent(in) :: nStages
+
+   call setupsquid(pprod, bottom, nStages)
+end subroutine f_setupsquid
+
 subroutine f_calcderivatives(u, dudt)
    use FEISTY !, only:
    use globals
@@ -36,6 +46,16 @@ subroutine f_calcderivatives(u, dudt)
 
    call calcderivatives(u, dudt)
 end subroutine f_calcderivatives
+
+subroutine f_calcderivativesSquid(u, dudt)
+   use FEISTY !, only:
+   use globals
+
+   real(dp), intent(in):: u(nGrid)
+   real(dp), intent(out):: dudt(nGrid)
+
+   call calcderivativesSquid(u, dudt)
+end subroutine f_calcderivativesSquid
 
 subroutine f_getrates(u, dudt, flvl_r, mortpred_r, g_r)
 use FEISTY
