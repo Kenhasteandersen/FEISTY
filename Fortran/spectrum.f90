@@ -85,6 +85,7 @@ contains
          this%mUpper = mb(2:(n + 1))                            ! upper boundary
          this%z = this%mUpper/this%mLower                       ! The ratio between upper and lower sizes
          this%m = exp(log(this%mLower) + 0.5d0*(log(this%z)))   ! Geometric mean center mass
+
       end subroutine calcGrid
 
    end subroutine initSpectrum
