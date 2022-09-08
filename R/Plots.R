@@ -41,7 +41,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   # Growth rate
   # 
   loglogpanel(xlim = xlim, ylim=rates$g+1e-10,
-                ylab="Growth rate (1/day)", xlab="-", xaxis = FALSE)
+                ylab="Growth rate (1/year)", xlab="-", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$g[p$ix[[i]]-length(p$ixR)], lwd=i, col='black')
   }
@@ -50,7 +50,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   # Mortalities:
   #
   loglogpanel(xlim=xlim, ylim=rates$mortpred+1e-10,
-              xlab="-", ylab="mort (1/day)", xaxis = FALSE)
+              xlab="-", ylab="mort (1/year)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
     lines(p$mc[p$ix[[i]]], p$mortF[p$ix[[i]]], lwd=i, col='blue')
