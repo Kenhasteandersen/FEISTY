@@ -1,0 +1,15 @@
+useDynLib(FeistyR, .registration = TRUE)
+importFrom("grDevices", "dev.off", "pdf", "windows")
+importFrom("graphics", "axis", "box", "image", "legend", "lines",
+             "mtext", "par", "points", "polygon")
+importFrom("stats", "na.omit", "simulate")
+importFrom("pracma", "erf")
+importFrom("latex2exp", "TeX")
+import(deSolve)
+import(shiny)
+
+export(setupPelagicSpecies, setupVertical, setupBasic, setupBasic2 )
+export(simulateFeisty, derivativesFeistyR)
+export(paramInit, paramAddResource, paramAddGroup, paramAddPhysiology)
+
+export(webFeisty)
