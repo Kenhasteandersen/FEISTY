@@ -35,7 +35,8 @@ The state variables are:
 
 \usage{
 simulateFeisty(p = setupBasic(), tEnd = 100, times = seq(from = 0, to = tEnd, by = 1), 
-               yini = p$u0, USEdll = TRUE, Rmodel = derivativesFeistyR, simpleOutput = FALSE)
+               yini = p$u0, USEdll = TRUE, Rmodel = derivativesFeistyR, 
+               simpleOutput = FALSE)
                
 derivativesFeistyR(t, u,  p,  FullOutput=TRUE)
 }
