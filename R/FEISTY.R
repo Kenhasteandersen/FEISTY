@@ -134,11 +134,25 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic = function(pprod = 100, bprod=5) {
+setupBasic = function(pprod = 100, bprod=5, temp=10) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
   param$bprod = bprod
+  param$temp = temp
+  param$setup=1
+  
+  #
+  #update temperature
+  #
+  Tref=10
+  Q10=1.88
+  Q10m=2.35 #Petrik et al.,2019
+  
+  
+  fTemp=Q10^((temp - Tref)/10)
+  fTempm=Q10m^((temp - Tref)/10)
+  
   #
   # Setup resource groups:
   #
@@ -175,9 +189,9 @@ setupBasic = function(pprod = 100, bprod=5) {
   q = -0.2 # Clearance rate exponent
   ix = param$ixFish
   m = param$mc[ix]
-  param$Cmax[ix] = h*m^n # maximum consumption rate 
-  param$V[ix] = gamma*m^q # clearance rate 
-  param$metabolism[ix] = k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
+  param$V[ix] = fTemp* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -290,12 +304,24 @@ setupBasic = function(pprod = 100, bprod=5) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
+setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9,temp=10) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
+  param$temp = temp
+  param$setup=2
+  
+  #
+  #update temperature
+  #
+  Tref=10
+  Q10=1.88
+  Q10m=2.35 #Petrik et al.,2019
+  
+  fTemp=Q10^((temp - Tref)/10)
+  fTempm=Q10m^((temp - Tref)/10)
   
   #
   # Setup resource groups:
@@ -325,9 +351,9 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
   q = -0.2 # Clearance rate exponent
   ix = param$ixFish
   m = param$mc[ix]
-  param$Cmax[ix] = h*m^n # maximum consumption rate 
-  param$V[ix] = gamma*m^q # clearance rate 
-  param$metabolism[ix] = k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
+  param$V[ix] = fTemp* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -425,7 +451,7 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
   return(param)
 }
 
-setupVertical = function(pprod = 80) {
+setupVertical = function(pprod = 80, nSizeGroups=3,region = 4) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
@@ -438,6 +464,9 @@ setupVertical = function(pprod = 80) {
   param$bent = 150
   bprod=0.1*(param$bent*(param$bottom/param$photic)^-0.86)
   param$bprod = bprod
+  param$nSizeGroups = nSizeGroups
+  param$region = region
+  param$setup = 3
   
   #
   # Setup resource groups:
@@ -452,11 +481,11 @@ setupVertical = function(pprod = 80) {
   #
   # Add fish groups:
   #  paramAddGroup = function(p ,mMin, mMax, mMature, nStages) 
-  param = paramAddGroup(param, 0.001, 250, 0.5, 2)    # Small pelagics
-  param = paramAddGroup(param, 0.001, 250, 0.5, 2)    # Mesopelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Bathypelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Large demersal
+  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Small pelagics
+  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Mesopelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Bathypelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large demersal
  
   # initial conditions
   param$u0[param$ixR] = c(0.5,0.5,0.5,0)
@@ -470,10 +499,22 @@ setupVertical = function(pprod = 80) {
   #
   # Override the generic psiMature and make only adult classes 50% mature
   #
-   param$psiMature = 0*param$psiMature
-   for (iGroup in 1:length(param$ix)){
-   param$psiMature[max(param$ix[[iGroup]])] = 0.5
-   }
+   # param$psiMature = 0*param$psiMature
+   # for (iGroup in 1:length(param$ix)){
+   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
+   # }
+  
+  param$psiMature = 0*param$psiMature
+  #overwrite psiMature    from matlab simple run
+  nsize=nSizeGroups+1
+  sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
+  matstageS = which.min(abs(sizes-0.5))
+  matstageL = which.min(abs(sizes-250))
+  param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
+  param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
+  param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
+  param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
+  param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
    
   #
   # Setup physiology:
@@ -528,8 +569,11 @@ setupVertical = function(pprod = 80) {
     param$dvm = 0              # no migration in shallow habitats
   }
                 
-  ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
-  ixadult = 3   #minloc(abs(sizes-lmat));
+  # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
+  # ixadult = 3   #minloc(abs(sizes-lmat));
+  
+  ixjuv = which.min(abs(sizes-0.5))
+  ixadult = which.min(abs(sizes-250))
   
   # zooplankton night
   xloc = 0 
@@ -736,6 +780,30 @@ setupVertical = function(pprod = 80) {
   param$theta[idx_predat,idx_prey] = param$theta[idx_predat,idx_prey]*0.5
   
   #...avlocDay  avlocNight    from matlab
+  
+  # update temperature
+  tempdata=read.table("../input/tempdata.dat", sep=',') #
+  tempdata[,5]=10 #
+  Q10=1.88
+  Q10m=1.88
+  
+  dist=(depthDay+depthNight)/2
+  TQ10 =  Q10^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  TQ10m =  Q10m^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  
+  scTemp_step=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  scTemp_stepm=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  for (i in 1:size(dist,2)) {
+  scTemp_step[,i] = dist[,i] * TQ10
+  scTemp_stepm[,i] = dist[,i] * TQ10m
+  }
+  
+  scTemp = colSums(scTemp_step)
+  scTempm = colSums(scTemp_stepm)
+  
+  param$Cmax = scTemp* param$Cmax # maximum consumption rate 
+  param$V= scTemp* param$V # clearance rate 
+  param$metabolism = scTempm* param$metabolism
   
   #
   # Mortality
@@ -965,7 +1033,7 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
 # Out:
 #  A simulation list
 # 
-simulate= function(p = setupBasic(), tEnd = 100,USEdll=TRUE) {
+simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
   #
   # Integrate the equations:
   #
@@ -974,15 +1042,27 @@ simulate= function(p = setupBasic(), tEnd = 100,USEdll=TRUE) {
   #Calc by R or dll
   if (USEdll) {
     loadFEISTYmodel()
-    if (exists("nSizeGroups",where=p)){
-    dummy = .Fortran("f_setupbasic2", pprod=as.numeric(p$pprod),
-                                      bprod=as.numeric(p$bprod),
-                                      nSizeGroups=as.integer(p$nSizeGroups))
-    } else if (exists("vertover",where=p)){
-      dummy = .Fortran("f_setupvertical", pprod=as.numeric(p$pprod))
-    } else{
-    dummy = .Fortran("f_setupbasic", pprod=as.numeric(p$pprod),
-                       bprod=as.numeric(p$bprod))
+    if (p$setup == 1) {
+      dummy = .Fortran("f_setupbasic",
+        pprod = as.numeric(p$pprod),
+        bprod = as.numeric(p$bprod),
+        T = as.numeric(p$temp)
+      )
+    } else if (p$setup == 2) {
+      dummy = .Fortran("f_setupbasic2",
+        pprod = as.numeric(p$pprod),
+        bprod = as.numeric(p$bprod),
+        nnStages = as.integer(p$nSizeGroups),
+        T = as.numeric(p$temp)
+      )
+      
+    } else if (p$setup == 3) {
+      dummy = .Fortran("f_setupvertical",
+        pprod = as.numeric(p$pprod),
+        nStages = as.integer(p$nSizeGroups),
+        region = as.integer(p$region)
+      )
+      
     }
     
     #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 

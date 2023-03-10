@@ -51,8 +51,8 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al., 2019
 ! --------------------------------------
-   subroutine setupbasic(pprod, bprod)
-      real(dp), intent(in)::pprod, bprod
+   subroutine setupbasic(pprod, bprod,T)
+      real(dp), intent(in)::pprod, bprod, T
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -84,7 +84,7 @@ contains
 
 ! Overwrite
       do iGroup = 1, nGroups
-         group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p) ! overwrite matabolism
+         group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p) ! overwrite metabolism
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
          group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0 ! only adults reproduce
@@ -126,6 +126,18 @@ contains
       theta(12, 8) = thetaD         ! medium large pelagics
       theta(12, 11) = 1.d0          ! medium demersals
 
+! update temperature
+call updateTemp(T)
+  !all fish group
+do iGroup = 1, nGroups
+    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
+    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
+    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
+end do
+  !vector
+V=V*fTemp
+Cmax=Cmax*fTemp
+
 contains
    subroutine read_namelist_setupbasic()
       integer :: file_unit, io_err
@@ -146,8 +158,8 @@ contains
 ! --------------------------------------
 ! Setup by Ken.
 ! --------------------------------------
-   subroutine setupbasic2(pprod, bprod, nStages) !
-      real(dp), intent(in) :: pprod, bprod
+   subroutine setupbasic2(pprod, bprod, nStages, T) !
+      real(dp), intent(in) :: pprod, bprod, T
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -236,6 +248,18 @@ contains
       theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1)) = thetaA*thetaD*theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1))
       theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2)) = thetaD*theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2))
 
+! update temperature
+call updateTemp(T)
+  !all fish group
+do iGroup = 1, nGroups
+    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
+    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
+    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
+end do
+  !vector
+V=V*fTemp
+Cmax=Cmax*fTemp
+
 contains
    subroutine read_namelist_setupbasic2()
       integer :: file_unit, io_err
@@ -255,8 +279,9 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap from MATLAB (van Denderen et al., 2020) the simple run folder
 ! --------------------------------------
-   subroutine setupVertical(pprod)
+   subroutine setupVertical(pprod, nStages,region)
       real(dp), intent(in) :: pprod !
+      integer, intent(in) :: nStages,region
 
 ! for theta calc
        real(dp) :: ssigma
@@ -289,7 +314,8 @@ contains
                               idx_predat(:), idx_prey(:)
       real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
-      integer :: iGroup, i, j, ixjuv, ixadult
+      real(dp),allocatable :: sizes(:)
+      integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
 
 
       call read_namelist_setupvertical()
@@ -301,12 +327,12 @@ contains
          bprod = bent*0.1d0
       end if
 
-      call parametersInit(5, 2 + 2 + 3 + 3 + 3, 4, pprod, bprod)!
-      call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishSmall,
-      call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishMeso,
-      call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishLarge,
-      call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishBathy,
-      call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishDemersal,
+      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, pprod, bprod)!
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishBathy,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal,
 
 ! vectors and matrix:
       allocate (sigmap(nGrid))
@@ -332,9 +358,22 @@ contains
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
-         group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
+         !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
 
       end do
+
+      !overwrite psiMature    from matlab simple run
+      nsize=nStages+1
+      allocate (sizes(nsize))
+      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
+      matstageS = minloc(abs(sizes-0.5d0),dim=1)
+      matstageL = minloc(abs(sizes-2.5d2),dim=1)
+      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
+      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
+      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
+      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
+      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
+
       group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
 ! Feeding preference matrix:
@@ -371,8 +410,9 @@ contains
       end if
 
 ! first stages as juvenile/adult for predators
-      ixjuv = 2     !minloc(abs(sizes-smat)); from matlab
-      ixadult = 3   !minloc(abs(sizes-lmat));
+      ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
+      ixadult = minloc(abs(sizes-2.5d2),dim=1)
+  deallocate (sizes)!see above overwrite psimature
 
 ! zooplankton night
       allocate (zp_n(size(xrange), 2))
@@ -592,6 +632,18 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
+! update temperature
+call updateTempV(depthDay, depthNight, bottom, region)
+! all fish group
+do iGroup = 1, nGroups
+    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+end do
+  !vector
+V=V*fTempV
+Cmax=Cmax*fTempV
+
 contains
    subroutine read_namelist_setupvertical()
       integer :: file_unit, io_err
@@ -614,7 +666,7 @@ contains
 ! --------------------------------------
    subroutine setupsquid(pprod, bottom, nStages)
       real(dp), intent(in) :: pprod !
-      real(dp), intent(in) :: bottom ! water depth default 1000.d0     revise input.nlm
+      real(dp), intent(in) :: bottom ! water depth default 1000.d0     revise input.nml
       integer, intent(in) :: nStages ! stage numbers
 
 ! for theta calc

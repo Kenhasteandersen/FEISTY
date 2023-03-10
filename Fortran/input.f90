@@ -8,21 +8,21 @@ module input
 
   subroutine open_inputfile(file_unit, io_err)
     integer,  intent(out) :: file_unit, io_err
-    open(newunit=file_unit,action='read', file="../input/input.nlm",iostat=io_err)
+    open(newunit=file_unit,action='read', file="../input/input.nml",iostat=io_err)
     call check_iostat(io_err, &
-        "Could not open file 'input.nlm', perhaps it does not exist?")
+                      "Could not open file 'input.nml', perhaps it does not exist?")
   end subroutine open_inputfile
 
   subroutine close_inputfile(file_unit, io_err)
     integer,  intent(in) :: file_unit, io_err
     call check_iostat(io_err, &
-        "Error reading name-list, please correct file content")
+                      "Error reading name-list, please correct file content")
     close (file_unit)
   end subroutine close_inputfile
 
-  ! -----------------------------------------------
-  ! Find problems with input
-  ! -----------------------------------------------
+    ! -----------------------------------------------
+    ! Find problems with input
+    ! -----------------------------------------------
 
   subroutine check_iostat(iostat, msg)
     integer, intent(in) :: iostat

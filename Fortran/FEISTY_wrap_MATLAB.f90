@@ -7,11 +7,13 @@ module FEISTY_wrap
 
 contains
 
-subroutine f_setupVertical(pprod) bind(c)
+subroutine f_setupVertical(pprod,nStages,region) bind(c)
 
    real(c_double), intent(in), value :: pprod
+   integer(c_int), intent(in), value :: nStages
+   integer(c_int), intent(in), value :: region
 
-   call setupVertical(pprod)
+   call setupVertical(pprod,nStages,region)
 
 end subroutine f_setupVertical
 

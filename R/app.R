@@ -24,17 +24,20 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
           
-          
             radioButtons("USEdll", 
-                         h5("ODE solved by"),
+                         ("Run by"),
                          choices = list("Fortran dll" = TRUE, "R" = FALSE),
-                         selected = TRUE),
+                         selected = TRUE,inline = TRUE),
             
             radioButtons("Setup", 
-                         h5("Setup"),
+                         ("Setup"),
                          choices = list("SetupBasic" = 1, "SetupBasic2" = 2, "SetupVertical (no bprod input)" = 3),
-                         selected = 1),
-          
+                         selected = 1 ,inline = TRUE),
+            radioButtons("region", 
+                         ("Region (temp. profile, only for vertical ver.)"),
+                         choices = list("Default (10 Celsius)" = 4, "Tropical" = 1, "Temperate" = 2, "Boreal"=3),
+                         selected = 4 ,inline = TRUE),
+            
             sliderInput("pprod",
                         "Primary prod. (1/yr):",
                         min = 1,
@@ -47,7 +50,19 @@ ui <- fluidPage(
                         min = 1,
                         max = 50,
                         step = 1,
-                        value = 5)
+                        value = 5),
+            sliderInput("nSizeGroups",
+                        "Fish stage number (not for setupbasic):",
+                        min = 3,
+                        max = 45,
+                        step = 3,
+                        value = 3),
+            sliderInput("temp",
+                        "Temperature (not for vertical ver. ):",
+                        min = 0,
+                        max = 28,
+                        step = 0.1,
+                        value = 10)
         ),
 
         # Show a plot of the generated distribution
@@ -62,16 +77,25 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   sim <- eventReactive(c(
-    input$pprod,input$bprod,input$USEdll,input$Setup
+    input$pprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,input$temp,input$region
   ),
   {
     # setup simulation
     if (input$Setup == 1) {
-      p = setupBasic(pprod = input$pprod, bprod=input$bprod)
-    }else if (input$Setup == 2) {
-      p = setupBasic2(pprod = input$pprod, bprod=input$bprod, nSizeGroups=9)   
-    }else if (input$Setup == 3) {
-      p = setupVertical(pprod = input$pprod)
+      p = setupBasic(pprod = input$pprod,
+                     bprod = input$bprod,
+                     temp = input$temp)
+    } else if (input$Setup == 2) {
+      p = setupBasic2(
+        pprod = input$pprod,
+        bprod = input$bprod,
+        nSizeGroups = input$nSizeGroups,
+        temp = input$temp
+      )
+    } else if (input$Setup == 3) {
+      p = setupVertical(pprod = input$pprod,
+                        nSizeGroups = input$nSizeGroups,
+                        region =as.integer(input$region))
     }
 
     # Simulate

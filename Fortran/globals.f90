@@ -19,9 +19,13 @@ module globals
    ! Small number to avoid divisions by zero
    real(dp), parameter :: eps = 1d-200
 
-   ! Temperature Q10 corrections (for Q10=2 and Q10=1.5)
-   real(dp) :: fTemp2, fTemp15
+   ! Temperature Q10 corrections
+   real(dp), parameter :: Q10=1.88d0, Q10m=1.88d0, Q10mPetrik=2.35d0
+   real(dp) :: fTemp, fTempm
    real(dp), parameter:: Tref = 10. ! Reference temperature
+
+   real(dp) :: tempdata(5501,5) ! contain tempdata from van Denderen et al., 2021 + notemp
+   real(dp), allocatable :: fTempV(:), fTempmV(:)
 
    !
    ! Specification of what to do with HTL losses:
@@ -52,26 +56,88 @@ contains
    ! -----------------------------------------------
    ! Temperature Q10 function
    ! -----------------------------------------------
-   function fTemp(Q10, T) result(f)
+   function calfTemp(Q10, T) result(f) !calculate temperature factor
       real(dp), intent(in):: Q10, T
       real(dp):: f
 
       f = Q10**((T - Tref)/10.)
-   end function fTemp
+   end function calfTemp
 
    ! -----------------------------------------------
    ! Update the temperature corrections only if T has changed
    ! -----------------------------------------------
-   subroutine updateTemperature(T)
-      real(dp), intent(in) :: T
-      real(dp), save :: Told = -1000.
+!   subroutine updateTemperature(T)
+!      real(dp), intent(in) :: T
+!      real(dp), save :: Told = -1000.
+!
+!      if (T .ne. Told) then
+!         Told = T
+!         fTemp2 = fTemp(2.d0, T)
+!         fTemp15 = fTemp(1.5d0, T)
+!      end if
+!   end subroutine updateTemperature
 
-      if (T .ne. Told) then
+subroutine updateTemp(T)
+      real(dp), intent(in) :: T
+      real(dp), save :: Told = -1000.d0
+
+if (T .ne. Told) then
          Told = T
-         fTemp2 = fTemp(2.d0, T)
-         fTemp15 = fTemp(1.5d0, T)
+         fTemp = calfTemp(Q10, T)  !Q10=1.88 clearance rate,  maximum consumption rate
+         fTempm = calfTemp(Q10mPetrik, T) !Q10m=2.35 for metabolism    Petrik
       end if
-   end subroutine updateTemperature
+
+end subroutine updateTemp
+
+
+subroutine updateTempV(depthDay, depthNight, bottom, region)
+ real(dp), intent(in) :: depthDay(:, :), depthNight(:, :), bottom
+ integer :: i,region
+ real(dp), allocatable :: dist(:,:), TQ10(:), TQ10m(:), fTemp_stepV(:,:), fTempm_stepV(:,:)
+
+    if (allocated (fTempV)) then
+        deallocate (fTempV)
+        deallocate (fTempmV)
+    end if
+
+allocate (dist(size(depthDay,1), size(depthDay,2)))
+allocate (TQ10(int(bottom+1)))
+allocate (TQ10m(int(bottom+1)))
+allocate (fTemp_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempm_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempV(size(depthDay,2)))
+allocate (fTempmV(size(depthDay,2)))
+
+    dist = 0.d0
+    TQ10 = 0.d0
+    TQ10m = 0.d0
+    fTemp_stepV = 0.d0
+    fTempm_stepV = 0.d0
+    fTempV = 0.d0
+    fTempmV  = 0.d0
+
+open(unit=1,action='read', file="../input/tempdata.dat",status="old")
+do i = 1,5501
+    read(1,*) tempdata(i,1),tempdata(i,2),tempdata(i,3),tempdata(i,4) !depth 0-5500(no use), tropical, temperate, boreal, notemp
+end do
+close(1)
+tempdata(:,5)=10.d0 !default temp, so no temp-effects
+
+dist = (depthDay + depthNight)/2.d0
+! region+1: 1+1 tropical, 2+1 temperate, 3+1 boreal, 4+1 notemp
+TQ10 =  Q10**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+TQ10m =  Q10m**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+
+
+do i=1,size(dist,2)
+fTemp_stepV(:,i) = dist(:,i) * TQ10
+fTempm_stepV(:,i) = dist(:,i) * TQ10m
+end do
+
+fTempV = sum(fTemp_stepV,1)
+fTempmV = sum(fTempm_stepV,1)
+
+end subroutine updateTempV
 
 
   ! linspace function:
