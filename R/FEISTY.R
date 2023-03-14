@@ -1195,9 +1195,21 @@ simulateeuler= function(p = setupVertical(), tEnd = 100, dt=0.1) {
 
 }
 
-# for global simulation
-# !put loadFEISTYmodel() outside in case repeatedly loading library and crash
-# edit param list before run this simulation
+#
+# for global offline simulation
+# design your own loop for all locations
+# put loadFEISTYmodel() outside loop in case repeatedly loading library and crash
+#
+# define 'param$input' shown below before simulation
+# p$szprod: small zooplankton production [gww/m2/year]
+# p$lzprod: large zooplankton production [gww/m2/year]
+# p$bprod:  benthos production [gww/m2/year]
+# p$bottom: seafloor depth [m]
+# p$photic: euphotic zone depth 
+# p$depb: depth grids (boundary data, not grid center) [m] !max 200 layers
+# p$Tprof: Temperature grids (boundary data, not grid center) [Celsius] !max 200 layers
+# p$nSizeGroups: fish stages !integer
+# 
 simulateglobal= function(p = setupvertical(), tEnd = 300) {
   #
   # Integrate the equations:
@@ -1207,8 +1219,8 @@ simulateglobal= function(p = setupvertical(), tEnd = 300) {
   #Calc by R or dll
   #loadFEISTYmodel()
   dummy = .Fortran("f_setupverticalglobal",
-                   szprod=as.numeric(p$uvicszmort),
-                   lzprod=as.numeric(p$uviclzmort),
+                   szprod=as.numeric(p$szprod),
+                   lzprod=as.numeric(p$lzprod),
                    bprod=as.numeric(p$bprod),
                    bottom=as.numeric(p$bottom),
                    photic=as.numeric(p$photic),
