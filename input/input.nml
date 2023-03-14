@@ -117,8 +117,8 @@
   ssigma = 10                ! width of initial distribution
   tau = 10                   ! increase in width
 !
-  bottom = 1500              ! total depth meter   [m]
-  photic = 150               ! photic zone depth   [m]
+!  bottom = 1500              ! total depth meter   [m]
+!  photic = 150               ! photic zone depth   [m]
   mesop = 250                !                     [m]
 !
   visual = 1.5               ! scalar; >1 visual predation primarily during the day, = 1 equal day and night

@@ -134,12 +134,13 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic = function(pprod = 100, bprod=5, temp=10) {
+setupBasic = function(pprod = 100, bprod=5, temps=10, tempb=8) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
   param$bprod = bprod
-  param$temp = temp
+  param$temps = temps
+  param$tempb = tempb
   param$setup=1
   
   #
@@ -149,9 +150,10 @@ setupBasic = function(pprod = 100, bprod=5, temp=10) {
   Q10=1.88
   Q10m=2.35 #Petrik et al.,2019
   
-  
-  fTemp=Q10^((temp - Tref)/10)
-  fTempm=Q10m^((temp - Tref)/10)
+  fTemp=Q10^((temps - Tref)/10)
+  fTempm=Q10m^((temps - Tref)/10)
+  fTempdem=Q10^((tempb - Tref)/10)
+  fTempmdem=Q10m^((tempb - Tref)/10)
   
   #
   # Setup resource groups:
@@ -187,11 +189,17 @@ setupBasic = function(pprod = 100, bprod=5, temp=10) {
   p = -0.175 # Metabolism exponent
   gamma = 70 # Coef. for clearance rate
   q = -0.2 # Clearance rate exponent
-  ix = param$ixFish
+  #ix = param$ixFish
+  ix = c(param$ix[[1]],param$ix[[2]])
   m = param$mc[ix]
   param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
   param$V[ix] = fTemp* gamma*m^q # clearance rate 
-  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism
+  ix = param$ix[[3]]
+  m = param$mc[ix]
+  param$Cmax[ix] = fTempdem* h*m^n # maximum consumption rate 
+  param$V[ix] = fTempdem* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempmdem* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -222,8 +230,6 @@ setupBasic = function(pprod = 100, bprod=5, temp=10) {
   param$theta[12,6] = thetaA*thetaD  # medium forage fish
   param$theta[12,8] = thetaD # medium large pelagics
   param$theta[12,11] = 1 # medium demersals
-  
-  
   
   # beta = 400
   # sigma = 1.3
@@ -281,7 +287,6 @@ setupBasic = function(pprod = 100, bprod=5, temp=10) {
   #
   param$mort0 = 0.1
   param$mortF[param$ixFish] = 0.3*c(0,1,0,0.1,1,0,0.1,1) # Fishing only on mature stages
-  
 
   param$metabolism[is.na(param$metabolism)]=0
   param$mortF[is.na(param$mortF)]=0
@@ -304,13 +309,14 @@ setupBasic = function(pprod = 100, bprod=5, temp=10) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9,temp=10) {
+setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
-  param$temp = temp
+  param$temps = temps
+  param$tempb = tempb
   param$setup=2
   
   #
@@ -320,8 +326,10 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9,temp=10) {
   Q10=1.88
   Q10m=2.35 #Petrik et al.,2019
   
-  fTemp=Q10^((temp - Tref)/10)
-  fTempm=Q10m^((temp - Tref)/10)
+  fTemp=Q10^((temps - Tref)/10)
+  fTempm=Q10m^((temps - Tref)/10)
+  fTempdem=Q10^((tempb - Tref)/10)
+  fTempmdem=Q10m^((tempb - Tref)/10)
   
   #
   # Setup resource groups:
@@ -349,11 +357,17 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9,temp=10) {
   p = -0.175 # Metabolism exponent
   gamma = 70 # Coef. for clearance rate
   q = -0.2 # Clearance rate exponent
-  ix = param$ixFish
+  #ix = param$ixFish
+  ix = c(param$ix[[1]],param$ix[[2]])
   m = param$mc[ix]
   param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
   param$V[ix] = fTemp* gamma*m^q # clearance rate 
-  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism
+  ix = param$ix[[3]]
+  m = param$mc[ix]
+  param$Cmax[ix] = fTempdem* h*m^n # maximum consumption rate 
+  param$V[ix] = fTempdem* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempmdem* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -451,14 +465,15 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9,temp=10) {
   return(param)
 }
 
-setupVertical = function(pprod = 80, nSizeGroups=3,region = 4) {
+setupVertical = function(pprod = 80, nSizeGroups=6,region = 4,
+                         bottom=1500,photic=150) {
   
   # Initialize the parameters:
   param = parametersInit(0, pprod)
   
   # habitat and small benthos
-  param$bottom=1500 # water depth
-  param$photic=150 # photic zone depth
+  param$bottom=bottom # water depth default 1500m
+  param$photic=photic # photic zone depth default 150m
   param$mesop = 250 # ? depth
   param$visual = 1.5 # scalar; >1 visual predation primarily during the day, = 1 equal day and night
   param$bent = 150
@@ -1021,7 +1036,6 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
   return(derivF$dudt)
 }
 
-
 #
 # Simulate the model.
 #
@@ -1046,23 +1060,26 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
       dummy = .Fortran("f_setupbasic",
         pprod = as.numeric(p$pprod),
         bprod = as.numeric(p$bprod),
-        T = as.numeric(p$temp)
+        Ts = as.numeric(p$temps),
+        Tb = as.numeric(p$tempb)
       )
     } else if (p$setup == 2) {
       dummy = .Fortran("f_setupbasic2",
         pprod = as.numeric(p$pprod),
         bprod = as.numeric(p$bprod),
-        nnStages = as.integer(p$nSizeGroups),
-        T = as.numeric(p$temp)
+        nStages = as.integer(p$nSizeGroups),
+        Ts = as.numeric(p$temps),
+        Tb = as.numeric(p$tempb)
       )
       
     } else if (p$setup == 3) {
       dummy = .Fortran("f_setupvertical",
         pprod = as.numeric(p$pprod),
         nStages = as.integer(p$nSizeGroups),
-        region = as.integer(p$region)
+        region = as.integer(p$region),
+        bottom= as.numeric(p$bottom),
+        photic= as.numeric(p$photic)
       )
-      
     }
     
     #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
@@ -1107,4 +1124,133 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
   return(sim)
   
 }
+
+#!!! PROBABLY INCORRECT
+#!!! PROBABLY INCORRECT
+#3stages dt=0.1   6stages 0.001        9stages 0.00001(slow)
+# setupbasic2 dt=0.01
+# setupvertical 6stages 9stages dt=0.1
+simulateeuler= function(p = setupVertical(), tEnd = 100, dt=0.1) {
+  
+  start_time = Sys.time()
+  
+  loadFEISTYmodel()
+  if (p$setup == 1) {
+    dummy = .Fortran("f_setupbasic",
+                     pprod = as.numeric(p$pprod),
+                     bprod = as.numeric(p$bprod),
+                     T = as.numeric(p$temp)
+    )
+  } else if (p$setup == 2) {
+    dummy = .Fortran("f_setupbasic2",
+                     pprod = as.numeric(p$pprod),
+                     bprod = as.numeric(p$bprod),
+                     nStages = as.integer(p$nSizeGroups),
+                     T = as.numeric(p$temp)
+    )
+    
+  } else if (p$setup == 3) {
+    dummy = .Fortran("f_setupvertical",
+                     pprod = as.numeric(p$pprod),
+                     nStages = as.integer(p$nSizeGroups),
+                     region = as.integer(p$region)
+    )
+  }
+  
+  res = .Fortran("f_simulateEuler", 
+                    u= as.numeric(p$u0),
+                    dudt=as.numeric(p$u0),
+                    tEnd=as.numeric(tEnd),
+                    dt=as.numeric(dt)
+                    )
+  
+  #
+  # Assemble output:
+  #
+  sim = list()
+  #p$USEdll=USEdll
+  sim$p = p
+  sim$R = res$u[p$ixR]
+  sim$B = res$u[p$ixFish]
+  #sim$t = t
+  #sim$nTime = length(t)
+  
+  #
+  # Calculate Spawning Stock Biomass
+  #
+  # SSB = matrix(nrow=length(t), ncol=p$nGroups)
+  # yield = SSB
+  # for (i in 1:p$nGroups)
+  #   for (j in 1:length(t)) {
+  #     SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
+  #     yield[j,i] = sum( u[j, p$ix[[i]]] * p$mortF[p$ix[[i]]] )
+  #   }
+  # sim$SSB = SSB
+  # sim$yield = yield
+  
+  end_time = Sys.time()
+  sim$tictoc=end_time-start_time
+  print(sim$tictoc)
+  return(sim)
+
+}
+
+# for global simulation
+# !put loadFEISTYmodel() outside in case repeatedly loading library and crash
+# edit param list before run this simulation
+simulateglobal= function(p = setupvertical(), tEnd = 300) {
+  #
+  # Integrate the equations:
+  #
+  #start_time = Sys.time()
+  t = seq(0, tEnd,length.out=tEnd+1) 
+  #Calc by R or dll
+  #loadFEISTYmodel()
+  dummy = .Fortran("f_setupverticalglobal",
+                   szprod=as.numeric(p$uvicszmort),
+                   lzprod=as.numeric(p$uviclzmort),
+                   bprod=as.numeric(p$bprod),
+                   bottom=as.numeric(p$bottom),
+                   photic=as.numeric(p$photic),
+                   dgrid=as.numeric(p$depb),
+                   tprof=as.numeric(p$Tprof),
+                   nStages=as.integer(p$nSizeGroups))
+  
+  #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
+  u = ode(y=p$u0,
+          times = t,
+          func = function(t,y,parms) list(calcDerivativesF(t,y,parms)),# Run by dll
+          parms = p)
+  
+  #
+  # Assemble output:
+  #
+  sim = list()
+  #p$USEdll=USEdll
+  sim$p = p
+  sim$R = u[, p$ixR+1]
+  sim$B = u[, p$ixFish+1]
+  sim$t = t
+  sim$nTime = length(t)
+  
+  #
+  # Calculate Spawning Stock Biomass
+  #
+  # SSB = matrix(nrow=length(t), ncol=p$nGroups)
+  # yield = SSB
+  # for (i in 1:p$nGroups)
+  #   for (j in 1:length(t)) {
+  #     SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
+  #     yield[j,i] = sum( u[j, p$ix[[i]]] * p$mortF[p$ix[[i]]] )
+  #   }
+  # sim$SSB = SSB
+  # sim$yield = yield
+  
+  #end_time = Sys.time()
+  #sim$tictoc=end_time-start_time
+  #print(sim$tictoc)
+  return(sim)
+}
+
+
 

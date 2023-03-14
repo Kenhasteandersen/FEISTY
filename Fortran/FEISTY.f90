@@ -51,8 +51,8 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al., 2019
 ! --------------------------------------
-   subroutine setupbasic(pprod, bprod,T)
-      real(dp), intent(in)::pprod, bprod, T
+   subroutine setupbasic(pprod, bprod,Ts,Tb)
+      real(dp), intent(in)::pprod, bprod, Ts, Tb
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -127,16 +127,26 @@ contains
       theta(12, 11) = 1.d0          ! medium demersals
 
 ! update temperature
-call updateTemp(T)
+call updateTemp(Ts,Tb)
+
   !all fish group
-do iGroup = 1, nGroups
+  !pelagic
+do iGroup = 1, nGroups-1
     group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
     group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
     group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
 end do
+  !demersal
+    group(3)%spec%V=group(3)%spec%V*fTempdem
+    group(3)%spec%Cmax=group(3)%spec%Cmax*fTempdem
+    group(3)%spec%metabolism=group(3)%spec%metabolism*fTempmdem
   !vector
-V=V*fTemp
-Cmax=Cmax*fTemp
+  !pelagic
+V(ixStart(1):ixEnd(2))=V(ixStart(1):ixEnd(2))*fTemp
+Cmax(ixStart(1):ixEnd(2))=Cmax(ixStart(1):ixEnd(2))*fTemp
+  !demersal
+V(ixStart(3):ixEnd(3))=V(ixStart(3):ixEnd(3))*fTempdem
+Cmax(ixStart(3):ixEnd(3))=Cmax(ixStart(3):ixEnd(3))*fTempdem
 
 contains
    subroutine read_namelist_setupbasic()
@@ -158,8 +168,8 @@ contains
 ! --------------------------------------
 ! Setup by Ken.
 ! --------------------------------------
-   subroutine setupbasic2(pprod, bprod, nStages, T) !
-      real(dp), intent(in) :: pprod, bprod, T
+   subroutine setupbasic2(pprod, bprod, nStages, Ts, Tb) !
+      real(dp), intent(in) :: pprod, bprod, Ts, Tb
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -249,16 +259,26 @@ contains
       theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2)) = thetaD*theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2))
 
 ! update temperature
-call updateTemp(T)
+call updateTemp(Ts, Tb)
   !all fish group
-do iGroup = 1, nGroups
+  !pelagic
+do iGroup = 1, nGroups-1
     group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
     group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
     group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
 end do
+  !demersal
+    group(3)%spec%V=group(3)%spec%V*fTempdem
+    group(3)%spec%Cmax=group(3)%spec%Cmax*fTempdem
+    group(3)%spec%metabolism=group(3)%spec%metabolism*fTempmdem
+
   !vector
-V=V*fTemp
-Cmax=Cmax*fTemp
+  !pelagic
+V(ixStart(1):ixEnd(2))=V(ixStart(1):ixEnd(2))*fTemp
+Cmax(ixStart(1):ixEnd(2))=Cmax(ixStart(1):ixEnd(2))*fTemp
+  !demersal
+V(ixStart(3):ixEnd(3))=V(ixStart(3):ixEnd(3))*fTempdem
+Cmax(ixStart(3):ixEnd(3))=Cmax(ixStart(3):ixEnd(3))*fTempdem
 
 contains
    subroutine read_namelist_setupbasic2()
@@ -279,15 +299,15 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap from MATLAB (van Denderen et al., 2020) the simple run folder
 ! --------------------------------------
-   subroutine setupVertical(pprod, nStages,region)
-      real(dp), intent(in) :: pprod !
+   subroutine setupVertical(pprod, nStages, region, bottom, photic)
+      real(dp), intent(in) :: pprod, bottom, photic !  default bottom:1500m euphotic depth 150m
       integer, intent(in) :: nStages,region
 
 ! for theta calc
        real(dp) :: ssigma
        real(dp) :: tau
-       real(dp) :: bottom
-       real(dp) :: photic
+       !real(dp) :: bottom
+       !real(dp) :: photic
        real(dp) :: mesop
        real(dp) :: visual
 !      real(dp) :: ssigma = 10.d0
@@ -652,7 +672,7 @@ contains
                                   & beta, sigma, mMin, &
                                   & mMedium, mLarge, &
                                   & bent, lbenk, szoog, lzoog, sbeng, lbeng,&
-                                  & ssigma, tau, bottom, photic, mesop, visual
+                                  & ssigma, tau, mesop, visual
 
       call open_inputfile(file_unit, io_err)
       read (file_unit, nml=input_setupvertical, iostat=io_err)
@@ -660,6 +680,401 @@ contains
    end subroutine read_namelist_setupvertical
 
    end subroutine setupVertical
+!
+!setup for global offline coupling
+!input: szprod: small zooplankton production
+!       lzprod: large zooplankton production
+!       bprod: benthos production
+!       bottom: seafloor depth
+!       photic: photic zone depth
+!       Dgrid: depth grid (boundary), max 200 layers
+!       Tprof: temperature profile (boundary), max 200 layers
+!       nStages: size number
+subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
+      real(dp), intent(in) :: szprod, lzprod, bprod, bottom, photic, Dgrid(:), Tprof(:) !
+      integer, intent(in) :: nStages
+       real(dp) :: pprod=100.d0 !overwrite later
+
+! for theta calc
+       real(dp) :: ssigma
+       real(dp) :: tau
+       !real(dp) :: bottom
+       !real(dp) :: photic
+       real(dp) :: mesop
+       real(dp) :: visual
+!      real(dp) :: ssigma = 10.d0
+!      real(dp) :: tau = 10.d0
+!      real(dp), parameter :: bottom = 1500.d0 ! total depth meter
+!      real(dp), parameter :: photic = 150.d0  ! photic zone depth
+!      real(dp), parameter :: mesop = 250.d0   ! depth ?
+!      real(dp), parameter :: visual = 1.5d0 ! scalar; >1 visual predation primarily during the day, = 1 equal day and night
+      real(dp), allocatable :: sigmap(:) ! width for each size class
+      real(dp) :: bent ! for bprod calc
+      !real(dp) :: bprod
+      real(dp), dimension(:), allocatable :: xrange
+      real(dp) :: dvm  ! vertical migration depth photic + 500.d0
+      real(dp) :: xloc ! vertical location    will be overwritten again and again
+      real(dp), allocatable :: xlocvec(:) ! vertical location vector used for some species
+      real(dp), allocatable :: zp_n(:, :), zp_d(:, :), & ! zooplankton day / night
+                               bent_dn(:, :), spel_dn(:, :), & ! benthos day & night      small pelagic day & night
+                               mpel_n(:, :), mpel_d(:, :), &   ! mesopelagic night / day
+                               lpel_n(:, :), lpel_d(:, :), &   ! large pelagic night / day
+                               bpel_n(:, :), bpel_d(:, :), &   ! bathypelagic night/ day
+                               dem_n(:, :), dem_d(:, :)        ! demersal night/ day
+      real(dp) :: demmig ! demersal migration
+      integer, allocatable :: ix(:), idx_be(:), idx_smd(:), pred1(:), pred2(:), pred3(:), prey1(:), prey2(:), &
+                              idx_predat(:), idx_prey(:)
+      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
+      integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
+      real(dp),allocatable :: sizes(:)
+      integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
+
+
+      call read_namelist_setupvertical()
+      allocate(xrange(int(bottom) + 1))
+
+!! calc bprod before initialization
+!      bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
+!      if (bprod .ge. bent*0.1d0) then
+!         bprod = bent*0.1d0
+!      end if
+
+      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, pprod, bprod)!
+      !overwrite K
+      K = [szprod, lzprod, bprod, lbenk]
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishBathy,
+      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal,
+
+! vectors and matrix:
+      allocate (sigmap(nGrid))
+      allocate (V(nGrid))
+      allocate (Enc(nGrid))
+      allocate (flvl(nGrid))
+      allocate (Cmax(nGrid))
+      allocate (mortpred(nGrid))
+      allocate (mc(nGrid))
+      allocate (mL(nGrid))
+      allocate (mU(nGrid))
+      allocate (vertover(nGrid, nGrid)) !
+
+      vertover = 0.d0
+      sizeprefer = 0.d0
+      theta = 0.d0 ! overwritten latter
+      V = 0.d0
+      Cmax = 0.d0
+
+! Overwrite
+      do iGroup = 1, nGroups
+
+         group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
+
+         group(iGroup)%spec%psiMature = 0.d0 ! reset
+         !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
+
+      end do
+
+      !overwrite psiMature    from matlab simple run
+      nsize=nStages+1
+      allocate (sizes(nsize))
+      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
+      matstageS = minloc(abs(sizes-0.5d0),dim=1)
+      matstageL = minloc(abs(sizes-2.5d2),dim=1)
+      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
+      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
+      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
+      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
+      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
+
+      !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
+
+! Feeding preference matrix:
+! assemble vectors
+      do iGroup = 1, nGroups
+         select type (spec => group(iGroup)%spec)
+         type is (spectrumfish)
+            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+         end select
+      end do
+      !from baseparameters.m
+      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! resource central mass
+      mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
+      mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0] ! resource mass lower limit
+! basic feeding preference matrix theta
+      do i = idxF, nGrid
+         do j = 1, nGrid
+            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
+                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
+                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
+            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+         end do
+      end do
+!!!vertical overlap
+      sigmap = ssigma + tau*log10(mc/mc(1)) ! width for each size class
+      xrange = linspace(0.d0, bottom, int(bottom) + 1)
+      dvm = photic + 500.d0 ! 650.d0
+      !  from matlab
+      if (bottom .lt. (photic + 500.d0)) then
+         dvm = bottom     ! migration to bottom in intermediate habitats
+      end if
+      if (bottom .le. mesop) then
+         dvm = 0.d0                   ! no migration in shallow habitats
+      end if
+
+! first stages as juvenile/adult for predators
+      ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
+      ixadult = minloc(abs(sizes-2.5d2),dim=1)
+  deallocate (sizes)!see above overwrite psimature
+
+! zooplankton night
+      allocate (zp_n(size(xrange), 2))
+      xloc = 0.d0 ! zoo on surface at night
+      do i = 1, 2 !small zoo & large zoo
+         zp_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(i)**2.d0)))* &
+                      exp(-(((xrange - xloc)**2.d0)/(2.d0*sigmap(i)**2.d0)))
+      end do
+      zp_n = matmul(zp_n, diag(1.d0/sum(zp_n, 1)))
+
+! zooplankton day (half at surface, half at dvm depth
+      allocate (zp_d(size(xrange), 2))
+      xloc = dvm !
+      do i = 1, 2 !index: small zoo & large zoo
+         zp_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(i)**2.d0)))* &
+                      exp(-(((xrange - xloc)**2.d0)/(2.d0*sigmap(i)**2.d0)))
+      end do
+      zp_d = matmul(zp_d, diag(1.d0/sum(zp_d, 1)))
+      zp_d = (zp_n + zp_d)/2.d0
+
+! benthos small and large (at bottom with width sigma)
+      allocate (bent_dn(size(xrange), 2))
+      xloc = bottom
+      do i = 1, 2 ! small benthos & large benthos
+         bent_dn(:, i) = (1.d0/(sqrt(2.d0*pi*ssigma**2.d0)))*exp(-((xrange - xloc)**2.d0/(2.d0*ssigma**2.d0)))
+         bent_dn(:, i) = bent_dn(:, i)/sum(bent_dn(:, i))
+      end do
+
+! small pelagic fish (day + night) always at surface
+      allocate (ix(ixEnd(1) - ixStart(1) + 1))
+      allocate (spel_dn(size(xrange), ixEnd(1) - ixStart(1) + 1))
+      xloc = 0.d0
+      ix = [(i, i=ixStart(1), ixEnd(1))]
+      do i = 1, size(ix)
+         spel_dn(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                         exp(-((xrange - xloc)**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      spel_dn = matmul(spel_dn, diag(1.d0/sum(spel_dn, 1)))
+
+! meso pelagic night   at surface
+      allocate (mpel_n(size(xrange), ixEnd(2) - ixStart(2) + 1))
+      deallocate (ix)
+      allocate (ix(ixEnd(2) - ixStart(2) + 1))
+      mpel_n = spel_dn
+
+! meso pelagic day (all at dvm)
+      allocate (mpel_d(size(xrange), ixEnd(2) - ixStart(2) + 1))
+      xloc = dvm
+      ix = [(i, i=ixStart(2), ixEnd(2))]
+      do i = 1, size(ix)
+         mpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                        exp(-((xrange - xloc)**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      mpel_d = matmul(mpel_d, diag(1.d0/sum(mpel_d, 1)))
+
+! large pelagic fish night (all at surface)
+      allocate (lpel_n(size(xrange), ixEnd(3) - ixStart(3) + 1))
+      deallocate (ix)
+      allocate (ix(ixEnd(3) - ixStart(3) + 1))
+      xloc = 0.d0
+      ix = [(i, i=ixStart(3), ixEnd(3))]
+      do i = 1, size(ix)
+         lpel_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                        exp(-((xrange - xloc)**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      lpel_n = matmul(lpel_n, diag(1.d0/sum(lpel_n, 1)))
+
+! large pelagic fish day (non-adult at surface   adult at dvm)
+      allocate (lpel_d(size(xrange), ixEnd(3) - ixStart(3) + 1))
+      allocate (xlocvec(ixEnd(3) - ixStart(3) + 1))
+      xlocvec = 0.d0 ! initialization
+      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      do i = 1, size(ix)
+         lpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      lpel_d = matmul(lpel_d, diag(1.d0/sum(lpel_d, 1)))
+      lpel_d = (lpel_d + lpel_n)/2.d0
+
+! bathypelagic night (adults in midwater, others at surface)
+      allocate (bpel_n(size(xrange), ixEnd(4) - ixStart(4) + 1))
+      deallocate (xlocvec)
+      deallocate (ix)
+      allocate (xlocvec(ixEnd(4) - ixStart(4) + 1))
+      allocate (ix(ixEnd(4) - ixStart(4) + 1))
+      xlocvec = 0.d0 ! initialization
+      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      ix = [(i, i=ixStart(4), ixEnd(4))]
+      do i = 1, size(ix)
+         bpel_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      bpel_n = matmul(bpel_n, diag(1.d0/sum(bpel_n, 1)))
+
+! bathypelagic day (all at dvm)
+      allocate (bpel_d(size(xrange), ixEnd(4) - ixStart(4) + 1))
+      xlocvec = dvm ! overwrite all elements by dvm
+      do i = 1, size(ix)
+         bpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      bpel_d = matmul(bpel_d, diag(1.d0/sum(bpel_d, 1)))
+
+! demersal fish night
+      allocate (dem_n(size(xrange), ixEnd(5) - ixStart(5) + 1))
+      deallocate (xlocvec)
+      deallocate (ix)
+      allocate (xlocvec(ixEnd(5) - ixStart(5) + 1))
+      allocate (ix(ixEnd(5) - ixStart(5) + 1))
+      xlocvec = 0.d0 ! initialization
+      xlocvec(ixjuv:size(xlocvec)) = bottom  !  larvae at surface   juvenile and adult at bottom
+      ix = [(i, i=ixStart(5), ixEnd(5))]
+      do i = 1, size(ix)
+         dem_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                       exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      dem_n = matmul(dem_n, diag(1.d0/sum(dem_n, 1)))
+
+! demersal fish day
+      demmig = dvm ! ??? from matlab
+      if ((bottom - dvm) .ge. 1200.d0) then
+         demmig = dvm + (bottom - dvm - 1200.d0)
+      end if
+      if ((bottom - dvm) .ge. 1500.d0) then
+         demmig = bottom
+      end if
+      allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
+      xlocvec(ixadult:size(xlocvec)) = dvm ! larvae at surface/ juvenile at bottom/ adult and middle
+      do i = 1, size(ix)
+         dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
+                       exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
+      end do
+      dem_d = matmul(dem_d, diag(1.d0/sum(dem_d, 1)))
+! from matlab
+      ! if shallower than euphotic depth, adult demersals feed across-habitats
+      if (bottom .le. photic) then
+         dem_d = (dem_d + dem_n)/2.d0
+         dem_n = dem_d
+      end if
+
+! calculate overlap during day
+      allocate (depthDay(size(xrange), nGrid))
+      allocate (test(size(xrange), nGrid))
+      allocate (dayout(nGrid, nGrid))
+      depthDay(:, 1:2) = zp_d ! resources
+      depthDay(:, 3:4) = bent_dn ! resources
+      depthDay(:, ixStart(1):ixEnd(1)) = spel_dn
+      depthDay(:, ixStart(2):ixEnd(2)) = mpel_d
+      depthDay(:, ixStart(3):ixEnd(3)) = lpel_d
+      depthDay(:, ixStart(4):ixEnd(4)) = bpel_d
+      depthDay(:, ixStart(nGroups):ixEnd(nGroups)) = dem_d
+
+      dayout = 0.d0
+      test = 0.d0
+      do i = 1, nGrid
+         do j = 1, nGrid
+            test(:, j) = min(depthDay(:, i), depthDay(:, j))
+         end do
+         dayout(:, i) = sum(test, 1)
+      end do
+
+! calculate overlap during night
+      allocate (depthNight(size(xrange), nGrid))
+      !test has already allocated
+      allocate (nightout(nGrid, nGrid))
+      depthNight(:, 1:2) = zp_n ! resources
+      depthNight(:, 3:4) = bent_dn ! resources
+      depthNight(:, ixStart(1):ixEnd(1)) = spel_dn
+      depthNight(:, ixStart(2):ixEnd(2)) = mpel_n
+      depthNight(:, ixStart(3):ixEnd(3)) = lpel_n
+      depthNight(:, ixStart(4):ixEnd(4)) = bpel_n
+      depthNight(:, ixStart(nGroups):ixEnd(nGroups)) = dem_n
+
+      nightout = 0.d0
+      test = 0.d0 !reset
+      do i = 1, nGrid
+         do j = 1, nGrid
+            test(:, j) = min(depthNight(:, i), depthNight(:, j))
+         end do
+         nightout(:, i) = sum(test, 1)
+      end do
+
+!!! visual ability
+! visual predation is good at light, bad in the dark
+      visualpred = [(i, i=ixStart(1), ixEnd(1)), (i, i=ixStart(3), ixEnd(3))] ! small palegic 5 6 always at surface   large pelagic 9 10 11
+      dayout(visualpred, :) = dayout(visualpred, :)*visual   ! predation enhance during day
+      nightout(visualpred, :) = nightout(visualpred, :)*(2.d0 - visual) ! predation decrease at night
+
+! pelagic predators have limited vision in twilight zone during day
+      pelpred = [(i, i=ixStart(3), ixEnd(3))]   ! large pelagic   9 10 11
+      pelpred = pelpred(ixadult:size(pelpred)) ! adult large pelagic  11  at dvm during day
+      preytwi = [(i, i=ixStart(2), ixEnd(2)), (i, i=ixStart(4), ixEnd(4))] ! mesopelagic 7 8   bathypelagic 12 13 14
+      dayout(pelpred, preytwi) = dayout(pelpred, preytwi)/visual*(2.d0 - visual)    ! /visual to restore and then *0.5
+
+!!! average overlap during the whole day
+      vertover = (dayout + nightout)*0.5d0
+!!! calculate combined feeding preference matrix
+      theta = sizeprefer*vertover
+
+!! specific revision of feeding preference
+!
+      idx_be = [(i, i=idxF, ixStart(5) + (ixjuv - 2))]     ! all pelagic and larval demersals
+      theta(idx_be, 3:4) = 0.d0      ! all pelagic and larval demersals do not eat benthos,
+      ! only juvenile & adult demersals eat benthos
+! small demersals are less preyed on
+      idx_smd = [(i, i=ixStart(5) + (ixjuv - 1), ixStart(5) + (ixadult - 2))] ! juvenile demersal is at bottom
+      theta(idx_be, idx_smd) = theta(idx_be, idx_smd)*0.25d0
+! juvenile & adult demersals do not eat zooplankton
+      theta(ixStart(5) + (ixjuv - 1):ixEnd(5), 1:2) = 0.d0
+! provide benefit to forage and mesopelagic fish (predator avoidance)
+      pred1 = [(i, i=ixStart(3) + (ixadult - 1), ixEnd(3))]
+      pred2 = [(i, i=ixStart(4) + (ixadult - 1), ixEnd(4))]
+      pred3 = [(i, i=ixStart(5) + (ixadult - 1), ixEnd(5))]
+      prey1 = [(i, i=ixStart(1) + (ixjuv - 1), ixEnd(1))]
+      prey2 = [(i, i=ixStart(2) + (ixjuv - 1), ixEnd(2))]
+      idx_predat = [pred1, pred2, pred3]
+      idx_prey = [prey1, prey2]
+      theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
+
+! update temperature
+call updateTempVG(Dgrid, Tprof, depthDay, depthNight, bottom)
+! all fish group
+do iGroup = 1, nGroups
+    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+end do
+  !vector
+V=V*fTempV
+Cmax=Cmax*fTempV
+
+contains
+   subroutine read_namelist_setupvertical()
+      integer :: file_unit, io_err
+
+      namelist /input_setupvertical/ h, nn, q, gamma, kk, p, epsAssim, epsRepro, &
+                                  & beta, sigma, mMin, &
+                                  & mMedium, mLarge, &
+                                  & bent, lbenk, szoog, lzoog, sbeng, lbeng,&
+                                  & ssigma, tau, mesop, visual
+
+      call open_inputfile(file_unit, io_err)
+      read (file_unit, nml=input_setupvertical, iostat=io_err)
+      call close_inputfile(file_unit, io_err)
+   end subroutine read_namelist_setupvertical
+
+   end subroutine setupVerticalGlobal
+
 
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020) with squid Remy & Daniel Ottmann
@@ -1471,5 +1886,26 @@ subroutine calcderivatives(u, dudt)
 
       g_r(ixStart(iGroup) - nResources:ixEnd(iGroup) - nResources) = this%g
    end subroutine assembleg
+
+
+  ! Euler time integration
+  !!!! probably incorrect
+  !!!! probably incorrect
+  subroutine simulateEuler(u, dudt, tEnd, dt)
+    real(dp), intent(inout):: u(:) ! Initial conditions and result after integration
+    !real(dp), intent(in):: pprod ,bprod, T     ! Light level
+    !integer, intent(in):: region, nStages ! Temperature
+    real(dp), intent(in):: tEnd ! Time to simulate
+    real(dp), intent(in):: dt    ! time step
+    real(dp) :: dudt(nGrid)
+    integer:: i, iEnd
+
+    iEnd = floor(tEnd/dt)
+
+    do i=1, iEnd
+       call calcDerivatives(u, dudt)
+       u = u + dudt*dt
+    end do
+  end subroutine simulateEuler
 
 end module FEISTY
