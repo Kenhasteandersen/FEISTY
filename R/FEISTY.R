@@ -14,10 +14,11 @@ library('pracma') # needed for erf, linspace
 # Out:
 #  A parameters list
 #
-parametersInit = function(depth, pprod) {
+parametersInit = function(depth, szprod, lzprod) {
   param = list()
   param$depth = depth
-  param$pprod = pprod
+  param$szprod = szprod
+  param$lzprod = lzprod
   
   #
   # Prepare for groups to be added:
@@ -134,10 +135,10 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic = function(pprod = 100, bprod=5, temps=10, tempb=8) {
+setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod,lzprod)
   param$bprod = bprod
   param$temps = temps
   param$tempb = tempb
@@ -160,7 +161,7 @@ setupBasic = function(pprod = 100, bprod=5, temps=10, tempb=8) {
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2
+  param$K = c(szprod,lzprod, bprod, 0)  # g ww/m2
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
  # param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
@@ -309,10 +310,10 @@ setupBasic = function(pprod = 100, bprod=5, temps=10, tempb=8) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
+setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod, lzprod)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
   param$temps = temps
@@ -336,7 +337,7 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2
+  param$K = c(szprod, lzprod, bprod, 0)  # g ww/m2
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
   #param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
@@ -465,11 +466,11 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
   return(param)
 }
 
-setupVertical = function(pprod = 80, nSizeGroups=6,region = 4,
+setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
                          bottom=1500,photic=150) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod, lzprod)
   
   # habitat and small benthos
   param$bottom=bottom # water depth default 1500m
@@ -488,7 +489,7 @@ setupVertical = function(pprod = 80, nSizeGroups=6,region = 4,
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2 
+  param$K = c(szprod, lzprod, bprod, 0)  # g ww/m2 
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
   param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit
   param$mUpper = c(0.001, 0.5, 125, 125) #upper limit
@@ -1058,14 +1059,16 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
     loadFEISTYmodel()
     if (p$setup == 1) {
       dummy = .Fortran("f_setupbasic",
-        pprod = as.numeric(p$pprod),
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
         bprod = as.numeric(p$bprod),
         Ts = as.numeric(p$temps),
         Tb = as.numeric(p$tempb)
       )
     } else if (p$setup == 2) {
       dummy = .Fortran("f_setupbasic2",
-        pprod = as.numeric(p$pprod),
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
         bprod = as.numeric(p$bprod),
         nStages = as.integer(p$nSizeGroups),
         Ts = as.numeric(p$temps),
@@ -1074,7 +1077,8 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
       
     } else if (p$setup == 3) {
       dummy = .Fortran("f_setupvertical",
-        pprod = as.numeric(p$pprod),
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
         nStages = as.integer(p$nSizeGroups),
         region = as.integer(p$region),
         bottom= as.numeric(p$bottom),

@@ -51,8 +51,8 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al., 2019
 ! --------------------------------------
-   subroutine setupbasic(pprod, bprod,Ts,Tb)
-      real(dp), intent(in)::pprod, bprod, Ts, Tb
+   subroutine setupbasic(szprod,lzprod, bprod,Ts,Tb)
+      real(dp), intent(in)::szprod,lzprod, bprod, Ts, Tb
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -63,7 +63,7 @@ contains
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
       call read_namelist_setupbasic()
-      call parametersInit(3, 2 + 3 + 3, 4, pprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, pprod)
+      call parametersInit(3, 2 + 3 + 3, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, szprod,lzprod, bprod,none)
       call parametersAddGroup(2, 2.50d2, 0.5d0) ! fishSmall
       call parametersAddGroup(3, 1.25d5, 2.5d2) ! fishLarge
       call parametersAddGroup(3, 1.25d5, 2.5d2)   ! fishDemersal
@@ -168,8 +168,8 @@ contains
 ! --------------------------------------
 ! Setup by Ken.
 ! --------------------------------------
-   subroutine setupbasic2(pprod, bprod, nStages, Ts, Tb) !
-      real(dp), intent(in) :: pprod, bprod, Ts, Tb
+   subroutine setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb) !
+      real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -179,7 +179,7 @@ contains
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
       call read_namelist_setupbasic2()    !
-      call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, pprod, bprod) ! (fish groups, total fish stages, 4 resources, pprod, bprod)
+      call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages, 4 resources,szprod,lzprod, bprod,none)
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall   nint: Returns the nearest integer to the argument.
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge (stages, max mass, mature mass)
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal
@@ -224,6 +224,17 @@ contains
             end if
          end do
       end do
+
+!! FROM NUM
+!! feeding preference matrix theta
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            theta(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+!            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+!               theta(i, j) = 0.d0
+!            end if
+!         end do
+!      end do
 
 ! further clac theta : feeding selection in terms of fish kinds and resources
       ! Small pelagic
@@ -295,12 +306,40 @@ contains
       call close_inputfile(file_unit, io_err)
    end subroutine read_namelist_setupbasic2
 
+! FROM NUM
+    ! Calculate the interaction coefficient between two size groups.
+    ! In:
+    !   z : The predator:prey body mass ratio between the two groups
+    !   beta: preferred predator:prey body mass ratio
+    !   sigma: width of selection
+    !   Delta: ratio between upper and lower body mass in size groups
+    !
+    function calcPhi(z, beta,sigma, Delta) result(res)
+      real(dp), intent(in):: z,beta,sigma,Delta
+      real(dp):: res, s
+
+      if (beta .eq. 0.d0) then
+         res = 0.d0 ! beta = 0 is interpreted as if the group is not feeding
+      else
+         s = 2*sigma*sigma
+         res = max(0.d0, &
+         (Sqrt(Delta)*(((exp(-Log((beta*Delta)/z)**2/s) - 2/exp(Log(z/beta)**2/s) + &
+         exp(-Log((Delta*z)/beta)**2/s))*s)/2. - &
+         (Sqrt(Pi)*Sqrt(s)*(Erf((-Log(beta*Delta) + Log(z))/Sqrt(s))*Log((beta*Delta)/z) + &
+         2*Erf(Log(z/beta)/Sqrt(s))*Log(z/beta) + &
+         Erf((Log(beta) - Log(Delta*z))/Sqrt(s))*Log((Delta*z)/beta)))/2.))/ &
+         ((-1 + Delta)*Log(Delta)) )
+      end if
+    end function calcPhi
+
+
+
    end subroutine setupbasic2
 ! --------------------------------------
 ! Setup of vertical overlap from MATLAB (van Denderen et al., 2020) the simple run folder
 ! --------------------------------------
-   subroutine setupVertical(pprod, nStages, region, bottom, photic)
-      real(dp), intent(in) :: pprod, bottom, photic !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical(szprod,lzprod, nStages, region, bottom, photic)
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic !  default bottom:1500m euphotic depth 150m
       integer, intent(in) :: nStages,region
 
 ! for theta calc
@@ -347,7 +386,7 @@ contains
          bprod = bent*0.1d0
       end if
 
-      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, pprod, bprod)!
+      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
@@ -693,7 +732,7 @@ contains
 subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
       real(dp), intent(in) :: szprod, lzprod, bprod, bottom, photic, Dgrid(:), Tprof(:) !
       integer, intent(in) :: nStages
-       real(dp) :: pprod=100.d0 !overwrite later
+       !real(dp) :: pprod=100.d0 !overwrite later
 
 ! for theta calc
        real(dp) :: ssigma
@@ -739,9 +778,9 @@ subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tpr
 !         bprod = bent*0.1d0
 !      end if
 
-      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, pprod, bprod)!
+      call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
       !overwrite K
-      K = [szprod, lzprod, bprod, lbenk]
+      !K = [szprod, lzprod, bprod, lbenk]
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
       call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
       call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
@@ -1079,8 +1118,8 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020) with squid Remy & Daniel Ottmann
 ! --------------------------------------
-   subroutine setupsquid(pprod, bottom, nStages)
-      real(dp), intent(in) :: pprod !
+   subroutine setupsquid(szprod,lzprod, bottom, nStages)
+      real(dp), intent(in) :: szprod,lzprod !
       real(dp), intent(in) :: bottom ! water depth default 1000.d0     revise input.nml
       integer, intent(in) :: nStages ! stage numbers
 
@@ -1141,7 +1180,7 @@ contains
 !      end if
       bprod=0.d0 ! no benthos production
 
-      call parametersInit(6, 2*nint(0.66d0*nStages) + 4*nStages, 4, pprod, bprod)!
+      call parametersInit(6, 2*nint(0.66d0*nStages) + 4*nStages, 4, szprod,lzprod, bprod)!
       call parametersAddGroup(nint(0.66d0*nStages), smaxfish, smat) ! fishSmall
       call parametersAddGroup(nint(0.66d0*nStages), smaxfish, smat) ! fishMeso  (stages, max mass, mature mass)
       call parametersAddGroup(nStages, lmaxfish, lmat)              ! fishLarge
@@ -1546,12 +1585,13 @@ contains
 ! nnGroups: Fish group numbers
 ! nnGrid: all fish grids (no resources)
 ! nnResources: resource numbers
-! pprod: small & large zooplankton carrying capacity
+! szprod: small zooplankton carrying capacity
+! lzprod: large zooplankton carrying capacity
 ! bprod: small benthos carrying capacity
 ! -------------------------------
-   subroutine parametersInit(nnGroups, nnGrid, nnResources, pprod, bprod)
+   subroutine parametersInit(nnGroups, nnGrid, nnResources, szprod,lzprod, bprod)
       integer, intent(in):: nnGroups, nnGrid, nnResources
-      real(dp), intent(in):: pprod, bprod
+      real(dp), intent(in):: szprod,lzprod, bprod
 
       nGroups = nnGroups                   ! fish size spectrum group numbers (species)
       iCurrentGroup = 0
@@ -1596,7 +1636,7 @@ contains
       !
 
       ! define resources:
-      K = [pprod, pprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
+      K = [szprod, lzprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
       rr = [szoog, lzoog, sbeng, lbeng]   ! growth rate of resources       [yr-1]
    end subroutine parametersInit
 
@@ -1728,7 +1768,7 @@ subroutine calcderivatives(u, dudt)
          do j = 1, nResources
             dRdt(j) = rr(j)*(K(j) - R(j)) - mortpred(j)*R(j)
          end do
-
+         print*,dRdt
       end subroutine calcderiv
 
    end subroutine calcderivatives

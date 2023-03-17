@@ -49,11 +49,17 @@ ui <- fluidPage(
                         max = 700,
                         step = 10,
                         value = 150),
-            sliderInput("pprod",
-                        "Small & large zoop. carrying capacity (g/m2):",
+            sliderInput("szprod",
+                        "Small zoop. carrying capacity (g/m2):",
                         min = 1,
                         max = 500,
-                        step = 5,
+                        step = 1,
+                        value = 100),
+            sliderInput("lzprod",
+                        "Large zoop. carrying capacity (g/m2):",
+                        min = 1,
+                        max = 500,
+                        step = 1,
                         value = 100),
             sliderInput("bprod",
                         "Small benthos carrying capacity (g/m2):",
@@ -96,7 +102,8 @@ server <- function(input, output) {
       hide("bottom")
       hide("photic")
       hide("nSizeGroups")
-      show("pprod")
+      show("szprod")
+      show("lzprod")
       show("bprod")
       show("temps")
       show("tempb")      
@@ -105,7 +112,8 @@ server <- function(input, output) {
       hide("bottom")
       hide("photic")
       show("nSizeGroups")
-      show("pprod")
+      show("szprod")
+      show("lzprod")
       show("bprod")
       show("temps")
       show("tempb")
@@ -114,7 +122,8 @@ server <- function(input, output) {
       show("bottom")
       show("photic")
       show("nSizeGroups")
-      show("pprod")
+      show("szprod")
+      show("lzprod")
       hide("bprod")
       hide("temps")
       hide("tempb") 
@@ -122,26 +131,29 @@ server <- function(input, output) {
     )
 
   sim <- eventReactive(c(
-    input$pprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,input$temps,input$tempb,input$region,
-    input$bottom,input$photic
+    input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
+    input$temps,input$tempb,input$region, input$bottom,input$photic
   ),
   {
     # setup simulation
     if (input$Setup == 1) {
-      p = setupBasic(pprod = input$pprod,
+      p = setupBasic(szprod = input$szprod,
+                     lzprod = input$lzprod,
                      bprod = input$bprod,
                      temps = input$temps,
                      tempb = input$tempb)
     } else if (input$Setup == 2) {
       p = setupBasic2(
-        pprod = input$pprod,
+        szprod = input$szprod,
+        lzprod = input$lzprod,
         bprod = input$bprod,
         nSizeGroups = input$nSizeGroups,
         temps = input$temps,
         tempb = input$tempb
       )
     } else if (input$Setup == 3) {
-      p = setupVertical(pprod = input$pprod,
+      p = setupVertical(szprod = input$szprod,
+                        lzprod = input$lzprod,
                         nSizeGroups = input$nSizeGroups,
                         region =as.integer(input$region),
                         input$bottom,

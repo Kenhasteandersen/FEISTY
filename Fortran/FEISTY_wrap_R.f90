@@ -1,31 +1,31 @@
 ! for R
-subroutine f_setupbasic(pprod,bprod, Ts, Tb)
+subroutine f_setupbasic(szprod,lzprod,bprod, Ts, Tb)
    use FEISTY !, only:
    use globals
 
-   real(dp), intent(in)::pprod,bprod, Ts, Tb
+   real(dp), intent(in)::szprod,lzprod,bprod, Ts, Tb
 
-   call setupbasic(pprod,bprod, Ts, Tb)
+   call setupbasic(szprod,lzprod,bprod, Ts, Tb)
 end subroutine f_setupbasic
 
-subroutine f_setupbasic2(pprod, bprod, nStages, Ts, Tb)
+subroutine f_setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
    use FEISTY ! only : setupbasic2
    use globals
 
-   real(dp), intent(in):: pprod, bprod, Ts, Tb
+   real(dp), intent(in):: szprod,lzprod, bprod, Ts, Tb
    integer, intent(in):: nStages
 
-   call setupbasic2(pprod, bprod, nStages, Ts, Tb)
+   call setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
 end subroutine f_setupbasic2
 
-subroutine f_setupvertical(pprod, nStages, region, bottom, photic)
+subroutine f_setupvertical(szprod,lzprod, nStages, region, bottom, photic)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: pprod, bottom, photic
+   real(dp), intent(in):: szprod,lzprod, bottom, photic
    integer, intent(in):: nStages, region
 
-   call setupvertical(pprod, nStages, region, bottom, photic)
+   call setupvertical(szprod,lzprod, nStages, region, bottom, photic)
 end subroutine f_setupvertical
 
 subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, tprof, nStages)
@@ -38,14 +38,14 @@ subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, t
    call setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
 end subroutine f_setupverticalglobal
 
-subroutine f_setupsquid(pprod, bottom, nStages)
+subroutine f_setupsquid(szprod,lzprod, bottom, nStages)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: pprod, bottom
+   real(dp), intent(in):: szprod,lzprod, bottom
    integer, intent(in) :: nStages
 
-   call setupsquid(pprod, bottom, nStages)
+   call setupsquid(szprod,lzprod, bottom, nStages)
 end subroutine f_setupsquid
 
 subroutine f_calcderivatives(u, dudt)
