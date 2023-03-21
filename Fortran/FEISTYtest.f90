@@ -8,8 +8,8 @@ program FEISTYtest
    !real(dp),intent(out):: thetaF(nGrid,nGrid)
    !real(dp), allocatable:: flvl_r(:), mortpred_r(:), g_r(:)
 
-   call setupbasic(100.d0,100.d0,5.d0,10.d0,9.d0)
-  !call setupbasic2(100.d0,5.d0,9,10.d0)
+   !call setupbasic(100.d0,100.d0,5.d0,10.d0,9.d0)
+  call setupbasic2(100.d0,100.d0,5.d0,9,10.d0,10.d0)
    !call setupVertical(80.d0,3,4) ! ?
    !call setupsquid( 50.d0, 100.d0 , 6)
    !call setupVerticalGlobal(0.1d0,0.1d0,10.d0,2580.d0,219.4018d0,&

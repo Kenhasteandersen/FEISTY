@@ -342,7 +342,8 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   #param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
-  
+ # mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
+  #mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0]
   #
   # Add fish groups:
   #
@@ -405,12 +406,20 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
    beta = 400
    sigma = 1.3
    param$theta = matrix(nrow=param$nStates, ncol=param$nStates)
-   for (i in param$ixFish) {
-     param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
-     param$theta[i,param$mc>param$mc[i]] = 0
+   # for (i in param$ixFish) {
+   #   param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
+   #   param$theta[i,param$mc>param$mc[i]] = 0
+   # }
+   # param$theta[is.na(param$theta)] = 0
+   
+   for (i in param$ixFish[1]:param$nStates) {
+     for (j in 1:param$nStates){
+       param$theta[i,j] = clacPhi(z=param$mc[i]/param$mc[j],beta=beta,sigma=sigma,Delta=param$mUpper[i]/param$mLower[i])
+       param$theta[i,j] = ifelse(param$mc[j]>param$mc[i],0,param$theta[i,j])
+     }
    }
    param$theta[is.na(param$theta)] = 0
-  
+   
    #
    # Setup interactions between groups and resources:
    #
@@ -1268,5 +1277,19 @@ simulateglobal= function(p = setupvertical(), tEnd = 300) {
   return(sim)
 }
 
+########################################################################
+#From NUM
+# Prey size preference
+clacPhi=function(z, beta,sigma, Delta){
 
+  s = 2*sigma*sigma
+  res=max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
+ exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
+(sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
+2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
+erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
+)
+
+return(res)
+  }
 

@@ -212,29 +212,29 @@ contains
          end select
       end do
       mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
-      ! mU = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) ! weight central size
-      ! mL = c(2e-06,0.001, 0.5e-03, 0.25) ! weight lower limit)
+      !mU = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) ! weight central size
+      !mL = c(2e-06,0.001, 0.5e-03, 0.25) ! weight lower limit)
 
-!basic feeding preference matrix theta
-      do i = idxF, nGrid
-         do j = 1, nGrid
-            theta(i, j) = exp(-(log(mc(i)/(beta*mc(j))))**2/(2*sigma)**2)
-            if (mc(j) .gt. mc(i)) then                   !small can't eat large
-               theta(i, j) = 0.d0
-            end if
-         end do
-      end do
-
-!! FROM NUM
-!! feeding preference matrix theta
+!!basic feeding preference matrix theta
 !      do i = idxF, nGrid
 !         do j = 1, nGrid
-!            theta(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+!            theta(i, j) = exp(-(log(mc(i)/(beta*mc(j))))**2/(2*sigma)**2)
 !            if (mc(j) .gt. mc(i)) then                   !small can't eat large
 !               theta(i, j) = 0.d0
 !            end if
 !         end do
 !      end do
+
+! FROM NUM
+! feeding preference matrix theta
+      do i = idxF, nGrid
+         do j = 1, nGrid
+            theta(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+               theta(i, j) = 0.d0
+            end if
+         end do
+      end do
 
 ! further clac theta : feeding selection in terms of fish kinds and resources
       ! Small pelagic
@@ -305,34 +305,6 @@ contains
       read (file_unit, nml=input_setupbasic2, iostat=io_err)
       call close_inputfile(file_unit, io_err)
    end subroutine read_namelist_setupbasic2
-
-! FROM NUM
-    ! Calculate the interaction coefficient between two size groups.
-    ! In:
-    !   z : The predator:prey body mass ratio between the two groups
-    !   beta: preferred predator:prey body mass ratio
-    !   sigma: width of selection
-    !   Delta: ratio between upper and lower body mass in size groups
-    !
-    function calcPhi(z, beta,sigma, Delta) result(res)
-      real(dp), intent(in):: z,beta,sigma,Delta
-      real(dp):: res, s
-
-      if (beta .eq. 0.d0) then
-         res = 0.d0 ! beta = 0 is interpreted as if the group is not feeding
-      else
-         s = 2*sigma*sigma
-         res = max(0.d0, &
-         (Sqrt(Delta)*(((exp(-Log((beta*Delta)/z)**2/s) - 2/exp(Log(z/beta)**2/s) + &
-         exp(-Log((Delta*z)/beta)**2/s))*s)/2. - &
-         (Sqrt(Pi)*Sqrt(s)*(Erf((-Log(beta*Delta) + Log(z))/Sqrt(s))*Log((beta*Delta)/z) + &
-         2*Erf(Log(z/beta)/Sqrt(s))*Log(z/beta) + &
-         Erf((Log(beta) - Log(Delta*z))/Sqrt(s))*Log((Delta*z)/beta)))/2.))/ &
-         ((-1 + Delta)*Log(Delta)) )
-      end if
-    end function calcPhi
-
-
 
    end subroutine setupbasic2
 ! --------------------------------------
@@ -1768,7 +1740,7 @@ subroutine calcderivatives(u, dudt)
          do j = 1, nResources
             dRdt(j) = rr(j)*(K(j) - R(j)) - mortpred(j)*R(j)
          end do
-         print*,dRdt
+
       end subroutine calcderiv
 
    end subroutine calcderivatives
@@ -1883,6 +1855,32 @@ subroutine calcderivatives(u, dudt)
       mL(ixStart(iGroup):ixEnd(iGroup)) = this%mLower
       mU(ixStart(iGroup):ixEnd(iGroup)) = this%mUpper
    end subroutine formvector
+
+   ! FROM NUM
+    ! Calculate the interaction coefficient between two size groups.
+    ! In:
+    !   z : The predator:prey body mass ratio between the two groups
+    !   beta: preferred predator:prey body mass ratio
+    !   sigma: width of selection
+    !   Delta: ratio between upper and lower body mass in size groups
+    !
+    function calcPhi(z, beta,sigma, Delta) result(res)
+      real(dp), intent(in):: z,beta,sigma,Delta
+      real(dp):: res, s
+
+      if (beta .eq. 0.d0) then
+         res = 0.d0 ! beta = 0 is interpreted as if the group is not feeding
+      else
+         s = 2*sigma*sigma
+         res = max(0.d0, &
+         (Sqrt(Delta)*(((exp(-Log((beta*Delta)/z)**2/s) - 2/exp(Log(z/beta)**2/s) + &
+         exp(-Log((Delta*z)/beta)**2/s))*s)/2. - &
+         (Sqrt(Pi)*Sqrt(s)*(Erf((-Log(beta*Delta) + Log(z))/Sqrt(s))*Log((beta*Delta)/z) + &
+         2*Erf(Log(z/beta)/Sqrt(s))*Log(z/beta) + &
+         Erf((Log(beta) - Log(Delta*z))/Sqrt(s))*Log((Delta*z)/beta)))/2.))/ &
+         ((-1 + Delta)*Log(Delta)) )
+      end if
+    end function calcPhi
 
 ! =========================
 ! rates
