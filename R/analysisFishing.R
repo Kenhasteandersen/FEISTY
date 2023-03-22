@@ -3,6 +3,7 @@
 #
 
 analyseStages = function(nStages = c(3,6,9,18,36), mInf=20, maxF = 10) {
+  y = list()
   for (i in 1:length(nStages)) {
     y[[i]] = plotYield(nStages[i],mInf=mInf,maxF=maxF)
   }
@@ -21,7 +22,7 @@ analyseStages = function(nStages = c(3,6,9,18,36), mInf=20, maxF = 10) {
 #
 # Make a yield curve
 #
-plotYield = function(nStages=20, mInf=20, p=setupOneSpecies(nStages = nStages, mInf=mInf), 
+plotYield = function(nStages=20, mInf=20, p=setupPelagicSpecies(nStages = nStages, mInf=mInf), 
                      maxF=3, nF=10, F=seq(0,maxF,length.out=nF)) {
   #
   # Fishing with a trawl selectivity
@@ -37,7 +38,7 @@ plotYield = function(nStages=20, mInf=20, p=setupOneSpecies(nStages = nStages, m
   
   for (i in 1:length(F)) {
     p = setFishing(p,F[i])
-    sim = simulate(p, tEnd=200) # Simulate
+    sim = simulate(p, tEnd=200, USEdll = FALSE) # Simulate
     yy = calcYield(sim)
     yield[i] = yy[[1]]
     yieldMin[i] = yy[[2]]
@@ -78,7 +79,7 @@ calcYield = function(
     sim,          # The simulation object to analyse
     etaTime=0.5) {# The fraction of the time series to integrate (default the last half) 
   
-  yieldMean = rep(data=0, p$nGroups)
+  yieldMean = rep(data=0, sim$p$nGroups)
   yieldMin = yieldMean
   yieldMax = yieldMean
 
@@ -104,7 +105,7 @@ calcSSB = function(
     sim,          # The simulation object to analyse
     etaTime=0.5) {# The fraction of the time series to integrate (default the last half) 
   
-  SSBMean = rep(data=0, p$nGroups)
+  SSBMean = rep(data=0, sim$p$nGroups)
   SSBMin = SSBMean
   SSBMax = SSBMean
   

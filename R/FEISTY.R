@@ -965,7 +965,7 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
 # Out:
 #  A simulation list
 # 
-simulate= function(p = setupBasic(), tEnd = 100,USEdll=TRUE) {
+simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
   #
   # Integrate the equations:
   #
