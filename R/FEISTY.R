@@ -43,11 +43,6 @@ loadFEISTYmodel = function() {
   
   dyn.load(sLibname)
 }
-
-
-
-
-
 #
 # Makes a grid.
 #
