@@ -1057,23 +1057,22 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
   }
   else
     return(derivF$dudt)
+}
+
+#
+# Load the Fortran library
+#
+loadFEISTYmodel = function() {
+  sys=Sys.info()['sysname']
   
-  #
-  # Load the Fortran library
-  #
-  loadFEISTYmodel = function() {
-    sys=Sys.info()['sysname']
-    
-    if (sys=='Darwin') 
-      sLibname = '../lib/libFEISTY.dylib'
-    if (sys=='Linux') 
-      sLibname = '../lib/libFEISTY.so'
-    if (sys=='Windows')
-      sLibname = '../lib/libFEISTY.dll'
-    
-    dyn.load(sLibname)
-  }
+  if (sys=='Darwin') 
+    sLibname = '../lib/libFEISTY.dylib'
+  if (sys=='Linux') 
+    sLibname = '../lib/libFEISTY.so'
+  if (sys=='Windows')
+    sLibname = '../lib/libFEISTY.dll'
   
+  dyn.load(sLibname)
 }
 
 #
