@@ -14,10 +14,11 @@ library('pracma') # needed for erf, linspace
 # Out:
 #  A parameters list
 #
-parametersInit = function(depth, pprod) {
+parametersInit = function(depth, szprod, lzprod) {
   param = list()
   param$depth = depth
-  param$pprod = pprod
+  param$szprod = szprod
+  param$lzprod = lzprod
   
   #
   # Prepare for groups to be added:
@@ -129,17 +130,33 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic = function(pprod = 100, bprod=5) {
+setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod,lzprod)
   param$bprod = bprod
+  param$temps = temps
+  param$tempb = tempb
+  param$setup=1
+  
+  #
+  #update temperature
+  #
+  Tref=10
+  Q10=1.88
+  Q10m=2.35 #Petrik et al.,2019
+  
+  fTemp=Q10^((temps - Tref)/10)
+  fTempm=Q10m^((temps - Tref)/10)
+  fTempdem=Q10^((tempb - Tref)/10)
+  fTempmdem=Q10m^((tempb - Tref)/10)
+  
   #
   # Setup resource groups:
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2
+  param$K = c(szprod,lzprod, bprod, 0)  # g ww/m2
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
  # param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
@@ -168,11 +185,17 @@ setupBasic = function(pprod = 100, bprod=5) {
   p = -0.175 # Metabolism exponent
   gamma = 70 # Coef. for clearance rate
   q = -0.2 # Clearance rate exponent
-  ix = param$ixFish
+  #ix = param$ixFish
+  ix = c(param$ix[[1]],param$ix[[2]])
   m = param$mc[ix]
-  param$Cmax[ix] = h*m^n # maximum consumption rate 
-  param$V[ix] = gamma*m^q # clearance rate 
-  param$metabolism[ix] = k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
+  param$V[ix] = fTemp* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism
+  ix = param$ix[[3]]
+  m = param$mc[ix]
+  param$Cmax[ix] = fTempdem* h*m^n # maximum consumption rate 
+  param$V[ix] = fTempdem* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempmdem* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -203,8 +226,6 @@ setupBasic = function(pprod = 100, bprod=5) {
   param$theta[12,6] = thetaA*thetaD  # medium forage fish
   param$theta[12,8] = thetaD # medium large pelagics
   param$theta[12,11] = 1 # medium demersals
-  
-  
   
   # beta = 400
   # sigma = 1.3
@@ -262,7 +283,6 @@ setupBasic = function(pprod = 100, bprod=5) {
   #
   param$mort0 = 0.1
   param$mortF[param$ixFish] = 0.3*c(0,1,0,0.1,1,0,0.1,1) # Fishing only on mature stages
-  
 
   param$metabolism[is.na(param$metabolism)]=0
   param$mortF[is.na(param$mortF)]=0
@@ -285,24 +305,40 @@ setupBasic = function(pprod = 100, bprod=5) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
+setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod, lzprod)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
+  param$temps = temps
+  param$tempb = tempb
+  param$setup=2
+  
+  #
+  #update temperature
+  #
+  Tref=10
+  Q10=1.88
+  Q10m=2.35 #Petrik et al.,2019
+  
+  fTemp=Q10^((temps - Tref)/10)
+  fTempm=Q10m^((temps - Tref)/10)
+  fTempdem=Q10^((tempb - Tref)/10)
+  fTempmdem=Q10m^((tempb - Tref)/10)
   
   #
   # Setup resource groups:
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2
+  param$K = c(szprod, lzprod, bprod, 0)  # g ww/m2
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
   #param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
-  
+ # mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
+  #mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0]
   #
   # Add fish groups:
   #
@@ -318,11 +354,17 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
   p = -0.175 # Metabolism exponent
   gamma = 70 # Coef. for clearance rate
   q = -0.2 # Clearance rate exponent
-  ix = param$ixFish
+  #ix = param$ixFish
+  ix = c(param$ix[[1]],param$ix[[2]])
   m = param$mc[ix]
-  param$Cmax[ix] = h*m^n # maximum consumption rate 
-  param$V[ix] = gamma*m^q # clearance rate 
-  param$metabolism[ix] = k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
+  param$Cmax[ix] = fTemp* h*m^n # maximum consumption rate 
+  param$V[ix] = fTemp* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempm* k*m^p # 0.2*param$Cmax[ix] # standard metabolism
+  ix = param$ix[[3]]
+  m = param$mc[ix]
+  param$Cmax[ix] = fTempdem* h*m^n # maximum consumption rate 
+  param$V[ix] = fTempdem* gamma*m^q # clearance rate 
+  param$metabolism[ix] = fTempmdem* k*m^p # 0.2*param$Cmax[ix] # standard metabolism 
   param$epsRepro = rep(0.01, param$nGroups) # reproduction * recruitment efficiency 
   param$epsAssim = 0.7 # Assimilation efficiency
   param$Cmax[is.na(param$Cmax)] = 0
@@ -359,12 +401,20 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
    beta = 400
    sigma = 1.3
    param$theta = matrix(nrow=param$nStates, ncol=param$nStates)
-   for (i in param$ixFish) {
-     param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
-     param$theta[i,param$mc>param$mc[i]] = 0
+   # for (i in param$ixFish) {
+   #   param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
+   #   param$theta[i,param$mc>param$mc[i]] = 0
+   # }
+   # param$theta[is.na(param$theta)] = 0
+   
+   for (i in param$ixFish[1]:param$nStates) {
+     for (j in 1:param$nStates){
+       param$theta[i,j] = clacPhi(z=param$mc[i]/param$mc[j],beta=beta,sigma=sigma,Delta=param$mUpper[i]/param$mLower[i])
+       param$theta[i,j] = ifelse(param$mc[j]>param$mc[i],0,param$theta[i,j])
+     }
    }
    param$theta[is.na(param$theta)] = 0
-  
+   
    #
    # Setup interactions between groups and resources:
    #
@@ -420,26 +470,30 @@ setupBasic2 = function(pprod = 100, bprod=5, nSizeGroups=9) {
   return(param)
 }
 
-setupVertical = function(pprod = 80) {
+setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
+                         bottom=1500,photic=150) {
   
   # Initialize the parameters:
-  param = parametersInit(0, pprod)
+  param = parametersInit(0, szprod, lzprod)
   
   # habitat and small benthos
-  param$bottom=1500 # water depth
-  param$photic=150 # photic zone depth
+  param$bottom=bottom # water depth default 1500m
+  param$photic=photic # photic zone depth default 150m
   param$mesop = 250 # ? depth
   param$visual = 1.5 # scalar; >1 visual predation primarily during the day, = 1 equal day and night
   param$bent = 150
   bprod=0.1*(param$bent*(param$bottom/param$photic)^-0.86)
   param$bprod = bprod
+  param$nSizeGroups = nSizeGroups
+  param$region = region
+  param$setup = 3
   
   #
   # Setup resource groups:
   #
   param$ixR = 1:4 # 4 resources: Small - large zoo small - large benthos 
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
-  param$K = c(pprod, pprod, bprod, 0)  # g ww/m2 
+  param$K = c(szprod, lzprod, bprod, 0)  # g ww/m2 
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
   param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit
   param$mUpper = c(0.001, 0.5, 125, 125) #upper limit
@@ -447,11 +501,11 @@ setupVertical = function(pprod = 80) {
   #
   # Add fish groups:
   #  paramAddGroup = function(p ,mMin, mMax, mMature, nStages) 
-  param = paramAddGroup(param, 0.001, 250, 0.5, 2)    # Small pelagics
-  param = paramAddGroup(param, 0.001, 250, 0.5, 2)    # Mesopelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Bathypelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, 3) # Large demersal
+  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Small pelagics
+  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Mesopelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Bathypelagics
+  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large demersal
  
   # initial conditions
   param$u0[param$ixR] = c(0.5,0.5,0.5,0)
@@ -465,10 +519,22 @@ setupVertical = function(pprod = 80) {
   #
   # Override the generic psiMature and make only adult classes 50% mature
   #
-   param$psiMature = 0*param$psiMature
-   for (iGroup in 1:length(param$ix)){
-   param$psiMature[max(param$ix[[iGroup]])] = 0.5
-   }
+   # param$psiMature = 0*param$psiMature
+   # for (iGroup in 1:length(param$ix)){
+   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
+   # }
+  
+  param$psiMature = 0*param$psiMature
+  #overwrite psiMature    from matlab simple run
+  nsize=nSizeGroups+1
+  sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
+  matstageS = which.min(abs(sizes-0.5))
+  matstageL = which.min(abs(sizes-250))
+  param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
+  param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
+  param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
+  param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
+  param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
    
   #
   # Setup physiology:
@@ -523,8 +589,11 @@ setupVertical = function(pprod = 80) {
     param$dvm = 0              # no migration in shallow habitats
   }
                 
-  ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
-  ixadult = 3   #minloc(abs(sizes-lmat));
+  # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
+  # ixadult = 3   #minloc(abs(sizes-lmat));
+  
+  ixjuv = which.min(abs(sizes-0.5))
+  ixadult = which.min(abs(sizes-250))
   
   # zooplankton night
   xloc = 0 
@@ -731,6 +800,30 @@ setupVertical = function(pprod = 80) {
   param$theta[idx_predat,idx_prey] = param$theta[idx_predat,idx_prey]*0.5
   
   #...avlocDay  avlocNight    from matlab
+  
+  # update temperature
+  tempdata=read.table("../input/tempdata.dat", sep=',') #
+  tempdata[,5]=10 #
+  Q10=1.88
+  Q10m=1.88
+  
+  dist=(depthDay+depthNight)/2
+  TQ10 =  Q10^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  TQ10m =  Q10m^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  
+  scTemp_step=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  scTemp_stepm=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  for (i in 1:size(dist,2)) {
+  scTemp_step[,i] = dist[,i] * TQ10
+  scTemp_stepm[,i] = dist[,i] * TQ10m
+  }
+  
+  scTemp = colSums(scTemp_step)
+  scTempm = colSums(scTemp_stepm)
+  
+  param$Cmax = scTemp* param$Cmax # maximum consumption rate 
+  param$V= scTemp* param$V # clearance rate 
+  param$metabolism = scTempm* param$metabolism
   
   #
   # Mortality
@@ -948,7 +1041,6 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
   return(derivF$dudt)
 }
 
-
 #
 # Simulate the model.
 #
@@ -969,15 +1061,33 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
   #Calc by R or dll
   if (USEdll) {
     loadFEISTYmodel()
-    if (exists("nSizeGroups",where=p)){
-    dummy = .Fortran("f_setupbasic2", pprod=as.numeric(p$pprod),
-                                      bprod=as.numeric(p$bprod),
-                                      nSizeGroups=as.integer(p$nSizeGroups))
-    } else if (exists("vertover",where=p)){
-      dummy = .Fortran("f_setupvertical", pprod=as.numeric(p$pprod))
-    } else{
-    dummy = .Fortran("f_setupbasic", pprod=as.numeric(p$pprod),
-                       bprod=as.numeric(p$bprod))
+    if (p$setup == 1) {
+      dummy = .Fortran("f_setupbasic",
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
+        bprod = as.numeric(p$bprod),
+        Ts = as.numeric(p$temps),
+        Tb = as.numeric(p$tempb)
+      )
+    } else if (p$setup == 2) {
+      dummy = .Fortran("f_setupbasic2",
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
+        bprod = as.numeric(p$bprod),
+        nStages = as.integer(p$nSizeGroups),
+        Ts = as.numeric(p$temps),
+        Tb = as.numeric(p$tempb)
+      )
+      
+    } else if (p$setup == 3) {
+      dummy = .Fortran("f_setupvertical",
+        szprod = as.numeric(p$szprod),
+        lzprod = as.numeric(p$lzprod),
+        nStages = as.integer(p$nSizeGroups),
+        region = as.integer(p$region),
+        bottom= as.numeric(p$bottom),
+        photic= as.numeric(p$photic)
+      )
     }
     
     #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
@@ -1022,4 +1132,159 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
   return(sim)
   
 }
+
+#!!! PROBABLY INCORRECT
+#!!! PROBABLY INCORRECT
+#3stages dt=0.1   6stages 0.001        9stages 0.00001(slow)
+# setupbasic2 dt=0.01
+# setupvertical 6stages 9stages dt=0.1
+simulateeuler= function(p = setupVertical(), tEnd = 100, dt=0.1) {
+  
+  start_time = Sys.time()
+  
+  loadFEISTYmodel()
+  if (p$setup == 1) {
+    dummy = .Fortran("f_setupbasic",
+                     pprod = as.numeric(p$pprod),
+                     bprod = as.numeric(p$bprod),
+                     T = as.numeric(p$temp)
+    )
+  } else if (p$setup == 2) {
+    dummy = .Fortran("f_setupbasic2",
+                     pprod = as.numeric(p$pprod),
+                     bprod = as.numeric(p$bprod),
+                     nStages = as.integer(p$nSizeGroups),
+                     T = as.numeric(p$temp)
+    )
+    
+  } else if (p$setup == 3) {
+    dummy = .Fortran("f_setupvertical",
+                     pprod = as.numeric(p$pprod),
+                     nStages = as.integer(p$nSizeGroups),
+                     region = as.integer(p$region)
+    )
+  }
+  
+  res = .Fortran("f_simulateEuler", 
+                    u= as.numeric(p$u0),
+                    dudt=as.numeric(p$u0),
+                    tEnd=as.numeric(tEnd),
+                    dt=as.numeric(dt)
+                    )
+  
+  #
+  # Assemble output:
+  #
+  sim = list()
+  #p$USEdll=USEdll
+  sim$p = p
+  sim$R = res$u[p$ixR]
+  sim$B = res$u[p$ixFish]
+  #sim$t = t
+  #sim$nTime = length(t)
+  
+  #
+  # Calculate Spawning Stock Biomass
+  #
+  # SSB = matrix(nrow=length(t), ncol=p$nGroups)
+  # yield = SSB
+  # for (i in 1:p$nGroups)
+  #   for (j in 1:length(t)) {
+  #     SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
+  #     yield[j,i] = sum( u[j, p$ix[[i]]] * p$mortF[p$ix[[i]]] )
+  #   }
+  # sim$SSB = SSB
+  # sim$yield = yield
+  
+  end_time = Sys.time()
+  sim$tictoc=end_time-start_time
+  print(sim$tictoc)
+  return(sim)
+
+}
+
+#
+# for global offline simulation
+# design your own loop for all locations
+# put loadFEISTYmodel() outside loop in case repeatedly loading library and crash
+#
+# define 'param$input' shown below before simulation
+# p$szprod: small zooplankton production [gww/m2/year]
+# p$lzprod: large zooplankton production [gww/m2/year]
+# p$bprod:  benthos production [gww/m2/year]
+# p$bottom: seafloor depth [m]
+# p$photic: euphotic zone depth 
+# p$depb: depth grids (boundary data, not grid center) [m] !max 200 layers
+# p$Tprof: Temperature grids (boundary data, not grid center) [Celsius] !max 200 layers
+# p$nSizeGroups: fish stages !integer
+# 
+simulateglobal= function(p = setupvertical(), tEnd = 300) {
+  #
+  # Integrate the equations:
+  #
+  #start_time = Sys.time()
+  t = seq(0, tEnd,length.out=tEnd+1) 
+  #Calc by R or dll
+  #loadFEISTYmodel()
+  dummy = .Fortran("f_setupverticalglobal",
+                   szprod=as.numeric(p$szprod),
+                   lzprod=as.numeric(p$lzprod),
+                   bprod=as.numeric(p$bprod),
+                   bottom=as.numeric(p$bottom),
+                   photic=as.numeric(p$photic),
+                   dgrid=as.numeric(p$depb),
+                   tprof=as.numeric(p$Tprof),
+                   nStages=as.integer(p$nSizeGroups))
+  
+  #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
+  u = ode(y=p$u0,
+          times = t,
+          func = function(t,y,parms) list(calcDerivativesF(t,y,parms)),# Run by dll
+          parms = p)
+  
+  #
+  # Assemble output:
+  #
+  sim = list()
+  #p$USEdll=USEdll
+  sim$p = p
+  sim$R = u[, p$ixR+1]
+  sim$B = u[, p$ixFish+1]
+  sim$t = t
+  sim$nTime = length(t)
+  
+  #
+  # Calculate Spawning Stock Biomass
+  #
+  # SSB = matrix(nrow=length(t), ncol=p$nGroups)
+  # yield = SSB
+  # for (i in 1:p$nGroups)
+  #   for (j in 1:length(t)) {
+  #     SSB[j,i] = sum( u[j, p$ix[[i]]] * p$psiMature[p$ix[[i]]] )
+  #     yield[j,i] = sum( u[j, p$ix[[i]]] * p$mortF[p$ix[[i]]] )
+  #   }
+  # sim$SSB = SSB
+  # sim$yield = yield
+  
+  #end_time = Sys.time()
+  #sim$tictoc=end_time-start_time
+  #print(sim$tictoc)
+  return(sim)
+}
+
+########################################################################
+#From NUM
+# Prey size preference
+clacPhi=function(z, beta,sigma, Delta){
+
+  s = 2*sigma*sigma
+  res=max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
+ exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
+(sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
+2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
+erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
+)
+
+return(res)
+  }
 

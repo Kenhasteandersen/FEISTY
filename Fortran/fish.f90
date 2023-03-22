@@ -10,7 +10,7 @@ module fish
    private
 ! fish physiology:
    real(dp) :: h
-   real(dp) :: hCepha   ! Note in input.nlm
+   real(dp) :: hCepha   ! Note in input.nml
    real(dp) :: nn
    real(dp) :: q
    real(dp) :: gamma

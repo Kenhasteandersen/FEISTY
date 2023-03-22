@@ -1,40 +1,51 @@
 ! for R
-subroutine f_setupbasic(pprod,bprod)
+subroutine f_setupbasic(szprod,lzprod,bprod, Ts, Tb)
    use FEISTY !, only:
    use globals
 
-   real(dp), intent(in)::pprod,bprod
+   real(dp), intent(in)::szprod,lzprod,bprod, Ts, Tb
 
-   call setupbasic(pprod,bprod)
+   call setupbasic(szprod,lzprod,bprod, Ts, Tb)
 end subroutine f_setupbasic
 
-subroutine f_setupbasic2(pprod, bprod, nStages)
+subroutine f_setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
    use FEISTY ! only : setupbasic2
    use globals
 
-   real(dp), intent(in):: pprod, bprod
+   real(dp), intent(in):: szprod,lzprod, bprod, Ts, Tb
    integer, intent(in):: nStages
 
-   call setupbasic2(pprod, bprod, nStages)
+   call setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
 end subroutine f_setupbasic2
 
-subroutine f_setupvertical(pprod)
+subroutine f_setupvertical(szprod,lzprod, nStages, region, bottom, photic)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: pprod
+   real(dp), intent(in):: szprod,lzprod, bottom, photic
+   integer, intent(in):: nStages, region
 
-   call setupvertical(pprod)
+   call setupvertical(szprod,lzprod, nStages, region, bottom, photic)
 end subroutine f_setupvertical
 
-subroutine f_setupsquid(pprod, bottom, nStages)
+subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, tprof, nStages)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: pprod, bottom
+   real(dp), intent(in):: szprod, lzprod, bprod, bottom, photic, dgrid(200), tprof(200)
+   integer, intent(in):: nStages
+
+   call setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
+end subroutine f_setupverticalglobal
+
+subroutine f_setupsquid(szprod,lzprod, bottom, nStages)
+   use FEISTY ! only :
+   use globals
+
+   real(dp), intent(in):: szprod,lzprod, bottom
    integer, intent(in) :: nStages
 
-   call setupsquid(pprod, bottom, nStages)
+   call setupsquid(szprod,lzprod, bottom, nStages)
 end subroutine f_setupsquid
 
 subroutine f_calcderivatives(u, dudt)
@@ -71,3 +82,14 @@ use globals
 
 end subroutine f_getrates
 
+subroutine f_simulateEuler(u, dudt, tEnd, dt)
+    use FEISTY
+    use globals
+
+         real(dp),intent(inout) :: u(nGrid)
+         real(dp),intent(in):: dudt(nGrid)
+         real(dp),intent(in) :: tEnd, dt
+
+         call simulateEuler(u, dudt, tEnd, dt)
+
+end subroutine f_simulateEuler
