@@ -3,6 +3,12 @@
 #
 library('deSolve')
 library('pracma') # needed for erf, linspace
+
+
+# ==================================================================
+#. Functions needed to setup the parameter structure
+# ==================================================================
+
 #
 # Initialize the parameter structure
 #
@@ -30,20 +36,6 @@ parametersInit = function(depth, szprod, lzprod) {
   return(param)
 }
 
-
-#new
-loadFEISTYmodel = function() {
-  sys=Sys.info()['sysname']
-  
-  if (sys=='Darwin') 
-    sLibname = '../lib/libFEISTY.dylib'
-  if (sys=='Linux') 
-    sLibname = '../lib/libFEISTY.so'
-  if (sys=='Windows')
-    sLibname = '../lib/libFEISTY.dll'
-  
-  dyn.load(sLibname)
-}
 #
 # Makes a grid.
 #
@@ -117,6 +109,23 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
   return(p)
 }
 
+#
+# Calculate size preference function by integrating over both predator
+# and prey size groups. See Andersen and Visser: Progress in Oceanography (213) 102995, appendix A.
+# 
+calcPhi=function(z, beta,sigma, Delta){
+  
+  s = 2*sigma*sigma
+  res=max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
+                                exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
+                              (sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
+                                                   2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
+                                                   erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
+  )
+  
+  return(res)
+}
+
 
 #
 # Make a basic three-species setup as described in Petrik et al (2019): Bottom-up 
@@ -129,6 +138,11 @@ paramAddGroup = function(p ,mMin, mMax, mMature, nStages) {
 #   ixGroup - array of nGroups with indices for each group
 #   mMature(nGroups) - mass of maturation of each group
 #
+
+# ==================================================================
+#. Various model setups
+# ==================================================================
+
 
 setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   
@@ -158,7 +172,7 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   param$r = c(1, 1, 1, 0) # Resource growth rates g ww/m2/yr
   param$K = c(szprod,lzprod, bprod, 0)  # g ww/m2
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
- # param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
+  # param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
   
@@ -213,7 +227,7 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   # Small pelagics:
   param$theta[5,1] = 1 # Small ones eat only small zooplankton
   param$theta[6,1:10] = c(thetaS, 1, 0, 0, 1, 0, 1, 0,0, 1) 
-
+  
   # Large pelagics:
   param$theta[7,1] = 1
   param$theta[8,1:10] = c(thetaS, 1, 0, 0, 1, 0, 1, 0,0, 1) 
@@ -273,22 +287,22 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   #   param$theta[i,param$ixFish] = 0
   # }
   
-# LArge demersals feed on benthic resources and all fish:
-#  for (i in ixDemersal[ param$mc[ixDemersal]>mLarge ]) {
-#    param$
-#  } 
-
+  # LArge demersals feed on benthic resources and all fish:
+  #  for (i in ixDemersal[ param$mc[ixDemersal]>mLarge ]) {
+  #    param$
+  #  } 
+  
   #
   # Mortality
   #
   param$mort0 = 0.1
   param$mortF[param$ixFish] = 0.3*c(0,1,0,0.1,1,0,0.1,1) # Fishing only on mature stages
-
+  
   param$metabolism[is.na(param$metabolism)]=0
   param$mortF[is.na(param$mortF)]=0
   param$psiMature[is.na(param$psiMature)]=0
   param$z[is.na(param$z)]=0
-
+  
   return(param)
 }
 
@@ -337,7 +351,7 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   #param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit)  
   #param$mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size
   param$u0[param$ixR] = param$K # Initial conditions at carrying capacity
- # mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
+  # mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
   #mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0]
   #
   # Add fish groups:
@@ -395,66 +409,66 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   # param$theta[12,8] = thetaD # medium large pelagics
   # param$theta[12,11] = 1 # medium demersals
   
-   #
-   # Size-based interactions:  
-   #
-   beta = 400
-   sigma = 1.3
-   param$theta = matrix(nrow=param$nStates, ncol=param$nStates)
-   # for (i in param$ixFish) {
-   #   param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
-   #   param$theta[i,param$mc>param$mc[i]] = 0
-   # }
-   # param$theta[is.na(param$theta)] = 0
-   
-   for (i in param$ixFish[1]:param$nStates) {
-     for (j in 1:param$nStates){
-       param$theta[i,j] = clacPhi(z=param$mc[i]/param$mc[j],beta=beta,sigma=sigma,Delta=param$mUpper[i]/param$mLower[i])
-       param$theta[i,j] = ifelse(param$mc[j]>param$mc[i],0,param$theta[i,j])
-     }
-   }
-   param$theta[is.na(param$theta)] = 0
-   
-   #
-   # Setup interactions between groups and resources:
-   #
-   ixSmall = param$ix[[1]]
-   ixLarge = param$ix[[2]]
-   ixDem = param$ix[[3]]
+  #
+  # Size-based interactions:  
+  #
+  beta = 400
+  sigma = 1.3
+  param$theta = matrix(nrow=param$nStates, ncol=param$nStates)
+  # for (i in param$ixFish) {
+  #   param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
+  #   param$theta[i,param$mc>param$mc[i]] = 0
+  # }
+  # param$theta[is.na(param$theta)] = 0
   
-   mMedium = 10
-   mLarge = 5000
-   ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=mMedium) ]
-   ixMediumSizeDem = ixDem[ (param$mc[ixDem]>mMedium) &
-     (param$mc[ixDem]<mLarge) ]
-   # Pelagic/demersal indices:
-   ixR = param$ixR
-   #ixDemPelagic = ixDem[(param$mc[ixDem] < 10) | (param$mc[ixDem] > 5000)]
-   #ixDemDemersal = ixDem[param$mc[ixDem] >= 10]
-   #ixLargeDemersal = ixLarge[param$mc[ixLarge] > 5000]
-   #ixPelagic = c(param$ixR[1],param$ixR[2], ixSmall, ixLarge, ixDemPelagic)
-   #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
-   
-   # Pelagic fish do not feed on benthic resources
-   param$theta[ixSmall, 3:4] = 0
-   param$theta[ixLarge, 3:4] = 0
-   # ... or on medium-sized demersal fish:
-   param$theta[ixSmall, ixMediumSizeDem] = 0
-   param$theta[ixLarge, ixMediumSizeDem] = 0
-   
-   # Large pelagics have reduced feeding efficiency on small pelagics:
-   param$theta[ixLarge,ixSmall] = thetaA * param$theta[ixLarge,ixSmall] 
-   # ... and do not feed on medium-sized demersal:
-   param$theta[ixLarge, ixMediumSizeDem ] = 0
-   
-   # Medium-sized large demersals feed only on benthos:
-   param$theta[ixMediumSizeDem, 1:2] = 0 
-   param$theta[ixMediumSizeDem, param$ixFish] = 0 
-   
-   # Large demersals feed have reduced feeding effiiency on pelagic species:
-   param$theta[ixDem, ixSmall] = thetaA * thetaD * param$theta[ixDem,ixSmall] 
-   param$theta[ixDem, ixLarge] = thetaD * param$theta[ixDem, ixLarge] 
-
+  for (i in param$ixFish[1]:param$nStates) {
+    for (j in 1:param$nStates){
+      param$theta[i,j] = calcPhi(z=param$mc[i]/param$mc[j],beta=beta,sigma=sigma,Delta=param$mUpper[i]/param$mLower[i])
+      param$theta[i,j] = ifelse(param$mc[j]>param$mc[i],0,param$theta[i,j])
+    }
+  }
+  param$theta[is.na(param$theta)] = 0
+  
+  #
+  # Setup interactions between groups and resources:
+  #
+  ixSmall = param$ix[[1]]
+  ixLarge = param$ix[[2]]
+  ixDem = param$ix[[3]]
+  
+  mMedium = 10
+  mLarge = 5000
+  ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=mMedium) ]
+  ixMediumSizeDem = ixDem[ (param$mc[ixDem]>mMedium) &
+                             (param$mc[ixDem]<mLarge) ]
+  # Pelagic/demersal indices:
+  ixR = param$ixR
+  #ixDemPelagic = ixDem[(param$mc[ixDem] < 10) | (param$mc[ixDem] > 5000)]
+  #ixDemDemersal = ixDem[param$mc[ixDem] >= 10]
+  #ixLargeDemersal = ixLarge[param$mc[ixLarge] > 5000]
+  #ixPelagic = c(param$ixR[1],param$ixR[2], ixSmall, ixLarge, ixDemPelagic)
+  #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
+  
+  # Pelagic fish do not feed on benthic resources
+  param$theta[ixSmall, 3:4] = 0
+  param$theta[ixLarge, 3:4] = 0
+  # ... or on medium-sized demersal fish:
+  param$theta[ixSmall, ixMediumSizeDem] = 0
+  param$theta[ixLarge, ixMediumSizeDem] = 0
+  
+  # Large pelagics have reduced feeding efficiency on small pelagics:
+  param$theta[ixLarge,ixSmall] = thetaA * param$theta[ixLarge,ixSmall] 
+  # ... and do not feed on medium-sized demersal:
+  param$theta[ixLarge, ixMediumSizeDem ] = 0
+  
+  # Medium-sized large demersals feed only on benthos:
+  param$theta[ixMediumSizeDem, 1:2] = 0 
+  param$theta[ixMediumSizeDem, param$ixFish] = 0 
+  
+  # Large demersals feed have reduced feeding effiiency on pelagic species:
+  param$theta[ixDem, ixSmall] = thetaA * thetaD * param$theta[ixDem,ixSmall] 
+  param$theta[ixDem, ixLarge] = thetaD * param$theta[ixDem, ixLarge] 
+  
   #
   # Mortality
   #
@@ -497,7 +511,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param$mc = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) # weight central size)
   param$mLower = c(2e-06,0.001, 0.5e-03, 0.25) # weight lower limit
   param$mUpper = c(0.001, 0.5, 125, 125) #upper limit
-
+  
   #
   # Add fish groups:
   #  paramAddGroup = function(p ,mMin, mMax, mMature, nStages) 
@@ -506,7 +520,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
   param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Bathypelagics
   param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large demersal
- 
+  
   # initial conditions
   param$u0[param$ixR] = c(0.5,0.5,0.5,0)
   param$u0[param$ixFish]= 0.0001*param$u0[param$ixFish]
@@ -519,10 +533,10 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   #
   # Override the generic psiMature and make only adult classes 50% mature
   #
-   # param$psiMature = 0*param$psiMature
-   # for (iGroup in 1:length(param$ix)){
-   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
-   # }
+  # param$psiMature = 0*param$psiMature
+  # for (iGroup in 1:length(param$ix)){
+  # param$psiMature[max(param$ix[[iGroup]])] = 0.5
+  # }
   
   param$psiMature = 0*param$psiMature
   #overwrite psiMature    from matlab simple run
@@ -535,7 +549,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
   param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
   param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
-   
+  
   #
   # Setup physiology:
   #
@@ -565,16 +579,16 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param$sizeprefer = matrix(nrow=param$nStates, ncol=param$nStates, data=0)
   param$vertover = matrix(nrow=param$nStates, ncol=param$nStates, data=0)
   
-# calculate size-preference matrix
+  # calculate size-preference matrix
   for (i in param$ixFish[[1]]: param$nStates){
-       for (j in 1: param$nStates){
-            param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
-              erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
-                  - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
-  param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
+    for (j in 1: param$nStates){
+      param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
+        erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
+        - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
+      param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
+    }
   }
-}
-# calculate overlap from depth distribution
+  # calculate overlap from depth distribution
   ssigma = 10 # width of initial distribution
   tau = 10    # increase in width
   
@@ -588,7 +602,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   if (param$bottom <= param$mesop) {
     param$dvm = 0              # no migration in shallow habitats
   }
-                
+  
   # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
   # ixadult = 3   #minloc(abs(sizes-lmat));
   
@@ -599,8 +613,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xloc = 0 
   zp_n = matrix(nrow=length(xrange), ncol=2, data=0) # ncol=2: small zoo & large zoo
   for (i in 1: 2){      
-   zp_n[,i] = (1/(sqrt(2*pi*sigmap[i]^2)))* 
-       exp(-(((xrange - xloc)^2)/(2*sigmap[i]^2)))
+    zp_n[,i] = (1/(sqrt(2*pi*sigmap[i]^2)))* 
+      exp(-(((xrange - xloc)^2)/(2*sigmap[i]^2)))
   }
   zp_n = zp_n %*% diag(1/colSums(zp_n))
   
@@ -609,30 +623,30 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xloc = param$dvm
   for (i in 1: 2){
     zp_d[, i] = (1/(sqrt(2*pi*sigmap[i]^2)))* 
-        exp(-(((xrange - xloc)^2)/(2*sigmap[i]^2)))
+      exp(-(((xrange - xloc)^2)/(2*sigmap[i]^2)))
   }
   zp_d = zp_d %*% diag(1/colSums(zp_d))
   zp_d = (zp_n + zp_d)/2
   
- # benthos small and large (at bottom with width sigma)
+  # benthos small and large (at bottom with width sigma)
   bent_dn= matrix(nrow=length(xrange), ncol=2, data=0)  #small bent & large bent   
   xloc = param$bottom
   for (i in 1: 2) {  # small benthos & large benthos
-  bent_dn[, i] = (1/(sqrt(2*pi*ssigma^2)))*exp(-((xrange - xloc)^2/(2*ssigma^2)))
-  bent_dn[, i] = bent_dn[, i]/sum(bent_dn[, i])
-}
+    bent_dn[, i] = (1/(sqrt(2*pi*ssigma^2)))*exp(-((xrange - xloc)^2/(2*ssigma^2)))
+    bent_dn[, i] = bent_dn[, i]/sum(bent_dn[, i])
+  }
   
- # small pelagic fish (day + night) always at surface
+  # small pelagic fish (day + night) always at surface
   #allocate (ix(ixEnd(1) - ixStart(1) + 1))
   spel_dn= matrix(nrow=length(xrange), ncol=length(param$ix[[1]]), data=0)
   xloc = 0
   ix = param$ix[[1]]
   for ( i in 1: length(ix)) {
-   spel_dn[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-     exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
+    spel_dn[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
   }
   spel_dn = spel_dn %*% diag(1/colSums(spel_dn))
- 
+  
   # meso pelagic night   at surface  
   mpel_n = spel_dn
   
@@ -642,7 +656,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   ix = param$ix[[2]]
   for (i in 1: length(ix)){
     mpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))*
-     exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
+      exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
   }
   mpel_d = mpel_d %*% diag(1/colSums(mpel_d))
   
@@ -651,8 +665,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xloc = 0
   ix = param$ix[[3]]
   for (i in 1:length(ix)){
-  lpel_n[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-    exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
+    lpel_n[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xloc)^2/(2*sigmap[ix[i]]^2)))
   }
   lpel_n = lpel_n %*% diag(1/colSums(lpel_n))
   
@@ -661,8 +675,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xlocvec = rep(0,length(ix)) # initialization #ix same as above
   xlocvec[ixadult:length(xlocvec)] = param$dvm # non-adult at surface   adult at dvm
   for (i in 1: length(ix)){ #ix same as above
-  lpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-    exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
+    lpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
   }
   lpel_d = lpel_d   %*%  diag(1/colSums(lpel_d))
   lpel_d = (lpel_d + lpel_n)/2
@@ -673,8 +687,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xlocvec = rep(0,length(ix)) # initialization
   xlocvec[ixadult:length(xlocvec)] = param$dvm # non-adult at surface   adult at dvm
   for (i in 1: length(ix)) {
-   bpel_n[,i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-    exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
+    bpel_n[,i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
   }
   bpel_n = bpel_n %*% diag(1/colSums(bpel_n))
   
@@ -682,9 +696,9 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   bpel_d = matrix(nrow=length(xrange), ncol=length(param$ix[[4]]), data=0)
   xlocvec = rep(param$dvm,length(ix)) # overwrite all elements by dvm
   for (i in 1:length(ix)) {
-  bpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))*
-    exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
-}
+    bpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))*
+      exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
+  }
   bpel_d = bpel_d %*% diag(1/colSums(bpel_d))
   
   # demersal fish night
@@ -693,31 +707,31 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   xlocvec = rep(0,length(ix)) # initialization
   xlocvec[ixjuv:length(xlocvec)] = param$bottom # larvae at surface   juvenile and adult at bottom
   for (i in 1: length(ix)) {
-  dem_n[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-    exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
+    dem_n[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
   }
   dem_n = dem_n %*% diag(1/colSums(dem_n))
   
   #demersal fish day
   demmig = param$dvm # ? from matlab
   if ((param$bottom - param$dvm) >= 1200){
-  demmig = param$dvm + (param$bottom-param$dvm-1200)
+    demmig = param$dvm + (param$bottom-param$dvm-1200)
   }
   if ((param$bottom - param$dvm) >= 1500){
-  demmig = param$bottom
+    demmig = param$bottom
   }
   dem_d= matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
   xlocvec[ixadult:length(xlocvec)] = param$dvm # larvae at surface/ juvenile at bottom/ adult and middle
   for (i in 1: length(ix)) {
-  dem_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
-    exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
+    dem_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
+      exp(-((xrange - xlocvec[i])^2/(2*sigmap[ix[i]]^2)))
   }
   dem_d = dem_d  %*%  diag(1/colSums(dem_d))
   # ? from matlab
   #if shallower than euphotic depth, adult demersals feed across-habitats
   if (param$bottom <= param$photic) {
-  dem_d = (dem_d + dem_n)/2
-  dem_n = dem_d
+    dem_d = (dem_d + dem_n)/2
+    dem_n = dem_d
   }
   
   # calculate overlap during day
@@ -735,9 +749,9 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   
   for (i in 1: param$nStates) {
     for ( j in 1: param$nStates) {
-     test[, j] = pmin(depthDay[, i], depthDay[, j])
+      test[, j] = pmin(depthDay[, i], depthDay[, j])
     }
-  param$dayout[, i] = colSums(test)
+    param$dayout[, i] = colSums(test)
   }
   
   # calculate overlap during night
@@ -780,7 +794,7 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   #  specific revision of feeding preference
   idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and larval demersals
   param$theta[idx_be, 3:4] = 0 # all pelagic and larval demersals do not eat benthos,
-                               # only juvenile & adult demersals eat benthos
+  # only juvenile & adult demersals eat benthos
   
   # small demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixjuv - 1)): (param$ix[[5]][1] + (ixadult - 2)) #
@@ -814,8 +828,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   scTemp_step=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
   scTemp_stepm=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
   for (i in 1:size(dist,2)) {
-  scTemp_step[,i] = dist[,i] * TQ10
-  scTemp_stepm[,i] = dist[,i] * TQ10m
+    scTemp_step[,i] = dist[,i] * TQ10
+    scTemp_stepm[,i] = dist[,i] * TQ10m
   }
   
   scTemp = colSums(scTemp_step)
@@ -836,8 +850,8 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param$mortF[is.na(param$mortF)]=0
   param$psiMature[is.na(param$psiMature)]=0
   param$z[is.na(param$z)]=0
-
-return(param)  
+  
+  return(param)  
 }
 
 
@@ -853,7 +867,7 @@ return(param)
 
 setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   # Initialize the parameters:x
-  param = parametersInit(depth, pprod)
+  param = parametersInit(depth, 0.75*pprod, 0.25*pprod) # Distribute production between small and large zooplankton
   
   #
   # Setup resource groups:
@@ -915,7 +929,7 @@ setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   #ixDemersal = c(param$ixR[3],param$ixR[4], ixDemDemersal, ixLargeDemersal)
   # Small pelagics feed on pelagic resources:
   
-
+  
   param$theta[,ixR[3:4]] = 0  # No demersal feeding
   #
   # Mortality
@@ -925,6 +939,9 @@ setupPelagicSpecies = function(depth = 500, pprod = 100, nStages=6, mInf) {
   return(param)
 }
 
+# ==================================================================
+#  Functions needed to simulate the model:
+# ==================================================================
 
 #
 # Calculate the derivatives of all state variables by R
@@ -943,13 +960,13 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   #
   # Calc consumption of all fish groups
   #
-
+  
   # Calc Encounter:
   Enc = p$V * (p$theta %*% u)
   f = Enc / (p$Cmax + Enc) # Functional response
   f[is.na(f)] = 0
   Eavail = p$epsAssim * p$Cmax * f - p$metabolism
-
+  
   # Predation mortality:
   #mortpred = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
   mm = p$Cmax*p$V/(Enc+p$Cmax)*u # temporarily store
@@ -957,13 +974,13 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   mortpred = t(p$theta) %*% mm
   
   
-
+  
   # Total mortality
   mort = mortpred + p$mort0 + p$mortF
   #
   # Derivative of fish groups
   #
-
+  
   # Flux out of the size group:
   v = Eavail[ix]
   vplus = pmax(0,v)
@@ -974,7 +991,7 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   gamma[kappa==0] = 0 # No growth of fully mature classes
   Fout = gamma*B
   Repro = (1-kappa)*vplus*B
-
+  
   # Flux into the size group
   Fin = 0
   for (i in 1:p$nGroups) {
@@ -984,16 +1001,16 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
     # Reproduction:
     Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + sum( Repro[ix] ))
   }
-
+  
   # Assemble derivatives of fish:
   dBdt = Fin - Fout + (v - mort[p$ixFish])*B - Repro
-
+  
   #
   # Resources:
   #
   R = u[p$ixR]
   dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
-
+  
   if (bFullOutput) {
     out = list()
     out$deriv = c(dRdt, dBdt)
@@ -1010,6 +1027,7 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
     return( list(c(dRdt, dBdt)) )
 }
 
+
 #
 # Calculate the derivatives of all state variables by Fortran dll
 #
@@ -1021,24 +1039,41 @@ calcDerivativesF = function(t, y, p, bFullOutput=FALSE) {
   
   dRdt = derivF$dudt[1:4]
   dBdt= derivF$dudt[p$ixFish]
-
-   if (bFullOutput) {
-     nGrid = p$nStates
- out = .Fortran("f_getrates", 
-                 u= as.numeric(y), # y is u last step, defined from plotSimulation
-                dudt=as.numeric(y), # in dll initially set as 0 and then runs
-                flvl_r=vector(length=nGrid, mode="numeric"),
-                mortpred_r = vector(length=nGrid, mode="numeric"),
-                g_r = vector(length=nGrid-length(p$ixR), mode="numeric")
-                )                  
-                 
-     out$f = out$flvl_r # Feeding level
-     out$mortpred = out$mortpred_r
-     out$g = out$g_r
-     return(out)
-   }
-   else
-  return(derivF$dudt)
+  
+  if (bFullOutput) {
+    nGrid = p$nStates
+    out = .Fortran("f_getrates", 
+                   u= as.numeric(y), # y is u last step, defined from plotSimulation
+                   dudt=as.numeric(y), # in dll initially set as 0 and then runs
+                   flvl_r=vector(length=nGrid, mode="numeric"),
+                   mortpred_r = vector(length=nGrid, mode="numeric"),
+                   g_r = vector(length=nGrid-length(p$ixR), mode="numeric")
+    )                  
+    
+    out$f = out$flvl_r # Feeding level
+    out$mortpred = out$mortpred_r
+    out$g = out$g_r
+    return(out)
+  }
+  else
+    return(derivF$dudt)
+  
+  #
+  # Load the Fortran library
+  #
+  loadFEISTYmodel = function() {
+    sys=Sys.info()['sysname']
+    
+    if (sys=='Darwin') 
+      sLibname = '../lib/libFEISTY.dylib'
+    if (sys=='Linux') 
+      sLibname = '../lib/libFEISTY.so'
+    if (sys=='Windows')
+      sLibname = '../lib/libFEISTY.dll'
+    
+    dyn.load(sLibname)
+  }
+  
 }
 
 #
@@ -1063,30 +1098,30 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
     loadFEISTYmodel()
     if (p$setup == 1) {
       dummy = .Fortran("f_setupbasic",
-        szprod = as.numeric(p$szprod),
-        lzprod = as.numeric(p$lzprod),
-        bprod = as.numeric(p$bprod),
-        Ts = as.numeric(p$temps),
-        Tb = as.numeric(p$tempb)
+                       szprod = as.numeric(p$szprod),
+                       lzprod = as.numeric(p$lzprod),
+                       bprod = as.numeric(p$bprod),
+                       Ts = as.numeric(p$temps),
+                       Tb = as.numeric(p$tempb)
       )
     } else if (p$setup == 2) {
       dummy = .Fortran("f_setupbasic2",
-        szprod = as.numeric(p$szprod),
-        lzprod = as.numeric(p$lzprod),
-        bprod = as.numeric(p$bprod),
-        nStages = as.integer(p$nSizeGroups),
-        Ts = as.numeric(p$temps),
-        Tb = as.numeric(p$tempb)
+                       szprod = as.numeric(p$szprod),
+                       lzprod = as.numeric(p$lzprod),
+                       bprod = as.numeric(p$bprod),
+                       nStages = as.integer(p$nSizeGroups),
+                       Ts = as.numeric(p$temps),
+                       Tb = as.numeric(p$tempb)
       )
       
     } else if (p$setup == 3) {
       dummy = .Fortran("f_setupvertical",
-        szprod = as.numeric(p$szprod),
-        lzprod = as.numeric(p$lzprod),
-        nStages = as.integer(p$nSizeGroups),
-        region = as.integer(p$region),
-        bottom= as.numeric(p$bottom),
-        photic= as.numeric(p$photic)
+                       szprod = as.numeric(p$szprod),
+                       lzprod = as.numeric(p$lzprod),
+                       nStages = as.integer(p$nSizeGroups),
+                       region = as.integer(p$region),
+                       bottom= as.numeric(p$bottom),
+                       photic= as.numeric(p$photic)
       )
     }
     
@@ -1100,7 +1135,7 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
             times = t,
             func = calcDerivativesR, #Run by R
             parms = p)
-}
+  }
   
   #
   # Assemble output:
@@ -1166,11 +1201,11 @@ simulateeuler= function(p = setupVertical(), tEnd = 100, dt=0.1) {
   }
   
   res = .Fortran("f_simulateEuler", 
-                    u= as.numeric(p$u0),
-                    dudt=as.numeric(p$u0),
-                    tEnd=as.numeric(tEnd),
-                    dt=as.numeric(dt)
-                    )
+                 u= as.numeric(p$u0),
+                 dudt=as.numeric(p$u0),
+                 tEnd=as.numeric(tEnd),
+                 dt=as.numeric(dt)
+  )
   
   #
   # Assemble output:
@@ -1200,7 +1235,7 @@ simulateeuler= function(p = setupVertical(), tEnd = 100, dt=0.1) {
   sim$tictoc=end_time-start_time
   print(sim$tictoc)
   return(sim)
-
+  
 }
 
 #
@@ -1272,19 +1307,4 @@ simulateglobal= function(p = setupvertical(), tEnd = 300) {
   return(sim)
 }
 
-########################################################################
-#From NUM
-# Prey size preference
-clacPhi=function(z, beta,sigma, Delta){
-
-  s = 2*sigma*sigma
-  res=max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
- exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
-(sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
-2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
-erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
-)
-
-return(res)
-  }
 
