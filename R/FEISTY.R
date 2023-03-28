@@ -492,7 +492,8 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
 #
 # Setup based on Denderen et al (2021) Emergent global biogeography of marine fish food webs, Global Ecology and Biogeography 30(9): 1822-1834.
 #
-setupVertical = function(szprod= 80,lzprod = 80, # Productivities
+setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
+                         bent = 150, # Detrital flux out of photic zone
                          nSizeGroups=6, # No. of size groups
                          region = 4, # Region to calculate temperatres
                          bottom=1500, # Bottom depth
@@ -510,7 +511,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Productivities
   param$photic=photic # photic zone depth default 150m
   param$mesop = 250 # ? depth
   param$visual = 1.5 # scalar; >1 visual predation primarily during the day, = 1 equal day and night
-  param$bent = 150
+  param$bent = bent
   bprod=0.1*(param$bent*(param$bottom/param$photic)^-0.86)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
