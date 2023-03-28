@@ -143,7 +143,9 @@ calcPhi=function(z, beta,sigma, Delta){
 #. Various model setups
 # ==================================================================
 
-
+#
+# Setup based on Petrik et al (2019) Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in Oceanography 176, 102124
+#
 setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   
   # Initialize the parameters:
@@ -319,7 +321,11 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
+setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
+                       temps=10, tempb=8, # Temperature at the surface and bottom
+                       nSizeGroups=9, # Number of size groups
+                       etaMature=0.25 # Size at maturity relative to asymptotic size
+                       ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -356,9 +362,9 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   #
   # Add fish groups:
   #
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups)) # Small pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Demersals
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups)) # Small pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Demersals
   #
   # Setup physiology:
   #
@@ -483,9 +489,18 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   
   return(param)
 }
-
-setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
-                         bottom=1500,photic=150) {
+#
+# Setup based on Denderen et al (2021) Emergent global biogeography of marine fish food webs, Global Ecology and Biogeography 30(9): 1822-1834.
+#
+setupVertical = function(szprod= 80,lzprod = 80, # Productivities
+                         nSizeGroups=6, # No. of size groups
+                         region = 4, # Region to calculate temperatres
+                         bottom=1500, # Bottom depth
+                         photic=150, # Photic zone depth
+                         etaMature = 0.25 # Size of matureation relative to
+                                          # asymptotic size. Different from
+                                          # Denderegen (2021), where it is 0.002
+                         ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -515,11 +530,11 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   #
   # Add fish groups:
   #  paramAddGroup = function(p ,mMin, mMax, mMature, nStages) 
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Small pelagics
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Mesopelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Bathypelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large demersal
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups))    # Small pelagics
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups))    # Mesopelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Bathypelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large demersal
   
   # initial conditions
   param$u0[param$ixR] = c(0.5,0.5,0.5,0)
@@ -973,8 +988,6 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   mm[ is.na(mm) ] = 0
   mortpred = t(p$theta) %*% mm
   
-  
-  
   # Total mortality
   mort = mortpred + p$mort0 + p$mortF
   #
@@ -1026,7 +1039,6 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   else
     return( list(c(dRdt, dBdt)) )
 }
-
 
 #
 # Calculate the derivatives of all state variables by Fortran dll

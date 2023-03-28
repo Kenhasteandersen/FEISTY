@@ -37,14 +37,14 @@ plotYield = function(nStages=20, mInf=20, p=setupPelagicSpecies(nStages = nStage
   SSB = rep(0,length(F))
   
   for (i in 1:length(F)) {
-    p = setFishing(p,F[i])
+    p = setFishing(p,rep(F[i], p$nGroups))
     sim = simulate(p, tEnd=200, USEdll = FALSE) # Simulate
     yy = calcYield(sim)
-    yield[i] = yy[[1]]
-    yieldMin[i] = yy[[2]]
-    yieldMax[i] = yy[[3]]
+    yield[i] = sum(yy[[1]])
+    yieldMin[i] = sum(yy[[2]])
+    yieldMax[i] = sum(yy[[3]])
     
-    SSB[i] = calcSSB(sim)[[1]]
+    SSB[i] = sum(calcSSB(sim)[[1]])
   }
   #
   # Plot
@@ -65,7 +65,7 @@ setFishing = function(p, F, etaF=0.05 ) {
   
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
-    mFishing = 0.05*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
+    mFishing = etaF*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
     psi = ( 1 + (p$mc[ix]/mFishing)^(-3) )^(-1) # Standard trawl selectivity from Andersen (2019) Fig 5.2
     p$mortF[ix] = psi*F[iGroup] 
   }
