@@ -553,17 +553,17 @@ setupVertical = function(szprod= 80,lzprod = 80, # Productivities
   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
   # }
   
-  param$psiMature = 0*param$psiMature
+  #param$psiMature = 0*param$psiMature
   #overwrite psiMature    from matlab simple run
   nsize=nSizeGroups+1
   sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
   matstageS = which.min(abs(sizes-0.5))
   matstageL = which.min(abs(sizes-250))
-  param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
-  param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
-  param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
-  param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
-  param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
+  #param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
+  #param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
+  #param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
+  #param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
+  #param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
   
   #
   # Setup physiology:
