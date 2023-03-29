@@ -156,8 +156,8 @@ server <- function(input, output) {
                         lzprod = input$lzprod,
                         nSizeGroups = input$nSizeGroups,
                         region =as.integer(input$region),
-                        input$bottom,
-                        input$photic)
+                        bent = input$bottom,
+                        photic = input$photic)
     }
 
     # Simulate
