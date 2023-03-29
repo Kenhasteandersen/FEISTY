@@ -67,12 +67,24 @@ ui <- fluidPage(
                         max = 50,
                         step = 1,
                         value = 5),
+           sliderInput("bent",
+                       "Detrital flux out of photic zone (g/m2):",
+                       min = 100,
+                       max = 300,
+                       step = 5,
+                       value = 150),
             sliderInput("nSizeGroups",
                         "Fish stage number:",
                         min = 3,
                         max = 45,
                         step = 3,
                         value = 3),
+           sliderInput("etaMature",
+                       "Mature size relative to asymptotic size:",
+                       min = 0.002,
+                       max = 0.3,
+                       step = 0.002,
+                       value = 0.25),
             sliderInput("temps",
                         "Surface temperature (top 100m, \u00B0C):",
                         min = 0,
@@ -102,6 +114,8 @@ server <- function(input, output) {
       hide("bottom")
       hide("photic")
       hide("nSizeGroups")
+      hide("etaMature")
+      hide("bent")
       show("szprod")
       show("lzprod")
       show("bprod")
@@ -111,6 +125,8 @@ server <- function(input, output) {
       hide("region")
       hide("bottom")
       hide("photic")
+      hide("bent")
+      show("etaMature")
       show("nSizeGroups")
       show("szprod")
       show("lzprod")
@@ -124,6 +140,8 @@ server <- function(input, output) {
       show("nSizeGroups")
       show("szprod")
       show("lzprod")
+      show("etaMature")
+      show("bent")
       hide("bprod")
       hide("temps")
       hide("tempb") 
@@ -132,7 +150,7 @@ server <- function(input, output) {
 
   sim <- eventReactive(c(
     input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
-    input$temps,input$tempb,input$region, input$bottom,input$photic
+    input$temps,input$tempb,input$region, input$bottom,input$photic,input$etaMature,input$bent
   ),
   {
     # setup simulation
@@ -149,19 +167,22 @@ server <- function(input, output) {
         bprod = input$bprod,
         nSizeGroups = input$nSizeGroups,
         temps = input$temps,
-        tempb = input$tempb
+        tempb = input$tempb,
+        etaMature= input$etaMature
       )
     } else if (input$Setup == 3) {
       p = setupVertical(szprod = input$szprod,
                         lzprod = input$lzprod,
                         nSizeGroups = input$nSizeGroups,
                         region =as.integer(input$region),
-                        input$bottom,
-                        input$photic)
+                        bottom=input$bottom,
+                        photic=input$photic,
+                        etaMature= input$etaMature,
+                        bent=input$bent)
     }
 
     # Simulate
-    return( simulate(p, tEnd = 100, USEdll=input$USEdll) )
+    return( simulate(p, tEnd = 200, USEdll=input$USEdll) )
   })
   
   # Make plots

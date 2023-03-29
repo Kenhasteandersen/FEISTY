@@ -143,7 +143,9 @@ calcPhi=function(z, beta,sigma, Delta){
 #. Various model setups
 # ==================================================================
 
-
+#
+# Setup based on Petrik et al (2019) Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in Oceanography 176, 102124
+#
 setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
   
   # Initialize the parameters:
@@ -319,7 +321,11 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
 #   mMature(nGroups) - mass of maturation of each group
 #
 
-setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=10, tempb=8) {
+setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
+                       temps=10, tempb=8, # Temperature at the top 100 m and bottom
+                       nSizeGroups=9, # Number of size groups
+                       etaMature=0.25 # Size at maturity relative to asymptotic size
+                       ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -327,6 +333,7 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   param$nSizeGroups = nSizeGroups
   param$temps = temps
   param$tempb = tempb
+  param$etaMature=etaMature
   param$setup=2
   
   #
@@ -356,9 +363,9 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   #
   # Add fish groups:
   #
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups)) # Small pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Demersals
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups)) # Small pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Demersals
   #
   # Setup physiology:
   #
@@ -483,9 +490,19 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, nSizeGroups=9, temps=
   
   return(param)
 }
-
-setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
-                         bottom=1500,photic=150) {
+#
+# Setup based on Denderen et al (2021) Emergent global biogeography of marine fish food webs, Global Ecology and Biogeography 30(9): 1822-1834.
+#
+setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
+                         bent = 150, # Detrital flux out of photic zone
+                         nSizeGroups=6, # No. of size groups
+                         region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celcius 
+                         bottom=1500, # Bottom depth
+                         photic=150, # Photic zone depth
+                         etaMature = 0.25 # Size of matureation relative to
+                                          # asymptotic size. Different from
+                                          # van Denderen (2021), where it is 0.002
+                         ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -495,11 +512,12 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   param$photic=photic # photic zone depth default 150m
   param$mesop = 250 # ? depth
   param$visual = 1.5 # scalar; >1 visual predation primarily during the day, = 1 equal day and night
-  param$bent = 150
+  param$bent = bent
   bprod=0.1*(param$bent*(param$bottom/param$photic)^-0.86)
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
   param$region = region
+  param$etaMature=etaMature
   param$setup = 3
   
   #
@@ -515,11 +533,11 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   #
   # Add fish groups:
   #  paramAddGroup = function(p ,mMin, mMax, mMature, nStages) 
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Small pelagics
-  param = paramAddGroup(param, 0.001, 250, 0.5, round(0.66*nSizeGroups))    # Mesopelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large pelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Bathypelagics
-  param = paramAddGroup(param, 0.001, 125000, 250, nSizeGroups) # Large demersal
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups))    # Small pelagics
+  param = paramAddGroup(param, 0.001, 250, etaMature*250, round(0.66*nSizeGroups))    # Mesopelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large pelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Bathypelagics
+  param = paramAddGroup(param, 0.001, 125000, etaMature*125000, nSizeGroups) # Large demersal
   
   # initial conditions
   param$u0[param$ixR] = c(0.5,0.5,0.5,0)
@@ -538,17 +556,17 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
   # }
   
-  param$psiMature = 0*param$psiMature
+  #param$psiMature = 0*param$psiMature
   #overwrite psiMature    from matlab simple run
-  nsize=nSizeGroups+1
-  sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
-  matstageS = which.min(abs(sizes-0.5))
-  matstageL = which.min(abs(sizes-250))
-  param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
-  param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
-  param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
-  param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
-  param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
+  #nsize=nSizeGroups+1
+  #sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
+  # matstageS = which.min(abs(sizes-0.5))
+  # matstageL = which.min(abs(sizes-250))
+  #param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
+  #param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
+  #param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
+  #param$psiMature[param$ix[[4]]][matstageL:length(param$ix[[4]])] = 0.5 # fishBathy
+  #param$psiMature[param$ix[[5]]][matstageL:length(param$ix[[5]])] = 0.5 # fishDemersal
   
   #
   # Setup physiology:
@@ -606,9 +624,12 @@ setupVertical = function(szprod= 80,lzprod = 80, nSizeGroups=6,region = 4,
   # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
   # ixadult = 3   #minloc(abs(sizes-lmat));
   
-  ixjuv = which.min(abs(sizes-0.5))
-  ixadult = which.min(abs(sizes-250))
-  
+  # ixjuv = which.min(abs(sizes-etaMature*250))
+  # ixadult = which.min(abs(sizes-etaMature*125000))
+ 
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
+   
   # zooplankton night
   xloc = 0 
   zp_n = matrix(nrow=length(xrange), ncol=2, data=0) # ncol=2: small zoo & large zoo
@@ -973,8 +994,6 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   mm[ is.na(mm) ] = 0
   mortpred = t(p$theta) %*% mm
   
-  
-  
   # Total mortality
   mort = mortpred + p$mort0 + p$mortF
   #
@@ -1026,7 +1045,6 @@ calcDerivativesR = function(t, u, p, bFullOutput=FALSE) {
   else
     return( list(c(dRdt, dBdt)) )
 }
-
 
 #
 # Calculate the derivatives of all state variables by Fortran dll
@@ -1110,17 +1128,21 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
                        bprod = as.numeric(p$bprod),
                        nStages = as.integer(p$nSizeGroups),
                        Ts = as.numeric(p$temps),
-                       Tb = as.numeric(p$tempb)
+                       Tb = as.numeric(p$tempb),
+                       etaMature = as.numeric(p$etaMature)
       )
       
     } else if (p$setup == 3) {
       dummy = .Fortran("f_setupvertical",
                        szprod = as.numeric(p$szprod),
                        lzprod = as.numeric(p$lzprod),
+                       bent=as.numeric(p$bent),
                        nStages = as.integer(p$nSizeGroups),
                        region = as.integer(p$region),
                        bottom= as.numeric(p$bottom),
-                       photic= as.numeric(p$photic)
+                       photic= as.numeric(p$photic),
+                       etaMature= as.numeric(p$etaMature)
+                       
       )
     }
     

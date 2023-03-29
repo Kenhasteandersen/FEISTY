@@ -168,8 +168,9 @@ contains
 ! --------------------------------------
 ! Setup by Ken.
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb) !
+   subroutine setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb, etaMature) !
       real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb
+      real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -180,9 +181,9 @@ contains
 
       call read_namelist_setupbasic2()    !
       call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages, 4 resources,szprod,lzprod, bprod,none)
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall   nint: Returns the nearest integer to the argument.
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge (stages, max mass, mature mass)
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, etaMature*2.50d2) ! fishSmall  original mature mass is 0.002 *2.50d2=0.5d0
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishLarge (stages, max mass, mature mass) 0.002 *1.25d5=2.5d2
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishDemersal
 
       ! vectors:
       allocate (V(nGrid))
@@ -310,9 +311,9 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap from MATLAB (van Denderen et al., 2020) the simple run folder
 ! --------------------------------------
-   subroutine setupVertical(szprod,lzprod, nStages, region, bottom, photic)
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic !  default bottom:1500m euphotic depth 150m
-      integer, intent(in) :: nStages,region
+   subroutine setupVertical(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature !  default bottom:1500m euphotic depth 150m
+      integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
        real(dp) :: ssigma
@@ -328,7 +329,7 @@ contains
 !      real(dp), parameter :: mesop = 250.d0   ! depth ?
 !      real(dp), parameter :: visual = 1.5d0 ! scalar; >1 visual predation primarily during the day, = 1 equal day and night
       real(dp), allocatable :: sigmap(:) ! width for each size class
-      real(dp) :: bent ! for bprod calc
+      !real(dp) :: bent ! for bprod calc
       real(dp) :: bprod
       real(dp), dimension(:), allocatable :: xrange
       real(dp) :: dvm  ! vertical migration depth photic + 500.d0
@@ -359,11 +360,11 @@ contains
       end if
 
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishBathy,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal,
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, etaMature*2.50d2) ! fishSmall  original mature mass is 0.002 *2.50d2=0.5d0
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, etaMature*2.50d2) ! fishMeso,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishLarge,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishBathy,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishDemersal,
 
 ! vectors and matrix:
       allocate (sigmap(nGrid))
@@ -388,22 +389,22 @@ contains
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
 
-         group(iGroup)%spec%psiMature = 0.d0 ! reset
+         !group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
 
       end do
 
       !overwrite psiMature    from matlab simple run
-      nsize=nStages+1
-      allocate (sizes(nsize))
-      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
-      matstageS = minloc(abs(sizes-0.5d0),dim=1)
-      matstageL = minloc(abs(sizes-2.5d2),dim=1)
-      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
-      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
-      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
-      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
-      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
+!      nsize=nStages+1
+!      allocate (sizes(nsize))
+!      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
+!      matstageS = minloc(abs(sizes-0.5d0),dim=1)
+!      matstageL = minloc(abs(sizes-2.5d2),dim=1)
+!      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
+!      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
+!      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
+!      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
+!      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
 
       group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
@@ -441,9 +442,14 @@ contains
       end if
 
 ! first stages as juvenile/adult for predators
-      ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
-      ixadult = minloc(abs(sizes-2.5d2),dim=1)
-  deallocate (sizes)!see above overwrite psimature
+      !ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
+      !ixadult = minloc(abs(sizes-2.5d2),dim=1)
+
+      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+
+
+!  deallocate (sizes)!see above overwrite psimature
 
 ! zooplankton night
       allocate (zp_n(size(xrange), 2))
@@ -681,8 +687,8 @@ contains
 
       namelist /input_setupvertical/ h, nn, q, gamma, kk, p, epsAssim, epsRepro, &
                                   & beta, sigma, mMin, &
+                                  & lbenk, szoog, lzoog, sbeng, lbeng,&!bent,
                                   & mMedium, mLarge, &
-                                  & bent, lbenk, szoog, lzoog, sbeng, lbeng,&
                                   & ssigma, tau, mesop, visual
 
       call open_inputfile(file_unit, io_err)
