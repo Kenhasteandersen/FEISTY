@@ -553,6 +553,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # for (iGroup in 1:length(param$ix)){
   # param$psiMature[max(param$ix[[iGroup]])] = 0.5
   # }
+  # }
   
   #param$psiMature = 0*param$psiMature
   #overwrite psiMature    from matlab simple run
@@ -618,11 +619,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (param$bottom <= param$mesop) {
     param$dvm = 0              # no migration in shallow habitats
   }
-  
-  # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
-  # ixadult = 3   #minloc(abs(sizes-lmat));
-  
-  
+
   # zooplankton night
   xloc = 0 
   zp_n = matrix(nrow=length(xrange), ncol=2, data=0) # ncol=2: small zoo & large zoo
@@ -687,7 +684,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #large pelagic fish day (non-adult at surface   adult at dvm)
   lpel_d= matrix(nrow=length(xrange), ncol=length(param$ix[[3]]), data=0)
   xlocvec = rep(0,length(ix)) # initialization #ix same as above
-  ixadult = which.min(abs(param$mc[param$ix[[3]]] - param$mMature[[3]]))
+  ixadult = which.min(abs(param$mLower[param$ix[[3]]] - param$mMature[[3]]))
   xlocvec[ixadult:length(xlocvec)] = param$dvm # non-adult at surface   adult at dvm
   for (i in 1: length(ix)){ #ix same as above
     lpel_d[, i] = (1/(sqrt(2*pi*sigmap[ix[i]]^2)))* 
@@ -719,8 +716,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # demersal fish night
   dem_n = matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
   ix = param$ix[[5]]
-  ixjuv = which.min(abs(param$mc[param$ix[[5]]] - 0.5))
-  ixadult = which.min(abs(param$mc[param$ix[[5]]] - param$mMature[[5]]))
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
   xlocvec = rep(0,length(ix)) # initialization
   xlocvec[ixjuv:length(xlocvec)] = param$bottom # larvae at surface   juvenile and adult at bottom
   for (i in 1: length(ix)) {
