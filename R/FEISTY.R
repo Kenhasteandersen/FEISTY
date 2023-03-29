@@ -322,10 +322,10 @@ setupBasic = function(szprod = 100, lzprod = 100, bprod=5, temps=10, tempb=8) {
 #
 
 setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
-                       temps=10, tempb=8, # Temperature at the surface and bottom
+                       temps=10, tempb=8, # Temperature at the top 100 m and bottom
                        nSizeGroups=9, # Number of size groups
                        etaMature=0.25 # Size at maturity relative to asymptotic size
-) {
+                       ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -333,6 +333,7 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
   param$nSizeGroups = nSizeGroups
   param$temps = temps
   param$tempb = tempb
+  param$etaMature=etaMature
   param$setup=2
   
   #
@@ -495,13 +496,13 @@ setupBasic2 = function(szprod = 100,lzprod = 100, bprod=5, # Productivities
 setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          bent = 150, # Detrital flux out of photic zone
                          nSizeGroups=6, # No. of size groups
-                         region = 4, # Region to calculate temperatres
+                         region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celcius 
                          bottom=1500, # Bottom depth
                          photic=150, # Photic zone depth
                          etaMature = 0.25 # Size of matureation relative to
-                         # asymptotic size. Different from
-                         # Denderen (2021), where it is 0.002
-) {
+                                          # asymptotic size. Different from
+                                          # van Denderen (2021), where it is 0.002
+                         ) {
   
   # Initialize the parameters:
   param = parametersInit(0, szprod, lzprod)
@@ -516,6 +517,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$bprod = bprod
   param$nSizeGroups = nSizeGroups
   param$region = region
+  param$etaMature=etaMature
   param$setup = 3
   
   #
@@ -559,8 +561,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #overwrite psiMature    from matlab simple run
   #nsize=nSizeGroups+1
   #sizes = logspace(log10(0.001), log10(125000), nsize) # mMin=0.001     mMax=1.25d5 predatory fish
-  #matstageS = which.min(abs(sizes-0.5))
-  #matstageL = which.min(abs(sizes-250))
+  # matstageS = which.min(abs(sizes-0.5))
+  # matstageL = which.min(abs(sizes-250))
   #param$psiMature[param$ix[[1]]][matstageS:length(param$ix[[1]])] = 0.5 # fishSmall
   #param$psiMature[param$ix[[2]]][matstageS:length(param$ix[[2]])] = 0.5 # fishMeso
   #param$psiMature[param$ix[[3]]][matstageL:length(param$ix[[3]])] = 0.5 # fishLarge
@@ -619,7 +621,16 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (param$bottom <= param$mesop) {
     param$dvm = 0              # no migration in shallow habitats
   }
-
+  
+  # ixjuv = 2     #minloc(abs(sizes-smat)); from matlab
+  # ixadult = 3   #minloc(abs(sizes-lmat));
+  
+  # ixjuv = which.min(abs(sizes-etaMature*250))
+  # ixadult = which.min(abs(sizes-etaMature*125000))
+ 
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
+   
   # zooplankton night
   xloc = 0 
   zp_n = matrix(nrow=length(xrange), ncol=2, data=0) # ncol=2: small zoo & large zoo
@@ -1122,17 +1133,21 @@ simulate= function(p = setupBasic(), tEnd = 100, USEdll=TRUE) {
                        bprod = as.numeric(p$bprod),
                        nStages = as.integer(p$nSizeGroups),
                        Ts = as.numeric(p$temps),
-                       Tb = as.numeric(p$tempb)
+                       Tb = as.numeric(p$tempb),
+                       etaMature = as.numeric(p$etaMature)
       )
       
     } else if (p$setup == 3) {
       dummy = .Fortran("f_setupvertical",
                        szprod = as.numeric(p$szprod),
                        lzprod = as.numeric(p$lzprod),
+                       bent=as.numeric(p$bent),
                        nStages = as.integer(p$nSizeGroups),
                        region = as.integer(p$region),
                        bottom= as.numeric(p$bottom),
-                       photic= as.numeric(p$photic)
+                       photic= as.numeric(p$photic),
+                       etaMature= as.numeric(p$etaMature)
+                       
       )
     }
     

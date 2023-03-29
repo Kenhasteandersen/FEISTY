@@ -56,9 +56,10 @@ FLAGS= -fPIC -O2
 
 
 
-OBJ = input.o globals.o spectrum.o fish.o FEISTY.o FEISTYtest.o FEISTY_wrap_R.o FEISTY_wrap_MATLAB.o
+OBJ = input.o globals.o spectrum.o fish.o FEISTY.o FEISTYtest.o FEISTY_wrap_R.o
+#FEISTY_wrap_MATLAB.o
 
-all: FEISTY libMatlab libR
+all: FEISTY  libR #libMatlab
 
 debugging: FLAGS=-fPIC -g3 -fbacktrace#-debug extended # -check all -fpe0 -warn -traceback 
 
@@ -70,11 +71,11 @@ debugging:  all
 FEISTY: $(OBJ)  FEISTYtest.o
 	$(FORT) $(LINK) -fPIC $(FLAGS) -o $@ $^
 
-libMatlab: $(OBJ) FEISTY_wrap_MATLAB.o
-	$(FORT) -shared $(LINK) $(FLAGS) -o $(libMatlab) $^
+#libMatlab: $(OBJ) FEISTY_wrap_MATLAB.o
+#	$(FORT) -shared $(LINK) $(FLAGS) -o $(libMatlab) $^
 
 libR: $(OBJ) FEISTY_wrap_R.o
 	$(FORT) -shared $(LINK) $(FLAGS) -o $(libR) $^
 
 clean:
-	rm -f *.o FEISTY $(libMatlab) $(libR)
+	rm -f *.o FEISTY  $(libR) #$(libMatlab)

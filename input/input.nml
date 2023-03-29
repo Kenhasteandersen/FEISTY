@@ -106,7 +106,7 @@
   mLarge = 5000              !large fish central mass used for feeding preference calc
 !
 !resources
-  bent = 150                 ! bprod is calculated in setupvertical    [g m-2]
+!  bent = 150                 ! bprod is calculated in setupvertical    [g m-2]
   lbenk = 0                  ! large benthos carry capacity
   szoog = 1                  ! small zooplankton growth rate
   lzoog = 1                  ! large zooplankton growth rate

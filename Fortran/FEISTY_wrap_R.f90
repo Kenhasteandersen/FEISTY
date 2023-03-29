@@ -8,24 +8,24 @@ subroutine f_setupbasic(szprod,lzprod,bprod, Ts, Tb)
    call setupbasic(szprod,lzprod,bprod, Ts, Tb)
 end subroutine f_setupbasic
 
-subroutine f_setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
+subroutine f_setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb,etaMature)
    use FEISTY ! only : setupbasic2
    use globals
 
-   real(dp), intent(in):: szprod,lzprod, bprod, Ts, Tb
+   real(dp), intent(in):: szprod,lzprod, bprod, Ts, Tb, etaMature
    integer, intent(in):: nStages
 
-   call setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb)
+   call setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb, etaMature)
 end subroutine f_setupbasic2
 
-subroutine f_setupvertical(szprod,lzprod, nStages, region, bottom, photic)
+subroutine f_setupvertical(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: szprod,lzprod, bottom, photic
+   real(dp), intent(in):: szprod,lzprod, bottom, photic, bent, etaMature
    integer, intent(in):: nStages, region
 
-   call setupvertical(szprod,lzprod, nStages, region, bottom, photic)
+   call setupvertical(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
 end subroutine f_setupvertical
 
 subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, tprof, nStages)
