@@ -544,8 +544,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$u0[param$ixFish]= 0.0001*param$u0[param$ixFish]
   
   if (param$bottom <= param$mesop) {
-    param$u0(param$ix[[2]][1]:param$ix[[2]][length(param$ix[[2]])])=0 #mesopelagics to zero
-    param$u0(param$ix[[4]][1]:param$ix[[4]][length(param$ix[[4]])])=0 #mid-water pred to zero
+    param$u0[param$ix[[2]][1]:param$ix[[2]][length(param$ix[[2]])]]=0 #mesopelagics to zero
+    param$u0[param$ix[[4]][1]:param$ix[[4]][length(param$ix[[4]])]]=0 #mid-water pred to zero
   }
   
   #
