@@ -28,14 +28,14 @@ subroutine f_setupvertical(szprod,lzprod, bent, nStages, region, bottom, photic,
    call setupvertical(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
 end subroutine f_setupvertical
 
-subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, tprof, nStages)
+subroutine f_setupverticalglobal(szprod, lzprod, bprod, bottom, photic, dgrid, tprof, nStages, etaMature)
    use FEISTY ! only :
    use globals
 
-   real(dp), intent(in):: szprod, lzprod, bprod, bottom, photic, dgrid(200), tprof(200)
+   real(dp), intent(in):: szprod, lzprod, bprod, bottom, photic, dgrid(200), tprof(200), etaMature
    integer, intent(in):: nStages
 
-   call setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
+   call setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages, etaMature)
 end subroutine f_setupverticalglobal
 
 subroutine f_setupsquid(szprod,lzprod, bottom, nStages)

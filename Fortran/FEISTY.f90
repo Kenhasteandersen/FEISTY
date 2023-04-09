@@ -226,7 +226,7 @@ contains
 !         end do
 !      end do
 
-! FROM NUM
+! FROM NUM Andersen, K. H., & Visser, A. W. (2023). Appendix https://doi.org/10.1016/j.pocean.2023.102995
 ! feeding preference matrix theta
       do i = idxF, nGrid
          do j = 1, nGrid
@@ -420,15 +420,27 @@ contains
       mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! resource central mass
       mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
       mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0] ! resource mass lower limit
-! basic feeding preference matrix theta
+!! basic feeding preference matrix theta
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
+!                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
+!                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
+!            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+!         end do
+!      end do
+
+! FROM NUM Andersen, K. H., & Visser, A. W. (2023). Appendix https://doi.org/10.1016/j.pocean.2023.102995
+! feeding preference matrix theta
       do i = idxF, nGrid
          do j = 1, nGrid
-            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
-                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
-                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
-            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+            sizeprefer(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+               sizeprefer(i, j) = 0.d0
+            end if
          end do
       end do
+
 !!!vertical overlap
       sigmap = ssigma + tau*log10(mc/mc(1)) ! width for each size class
       xrange = linspace(0.d0, bottom, int(bottom) + 1)
@@ -707,8 +719,8 @@ contains
 !       Dgrid: depth grid (boundary), max 200 layers
 !       Tprof: temperature profile (boundary), max 200 layers
 !       nStages: size number
-subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages)
-      real(dp), intent(in) :: szprod, lzprod, bprod, bottom, photic, Dgrid(:), Tprof(:) !
+subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tprof, nStages, etaMature)
+      real(dp), intent(in) :: szprod, lzprod, bprod, bottom, photic, Dgrid(:), Tprof(:), etaMature !
       integer, intent(in) :: nStages
        !real(dp) :: pprod=100.d0 !overwrite later
 
@@ -759,12 +771,11 @@ subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tpr
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
       !overwrite K
       !K = [szprod, lzprod, bprod, lbenk]
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishSmall,
-      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, 0.5d0) ! fishMeso,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishLarge,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishBathy,
-      call parametersAddGroup(nStages, 1.25d5, 2.5d2) ! fishDemersal,
-
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, etaMature*2.50d2) ! fishSmall  original mature mass is 0.002 *2.50d2=0.5d0
+      call parametersAddGroup(nint(0.66d0*nStages), 2.50d2, etaMature*2.50d2) ! fishMeso,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishLarge,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishBathy,
+      call parametersAddGroup(nStages, 1.25d5, etaMature*1.25d5) ! fishDemersal,
 ! vectors and matrix:
       allocate (sigmap(nGrid))
       allocate (V(nGrid))
@@ -794,16 +805,16 @@ subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tpr
       end do
 
       !overwrite psiMature    from matlab simple run
-      nsize=nStages+1
-      allocate (sizes(nsize))
-      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
-      matstageS = minloc(abs(sizes-0.5d0),dim=1)
-      matstageL = minloc(abs(sizes-2.5d2),dim=1)
-      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
-      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
-      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
-      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
-      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
+!      nsize=nStages+1
+!      allocate (sizes(nsize))
+!      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
+!      matstageS = minloc(abs(sizes-0.5d0),dim=1)
+!      matstageL = minloc(abs(sizes-2.5d2),dim=1)
+!      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
+!      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
+!      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
+!      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
+!      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
 
       !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
@@ -820,14 +831,24 @@ subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tpr
       mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
       mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0] ! resource mass lower limit
 ! basic feeding preference matrix theta
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
+!                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
+!                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
+!            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+!         end do
+!      end do
+
       do i = idxF, nGrid
          do j = 1, nGrid
-            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
-                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
-                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
-            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+            sizeprefer(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+               sizeprefer(i, j) = 0.d0
+            end if
          end do
       end do
+
 !!!vertical overlap
       sigmap = ssigma + tau*log10(mc/mc(1)) ! width for each size class
       xrange = linspace(0.d0, bottom, int(bottom) + 1)
@@ -841,9 +862,14 @@ subroutine setupVerticalGlobal(szprod, lzprod, bprod, bottom, photic, Dgrid, Tpr
       end if
 
 ! first stages as juvenile/adult for predators
-      ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
-      ixadult = minloc(abs(sizes-2.5d2),dim=1)
-  deallocate (sizes)!see above overwrite psimature
+!      ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
+!      ixadult = minloc(abs(sizes-2.5d2),dim=1)
+
+
+      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+
+!  deallocate (sizes)!see above overwrite psimature
 
 ! zooplankton night
       allocate (zp_n(size(xrange), 2))

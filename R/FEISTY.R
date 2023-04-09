@@ -599,14 +599,23 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$vertover = matrix(nrow=param$nStates, ncol=param$nStates, data=0)
   
   # calculate size-preference matrix
-  for (i in param$ixFish[[1]]: param$nStates){
-    for (j in 1: param$nStates){
-      param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
-        erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
-        - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
-      param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
+  # for (i in param$ixFish[[1]]: param$nStates){
+  #   for (j in 1: param$nStates){
+  #     param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
+  #       erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
+  #       - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
+  #     param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
+  #   }
+  # }
+  
+  for (i in param$ixFish[1]:param$nStates) {
+    for (j in 1:param$nStates){
+      param$sizeprefer[i,j] = calcPhi(z=param$mc[i]/param$mc[j],beta=beta,sigma=sigma,Delta=param$mUpper[i]/param$mLower[i])
+      param$sizeprefer[i,j] = ifelse(param$mc[j]>param$mc[i],0,param$sizeprefer[i,j])
     }
   }
+  param$sizeprefer[is.na(param$sizeprefer)] = 0
+  
   # calculate overlap from depth distribution
   ssigma = 10 # width of initial distribution
   tau = 10    # increase in width
@@ -1295,7 +1304,8 @@ simulateglobal= function(p = setupvertical(), tEnd = 300) {
                    photic=as.numeric(p$photic),
                    dgrid=as.numeric(p$depb),
                    tprof=as.numeric(p$Tprof),
-                   nStages=as.integer(p$nSizeGroups))
+                   nStages=as.integer(p$nSizeGroups),
+                   etaMature=as.numeric(p$etaMature))
   
   #dudt = assign("dudt", rep(as.double(0),12), envir = .GlobalEnv) 
   u = ode(y=p$u0,
