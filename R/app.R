@@ -11,6 +11,7 @@
 
 library(shiny)
 library(shinyjs)
+library(latex2exp)
 source("Plots.R")
 
 #
