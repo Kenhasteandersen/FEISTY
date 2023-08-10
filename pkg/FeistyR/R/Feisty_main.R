@@ -18,6 +18,7 @@
 
 # Load deSolve:
 library(deSolve)
+library(pracma)#to have the function "erf" , otherwise it doesn't work
 
 # ------------------------------------------------------------------------------
 #
