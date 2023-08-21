@@ -77,6 +77,10 @@ setupBasic = function(pprod = 100, # primary production?
   param$theta["Demersals_3", "smallPel_2"] = 0.75/2
   param$theta["Demersals_3", "largePel_2"] = 0.75 
   param$theta["Demersals_3", "Demersals_2"] = 1 
+  
+  
+  # Setup selection: 
+  param$setup = "setupBasic"
 
   return(param)
 }
@@ -187,6 +191,10 @@ setupBasic2 = function(pprod = 100, bprod=5, nStages=9) {
   param$mortF[is.na(param$mortF)]=0
   param$psiMature[is.na(param$psiMature)]=0
   param$z[is.na(param$z)]=0
+  
+  
+  # Setup selection: 
+  param$setup = "setupBasic2"
   
   return(param)
 }
@@ -380,41 +388,42 @@ setupVertical = function(pprod = 80,
   }
   
   # calculate overlap during day
-  depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   test     = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   param$dayout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthDay[, 1:2] = zp_d # resources
-  depthDay[, 3:4] = bent_dn # resources
-  depthDay[, param$ix[[1]]] = spel_dn
-  depthDay[, param$ix[[2]]] = mpel_d
-  depthDay[, param$ix[[3]]] = lpel_d
-  depthDay[, param$ix[[4]]] = bpel_d
-  depthDay[, param$ix[[5]]] = dem_d
+  param$depthDay[, 1:2] = zp_d # resources
+  param$depthDay[, 3:4] = bent_dn # resources
+  param$depthDay[, param$ix[[1]]] = spel_dn
+  param$depthDay[, param$ix[[2]]] = mpel_d
+  param$depthDay[, param$ix[[3]]] = lpel_d
+  param$depthDay[, param$ix[[4]]] = bpel_d
+  param$depthDay[, param$ix[[5]]] = dem_d
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-     test[, j] = pmin(depthDay[, i], depthDay[, j])
+     test[, j] = pmin(param$depthDay[, i], param$depthDay[, j])
     }
   param$dayout[, i] = colSums(test)
+  param$depthDay
   }
   
   # calculate overlap during night
-  depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   # test will be overwritten
   param$nightout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthNight[, 1:2] = zp_n # resources
-  depthNight[, 3:4] = bent_dn # resources
-  depthNight[, param$ix[[1]]] = spel_dn
-  depthNight[, param$ix[[2]]] = mpel_n
-  depthNight[, param$ix[[3]]] = lpel_n
-  depthNight[, param$ix[[4]]] = bpel_n
-  depthNight[, param$ix[[5]]] = dem_n
+  param$depthNight[, 1:2] = zp_n # resources
+  param$depthNight[, 3:4] = bent_dn # resources
+  param$depthNight[, param$ix[[1]]] = spel_dn
+  param$depthNight[, param$ix[[2]]] = mpel_n
+  param$depthNight[, param$ix[[3]]] = lpel_n
+  param$depthNight[, param$ix[[4]]] = bpel_n
+  param$depthNight[, param$ix[[5]]] = dem_n
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-      test[, j] = pmin(depthNight[, i], depthNight[, j])
+      test[, j] = pmin(param$depthNight[, i], param$depthNight[, j])
     }
     param$nightout[, i] = colSums(test)
   }
@@ -462,6 +471,10 @@ setupVertical = function(pprod = 80,
   idx_predat = c(pred1, pred2, pred3)
   idx_prey   = c(prey1, prey2)
   param$theta[idx_predat,idx_prey] = param$theta[idx_predat,idx_prey]*0.5
+  
+  
+  # Setup selection: 
+  param$setup = "setupVertical"
   
 return(param)  
 }
