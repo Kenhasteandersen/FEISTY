@@ -41,7 +41,9 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("plotSimulation", height="600px")
+           #plotOutput("plotSimulation", height="600px")
+           plotOutput("plotNetwork", height="600px")
+           
         )
     )
 )

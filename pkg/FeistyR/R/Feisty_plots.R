@@ -143,11 +143,11 @@ plotTheta = function(p) {
 # Bubbles plot :
 #-------------------------------------------------------------------------------
 
-plot_network <- function(p) {
+plot_network <- function(p, sim) {
   
   # Number of groups and biomass:
   ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
-  biomass <- sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
+  biomass <- sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
   
   #Average of the biomass : 
   Bi <- colMeans(biomass[(nrow(biomass) -50):nrow(biomass),])
