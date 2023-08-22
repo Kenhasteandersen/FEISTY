@@ -320,3 +320,40 @@ ribbon <- function(x,ymin=NA,ymax,col=lightgrey) {
 tightaxes <- function() {
   par(xaxs="i", yaxs="i")
 }
+
+
+
+calcEncounter <- function(x, p) {
+  #
+  # Consumption
+  #
+  Encspecies <- c(p$V * p$theta %*% x)
+  p$n <- -0.25 # Max. consumption exponent     [-] = bc in Feisty_parms function "paramAddPhysiology"
+  f <- Encspecies[p$ix[[1]][1]:p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]] / (p$Cmax[p$ix[[1]][1]:p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]] + Encspecies[p$ix[[1]][1]:p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]]) # correction for total prey consumption 
+  f[is.na(f)] <- 0
+  f <- c(rep(0, 4), f) #ajoute 4 zéros au debut du vecteur pour qu'il fasse la bonne taille
+  p$h <- rep(20, p$nStages) # Value fish
+  p$met <- 0.2 * p$h # maintenance costs, 20% of h
+  p$m <- -0.175 # = bm de feisty_parms (Metabolism exponent )
+  p$Mc <- (p$met * p$mc^p$m) / p$mc
+  Eavail <- p$Cmax * p$epsAssim * f - p$Mc
+  
+  #
+  # Mortality: from prey on i
+  #
+  matrice <- matrix(0, nrow = length(x), ncol = length(x))
+  for (i in 1:length(x)) {
+    for (j in 1:length(x)) {
+      if ((p$Cmax[i] + Encspecies[j]) == 0) {
+        matrice[i, j] <- NA
+      } else {
+        matrice[i, j] <- (p$Cmax[i] * p$V[i]) * p$theta[i] / (p$Cmax[i] + Encspecies[j])
+      }
+    }
+  }
+  matrice[is.na(matrice)] <- 0
+  mortpred <- c(t(matrice) %*% x)
+  
+  return(list(f = f, mortpred = mortpred, Eavail = Eavail))
+} 
+
