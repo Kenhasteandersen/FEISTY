@@ -264,7 +264,7 @@ if (cus==FALSE){
   
   file_path=system.file("data", "input.nml", package = "FeistyR")
   # Call the Fortran subroutine to pass input file path
-  result <- passpath(file_path)
+  passresult <- passpath(file_path)
   
   if (setup==1){
     initfunc <- "initfeistysetupbasic"
@@ -326,7 +326,7 @@ passpath <- function(file_path) {
    sys=Sys.info()['sysname']
    
    if (sys=='Darwin') {
-    # sLibname = system.file("libs", "FeistyR.dll", package = "FeistyR")
+    # sLibname = system.file("libs", "FeistyR.dylib", package = "FeistyR")
    }
    if (sys=='Linux') {
     # sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
@@ -341,5 +341,5 @@ passpath <- function(file_path) {
    
   dyn.load(sLibname)
   
-  .Fortran("passpath", file_path_in = as.character(file_path))
+  dummy=.Fortran("passpath", file_path_in = as.character(file_path))
 }
