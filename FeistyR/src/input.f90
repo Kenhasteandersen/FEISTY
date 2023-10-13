@@ -4,11 +4,14 @@
 module input
   implicit none
 
+  character(256) :: file_path
+
   contains
+
 
   subroutine open_inputfile(file_unit, io_err)
     integer,  intent(out) :: file_unit, io_err
-    open(newunit=file_unit,action='read', file="../input/input.nml",iostat=io_err)!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main
+    open(newunit=file_unit,action='read', file=file_path,iostat=io_err)!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main../FeistyR/data
     call check_iostat(io_err, &
                       "Could not open file 'input.nml', perhaps it does not exist?")
   end subroutine open_inputfile
@@ -36,3 +39,12 @@ module input
   end subroutine check_iostat
 
 end module input
+
+
+! Oct 2023
+   subroutine passpath(file_path_in)
+    use input
+      character(*), intent(in) :: file_path_in
+      file_path=file_path_in
+
+   end subroutine passpath

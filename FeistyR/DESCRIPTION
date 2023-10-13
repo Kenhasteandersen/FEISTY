@@ -11,3 +11,4 @@ VignetteBuilder: knitr
 Description:  size- and traitbased model of higher trophic level dynamics.
 License: GPL (>=3.0)
 LazyData: yes
+NeedsCompilation: yes

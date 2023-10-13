@@ -8,8 +8,8 @@ importFrom("latex2exp", "TeX")
 import(deSolve)
 import(shiny)
 
-export(setupPelagicSpecies, setupVertical, setupBasic, setupBasic2 )
-export(simulateFeisty, derivativesFeistyR)
+export(setupPelagicSpecies, setupVertical, setupBasic, setupBasic2)
+export(simulateFeisty, derivativesFeistyR, passpath)
 export(paramInit, paramAddResource, paramAddGroup, paramAddPhysiology)
 
 export(webFeisty)

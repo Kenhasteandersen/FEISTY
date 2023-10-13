@@ -164,6 +164,15 @@ derivativesFeistyR = function(t,              # current time
 # Simulate the model.
 #
 # In: 
+#  cus : FALSE-> Fixed setups (published and revised).
+#        TRUE -> Customize your own setup. 'setup' and 'setupini' are revoked.
+#  setup : It only works when 'cus' is TRUE.
+#          setup type: 1 = Petrik et al. (2019)
+#                      2 = 
+#                      3 = van Denderen et al. (2020)
+#                      4 =           
+#  setupini : It only works when 'cus' is TRUE.......
+#
 #  p : fully populated set of parameters
 #  tEnd : time to simulate (years)
 #  USEdll : TRUE -> ODE solved by dll / FALSE -> ODE solved by R
@@ -173,7 +182,10 @@ derivativesFeistyR = function(t,              # current time
 # 
 # ------------------------------------------------------------------------------
 
-simulateFeisty = function(p      = setupBasic(), 
+simulateFeisty = function(cus    = FALSE,
+                          setup  = 1,
+                          setupini = c(100,100,5,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
+                          p      = setupBasic(), 
                           tEnd   = 100,
                           times  = seq(from=0, to=tEnd, by=1),
                           yini   = p$u0,  
@@ -220,7 +232,7 @@ simulateFeisty = function(p      = setupBasic(),
                 rep(p$mortF,      length.out=nGrid))  
   
     # names of functions in fortran code to be used
-    initfunc <- "initfeisty"   # the initialisation function
+    #initfunc <- "initfeisty"   # the initialisation function
     runfunc  <- "runfeisty"    # the derivative function
     
     # output variables
@@ -235,13 +247,44 @@ simulateFeisty = function(p      = setupBasic(),
       paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
       paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
 
+if (cus==TRUE){
+     initfunc <- "initfeisty"
+  
+     if (any(is.na(times)))  # one call and return
+     return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
+                  func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+                  ipar=ipar, rpar=as.double(rpar)))
+  
+   u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
+          func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+          ipar=ipar, rpar=as.double(rpar)) # Run by dll
+}
+    
+if (cus==FALSE){
+  
+  file_path=system.file("data", "input.nml", package = "FeistyR")
+  # Call the Fortran subroutine to pass input file path
+  result <- passpath(file_path)
+  
+  if (setup==1){
+    initfunc <- "initfeistysetupbasic"
     if (any(is.na(times)))  # one call and return
      return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
             func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-            ipar=ipar, rpar=as.double(rpar)))
-    u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
+            ipar=NULL, rpar=NULL))
+    
+    
+    u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
             func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-            ipar=ipar, rpar=as.double(rpar)) # Run by dll
+            ipar=NULL, rpar=NULL) # Run by dll
+  }
+  
+  if (setup==2){ #setupbasic2
+    
+  }
+}    
+    
+    
   } else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
@@ -277,3 +320,26 @@ simulateFeisty = function(p      = setupBasic(),
   
 }
 
+# Oct 2023 Transmit input file path to Fortran library
+passpath <- function(file_path) {
+  
+   sys=Sys.info()['sysname']
+   
+   if (sys=='Darwin') {
+    # sLibname = system.file("libs", "FeistyR.dll", package = "FeistyR")
+   }
+   if (sys=='Linux') {
+    # sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+   }
+   if (sys=='Windows'){
+       if (Sys.info()['machine']=='x86-64'){
+         sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
+       }else{
+         sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
+       }
+   }
+   
+  dyn.load(sLibname)
+  
+  .Fortran("passpath", file_path_in = as.character(file_path))
+}
