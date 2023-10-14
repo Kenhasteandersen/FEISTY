@@ -11,5 +11,5 @@ Currently barely functional
 Todo:
 
 - Update setups in R codes
-- </del>Fix Shiny App</del>
+- ~Fix Shiny App~
 - More clever way to implement fixed setups and customized setups
