@@ -9,7 +9,7 @@ import(deSolve)
 import(shiny)
 
 export(setupPelagicSpecies, setupVertical, setupBasic, setupBasic2)
-export(simulateFeisty, derivativesFeistyR, passpath)
+export(simulateFeisty, derivativesFeistyR)
 export(paramInit, paramAddResource, paramAddGroup, paramAddPhysiology)
 
 export(webFeisty)

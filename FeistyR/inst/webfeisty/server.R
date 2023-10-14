@@ -20,7 +20,16 @@ server <- function(input, output) {
     }
 
     # Simulate
-    return( simulateFeisty(p, tEnd = 100, USEdll=input$USEdll, simpleOutput = TRUE) )
+    return( simulateFeisty(cus    = FALSE,
+                           setup  = 1,
+                           setupini = c(input$pprod,input$pprod,input$bprod,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
+                           p, 
+                           tEnd   = 100,
+                           times  = seq(from=0, to=100, by=1), #to=tEnd but must give a number directly
+                           yini   = p$u0,  
+                           USEdll = input$USEdll,
+                           Rmodel = derivativesFeistyR,
+                           simpleOutput = TRUE) )
   })
   
   # Make plots

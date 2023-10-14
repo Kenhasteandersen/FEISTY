@@ -262,6 +262,30 @@ if (cus==TRUE){
     
 if (cus==FALSE){
   
+  # Oct 2023 Transmit input file path to Fortran library
+  passpath <- function(file_path) {
+    
+    sys=Sys.info()['sysname']
+    
+    if (sys=='Darwin') {
+      # sLibname = system.file("libs", "FeistyR.dylib", package = "FeistyR")
+    }
+    if (sys=='Linux') {
+      # sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+    }
+    if (sys=='Windows'){
+      if (Sys.info()['machine']=='x86-64'){
+        sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
+      }else{
+        sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
+      }
+    }
+    
+    dyn.load(sLibname)
+    
+    dummy=.Fortran("passpath", file_path_in = as.character(file_path))
+  }
+  
   file_path=system.file("data", "input.nml", package = "FeistyR")
   # Call the Fortran subroutine to pass input file path
   passresult <- passpath(file_path)
@@ -318,28 +342,4 @@ if (cus==FALSE){
   
   return(sim)
   
-}
-
-# Oct 2023 Transmit input file path to Fortran library
-passpath <- function(file_path) {
-  
-   sys=Sys.info()['sysname']
-   
-   if (sys=='Darwin') {
-    # sLibname = system.file("libs", "FeistyR.dylib", package = "FeistyR")
-   }
-   if (sys=='Linux') {
-    # sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
-   }
-   if (sys=='Windows'){
-       if (Sys.info()['machine']=='x86-64'){
-         sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
-       }else{
-         sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
-       }
-   }
-   
-  dyn.load(sLibname)
-  
-  dummy=.Fortran("passpath", file_path_in = as.character(file_path))
 }
