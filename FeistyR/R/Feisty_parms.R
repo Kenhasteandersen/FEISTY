@@ -234,7 +234,7 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 paramAddPhysiology = function (p, 
               ac = 20,          # Max. consumption coefficient  [g^(-n)/yr]
               bc = -0.25,       # Max. consumption exponent     [-]
-              am = 4,           # Metabolism coefficient        [g^(-p)/yr]
+              am = 0.011*365,#4,           # Metabolism coefficient        [g^(-p)/yr]
               bm = -0.175,      # Metabolism exponent           [-]
               ae = 70,      # Coef. for clearance rate      [m2*g^(q-1)/yr] encounter slope
               be = -0.2,        # Clearance rate exponent
@@ -262,6 +262,11 @@ paramAddPhysiology = function (p,
   # Assimilation efficiency, [-]
   p$epsAssim = epsAssim                   
   
+  #Oct 2023 add for Temperature effects
+  p$Cmaxsave=p$Cmax
+  p$Vsave=p$V
+  p$metabolismsave=p$metabolism
+  
   # remove the NAs
   # remove the NAs
   p$mc       [is.na(p$mc)]        <- 0 
@@ -285,6 +290,74 @@ paramAddPhysiology = function (p,
   row.names(p$groups) = p$groupnames[-p$ixR]
   return(p)
 }
+
+#--------------------------
+#
+#
+#--------------------------
+paramTeffect = function (p, # only for setupbasic & 2
+                         Tref,
+                         Q10,
+                         Q10m,
+                         u=NA){ # B container: R+fish
+  
+  p$Q10  = Q10
+  p$Q10m = Q10m
+  p$Tref = Tref
+  # 
+  p$fT = Q10^((p$Tp - Tref)/10) # factor of T effects on V Cmax
+  p$fT_met = Q10m^((p$Tp - Tref)/10) # factor of T effects on metabolism
+  p$fT_dem = Q10^((p$Tb - Tref)/10) # demersal
+  p$fT_met_dem = Q10m^((p$Tb - Tref)/10)
+  
+  if (p$depth<200){
+  
+  lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>10]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>10 & p$mc[p$ix[[2]]]<5000]]))/
+         (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>10]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>10 & p$mc[p$ix[[2]]]<5000]]) + 
+          sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]]) + sum(u[3:4])) #Eq. 15
+  
+  lambda=0.5 #
+  p$eT = p$Tp * lambda + p$Tb * (1-lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
+  
+  p$fT_dem_shallow=Q10^((p$eT - Tref)/10) # demersal
+  p$fT_met_dem_shallow=Q10m^((p$eT - Tref)/10)
+  }
+  
+  ix = c(p$ix[[1]],p$ix[[2]])
+
+  #pelagics
+  p$V[ix]= p$fT * p$V[ix]
+  
+  p$Cmax[ix]= p$fT * p$Cmax[ix]
+  
+  p$metabolism[ix] = p$fT_met * p$metabolism[ix]
+  
+  #demersal
+  #small
+  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] # small demersal are pelagic
+  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10]
+  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT_met * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10]
+  #medium
+  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] # small demersal are pelagic
+  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]
+  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]
+    
+  if (p$depth < 200){
+    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem_shallow * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] #
+    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem_shallow * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_met_dem_shallow * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+  }else{
+    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] #
+    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+    
+  }
+  
+  
+  return(p)
+}
+  
+                         
 
 #===============================================================================
 # MODEL APPLICATIONS 

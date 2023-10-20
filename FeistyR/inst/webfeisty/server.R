@@ -12,7 +12,7 @@ server <- function(input, output) {
   {
     # setup simulation
     if (input$Setup == 1) {
-      p = setupBasic(pprod = input$pprod, bprod=input$bprod)
+      p = setupBasic(szprod = input$pprod, lzprod = input$pprod, bprod=input$bprod,depth=100,Tp=10,Tb=8)
     }else if (input$Setup == 2) {
       p = setupBasic2(pprod = input$pprod, bprod=input$bprod, nStages=9)   
     }else if (input$Setup == 3) {

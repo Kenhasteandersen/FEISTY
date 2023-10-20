@@ -1808,194 +1808,11 @@ contains
 !  u: the vector of state variables (all resources and all fish grids)
 !  dudt: vector to hold the derivative (input and output)
 ! ----------------------------------------------------------------------
-subroutine calcderivatives(u, dudt)
-      real(dp), intent(in) :: u(nGrid)
-      real(dp), intent(inout) :: dudt(nGrid)
-      integer :: i, iGroup
 
-      dudt = 0.d0 ! overwritten latter
+!Replaced by vectorized 'calcderivatives' in Karline Soetaert package below.
 
-      do i = 1, nGrid
-         upositive(i) = max(0.d0, u(i)) ! keep state variables positive
-      end do
 
-      Enc = V*matmul(theta, upositive)  !a vector contain all Enc for all grid (resources+fish)
-      flvl = Enc/(Cmax + Enc)           !a vector contain all flvl for all grid (resources+fish)
 
-      do i = 1, nGrid
-         if (isnan(flvl(i))) then
-            flvl(i) = 0.d0
-         end if
-      end do
-
-! Calc available food:
-!      do i = 1, nGrid                               !all components  R and Fish
-!         F(i) = 0.d0                             ! overwritten latter
-!         do j = 1, nGrid
-!            F(i) = F(i) + theta(i, j)*upositive(j) ! matrix multiplication    use upositive
-!         end do
-!      end do
-    F = 0.d0
-    F = matmul(theta,upositive) ! totally same as above
-
-!Calc Encounter/feeding:
-!return Enc flvl  Eavail for each group
-      do iGroup = 1, nGroups
-         call calcFeeding(group(iGroup)%spec, F(ixStart(iGroup):ixEnd(iGroup)))
-      end do
-
-! Mortality:
-! Predation mortality, including all resources and fish grids
-      mortpred = (Cmax*V/(Enc + Cmax)*upositive) ! temporarily store
-      do i = 1, nGrid
-         if (isnan(mortpred(i))) then            ! because some denominator are 0
-            mortpred(i) = 0.d0
-         end if
-      end do
-      mortpred = matmul(transpose(theta), mortpred)
-
-! Total mortality, only for each fish group
-      do iGroup = 1, nGroups
-         do i = 1, (ixEnd(iGroup) - ixStart(iGroup) + 1)
-            group(iGroup)%spec%mort(i) = mortpred(ixStart(iGroup) + i - 1) + &  !predation mortality
-                                         group(iGroup)%spec%mort0(i) + &        !intrinsic mortality
-                                         group(iGroup)%spec%mortF(i)            !fishing mortality
-         end do
-      end do
-
-! Flux and derivative assemble
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call calcfluxfish(spec, upositive(ixStart(iGroup):ixEnd(iGroup)))     ! Flux out and Flux in
-            call calcderiv(spec, upositive(1:nResources), upositive(ixStart(iGroup):ixEnd(iGroup)), &  ! Assemble derivatives
-                           dudt(1:nResources), dudt(ixStart(iGroup):ixEnd(iGroup)))
-         end select
-      end do
-
-   contains
-!-------------------------------------------------------------------------
-!  Assemble derivatives of resources and fish:
-!  input:
-!  R: the vector of state variables (all resources)
-!  B: the vector of state variables (all fish grids)
-!  dRdt: vector to hold the derivative of resources (input as a part of dudt and output)
-!  dBdt: vector to hold the derivative of fish (input as a part of dudt and output)
-!-------------------------------------------------------------------------
-      subroutine calcderiv(this, R, B, dRdt, dBdt)
-         class(spectrumfish)::this
-         real(dp), intent(in)::R(nResources), B(this%n)
-         real(dp), intent(inout)::dRdt(nResources), dBdt(this%n)
-         integer::i, j
-!Fish:
-         do i = 1, this%n
-            dBdt(i) = this%Jin(i) - this%Jout(i) + (this%nu(i) - this%mort(i))*B(i) - this%Repro(i)
-         end do
-!Resources:
-         do j = 1, nResources
-            dRdt(j) = rr(j)*(K(j) - R(j)) - mortpred(j)*R(j)
-         end do
-
-      end subroutine calcderiv
-
-   end subroutine calcderivatives
-
-! calcderivatives for squid version---------------------------
-   subroutine calcderivativesSquid(u, dudt)
-      real(dp), intent(in) :: u(nGrid)
-      real(dp), intent(inout) :: dudt(nGrid)
-      integer :: i, iGroup
-
-      dudt = 0.d0 ! overwritten latter
-
-      do i = 1, nGrid
-         upositive(i) = max(0.d0, u(i)) ! keep state variables positive
-      end do
-
-      Enc = V*matmul(theta, upositive)  !a vector contain all Enc for all grid (resources+fish)
-      flvl = Enc/(Cmax + Enc)           !a vector contain all flvl for all grid (resources+fish)
-
-      do i = 1, nGrid
-         if (isnan(flvl(i))) then
-            flvl(i) = 0.d0
-         end if
-      end do
-
-! Calc available food:
-    F = 0.d0
-    F = matmul(theta,upositive) ! totally same as above
-
-!Calc Encounter/feeding:
-!return Enc flvl Eavail for each group
-      do iGroup = 1, nGroups
-         call calcFeeding(group(iGroup)%spec, F(ixStart(iGroup):ixEnd(iGroup)))
-      end do
-
-! Mortality:
-! Predation mortality, including all resources and fish grids
-      mortpred = (Cmax*V/(Enc + Cmax)*upositive) ! temporarily store
-      do i = 1, nGrid
-         if (isnan(mortpred(i))) then            ! because some denominator are 0
-            mortpred(i) = 0.d0
-         end if
-      end do
-      mortpred = matmul(transpose(theta), mortpred)
-
-! Total mortality, only for each fish group
-      do iGroup = 1, nGroups
-         do i = 1, (ixEnd(iGroup) - ixStart(iGroup) + 1)
-            group(iGroup)%spec%mort(i) = mortpred(ixStart(iGroup) + i - 1) + &  !predation mortality
-                                         group(iGroup)%spec%mort0(i) + &        !intrinsic mortality
-                                         group(iGroup)%spec%mortF(i)            !fishing mortality
-         end do
-      end do
-
-! Flux and derivative assemble
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call calcfluxfish(spec, upositive(ixStart(iGroup):ixEnd(iGroup)))     ! Flux out and Flux in
-            call calcderiv(spec, upositive(1:nResources), upositive(ixStart(iGroup):ixEnd(iGroup)), &  ! Assemble derivatives
-                           dudt(1:nResources), dudt(ixStart(iGroup):ixEnd(iGroup)))
-         end select
-      end do
-
-   contains
-!-------------------------------------------------------------------------
-!  Assemble derivatives of resources and fish:
-!  input:
-!  R: the vector of state variables (all resources)
-!  B: the vector of state variables (all fish grids)
-!  dRdt: vector to hold the derivative of resources (input as a part of dudt and output)
-!  dBdt: vector to hold the derivative of fish (input as a part of dudt and output)
-!-------------------------------------------------------------------------
-      subroutine calcderiv(this, R, B, dRdt, dBdt)
-         class(spectrumfish)::this
-         real(dp), intent(in)::R(nResources), B(this%n)
-         real(dp), intent(inout)::dRdt(nResources), dBdt(this%n)
-         real(dp),allocatable:: F_D_out(:,:) ! detritus flus out
-         integer::i, j
-         real(dp):: transR(2,1),transm(1,2)
-!Fish:
-         do i = 1, this%n
-            dBdt(i) = this%Jin(i) - this%Jout(i) + (this%nu(i) - this%mort(i))*B(i) - this%Repro(i)
-         end do
-!Resources:
-         do j = 1, nResources
-            dRdt(j) = rr(j)*(K(j) - R(j)) - mortpred(j)*R(j)
-         end do
-
-! Detritus flux out:
-          transR(1:2,1)= R(1:2)
-          transm(1,1:2)=mortpred(1:2)
-     allocate(F_D_out(1,1))
-    F_D_out =121.d0 + 2.58d0 * matmul(transm , transR)
-    dRdt(3) = F_D_out(1,1) * martin * epst - rr(3) * R(3) - mortpred(3) * R(3)
-    dRdt(4) = 0
-
-      end subroutine calcderiv
-
-   end subroutine calcderivativesSquid
 
 !-------------------------------------------------------------
 ! return assembled vectors containing values for all fish grid (no resources)
@@ -2079,28 +1896,6 @@ subroutine calcderivatives(u, dudt)
 
       g_r(ixStart(iGroup) - nResources:ixEnd(iGroup) - nResources) = this%g
    end subroutine assembleg
-
-
-  ! Euler time integration
-  !!!! probably incorrect
-  !!!! probably incorrect
-  subroutine simulateEuler(u, dudt, tEnd, dt)
-    real(dp), intent(inout):: u(:) ! Initial conditions and result after integration
-    !real(dp), intent(in):: pprod ,bprod, T     ! Light level
-    !integer, intent(in):: region, nStages ! Temperature
-    real(dp), intent(in):: tEnd ! Time to simulate
-    real(dp), intent(in):: dt    ! time step
-    real(dp) :: dudt(nGrid)
-    integer:: i, iEnd
-
-    iEnd = floor(tEnd/dt)
-
-    do i=1, iEnd
-       call calcDerivatives(u, dudt)
-       u = u + dudt*dt
-    end do
-  end subroutine simulateEuler
-
 
 
 ! Oct 2023
@@ -2414,7 +2209,7 @@ end subroutine set2vec
 !  dudt: vector to hold the derivative (input and output)
 ! ----------------------------------------------------------------------
 
-  subroutine calcderivativescus(u, dudt)
+  subroutine calcderivatives(u, dudt)
 
       real(dp), intent(in)    :: u(nGrid)
       real(dp), intent(inout) :: dudt(nGrid)
@@ -2540,7 +2335,7 @@ end subroutine set2vec
         dudt(i+nResources) = dBdt(i)
       enddo
 
-  end subroutine calcderivativescus
+  end subroutine calcderivatives
 !============================================================
 
 
@@ -2640,7 +2435,7 @@ end module FEISTY
          feistyinitialised = .TRUE.
       end if
 
-      call calcderivativescus(conc, dconc)
+      call calcderivatives(conc, dconc)
       CALL outfeisty(yout)
 
    end subroutine runfeisty
