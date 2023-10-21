@@ -34,7 +34,7 @@ module spectrum
    contains
 
       procedure, pass :: initSpectrum
-      procedure :: calcFeeding
+      !procedure :: calcFeeding
    end type typeSpectrum
 
    type spectrumContainer
@@ -90,17 +90,5 @@ contains
 
    end subroutine initSpectrum
 
-! calc for each fish group
-! in : available food of each group
-! out:  Enc flvl Eavail for each fish group
-   subroutine calcFeeding(this, F)
-      class(typeSpectrum), intent(inout):: this
-      real(dp), intent(in):: F(this%n)
-
-      this%Enc = this%V*F                                ! Encounter rate
-      this%flvl = this%Enc/(this%Cmax + this%Enc)        ! feeding level
-      this%Eavail = this%epsAssim*this%flvl*this%Cmax - this%metabolism ! available energy
-
-   end subroutine calcFeeding
 
 end module spectrum

@@ -1,6 +1,6 @@
-SOURCES = input.f90 globals.f90 spectrum.f90 fish.f90 FEISTY.f90 FEISTYtest.f90
+SOURCES = input.f90 globals.f90 spectrum.f90 fish.f90 setup.f90 FEISTY.f90 FEISTYtest.f90
 
-OBJECTS = input.o globals.o spectrum.o fish.o FEISTY.o FEISTYtest.o
+OBJECTS = input.o globals.o spectrum.o fish.o setup.o FEISTY.o FEISTYtest.o
 
 #clean:
 #	rm -f *.o *.mod

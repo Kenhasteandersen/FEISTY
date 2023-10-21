@@ -62,12 +62,12 @@ module fish
 
    contains
       procedure, pass :: initFish
-      procedure :: calcfluxfish
+      !procedure :: calcfluxfish
    end type spectrumFish
 
    public h, hCepha , nn, q, gamma, kk, p, epsAssim, epsRepro, epst, beta, betaCepha, sigma, mMin, mMedium, mLarge,  &
           spectrumFish, &
-          initFish, calcfluxfish, &
+          initFish,&! calcfluxfish, &
           lbenk, szoog, lzoog, sbeng, lbeng
 
 contains
@@ -99,42 +99,5 @@ contains
       this%mortF = 0.d0                  ! Fishing mortality
 
    end subroutine initFish
-
-! calc Flux out and Flux in for each fish group
-! u : the vector of state variables for each fish group
-   subroutine calcfluxfish(this, u)
-      class(spectrumFish), intent(inout):: this
-      real(dp), intent(in):: u(this%n)
-      real(dp)::kappa(this%n), ggamma(this%n)
-      integer::i, ixPrev(this%n)
-
-      this%nu = this%Eavail
-
-!Flux out
-      do i = 1, this%n
-         this%nupositive(i) = max(0.d0, this%nu(i))
-
-         kappa(i) = 1.d0 - this%psiMature(i)
-         ggamma(i) = (kappa(i)*this%nupositive(i) - this%mort(i))/ &
-                     (1.d0 - (1.d0/this%z(i))**(1.d0 - this%mort(i)/(kappa(i)*this%nupositive(i))))
-         this%g(i) = kappa(i)*this%nupositive(i) !growth rate
-         if (kappa(i) .eq. 0) then
-            ggamma(i) = 0.d0 ! No growth of fully mature classes
-         end if
-
-         this%Jout(i) = ggamma(i)*u(i)                              ! Energy flow out of the current stage
-         this%Repro(i) = (1 - kappa(i))*this%nupositive(i)*u(i)     ! Energy can be used for Reproduction
-      end do
-
-!Flux in
-      ixPrev = [this%n, (i, i=1, (this%n - 1))]   ! index: the flux into the current grid is the flux out from the previous grid
-      do i = 1, this%n
-         this%Jin(i) = this%Jout(ixPrev(i))  ! the first grid will be overwrite in next step
-      end do
-      ! Reproduction:
-      this%Jin(1) = epsRepro*(this%Jin(1) + sum(this%Repro))    ! overwrite first grid by reproduction data
-
-   end subroutine calcfluxfish
-!
 
 end module fish

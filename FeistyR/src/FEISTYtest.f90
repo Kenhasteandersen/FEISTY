@@ -1,6 +1,6 @@
 ! for debug
 program FEISTYtest
-   use FEISTY
+   use setup
    use globals
    implicit none
 
