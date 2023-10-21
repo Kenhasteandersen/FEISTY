@@ -267,25 +267,25 @@ contains
       !mL = c(2e-06,0.001, 0.5e-03, 0.25) ! weight lower limit)
 
 !!basic feeding preference matrix theta
-!      do i = idxF, nGrid
-!         do j = 1, nGrid
-!            theta(i, j) = exp(-(log(mc(i)/(beta*mc(j))))**2/(2*sigma)**2)
-!            if (mc(j) .gt. mc(i)) then                   !small can't eat large
-!               theta(i, j) = 0.d0
-!            end if
-!         end do
-!      end do
-
-! FROM NUM Andersen, K. H., & Visser, A. W. (2023). Appendix https://doi.org/10.1016/j.pocean.2023.102995
-! feeding preference matrix theta
       do i = idxF, nGrid
          do j = 1, nGrid
-            theta(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+            theta(i, j) = exp(-(log(mc(i)/(beta*mc(j))))**2/(2*sigma)**2)
             if (mc(j) .gt. mc(i)) then                   !small can't eat large
                theta(i, j) = 0.d0
             end if
          end do
       end do
+
+! FROM NUM Andersen, K. H., & Visser, A. W. (2023). Appendix https://doi.org/10.1016/j.pocean.2023.102995
+! feeding preference matrix theta
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            theta(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+!            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+!               theta(i, j) = 0.d0
+!            end if
+!         end do
+!      end do
 
 ! further clac theta : feeding selection in terms of fish kinds and resources
       ! Small pelagic

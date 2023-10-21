@@ -7,6 +7,7 @@ importFrom("pracma", "erf")
 importFrom("latex2exp", "TeX")
 import(deSolve)
 import(shiny)
+import(shinyjs)
 
 export(setupPelagicSpecies, setupVertical, setupBasic, setupBasic2)
 export(simulateFeisty, derivativesFeistyR)

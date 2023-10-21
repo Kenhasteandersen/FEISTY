@@ -289,6 +289,12 @@ if (cus==FALSE){
   
   if (setup==1){
     initfunc <- "initfeistysetupbasic"
+  }else if(setup==2){
+    initfunc <- "initfeistysetupbasic2"
+  }else if(setup==3){
+    initfunc <- "initfeistysetupVertical"
+  }
+  
     if (any(is.na(times)))  # one call and return
      return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
             func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
@@ -298,11 +304,7 @@ if (cus==FALSE){
     u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
             func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
             ipar=NULL, rpar=NULL) # Run by dll
-  }
   
-  if (setup==2){ #setupbasic2
-    
-  }
 }    
     
     

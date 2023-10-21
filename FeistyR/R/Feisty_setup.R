@@ -47,6 +47,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   
   # physiology of all fish stages
   param = paramAddPhysiology(param)
+  
   param=paramTeffect(param, # only for setupbasic & 2
                            Tref=10,
                            Q10=1.88,
@@ -123,33 +124,66 @@ setupBasic = function(szprod = 100, # small zoo production?
 #   mMature(nGroups) - mass of maturation of each group
 # ------------------------------------------------------------------------------
 
-setupBasic2 = function(pprod = 100, bprod=5, nStages=9) {
+setupBasic2 = function(szprod = 100, # small zoo production?
+                       lzprod = 100, # large zoo production?
+                       bprod  = 5,   # benthos production?
+                       depth  = 100, # water column depth [m]
+                       Tp     = 10,  # pelagic layer averaged temperature [Celsius]
+                       Tb     = 8,  # bottom layer depth [Celsius]
+                       nStages=9,
+                       etaMature=0.25) {
   
   # Initialize the parameters:
-  param = paramInit(depth=0, pprod=pprod, bprod=bprod)
+  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,etaMature=etaMature)
 
   # Setup resource groups:
   param = paramAddResource(
         param, 
         names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
-        K    = c(pprod, pprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+        K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
 
 
 # Add fish groups:
   nSmall = round(0.66*nStages)
-  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=0.5, 
+  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, 
                         mortF=0,      nStages=nSmall, name="smallPel")
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=250, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, 
                         mortF=0, nStages=nStages, name="largePel") 
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=250, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, 
                         mortF=0, nStages=nStages, name="Demersals")
 
   # physiology of all fish stages
   param = paramAddPhysiology(param)
+  
+  param=paramTeffect(param, # only for setupbasic & 2
+                     Tref=10,
+                     Q10=1.88,
+                     Q10m=2.35,
+                     u=NA)
+  
+  # Tref=10
+  # Q10=1.88
+  # Q10m=2.35 #Petrik et al.,2019
+  # 
+  # fTemp=Q10^((Tp - Tref)/10)
+  # fTempm=Q10m^((Tp - Tref)/10)
+  # fTempdem=Q10^((Tb - Tref)/10)
+  # fTempmdem=Q10m^((Tb - Tref)/10)
+  # 
+  # ix = c(param$ix[[1]],param$ix[[2]])
+  # m = param$mc[ix]
+  # param$Cmax[ix] = fTemp* param$Cmax[ix] # maximum consumption rate
+  # param$V[ix] = fTemp* param$V[ix] # clearance rate
+  # param$metabolism[ix] = fTempm* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism
+  # ix = param$ix[[3]]
+  # m = param$mc[ix]
+  # param$Cmax[ix] = fTempdem* param$Cmax[ix] # maximum consumption rate
+  # param$V[ix] = fTempdem* param$V[ix] # clearance rate
+  # param$metabolism[ix] = fTempmdem* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism
 
   # Setup size interaction matrix:
   thetaA = 0.5  # Large fish pref for medium forage fish
