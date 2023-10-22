@@ -40,8 +40,8 @@ server <- function(input, output) {
     show("etaMature")
     show("bent")
     hide("bprod")
-    hide("temps")
-    hide("tempb") 
+    hide("Tp")
+    hide("Tb") 
   }
   )
   
@@ -60,7 +60,15 @@ server <- function(input, output) {
                       etaMature=input$etaMature)
       setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,input$Tp,input$Tb,input$etaMature)
     }else if (input$Setup == 3) {
-      #p = setupVertical(pprod = input$pprod)
+      p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
+                      nStages  = input$nSizeGroups, # Number of size groups
+                      region   = as.integer(input$region),
+                      depth    = input$bottom,
+                      photic   = input$photic,
+                      mesopelagic=250,
+                      visual=1.5,
+                      etaMature=input$etaMature)
+      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature)
       
     }
 

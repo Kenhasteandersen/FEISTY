@@ -122,7 +122,7 @@ allocate (fTempmV(size(depthDay,2)))
     fTempV = 0.d0
     fTempmV  = 0.d0
 
-open(unit=1,action='read', file="../FeistyR/data/tempdata.dat",status="old")!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main
+open(unit=1,action='read', file="file_path_V",status="old")!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main
 do i = 1,5501
     read(1,*) tempdata(i,1),tempdata(i,2),tempdata(i,3),tempdata(i,4) !depth 0-5500(no use), tropical, temperate, boreal, default(10 celcius)
 end do

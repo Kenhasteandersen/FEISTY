@@ -163,12 +163,12 @@ derivativesFeistyR = function(t,              # current time
 # In: 
 #  cus : FALSE-> Fixed setups (published and revised).
 #        TRUE -> Customize your own setup. 'setup' and 'setupini' are revoked.
-#  setup : It only works when 'cus' is TRUE.
+#  setup : It only works when 'cus' is FALSE.
 #          setup type: 1 = Petrik et al. (2019)
 #                      2 = 
 #                      3 = van Denderen et al. (2020)
 #                      4 =           
-#  setupini : It only works when 'cus' is TRUE.......
+#  setupini : It only works when 'cus' is FALSE.......
 #
 #  p : fully populated set of parameters
 #  tEnd : time to simulate (years)
@@ -260,7 +260,7 @@ if (cus==TRUE){
 if (cus==FALSE){
   
   # Oct 2023 Transmit input file path to Fortran library
-  passpath <- function(file_path) {
+  passpath <- function() {
     
     sys=Sys.info()['sysname']
     
@@ -278,21 +278,24 @@ if (cus==FALSE){
       }
     }
     
-    dyn.load(sLibname)
+    if(!is.loaded(sLibname)) dyn.load(sLibname)
     
+    file_path=system.file("data", "input.nml", package = "FeistyR")
     dummy=.Fortran("passpath", file_path_in = as.character(file_path))
+    file_path_V=system.file("data", "tempdata.dat", package = "FeistyR")
+    dummy=.Fortran("passpathv", file_path_in = as.character(file_path_V))
   }
   
-  file_path=system.file("data", "input.nml", package = "FeistyR")
+
   # Call the Fortran subroutine to pass input file path
-  passresult <- passpath(file_path)
+  passresult <- passpath()
   
   if (setup==1){
     initfunc <- "initfeistysetupbasic"
   }else if(setup==2){
     initfunc <- "initfeistysetupbasic2"
   }else if(setup==3){
-    initfunc <- "initfeistysetupVertical"
+    initfunc <- "initfeistysetupvertical"
   }
   
     if (any(is.na(times)))  # one call and return
@@ -333,8 +336,8 @@ if (cus==FALSE){
   SSB = matrix(nrow=length(times), ncol=p$nGroups)
   yield = SSB
   for (i in 1:p$nGroups){
-      SSB[,i]   = colSums( t(u[, p$ix[[i]]]) * p$psiMature[p$ix[[i]]] )
-      yield[,i] = colSums( t(u[, p$ix[[i]]]) * p$mortF[p$ix[[i]]] )
+      SSB[,i]   = colSums( t(u[, p$ix[[i]]+1]) * p$psiMature[p$ix[[i]]] )
+      yield[,i] = colSums( t(u[, p$ix[[i]]+1]) * p$mortF[p$ix[[i]]] )
   }
   sim$SSB = SSB
   sim$yield = yield

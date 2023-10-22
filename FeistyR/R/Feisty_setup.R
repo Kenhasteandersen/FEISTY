@@ -264,21 +264,28 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #
 # ------------------------------------------------------------------------------
 
-setupVertical = function(pprod = 80, 
-                         depth=1500,      # water depth
-                         photic=150,      # photic zone depth
+setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
+                         bent = 150, # Detrital flux out of photic zone
+                         nStages=6, # No. of size groups
+                         region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
+                         depth=1500, # Bottom depth
+                         photic=150, # Photic zone depth
                          mesopelagic=250, # mesopelagic depth
-                         bent=150,        # ??
-                         visual=1.5  ) {# >1 visual predation primarily during the day, = 1 equal day and night
+                         visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
+                         etaMature = 0.25 # Size of matureation relative to
+                                          # asymptotic size. Different from
+                                          # van Denderen (2021), where it is 0.002
+                               ) {
   
   #------------------  
   # Initialize the parameters:
   # habitat and small benthos
   #------------------  
   bprod=0.1*(bent*(depth/photic)^-0.86)
+  if(bprod>=0.1*bent)bprod=0.1*bent
 
-  param = paramInit(bottom=depth, pprod=pprod, bprod=bprod, photic=photic,
-                    mesop=mesopelagic, visual=visual, bent=bent)
+  param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
+                    mesop=mesopelagic, visual=visual, bent=bent,etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
@@ -287,7 +294,7 @@ setupVertical = function(pprod = 80,
     param = paramAddResource(
         param, 
         names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
-        K    = c(pprod, pprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+        K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
         mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
@@ -297,31 +304,32 @@ setupVertical = function(pprod = 80,
   #------------------  
   # Add fish groups:
   #------------------  
+  nSmall = round(0.66*nStages)
   # mMature=NA overrides the generic psiMature-> only adult classes 50% mature
   u0  = 0.0001
-  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=NA, u0=u0,
-                        mortF=c(0,0.3),      nStages=2, name="smallPel")
+  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0,
+                        mortF=0,      nStages=nSmall, name="smallPel")
   
 
   u0M = u0  # initial condition = 0 if no mesopelagic zone
-  if (param$bottom > param$mesop) u0m <- 0
+  if (param$bottom <= param$mesop) u0M <- 0
   
-  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=NA, u0=u0M,
-                        mortF=c(0,0.5),   nStages=2, name="mesoPel")
+  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0M,
+                        mortF=0,   nStages=nSmall, name="mesoPel")
 
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, u0=u0, 
-                        mortF=c(0,0,0.5), nStages=3, name="largePel") 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0, 
+                        mortF=0, nStages=nStages, name="largePel") 
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, u0=u0, 
-                        mortF=c(0,0,0.5), nStages=3, name="bathyPel") 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0M, 
+                        mortF=0, nStages=nStages, name="bathyPel") 
 
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, u0=u0,
-                        mortF=c(0,0,0.5), nStages=3, name="Demersals")
-
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
+                        mortF=0, nStages=nStages, name="Demersals")
+  param$mortF[length(param$mortF)]=0.5
   #------------------  
   # Setup physiology:
   #------------------  
-  param = paramAddPhysiology(param)
+  param = paramAddPhysiology(param,am = 0.2*20) # 20% * Max. consumption coefficient)
     
   #------------------  
   #------------------  
@@ -362,8 +370,8 @@ setupVertical = function(pprod = 80,
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
   
-  ixjuv   = 2   #minloc(abs(sizes-smat)); from matlab
-  ixadult = 3   #minloc(abs(sizes-lmat));
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
 
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
@@ -525,6 +533,31 @@ setupVertical = function(pprod = 80,
   idx_predat = c(pred1, pred2, pred3)
   idx_prey   = c(prey1, prey2)
   param$theta[idx_predat,idx_prey] = param$theta[idx_predat,idx_prey]*0.5
+  
+  # update temperature
+  tempdata=read.table(system.file("data", "tempdata.dat", package = "FeistyR"), sep=',') #
+  tempdata[,5]=10 #
+  Q10=1.88
+  Q10m=1.88
+  
+  dist=(depthDay+depthNight)/2
+  TQ10 =  Q10^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  TQ10m =  Q10m^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
+  
+  scTemp_step=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  scTemp_stepm=matrix(0,nrow=size(dist,1),ncol=size(dist,2))
+  for (i in 1:size(dist,2)) {
+    scTemp_step[,i] = dist[,i] * TQ10
+    scTemp_stepm[,i] = dist[,i] * TQ10m
+  }
+  
+  scTemp = colSums(scTemp_step)
+  scTempm = colSums(scTemp_stepm)
+  
+  param$Cmax = scTemp* param$Cmax # maximum consumption rate 
+  param$V= scTemp* param$V # clearance rate 
+  param$metabolism = scTempm* param$metabolism
+  
   
 return(param)  
 }

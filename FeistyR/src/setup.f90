@@ -474,25 +474,25 @@ contains
       mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
       mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0] ! resource mass lower limit
 !! basic feeding preference matrix theta
-!      do i = idxF, nGrid
-!         do j = 1, nGrid
-!            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
-!                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
-!                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
-!            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
-!         end do
-!      end do
+      do i = idxF, nGrid
+         do j = 1, nGrid
+            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
+                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
+                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
+            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+         end do
+      end do
 
 ! FROM NUM Andersen, K. H., & Visser, A. W. (2023). Appendix https://doi.org/10.1016/j.pocean.2023.102995
 ! feeding preference matrix theta
-      do i = idxF, nGrid
-         do j = 1, nGrid
-            sizeprefer(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
-            if (mc(j) .gt. mc(i)) then                   !small can't eat large
-               sizeprefer(i, j) = 0.d0
-            end if
-         end do
-      end do
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            sizeprefer(i, j) = calcPhi(mc(i)/mc(j), beta, sigma,mU(i)/mL(i))
+!            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+!               sizeprefer(i, j) = 0.d0
+!            end if
+!         end do
+!      end do
 
 !!!vertical overlap
       sigmap = ssigma + tau*log10(mc/mc(1)) ! width for each size class

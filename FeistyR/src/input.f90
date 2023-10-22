@@ -4,7 +4,8 @@
 module input
   implicit none
 
-  character(256) :: file_path
+  character(256) :: file_path, file_path_V
+
 
   contains
 
@@ -48,3 +49,10 @@ end module input
       file_path=file_path_in
 
    end subroutine passpath
+
+   subroutine passpathv(file_path_in)
+    use input
+      character(*), intent(in) :: file_path_in
+      file_path_V=file_path_in
+
+   end subroutine passpathv
