@@ -40,11 +40,11 @@ derivativesFeistyR = function(t,              # current time
   R     = u[p$ixR]       # resource, prey
   iFish = p$ixFish
   B     = u[iFish]       # fish, 
-
+  
   # ----------------------------------------------
   # Consumption of all fish groups
   # ----------------------------------------------
-
+  
   # V: clearance rate, (m2/g/yr) 
   # theta x u: prey available for consumption
   # Cmax: maximum consumption rate, /yr 
@@ -57,7 +57,7 @@ derivativesFeistyR = function(t,              # current time
   
   # net growth rate, /yr
   Eavail  = p$epsAssim * p$Cmax * f - p$metabolism
-
+  
   # ----------------------------------------------
   # Predation mortality, /yr:
   # = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
@@ -66,16 +66,16 @@ derivativesFeistyR = function(t,              # current time
   mm = p$Cmax*p$V/(Enc+p$Cmax)*u # temporarily store
   mm[ is.na(mm) ] = 0
   mortpred = t(p$theta) %*% mm
-
+  
   # ----------------------------------------------
   # Total mortality (includes basal and fishing mortality)
   # ----------------------------------------------
   mort = mortpred + p$mort0 + p$mortF   # /year
-
+  
   # ----------------------------------------------
   # Derivative of fish groups
   # ----------------------------------------------
-
+  
   # Flux out of the size group
   #------------------------------
   v     = Eavail[iFish]   # net growth rate
@@ -96,7 +96,7 @@ derivativesFeistyR = function(t,              # current time
   
   # fraction to reproduction
   Repro = (1-kappa)*vplus*B
-
+  
   # Flux into the size group
   #------------------------------
   Fin = 0
@@ -110,11 +110,11 @@ derivativesFeistyR = function(t,              # current time
     RR[i] = sum(Repro[ix]) + Fin[ix[1]]
     Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + sum( Repro[ix] ))
   }
-
+  
   # ----------------------------------------------
   # Assemble derivatives of fish:
   # ----------------------------------------------
-
+  
   dBdt = Fin - Fout + (v - mort[p$ixFish])*B - Repro
   
   # ----------------------------------------------
@@ -124,7 +124,7 @@ derivativesFeistyR = function(t,              # current time
     dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
   else               # logistic
     dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
-
+  
   if (FullOutput) {
     out = list()
     out$deriv = c(dRdt, dBdt)
@@ -134,15 +134,15 @@ derivativesFeistyR = function(t,              # current time
     out$Repro = Repro
     out$Fin   = Fin
     out$Fout  = Fout
-
-  # for the budget:
+    
+    # for the budget:
     grazing = p$Cmax * f         # grazing rate, /yr
     loss    = (1.-p$epsAssim) * grazing + p$metabolism
-  
+    
     il <- NULL
     for (i in 1:length(p$ix))
       il <- c(il, rep(i, times=length(p$ix[[i]])))
-  
+    
     out$TotMort    = tapply((mort   *u)[p$ixFish], INDEX=il, FUN=sum)
     out$TotGrazing = tapply((grazing*u)[p$ixFish], INDEX=il, FUN=sum)
     out$TotLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum)
@@ -190,18 +190,18 @@ simulateFeisty = function(cus    = FALSE,
                           Rmodel = derivativesFeistyR,
                           simpleOutput = FALSE) 
 {
-
+  
   nR      <- p$nResources[1]  # [1] to make sure that this is only one number
   nGroups <- p$nGroups[1]
   nGrid   <- p$nStages[1]
   nFGrid  <- nGrid-nR
   
   if (length(yini) != nGrid) 
-      stop ("length of 'yini' not ok - should be ", nGrid)  
-
+    stop ("length of 'yini' not ok - should be ", nGrid)  
+  
   if (USEdll) {    # calculate in Fortran
-
-  # the integers to be passed to the fortran code
+    
+    # the integers to be passed to the fortran code
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
               unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
@@ -210,11 +210,11 @@ simulateFeisty = function(cus    = FALSE,
     ipar <- as.integer(ipar)
     if (length(ipar) != 3 + nGroups) 
       stop ("length of 'ipar' not ok -check parameters")  
-
+    
     if (any(dim(p$theta)-c(nGrid, nGrid) != 0))
       stop ("dimension of 'theta' not ok: should be (", nGrid, ",", nGrid, ")")  
-
-   # the double precisions to be passed to the fortran code
+    
+    # the double precisions to be passed to the fortran code
     rpar   <- c(rep(p$K,  length.out=nR),            # resource parameters
                 rep(p$r,  length.out=nR),  
                 rep(p$epsRepro, length.out=nGroups), # group-specific parameter
@@ -227,7 +227,7 @@ simulateFeisty = function(cus    = FALSE,
                 rep(p$metabolism, length.out=nGrid),
                 rep(p$mort0,      length.out=nGrid),
                 rep(p$mortF,      length.out=nGrid))  
-  
+    
     # names of functions in fortran code to be used
     #initfunc <- "initfeisty"   # the initialisation function
     runfunc  <- "runfeisty"    # the derivative function
@@ -243,72 +243,72 @@ simulateFeisty = function(cus    = FALSE,
       paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
       paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
       paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
-
-if (cus==TRUE){
-     initfunc <- "initfeisty"
-  
-     if (any(is.na(times)))  # one call and return
-     return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
-                  func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-                  ipar=ipar, rpar=as.double(rpar)))
-  
-   u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
-          func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-          ipar=ipar, rpar=as.double(rpar)) # Run by dll
-}
     
-if (cus==FALSE){
-  
-  # Oct 2023 Transmit input file path to Fortran library
-  passpath <- function() {
-    
-    sys=Sys.info()['sysname']
-    
-    if (sys=='Darwin') {
-      # sLibname = system.file("libs", "FeistyR.dylib", package = "FeistyR")
+    if (cus==TRUE){
+      initfunc <- "initfeisty"
+      
+      if (any(is.na(times)))  # one call and return
+        return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
+                        func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+                        ipar=ipar, rpar=as.double(rpar)))
+      
+      u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
+              func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+              ipar=ipar, rpar=as.double(rpar)) # Run by dll
     }
-    if (sys=='Linux') {
-      # sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
-    }
-    if (sys=='Windows'){
-      if (Sys.info()['machine']=='x86-64'){
-        sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
-      }else{
-        sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
+    
+    if (cus==FALSE){
+      
+      # Oct 2023 Transmit input file path to Fortran library
+      passpath <- function() {
+        
+        sys=Sys.info()['sysname']
+        
+        if (sys=='Darwin') {
+          sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+        }
+        if (sys=='Linux') {
+          sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+        }
+        if (sys=='Windows'){
+          if (Sys.info()['machine']=='x86-64'){
+            sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
+          }else{
+            sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
+          }
+        }
+        
+        if(!is.loaded(sLibname)) dyn.load(sLibname)
+        
+        file_path=system.file("data", "input.nml", package = "FeistyR")
+        dummy=.Fortran("passpath", file_path_in = as.character(file_path))
+        file_path_V=system.file("data", "tempdata.dat", package = "FeistyR")
+        dummy=.Fortran("passpathv", file_path_in = as.character(file_path_V))
       }
-    }
-    
-    if(!is.loaded(sLibname)) dyn.load(sLibname)
-    
-    file_path=system.file("data", "input.nml", package = "FeistyR")
-    dummy=.Fortran("passpath", file_path_in = as.character(file_path))
-    file_path_V=system.file("data", "tempdata.dat", package = "FeistyR")
-    dummy=.Fortran("passpathv", file_path_in = as.character(file_path_V))
-  }
-  
-
-  # Call the Fortran subroutine to pass input file path
-  passresult <- passpath()
-  
-  if (setup==1){
-    initfunc <- "initfeistysetupbasic"
-  }else if(setup==2){
-    initfunc <- "initfeistysetupbasic2"
-  }else if(setup==3){
-    initfunc <- "initfeistysetupvertical"
-  }
-  
-    if (any(is.na(times)))  # one call and return
-     return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
-            func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-            ipar=NULL, rpar=NULL))
-    
-    
-    u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
-            func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-            ipar=NULL, rpar=NULL) # Run by dll
-  
-}    
+      
+      
+      # Call the Fortran subroutine to pass input file path
+      passresult <- passpath()
+      
+      if (setup==1){
+        initfunc <- "initfeistysetupbasic"
+      }else if(setup==2){
+        initfunc <- "initfeistysetupbasic2"
+      }else if(setup==3){
+        initfunc <- "initfeistysetupvertical"
+      }
+      
+      if (any(is.na(times)))  # one call and return
+        return( DLLfunc(y=yini, times=0, parms=as.double(setupini), dllname = "FeistyR",
+                        func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+                        ipar=NULL, rpar=NULL))
+      
+      
+      u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
+              func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+              ipar=NULL, rpar=NULL) # Run by dll
+      
+    }    
     
     
   } else if (any(is.na(times))) {  # one call and return
@@ -316,7 +316,7 @@ if (cus==FALSE){
   } else {               # R-code
     
     u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R
-
+    
   }
   if (! simpleOutput) return(u)
   #
@@ -336,8 +336,8 @@ if (cus==FALSE){
   SSB = matrix(nrow=length(times), ncol=p$nGroups)
   yield = SSB
   for (i in 1:p$nGroups){
-      SSB[,i]   = colSums( t(u[, p$ix[[i]]+1]) * p$psiMature[p$ix[[i]]] )
-      yield[,i] = colSums( t(u[, p$ix[[i]]+1]) * p$mortF[p$ix[[i]]] )
+    SSB[,i]   = colSums( t(u[, p$ix[[i]]+1]) * p$psiMature[p$ix[[i]]] )
+    yield[,i] = colSums( t(u[, p$ix[[i]]+1]) * p$mortF[p$ix[[i]]] )
   }
   sim$SSB = SSB
   sim$yield = yield
