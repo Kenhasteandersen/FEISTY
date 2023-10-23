@@ -299,7 +299,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
         mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
         mUpper = c(0.001, 0.5, 125, 125),
-        u0     = 0.5)
+        u0     = c(0.5,0.5,0.5,0))
 
   #------------------  
   # Add fish groups:
