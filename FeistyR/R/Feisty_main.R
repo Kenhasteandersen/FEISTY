@@ -281,9 +281,9 @@ simulateFeisty = function(cus    = FALSE,
         if(!is.loaded(sLibname)) dyn.load(sLibname)
         
         file_path=system.file("data", "input.nml", package = "FeistyR")
-        dummy=.Fortran("passpath", file_path_in = as.character(file_path))
+        dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
         file_path_V=system.file("data", "tempdata.dat", package = "FeistyR")
-        dummy=.Fortran("passpathv", file_path_in = as.character(file_path_V))
+        dummy=.C("passpathv", length=nchar(file_path_V), file_path_in=charToRaw(file_path_V))
       }
       
       
@@ -303,11 +303,9 @@ simulateFeisty = function(cus    = FALSE,
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=NULL, rpar=NULL))
       
-      
       u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=NULL, rpar=NULL) # Run by dll
-      
     }    
     
     

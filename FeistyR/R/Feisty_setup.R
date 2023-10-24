@@ -209,8 +209,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    ixLarge = param$ix[[2]]
    ixDem   = param$ix[[3]]
   
-   mMedium = 10
-   mLarge = 5000
+   mMedium = 0.5
+   mLarge = 250
    ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=mMedium) ]
    ixMediumSizeDem = ixDem[ (param$mc[ixDem]>mMedium) &
                             (param$mc[ixDem]<mLarge) ]

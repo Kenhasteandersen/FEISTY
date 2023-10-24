@@ -3,7 +3,6 @@
 !
 module input
   implicit none
-
   character(256) :: file_path, file_path_V
 
 
@@ -39,20 +38,36 @@ module input
 
   end subroutine check_iostat
 
+
+
 end module input
 
+! 
+! Routines used to pass the paths for the input files from R to the Fortran library:
+!
+    subroutine passpath(length, file_path_in) bind(C)
+      use input
+     use iso_c_binding, only: c_int, c_char
+     integer(c_int), intent(in):: length ! Length of the character string being sent in
+     character(c_char), dimension(length), intent(in) :: file_path_in
+     integer:: i
 
-! Oct 2023
-   subroutine passpath(file_path_in)
-    use input
-      character(*), intent(in) :: file_path_in
-      file_path=file_path_in
+    ! Transfor from the R-file_path_in to the Fortran format
+     do i = 1, length
+       file_path(i:i) = file_path_in(i)
+     end do
+    end subroutine passpath
 
-   end subroutine passpath
+    subroutine passpathv(length, file_path_in) bind(C)
+      use input
+      use iso_c_binding, only: c_int, c_char
+      integer(c_int), intent(in):: length ! Length of the character string being sent in
+      character(c_char), dimension(length), intent(in) :: file_path_in
+      integer:: i
+ 
+     ! Transfor from the R-file_path_in to the Fortran format
+      do i = 1, length
+        file_path_V(i:i) = file_path_in(i)
+      end do
+    end subroutine passpathv
 
-   subroutine passpathv(file_path_in)
-    use input
-      character(*), intent(in) :: file_path_in
-      file_path_V=file_path_in
-
-   end subroutine passpathv
