@@ -73,7 +73,7 @@ server <- function(input, output) {
     }
 
     # Simulate
-    return( simulateFeisty(cus    = FALSE,
+    return( simulateFeisty(bUseRDerivative    = FALSE,
                            setup  = input$Setup,
                            setupini = setupini,
                            p, 

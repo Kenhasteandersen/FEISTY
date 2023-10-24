@@ -125,7 +125,10 @@ derivativesFeistyR = function(t,              # current time
   else               # logistic
     dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
   
-  if (FullOutput) {
+  # ----------------------------------------------
+  # Assemble output:
+  # ----------------------------------------------
+  if (FullOutput) { # Output everything
     out = list()
     out$deriv = c(dRdt, dBdt)
     out$f     = f # Feeding level all stages
@@ -151,7 +154,7 @@ derivativesFeistyR = function(t,              # current time
     out$Fishes     = tapply(B, INDEX=il, FUN=sum)
     return(out)
   }
-  else
+  else # Output just the derivatives
     return( list(c(dRdt, dBdt)) )
 }
 
@@ -161,52 +164,58 @@ derivativesFeistyR = function(t,              # current time
 # Simulate the model.
 #
 # In: 
-#  cus : FALSE-> Fixed setups (published and revised).
-#        TRUE -> Customize your own setup. 'setup' and 'setupini' are revoked.
-#  setup : It only works when 'cus' is FALSE.
-#          setup type: 1 = Petrik et al. (2019)
-#                      2 = 
-#                      3 = van Denderen et al. (2020)
+#  bUseRDerivative : FALSE-> Used fixed setups coded in the Fortran library 
+#                    (published and revised).
+#                    TRUE -> Use setups coded in R. Makes it easier to bUseRDerivativetomize
+#                    your own setup. 'setup' and 'setupini' are revoked.
+#  setup: This is the function that defines the parameters (the "setup") which is used 
+#         when bUseRDerivative = TRUE
+#          setup type: 1 = setupBasic: Petrik et al. (2019)
+#                      2 = setupBasic2: as (1) but with adjusted to work with arbitrary no of stages
+#                      3 = setVertical: van Denderen et al. (2020)
 #                      4 =           
-#  setupini : It only works when 'cus' is FALSE.......
+#  setupini: The initial parameters values for the setup coded in Fortran (if bUseRDerivative=FALSE)
 #
 #  p : fully populated set of parameters
 #  tEnd : time to simulate (years)
-#  USEdll : TRUE -> ODE solved by dll / FALSE -> ODE solved by R
+#  times: The times steps to return. If times=NA then it just does one call, essentially
+#          used to just get the derivate and not simulate
+#  USEdll : TRUE -> ODE solved by Fortran dll / FALSE -> ODE solved by R
+#  simpleOutput: boolean that states whether the full output is needed or not
 #
 # Out:
 #  A simulation list
 # 
 # ------------------------------------------------------------------------------
 
-simulateFeisty = function(cus    = FALSE,
+simulateFeisty = function(bUseRDerivative    = FALSE,
                           setup  = 1,
                           setupini = c(100,100,5,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
                           p      = setupBasic(), 
                           tEnd   = 100,
-                          times  = seq(from=0, to=tEnd, by=1),
+                          times  = seq(from=0, to=tEnd, by=1), 
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFeistyR,
                           simpleOutput = FALSE) 
 {
   
-  nR      <- p$nResources[1]  # [1] to make sure that this is only one number
-  nGroups <- p$nGroups[1]
-  nGrid   <- p$nStages[1]
-  nFGrid  <- nGrid-nR
+  nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
+  nGroups <- p$nGroups[1] # no of fish groups
+  nGrid   <- p$nStages[1] # no of grid points
+  nFGrid  <- nGrid-nR # grid points of fish
   
   if (length(yini) != nGrid) 
     stop ("length of 'yini' not ok - should be ", nGrid)  
-  
-  if (USEdll) {    # calculate in Fortran
-    
+  #
+  # calculate in Fortran
+  #
+  if (USEdll) {    
     # the integers to be passed to the fortran code
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
               unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
               p$Rtype)                           # type of resource dynamics
-    
     ipar <- as.integer(ipar)
     if (length(ipar) != 3 + nGroups) 
       stop ("length of 'ipar' not ok -check parameters")  
@@ -229,7 +238,6 @@ simulateFeisty = function(cus    = FALSE,
                 rep(p$mortF,      length.out=nGrid))  
     
     # names of functions in fortran code to be used
-    #initfunc <- "initfeisty"   # the initialisation function
     runfunc  <- "runfeisty"    # the derivative function
     
     # output variables
@@ -244,7 +252,11 @@ simulateFeisty = function(cus    = FALSE,
       paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
       paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
     
-    if (cus==TRUE){
+    # 
+    # Run the simulation:
+    #
+    if (bUseRDerivative==TRUE){     # If using the R code for calculating the derivative (slow):
+      
       initfunc <- "initfeisty"
       
       if (any(is.na(times)))  # one call and return
@@ -257,11 +269,9 @@ simulateFeisty = function(cus    = FALSE,
               ipar=ipar, rpar=as.double(rpar)) # Run by dll
     }
     
-    if (cus==FALSE){
-      
+    if (bUseRDerivative==FALSE){    # If using the derivative from Fortran (fast):
       # Oct 2023 Transmit input file path to Fortran library
       passpath <- function() {
-        
         sys=Sys.info()['sysname']
         
         if (sys=='Darwin') {
@@ -286,10 +296,10 @@ simulateFeisty = function(cus    = FALSE,
         dummy=.C("passpathv", length=nchar(file_path_V), file_path_in=charToRaw(file_path_V))
       }
       
-      
       # Call the Fortran subroutine to pass input file path
       passresult <- passpath()
       
+      # Choose the setup:
       if (setup==1){
         initfunc <- "initfeistysetupbasic"
       }else if(setup==2){
@@ -302,24 +312,24 @@ simulateFeisty = function(cus    = FALSE,
         return( DLLfunc(y=yini, times=0, parms=as.double(setupini), dllname = "FeistyR",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=NULL, rpar=NULL))
-      
+      # Full simulation:
       u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=NULL, rpar=NULL) # Run by dll
     }    
-    
-    
+    #
+    # Calculate in R:
+    #
   } else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
-    
     u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R
-    
   }
-  if (! simpleOutput) return(u)
   #
   # Assemble output:
   #
+  if (! simpleOutput) return(u)
+ 
   sim   = list()
   sim$R = u[, p$ixR+1]
   sim$B = u[, p$ixFish+1]
@@ -341,5 +351,4 @@ simulateFeisty = function(cus    = FALSE,
   sim$yield = yield
   
   return(sim)
-  
 }
