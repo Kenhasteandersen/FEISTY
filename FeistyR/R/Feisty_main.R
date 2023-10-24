@@ -190,7 +190,7 @@ derivativesFeistyR = function(t,              # current time
 
 simulateFeisty = function(bUseRDerivative    = FALSE,
                           setup  = 1,
-                          setupini = c(100,100,5,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
+                          setupini = c(100,100,5,100,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
                           p      = setupBasic(), 
                           tEnd   = 100,
                           times  = seq(from=0, to=tEnd, by=1), 

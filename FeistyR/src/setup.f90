@@ -98,8 +98,8 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al., 2019
 ! --------------------------------------
-   subroutine setupbasic(szprod,lzprod, bprod,Ts,Tb)
-      real(dp), intent(in)::szprod,lzprod, bprod, Ts, Tb
+   subroutine setupbasic(szprod, lzprod, bprod, depth, Ts, Tb)
+      real(dp), intent(in)::szprod,lzprod, bprod, depth, Ts, Tb
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -146,13 +146,13 @@ contains
 
 ! Feeding preference matrix:
 ! assemble vectors
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-         end select
-      end do
-      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
+!      do iGroup = 1, nGroups
+!         select type (spec => group(iGroup)%spec)
+!         type is (spectrumfish)
+!            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+!         end select
+!      end do
+!      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
       !mU(1:nResources) = [2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)] ! weight central size
       !mL(1:nResources) = [2e-06,0.001, 0.5e-03, 0.25] ! weight lower limit)
 
@@ -169,8 +169,10 @@ contains
       ! Demersals:
       theta(10, 1) = 1.d0           ! larval demersals ear small zooplankton
       theta(11, 3) = 1.d0           ! medium demersals eat small benthos
+      if (depth .lt. 200.d0) then
       theta(12, 6) = thetaA*thetaD  ! medium forage fish
       theta(12, 8) = thetaD         ! medium large pelagics
+      end if
       theta(12, 11) = 1.d0          ! medium demersals
 
 ! update temperature
@@ -184,16 +186,32 @@ do iGroup = 1, nGroups-1
     group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
 end do
   !demersal
-    group(3)%spec%V=group(3)%spec%V*fTempdem
-    group(3)%spec%Cmax=group(3)%spec%Cmax*fTempdem
-    group(3)%spec%metabolism=group(3)%spec%metabolism*fTempmdem
-  !vector
-  !pelagic
-V(ixStart(1):ixEnd(2))=V(ixStart(1):ixEnd(2))*fTemp
-Cmax(ixStart(1):ixEnd(2))=Cmax(ixStart(1):ixEnd(2))*fTemp
-  !demersal
-V(ixStart(3):ixEnd(3))=V(ixStart(3):ixEnd(3))*fTempdem
-Cmax(ixStart(3):ixEnd(3))=Cmax(ixStart(3):ixEnd(3))*fTempdem
+  !small
+    group(3)%spec%V(1)=group(3)%spec%V(1)*fTemp
+    group(3)%spec%Cmax(1)=group(3)%spec%Cmax(1)*fTemp
+    group(3)%spec%metabolism(1)=group(3)%spec%metabolism(1)*fTempm
+  !medium
+    group(3)%spec%V(2)=group(3)%spec%V(2)*fTempdem
+    group(3)%spec%Cmax(2)=group(3)%spec%Cmax(2)*fTempdem
+    group(3)%spec%metabolism(2)=group(3)%spec%metabolism(2)*fTempmdem
+  !large
+   if (depth .lt. 200.d0) then
+    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem_shallow
+    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem_shallow
+    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem_shallow
+   else
+    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem
+    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem
+    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem
+   end if
+
+!update vector V Cmax for T effects
+      do iGroup = 1, nGroups
+         select type (spec => group(iGroup)%spec)
+         type is (spectrumfish)
+            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+         end select
+      end do
 
 call set2vec
 Rtype=1

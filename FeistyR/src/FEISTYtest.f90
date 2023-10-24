@@ -8,7 +8,7 @@ program FEISTYtest
    !real(dp),intent(out):: thetaF(nGrid,nGrid)
    !real(dp), allocatable:: flvl_r(:), mortpred_r(:), g_r(:)
 
-   call setupbasic(100.d0,100.d0,5.d0,10.d0,9.d0)
+   call setupbasic(100.d0,100.d0,5.d0,100.d0,10.d0,8.d0)
   !call setupbasic2(100.d0,100.d0,5.d0,9,10.d0,10.d0,0.002d0)
   ! call setupVertical(80.d0,80.d0,150.d0,6,4,1500.d0,150.d0,0.25d0) !
    !call setupsquid( 50.d0, 100.d0 , 6)
@@ -54,7 +54,7 @@ program FEISTYtest
 
 
  call calcderivatives(u0,dudt)
-    call setupbasic(100.d0,100.d0,5.d0,10.d0,9.d0)
+    call setupbasic(100.d0,100.d0,5.d0,100.d0,10.d0,9.d0)
      call calcderivatives(u0,dudt)
  !call calcderivativesSquid(u0,dudt)
 

@@ -17,12 +17,14 @@ server <- function(input, output) {
     show("lzprod")
     show("bprod")
     show("temps")
-    show("tempb")      
+    show("tempb")
+    show("sh_de")
   }else if (input$Setup==2) {
     hide("region")
     hide("bottom")
     hide("photic")
     hide("bent")
+    hide("sh_de")
     show("etaMature")
     show("nSizeGroups")
     show("szprod")
@@ -41,21 +43,23 @@ server <- function(input, output) {
     show("bent")
     hide("bprod")
     hide("Tp")
-    hide("Tb") 
+    hide("Tb")
+    hide("sh_de")
   }
   )
   
   sim <- eventReactive(c(
     input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
-    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent
+    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent,
+    input$sh_de
   ),
   {
     # setup simulation
     if (input$Setup == 1) {
-      p = setupBasic(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=100,Tp=input$Tp,Tb=input$Tb)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$Tp,input$Tb)
+      p = setupBasic(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb)
+      setupini = c(input$szprod,input$lzprod,input$bprod,input$sh_de,input$Tp,input$Tb)
     }else if (input$Setup == 2) {
-      p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=100,Tp=input$Tp,Tb=input$Tb,
+      p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
                       etaMature=input$etaMature)
       setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,input$Tp,input$Tb,input$etaMature)

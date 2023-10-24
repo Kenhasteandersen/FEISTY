@@ -24,7 +24,8 @@ setupBasic = function(szprod = 100, # small zoo production?
                       Tb     = 8)  # bottom layer depth [Celsius]
   {
   # Initialize the parameters:
-  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb)
+  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,
+                    mMedium = 0.5, mLarge = 250)
   
   # Add resource:
   param = paramAddResource(
@@ -53,26 +54,7 @@ setupBasic = function(szprod = 100, # small zoo production?
                            Q10=1.88,
                            Q10m=2.35,
                            u=NA)
-  # Tref=10
-  # Q10=1.88
-  # Q10m=2.35 #Petrik et al.,2019
-  # 
-  # fTemp=Q10^((Tp - Tref)/10)
-  # fTempm=Q10m^((Tp - Tref)/10)
-  # fTempdem=Q10^((Tb - Tref)/10)
-  # fTempmdem=Q10m^((Tb - Tref)/10)
-  # 
-  # ix = c(param$ix[[1]],param$ix[[2]])
-  # m = param$mc[ix]
-  # param$Cmax[ix] = fTemp* param$Cmax[ix] # maximum consumption rate 
-  # param$V[ix] = fTemp* param$V[ix] # clearance rate 
-  # param$metabolism[ix] = fTempm* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism
-  # ix = param$ix[[3]]
-  # m = param$mc[ix]
-  # param$Cmax[ix] = fTempdem* param$Cmax[ix] # maximum consumption rate 
-  # param$V[ix] = fTempdem* param$V[ix] # clearance rate 
-  # param$metabolism[ix] = fTempmdem* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism 
-  #
+
   # Setup size interaction matrix:
   #
 
@@ -102,7 +84,6 @@ setupBasic = function(szprod = 100, # small zoo production?
   param$theta["Demersals_1", "smallZoo"] = 1
   param$theta["Demersals_2", "smallBenthos"] = 1
   if (param$depth < 200){
-  param$theta["Demersals_3", "smallPel_2"] = 1
   param$theta["Demersals_3", "smallPel_2"] = 0.75/2
   param$theta["Demersals_3", "largePel_2"] = 0.75 
   }
@@ -134,7 +115,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        etaMature=0.25) {
   
   # Initialize the parameters:
-  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,etaMature=etaMature)
+  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,etaMature=etaMature,
+                    mMedium = 0.5, mLarge = 250)
 
   # Setup resource groups:
   param = paramAddResource(
@@ -209,11 +191,10 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    ixLarge = param$ix[[2]]
    ixDem   = param$ix[[3]]
   
-   mMedium = 0.5
-   mLarge = 250
-   ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=mMedium) ]
-   ixMediumSizeDem = ixDem[ (param$mc[ixDem]>mMedium) &
-                            (param$mc[ixDem]<mLarge) ]
+   ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=param$mMedium) ]
+   ixMediumSizeDem = ixDem[ (param$mc[ixDem]>param$mMedium) &
+                            (param$mc[ixDem]<param$mLarge) ]
+   ixLargeSizeDem = ixDem[ (param$mc[ixDem]>=param$mLarge) ]
    
    # Pelagic/demersal indices:
    ixR = param$ixR
@@ -236,8 +217,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    param$theta[ixMediumSizeDem, param$ixFish] = 0 
    
    # Large demersals feed have reduced feeding effiiency on pelagic species:
-   param$theta[ixDem, ixSmall] = thetaA * thetaD * param$theta[ixDem,ixSmall] 
-   param$theta[ixDem, ixLarge] = thetaD * param$theta[ixDem, ixLarge] 
+   param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
+   param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
 
   #
   # Mortality

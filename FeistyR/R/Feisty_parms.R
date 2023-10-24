@@ -312,9 +312,9 @@ paramTeffect = function (p, # only for setupbasic & 2
   
   if (p$depth<200){
   
-  lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>10]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>10 & p$mc[p$ix[[2]]]<5000]]))/
-         (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>10]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>10 & p$mc[p$ix[[2]]]<5000]]) + 
-          sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]]) + sum(u[3:4])) #Eq. 15
+  lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]))/
+         (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]) + 
+          sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]]) + sum(u[3:4])) #Eq. 15
   
   lambda=0.5 #
   p$eT = p$Tp * lambda + p$Tb * (1-lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
@@ -334,22 +334,22 @@ paramTeffect = function (p, # only for setupbasic & 2
   
   #demersal
   #small
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]<=10] = p$fT_met * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=10]
+  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] # small demersal are pelagic
+  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
+  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT_met * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
   #medium
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>10 & p$mc[p$ix[[3]]]<5000]
-    
+  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] # small demersal are pelagic
+  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
+  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
+  #Large  
   if (p$depth < 200){
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem_shallow * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem_shallow * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_met_dem_shallow * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
+    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
+    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem_shallow * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
   }else{
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>5000] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>5000]
+    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
+    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
+    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
     
   }
   

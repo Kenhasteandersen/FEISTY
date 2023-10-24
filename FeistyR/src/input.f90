@@ -42,7 +42,7 @@ module input
 
 end module input
 
-! 
+!
 ! Routines used to pass the paths for the input files from R to the Fortran library:
 !
     subroutine passpath(length, file_path_in) bind(C)
@@ -64,7 +64,7 @@ end module input
       integer(c_int), intent(in):: length ! Length of the character string being sent in
       character(c_char), dimension(length), intent(in) :: file_path_in
       integer:: i
- 
+
      ! Transfor from the R-file_path_in to the Fortran format
       do i = 1, length
         file_path_V(i:i) = file_path_in(i)

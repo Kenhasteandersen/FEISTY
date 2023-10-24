@@ -21,7 +21,7 @@ module globals
 
    ! Temperature Q10 corrections
    real(dp), parameter :: Q10=1.88d0, Q10m=1.88d0, Q10mPetrik=2.35d0
-   real(dp) :: fTemp, fTempm, fTempdem, fTempmdem
+   real(dp) :: fTemp, fTempm, fTempdem, fTempmdem, fTempdem_shallow, fTempmdem_shallow
    real(dp), parameter:: Tref = 10.d0 ! Reference temperature
 
    real(dp), allocatable :: fTempV(:), fTempmV(:)
@@ -79,6 +79,7 @@ contains
 ! update temperature setupbasic (Petrik et al., 2019) and setupbasic2
 subroutine updateTemp(Ts, Tb)
       real(dp), intent(in) :: Ts, Tb
+      real(dp) :: eT, lambda
       real(dp), save :: Tolds = -1000.d0
       real(dp), save :: Toldb = -1000.d0
 
@@ -90,6 +91,11 @@ subroutine updateTemp(Ts, Tb)
          fTempdem = calfTemp(Q10, Tb)  !for demersal
          fTempmdem = calfTemp(Q10mPetrik, Tb) !for demersal
 
+          !lambda should depend on B but temporarily set as 0.5
+          lambda = 0.5d0
+          eT     = Ts * lambda + Tb * (1-lambda)
+          fTempdem_shallow  = calfTemp(Q10, eT)
+          fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
       end if
 
 end subroutine updateTemp
