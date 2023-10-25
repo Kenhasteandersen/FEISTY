@@ -83,7 +83,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   # Demersals:
   param$theta["Demersals_1", "smallZoo"] = 1
   param$theta["Demersals_2", "smallBenthos"] = 1
-  if (param$depth < 200){
+  if (param$depth < 200){ # Large demersals only eat pelagic prey in shallow water
   param$theta["Demersals_3", "smallPel_2"] = 0.75/2
   param$theta["Demersals_3", "largePel_2"] = 0.75 
   }
@@ -147,25 +147,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                      Q10m=2.35,
                      u=NA)
   
-  # Tref=10
-  # Q10=1.88
-  # Q10m=2.35 #Petrik et al.,2019
-  # 
-  # fTemp=Q10^((Tp - Tref)/10)
-  # fTempm=Q10m^((Tp - Tref)/10)
-  # fTempdem=Q10^((Tb - Tref)/10)
-  # fTempmdem=Q10m^((Tb - Tref)/10)
-  # 
-  # ix = c(param$ix[[1]],param$ix[[2]])
-  # m = param$mc[ix]
-  # param$Cmax[ix] = fTemp* param$Cmax[ix] # maximum consumption rate
-  # param$V[ix] = fTemp* param$V[ix] # clearance rate
-  # param$metabolism[ix] = fTempm* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism
-  # ix = param$ix[[3]]
-  # m = param$mc[ix]
-  # param$Cmax[ix] = fTempdem* param$Cmax[ix] # maximum consumption rate
-  # param$V[ix] = fTempdem* param$V[ix] # clearance rate
-  # param$metabolism[ix] = fTempmdem* param$metabolism[ix] # 0.2*param$Cmax[ix] # standard metabolism
 
   # Setup size interaction matrix:
   thetaA = 0.5  # Large fish pref for medium forage fish
@@ -216,9 +197,23 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    param$theta[ixMediumSizeDem, 1:2] = 0 
    param$theta[ixMediumSizeDem, param$ixFish] = 0 
    
-   # Large demersals feed have reduced feeding effiiency on pelagic species:
-   param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
-   param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
+   # Large demersals feed have reduced feeding efficiency on pelagic species:
+   if(param$depth<200){ # Large demersals only eat pelagic prey in shallow water
+          param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
+          param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
+        
+          #param$theta[ixLargeSizeDem, 1:2] = 
+          #param$theta[ixLargeSizeDem, ixSmallSizeDem] =
+   }else{
+          param$theta[ixLargeSizeDem, ixSmall] = 0
+          param$theta[ixLargeSizeDem, ixLarge] = 0 
+     
+          param$theta[ixLargeSizeDem, 1:2] = 0
+          param$theta[ixLargeSizeDem, ixSmallSizeDem] = 0
+   }
+
+
+   
 
   #
   # Mortality

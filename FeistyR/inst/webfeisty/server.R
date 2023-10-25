@@ -24,7 +24,7 @@ server <- function(input, output) {
     hide("bottom")
     hide("photic")
     hide("bent")
-    hide("sh_de")
+    show("sh_de")
     show("etaMature")
     show("nSizeGroups")
     show("szprod")
@@ -62,7 +62,7 @@ server <- function(input, output) {
       p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
                       etaMature=input$etaMature)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,input$Tp,input$Tb,input$etaMature)
+      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature)
     }else if (input$Setup == 3) {
       p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                       nStages  = input$nSizeGroups, # Number of size groups

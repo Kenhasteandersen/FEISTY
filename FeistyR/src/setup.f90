@@ -236,8 +236,8 @@ contains
 ! --------------------------------------
 ! Setup by Ken.
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprod, nStages, Ts, Tb, etaMature) !
-      real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb
+   subroutine setupbasic2(szprod,lzprod, bprod, nStages, depth, Ts, Tb, etaMature) !
+      real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb, depth
       real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
@@ -333,10 +333,33 @@ contains
             theta(ixStart(3) + i - 1, idxF:nGrid) = 0.d0   ! Medium demersals has not feeding on all fish (only eat benthos)
          end if
 
+
+      ! Large demersals feed have reduced feeding efficiency on pelagic species:
+         if (group(3)%spec%m(i) .ge. mLarge) then
+           if(depth .lt. 200) then
+      theta(ixStart(3) + i - 1, ixStart(1):ixEnd(1)) = thetaA*thetaD*theta(ixStart(3) + i - 1, ixStart(1):ixEnd(1))
+      theta(ixStart(3) + i - 1, ixStart(2):ixEnd(2)) = thetaD*theta(ixStart(3) + i - 1, ixStart(2):ixEnd(2))
+!      theta(ixStart(3) + i - 1, 1:2) =
+!              do j = 1, group(3)%spec%n
+!              if (group(3)%spec%m(j) .le. mMedium) then
+!      theta(ixStart(3) + i - 1, ixStart(3) + j - 1 ) =
+!              endif
+!              enddo
+
+           else
+
+      theta(ixStart(3) + i - 1, ixStart(1):ixEnd(1)) = 0
+      theta(ixStart(3) + i - 1, ixStart(2):ixEnd(2)) = 0
+      theta(ixStart(3) + i - 1, 1:2) = 0
+              do j = 1, group(3)%spec%n
+              if (group(3)%spec%m(j) .le. mMedium) then
+      theta(ixStart(3) + i - 1, ixStart(3) + j - 1 ) = 0
+              endif
+              enddo
+           endif
+         end if
+
       end do
-      ! Large demersals feed have reduced feeding effiiency on pelagic species:
-      theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1)) = thetaA*thetaD*theta(ixStart(3):ixEnd(3), ixStart(1):ixEnd(1))
-      theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2)) = thetaD*theta(ixStart(3):ixEnd(3), ixStart(2):ixEnd(2))
 
 ! update temperature
 call updateTemp(Ts, Tb)
@@ -347,18 +370,42 @@ do iGroup = 1, nGroups-1
     group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
     group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
 end do
-  !demersal
-    group(3)%spec%V=group(3)%spec%V*fTempdem
-    group(3)%spec%Cmax=group(3)%spec%Cmax*fTempdem
-    group(3)%spec%metabolism=group(3)%spec%metabolism*fTempmdem
 
-  !vector
-  !pelagic
-V(ixStart(1):ixEnd(2))=V(ixStart(1):ixEnd(2))*fTemp
-Cmax(ixStart(1):ixEnd(2))=Cmax(ixStart(1):ixEnd(2))*fTemp
   !demersal
-V(ixStart(3):ixEnd(3))=V(ixStart(3):ixEnd(3))*fTempdem
-Cmax(ixStart(3):ixEnd(3))=Cmax(ixStart(3):ixEnd(3))*fTempdem
+do i = 1, group(3)%spec%n
+
+  if (group(3)%spec%m(i) .le. mMedium) then
+  !small
+    group(3)%spec%V(i)=group(3)%spec%V(i)*fTemp
+    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTemp
+    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempm
+
+  elseif (group(3)%spec%m(i) .gt. mMedium .and. group(3)%spec%m(i) .lt. mLarge)then
+  !medium
+    group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
+    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
+    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
+  elseif (group(3)%spec%m(i) .ge. mLarge)then
+  !large
+     if (depth .lt. 200.d0) then
+     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem_shallow
+     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem_shallow
+     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem_shallow
+     else
+     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
+     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
+     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
+     end if
+  end if
+end do
+
+!update vector V Cmax for T effects
+      do iGroup = 1, nGroups
+         select type (spec => group(iGroup)%spec)
+         type is (spectrumfish)
+            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+         end select
+      end do
 
 call set2vec
 Rtype=1

@@ -29,8 +29,8 @@
   sigma = 1.3
   mMin = 0.001               !min fish mass  (boundary of the grid)         [g]
 !
-  mMedium = 10               !medium fish central mass used for feeding preference calc [g]
-  mLarge = 5000              !large fish central mass used for feeding preference calc  [g]
+  mMedium = 0.5               !medium fish central mass used for feeding preference calc [g]
+  mLarge = 250              !large fish central mass used for feeding preference calc  [g]
 !
 !resources
   lbenk =  0               ! large benthos carry capacity                   [g m-2]
@@ -66,8 +66,8 @@
   sigma = 1.3
   mMin = 0.001               !min fish mass  (boundary of the grid)
 !
-  mMedium = 10               !medium fish central mass used for feeding preference calc
-  mLarge = 5000              !large fish central mass used for feeding preference calc
+  mMedium = 0.5               !medium fish central mass used for feeding preference calc
+  mLarge = 250              !large fish central mass used for feeding preference calc
 !
 !resources
   lbenk = 0                  ! large benthos carry capacity
