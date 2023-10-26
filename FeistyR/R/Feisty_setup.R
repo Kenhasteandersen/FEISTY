@@ -87,6 +87,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   param$theta["Demersals_3", "smallPel_2"] = 0.75/2
   param$theta["Demersals_3", "largePel_2"] = 0.75 
   }
+  param$theta["Demersals_3", "smallBenthos"] = 1
   param$theta["Demersals_3", "Demersals_2"] = 1 
 
   return(param)

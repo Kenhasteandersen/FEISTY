@@ -173,6 +173,7 @@ contains
       theta(12, 6) = thetaA*thetaD  ! medium forage fish
       theta(12, 8) = thetaD         ! medium large pelagics
       end if
+      theta(12, 3) = 1.d0           ! large demersals eat small benthos
       theta(12, 11) = 1.d0          ! medium demersals
 
 ! update temperature
