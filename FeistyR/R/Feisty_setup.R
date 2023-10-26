@@ -246,23 +246,19 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          nStages=6, # No. of size groups
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
                          depth=1500, # Bottom depth
-                         photic=150, # Photic zone depth
-                         mesopelagic=250, # mesopelagic depth
-                         visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
-                         etaMature = 0.25 # Size of matureation relative to
-                                          # asymptotic size. Different from
-                                          # van Denderen (2021), where it is 0.002
-                               ) {
+                         photic=150 # Photic zone depth
+                         ){
   
   #------------------  
   # Initialize the parameters:
   # habitat and small benthos
   #------------------  
+  etaMature=0.002
   bprod=0.1*(bent*(depth/photic)^-0.86)
   if(bprod>=0.1*bent)bprod=0.1*bent
 
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
-                    mesop=mesopelagic, visual=visual, bent=bent,etaMature=etaMature,region=region)
+                    mesop=250, visual=1.5, bent=bent,etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
@@ -307,6 +303,19 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # Setup physiology:
   #------------------  
   param = paramAddPhysiology(param,am = 0.2*20) # 20% * Max. consumption coefficient)
+  
+  
+  #overwrite psiMature only for setupVertical
+  nsize= nStages+1
+  sizes = 10^(linspace(log10(0.001), log10(125000), nsize))
+  matstageS =   which.min(abs(sizes - etaMature*250))
+  matstageL =   which.min(abs(sizes - etaMature*125000))
+  param$psiMature=param$psiMature*0
+  param$psiMature[param$ix[[1]][matstageS:max(param$ix[[1]])]]=0.5
+  param$psiMature[param$ix[[2]][matstageS:max(param$ix[[2]])]]=0.5
+  param$psiMature[param$ix[[3]][matstageL:max(param$ix[[3]])]]=0.5
+  param$psiMature[param$ix[[4]][matstageL:max(param$ix[[4]])]]=0.5
+  param$psiMature[param$ix[[5]][matstageL:max(param$ix[[5]])]]=0.5
     
   #------------------  
   #------------------  
@@ -346,9 +355,12 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
-  
-  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
-  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
+
+  ixjuv = which.min(abs(sizes - etaMature*250))
+  ixadult = which.min(abs(sizes - etaMature*125000))
+    
+  # ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
+  # ixadult = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
 
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
@@ -657,8 +669,8 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
   
-  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))
-  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - param$mMature[[5]]))
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){

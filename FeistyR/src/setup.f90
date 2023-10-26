@@ -430,8 +430,8 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020)
 ! --------------------------------------
-   subroutine setupVertical(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical(szprod,lzprod, bent, nStages, region, bottom, photic)
+      real(dp), intent(in) :: szprod,lzprod, bottom, bent,photic !  default bottom:1500m euphotic depth 150m
       integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
@@ -467,6 +467,7 @@ contains
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
       real(dp),allocatable :: sizes(:)
       integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
+      real(dp), parameter :: etaMature = 0.002d0
 
 
       call read_namelist_setupvertical()
@@ -508,22 +509,22 @@ contains
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
 
-         !group(iGroup)%spec%psiMature = 0.d0 ! reset
+         group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
 
       end do
 
       !overwrite psiMature    from matlab simple run
-!      nsize=nStages+1
-!      allocate (sizes(nsize))
-!      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
-!      matstageS = minloc(abs(sizes-0.5d0),dim=1)
-!      matstageL = minloc(abs(sizes-2.5d2),dim=1)
-!      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
-!      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
-!      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
-!      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
-!      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
+      nsize=nStages+1
+      allocate (sizes(nsize))
+      sizes = 10**(linspace(log10(mMin), log10(1.25d5), nsize)) !      mMin=0.001     mMax=1.25d5 predatory fish
+      matstageS = minloc(abs(sizes-0.5d0),dim=1)! 0.002d0*250.d0
+      matstageL = minloc(abs(sizes-2.5d2),dim=1)! 0.002d0*125000.d0
+      group(1)%spec%psiMature(matstageS:group(1)%spec%n) = 0.5d0 ! fishSmall
+      group(2)%spec%psiMature(matstageS:group(2)%spec%n) = 0.5d0 ! fishMeso
+      group(3)%spec%psiMature(matstageL:group(3)%spec%n) = 0.5d0 ! fishLarge
+      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
+      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
 
       group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
@@ -573,14 +574,14 @@ contains
       end if
 
 ! first stages as juvenile/adult for predators
-      !ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
-      !ixadult = minloc(abs(sizes-2.5d2),dim=1)
+      ixjuv = minloc(abs(sizes-0.5d0),dim=1) ! 0.002d0*250.d0
+      ixadult = minloc(abs(sizes-2.5d2),dim=1) ! 0.002d0*125000.d0
 
-      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
-      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+!      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+!      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
 
 
-!  deallocate (sizes)!see above overwrite psimature
+  deallocate (sizes)!see above overwrite psimature
 
 ! zooplankton night
       allocate (zp_n(size(xrange), 2))
@@ -981,7 +982,7 @@ contains
       !ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
       !ixadult = minloc(abs(sizes-2.5d2),dim=1)
 
-      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*250.d0),dim=1) !predatory fish
       ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
 
 
