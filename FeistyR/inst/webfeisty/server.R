@@ -88,7 +88,7 @@ server <- function(input, output) {
       setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature)
       
     }else if (input$Setup == 4) {
-      p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
+      p = setupVertical2(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                         nStages  = input$nSizeGroups, # Number of size groups
                         region   = as.integer(input$region),
                         depth    = input$bottom,
