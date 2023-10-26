@@ -20,8 +20,8 @@
 void F77_NAME(initfeisty)(void (* steadyparms)(int *, double *));     /*customize*/
 void F77_NAME(initfeistysetupbasic)(void (* steadyparms)(int *, double *));        /* setupbasic (Petrik et al., 2019) */
 void F77_NAME(initfeistysetupbasic2)(void (* steadyparms)(int *, double *));       /* setupbasic2 */
-void F77_NAME(initfeistysetupvertical)(void (* steadyparms)(int *, double *));     /* setupvertical (van Denderen et al., 2021)  */
-//void F77_NAME(initfeistysetupvertical2)(void (* steadyparms)(int *, double *));    /* setupvertical2                  */
+void F77_NAME(initfeistysetupvertical)(void (* steadyparms)(int *, double *));     /* setupvertical (van Denderen et al., 2020)  */
+void F77_NAME(initfeistysetupvertical2)(void (* steadyparms)(int *, double *));    /* setupvertical2                  */
 void F77_NAME(runfeisty) (int *, double *, double *, double *, double *, int *);
 
 R_FortranMethodDef FEntries[] = {
@@ -29,7 +29,7 @@ R_FortranMethodDef FEntries[] = {
     {"initfeistysetupbasic",    (DL_FUNC) &F77_SUB(initfeistysetupbasic),   1},
     {"initfeistysetupbasic2",    (DL_FUNC) &F77_SUB(initfeistysetupbasic2),   1},
     {"initfeistysetupvertical",    (DL_FUNC) &F77_SUB(initfeistysetupvertical),   1},
-   // {"initfeistysetupvertical2",    (DL_FUNC) &F77_SUB(initfeistysetupvertical2),   1},
+    {"initfeistysetupvertical2",    (DL_FUNC) &F77_SUB(initfeistysetupvertical2),   1},
     {"runfeisty",     (DL_FUNC) &F77_SUB(runfeisty),    6},
     {NULL, NULL, 0}
 };
@@ -39,7 +39,7 @@ void R_init_feisty(DllInfo *dll) {
 
   R_registerRoutines(dll, NULL, NULL, FEntries, NULL);
 
-  // the following line protects against accidentially finding entry points
+  // the following line protects against accidentally finding entry points
 
   R_useDynamicSymbols(dll, FALSE); // disable dynamic searching
 }

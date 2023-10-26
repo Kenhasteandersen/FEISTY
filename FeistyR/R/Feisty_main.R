@@ -306,6 +306,8 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
         initfunc <- "initfeistysetupbasic2"
       }else if(setup==3){
         initfunc <- "initfeistysetupvertical"
+      }else if(setup==4){
+        initfunc <- "initfeistysetupvertical2"
       }
       
       if (any(is.na(times)))  # one call and return

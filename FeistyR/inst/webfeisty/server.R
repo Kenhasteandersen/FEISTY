@@ -45,6 +45,19 @@ server <- function(input, output) {
     hide("Tp")
     hide("Tb")
     hide("sh_de")
+  }else if (input$Setup==4) {
+    show("region")
+    show("bottom")
+    show("photic")
+    show("nSizeGroups")
+    show("szprod")
+    show("lzprod")
+    show("etaMature")
+    show("bent")
+    hide("bprod")
+    hide("Tp")
+    hide("Tb")
+    hide("sh_de")
   }
   )
   
@@ -72,6 +85,17 @@ server <- function(input, output) {
                       mesopelagic=250,
                       visual=1.5,
                       etaMature=input$etaMature)
+      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature)
+      
+    }else if (input$Setup == 4) {
+      p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
+                        nStages  = input$nSizeGroups, # Number of size groups
+                        region   = as.integer(input$region),
+                        depth    = input$bottom,
+                        photic   = input$photic,
+                        mesopelagic=250,
+                        visual=1.5,
+                        etaMature=input$etaMature)
       setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature)
       
     }
