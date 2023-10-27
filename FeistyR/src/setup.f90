@@ -526,7 +526,7 @@ contains
       group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
       group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
 
-      group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
+      !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
 ! Feeding preference matrix:
 ! assemble vectors
