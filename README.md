@@ -13,3 +13,4 @@ Todo:
 - Update setups in R codes
 - ~Fix Shiny App~
 - More clever way to implement fixed setups and customized setups
+- Non-negative constraints
