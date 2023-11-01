@@ -362,6 +362,8 @@ contains
 
       end do
 
+      theta(:,4) = 0.d0
+
 ! update temperature
 call updateTemp(Ts, Tb)
   !all fish group
