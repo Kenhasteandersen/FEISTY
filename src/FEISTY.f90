@@ -291,14 +291,19 @@
 !  dudt: vector to hold the derivative (input and output)
 ! ----------------------------------------------------------------------
 
-  subroutine calcderivatives(u, dudt)
+  subroutine calcderivatives(uin, dudt)
     use  setup
-      real(dp), intent(in)    :: u(nGrid)
+      real(dp), intent(in)    :: uin(nGrid)
       real(dp), intent(inout) :: dudt(nGrid)
+      real(dp):: u(nGrid)
 
       integer :: i, j, ii, istart, istop, iGroup
 
 ! ----------------------------------------------------------------------
+dudt=0.d0
+do i = 1, nGrid
+  u(i) = max(0.d0 , uin(i))
+end do
 
 ! ----------------------------------------------
 ! Feeding $ losses for resources and fish grids:

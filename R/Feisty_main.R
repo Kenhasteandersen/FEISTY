@@ -36,7 +36,7 @@ derivativesFeistyR = function(t,              # current time
                               FullOutput=TRUE) {
   
   # split state variable vector into resource and fish
-  
+  u[u<0]=0
   R     = u[p$ixR]       # resource, prey
   iFish = p$ixFish
   B     = u[iFish]       # fish, 
