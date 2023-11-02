@@ -214,7 +214,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    }
 
    # additional process: 0 preference on large benthos
-   param$theta[,4]=0
+   #param$theta[,4]=0
    
 
   #

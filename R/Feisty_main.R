@@ -193,7 +193,7 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
                           setupini = c(100,100,5,100,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
                           p      = setupBasic(), 
                           tEnd   = 100,
-                          times  = seq(from=0, to=tEnd, by=1), 
+                          times  = seq(from=0, to=tEnd, by=0.1), 
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFeistyR,

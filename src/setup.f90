@@ -362,7 +362,7 @@ contains
 
       end do
 
-      theta(:,4) = 0.d0
+!      theta(:,4) = 0.d0
 
 ! update temperature
 call updateTemp(Ts, Tb)
