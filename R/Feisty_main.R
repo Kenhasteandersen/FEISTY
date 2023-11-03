@@ -193,12 +193,13 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
                           setupini = c(100,100,5,100,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
                           p      = setupBasic(), 
                           tEnd   = 100,
-                          times  = seq(from=0, to=tEnd, by=0.1), 
+                          tStep=1, 
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFeistyR,
                           simpleOutput = FALSE) 
 {
+  times  = seq(from=0, to=tEnd, by=tStep) 
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
   nGroups <- p$nGroups[1] # no of fish groups
@@ -327,6 +328,11 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   } else {               # R-code
     u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R
   }
+  
+  if (any(u[,c(p$ixR,p$ixFish)+1]<0)) 
+    stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
+                ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))  
+  
   #
   # Assemble output:
   #

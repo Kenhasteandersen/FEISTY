@@ -81,7 +81,14 @@ plotSSBtime = function(sim, bPlot=TRUE) {
   #
   for (i in p$ixR)
     lines(sim$t, sim$R[,i], col='blue')
-}
+
+  legend(x='bottomright',
+         legend=c('Resources','Fish'),
+         lty=c(1,1),
+         col=c('blue','black'),
+         bty='n')
+  
+  }
 
 #-------------------------------------------------------------------------------
 # Plots the mortalities and feeding levels
