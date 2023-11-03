@@ -103,6 +103,7 @@ server <- function(input, output) {
                            setupini = setupini,
                            p, 
                            tEnd   = 100,
+                           tStep  = 1,
                            times  = seq(from=0, to=100, by=1), #to=tEnd but must give a number directly
                            yini   = p$u0,  
                            USEdll = input$USEdll,

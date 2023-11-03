@@ -193,13 +193,13 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
                           setupini = c(100,100,5,100,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
                           p      = setupBasic(), 
                           tEnd   = 100,
-                          tStep=1, 
+                          tStep  = 1,
+                          times  = seq(from=0, to=tEnd, by=tStep),  
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFeistyR,
                           simpleOutput = FALSE) 
 {
-  times  = seq(from=0, to=tEnd, by=tStep) 
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
   nGroups <- p$nGroups[1] # no of fish groups
