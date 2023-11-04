@@ -89,7 +89,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   }
   param$theta["Demersals_3", "smallBenthos"] = 1
   param$theta["Demersals_3", "Demersals_2"] = 1 
-
+param$setup="setupBasic"
   return(param)
 }
 
@@ -228,7 +228,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   param$mortF[is.na(param$mortF)]=0
   param$psiMature[is.na(param$psiMature)]=0
   param$z[is.na(param$z)]=0
-  
+  param$setup="setupBasic2"
   return(param)
 }
 
@@ -442,41 +442,41 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   }
   
   # calculate overlap during day
-  depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   test     = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   param$dayout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthDay[, 1:2] = zp_d # resources
-  depthDay[, 3:4] = bent_dn # resources
-  depthDay[, param$ix[[1]]] = spel_dn
-  depthDay[, param$ix[[2]]] = mpel_d
-  depthDay[, param$ix[[3]]] = lpel_d
-  depthDay[, param$ix[[4]]] = bpel_d
-  depthDay[, param$ix[[5]]] = dem_d
+  param$depthDay[, 1:2] = zp_d # resources
+  param$depthDay[, 3:4] = bent_dn # resources
+  param$depthDay[, param$ix[[1]]] = spel_dn
+  param$depthDay[, param$ix[[2]]] = mpel_d
+  param$depthDay[, param$ix[[3]]] = lpel_d
+  param$depthDay[, param$ix[[4]]] = bpel_d
+  param$depthDay[, param$ix[[5]]] = dem_d
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-     test[, j] = pmin(depthDay[, i], depthDay[, j])
+     test[, j] = pmin(param$depthDay[, i], param$depthDay[, j])
     }
   param$dayout[, i] = colSums(test)
   }
   
   # calculate overlap during night
-  depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   # test will be overwritten
   param$nightout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthNight[, 1:2] = zp_n # resources
-  depthNight[, 3:4] = bent_dn # resources
-  depthNight[, param$ix[[1]]] = spel_dn
-  depthNight[, param$ix[[2]]] = mpel_n
-  depthNight[, param$ix[[3]]] = lpel_n
-  depthNight[, param$ix[[4]]] = bpel_n
-  depthNight[, param$ix[[5]]] = dem_n
+  param$depthNight[, 1:2] = zp_n # resources
+  param$depthNight[, 3:4] = bent_dn # resources
+  param$depthNight[, param$ix[[1]]] = spel_dn
+  param$depthNight[, param$ix[[2]]] = mpel_n
+  param$depthNight[, param$ix[[3]]] = lpel_n
+  param$depthNight[, param$ix[[4]]] = bpel_n
+  param$depthNight[, param$ix[[5]]] = dem_n
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-      test[, j] = pmin(depthNight[, i], depthNight[, j])
+      test[, j] = pmin(param$depthNight[, i], param$depthNight[, j])
     }
     param$nightout[, i] = colSums(test)
   }
@@ -531,7 +531,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   Q10=1.88
   Q10m=1.88
   
-  dist=(depthDay+depthNight)/2
+  dist=(param$depthDay+param$depthNight)/2
   TQ10 =  Q10^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
   TQ10m =  Q10m^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
   
@@ -548,7 +548,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$Cmax = scTemp* param$Cmax # maximum consumption rate 
   param$V= scTemp* param$V # clearance rate 
   param$metabolism = scTempm* param$metabolism
-  
+  param$setup="setupVertical"
   
 return(param)  
 }
@@ -752,41 +752,41 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   }
   
   # calculate overlap during day
-  depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthDay = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   test     = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   param$dayout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthDay[, 1:2] = zp_d # resources
-  depthDay[, 3:4] = bent_dn # resources
-  depthDay[, param$ix[[1]]] = spel_dn
-  depthDay[, param$ix[[2]]] = mpel_d
-  depthDay[, param$ix[[3]]] = lpel_d
-  depthDay[, param$ix[[4]]] = bpel_d
-  depthDay[, param$ix[[5]]] = dem_d
+  param$depthDay[, 1:2] = zp_d # resources
+  param$depthDay[, 3:4] = bent_dn # resources
+  param$depthDay[, param$ix[[1]]] = spel_dn
+  param$depthDay[, param$ix[[2]]] = mpel_d
+  param$depthDay[, param$ix[[3]]] = lpel_d
+  param$depthDay[, param$ix[[4]]] = bpel_d
+  param$depthDay[, param$ix[[5]]] = dem_d
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-      test[, j] = pmin(depthDay[, i], depthDay[, j])
+      test[, j] = pmin(param$depthDay[, i], param$depthDay[, j])
     }
     param$dayout[, i] = colSums(test)
   }
   
   # calculate overlap during night
-  depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
+  param$depthNight = matrix(nrow=length(xrange), ncol=param$nStages, data=0)
   # test will be overwritten
   param$nightout = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
-  depthNight[, 1:2] = zp_n # resources
-  depthNight[, 3:4] = bent_dn # resources
-  depthNight[, param$ix[[1]]] = spel_dn
-  depthNight[, param$ix[[2]]] = mpel_n
-  depthNight[, param$ix[[3]]] = lpel_n
-  depthNight[, param$ix[[4]]] = bpel_n
-  depthNight[, param$ix[[5]]] = dem_n
+  param$depthNight[, 1:2] = zp_n # resources
+  param$depthNight[, 3:4] = bent_dn # resources
+  param$depthNight[, param$ix[[1]]] = spel_dn
+  param$depthNight[, param$ix[[2]]] = mpel_n
+  param$depthNight[, param$ix[[3]]] = lpel_n
+  param$depthNight[, param$ix[[4]]] = bpel_n
+  param$depthNight[, param$ix[[5]]] = dem_n
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-      test[, j] = pmin(depthNight[, i], depthNight[, j])
+      test[, j] = pmin(param$depthNight[, i], param$depthNight[, j])
     }
     param$nightout[, i] = colSums(test)
   }
@@ -841,7 +841,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   Q10=1.88
   Q10m=1.88
   
-  dist=(depthDay+depthNight)/2
+  dist=(param$depthDay+param$depthNight)/2
   TQ10 =  Q10^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
   TQ10m =  Q10m^((tempdata[1:(param$bottom+1), (region+1)]-10)/10)
   
@@ -859,6 +859,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$V= scTemp* param$V # clearance rate 
   param$metabolism = scTempm* param$metabolism
   
+  param$setup="setupVertical2"
   
   return(param)  
 }

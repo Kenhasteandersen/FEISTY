@@ -339,6 +339,7 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   if (! simpleOutput) return(u)
  
   sim   = list()
+  sim$u = u[,c(p$ixR,p$ixFish)+1]
   sim$R = u[, p$ixR+1]
   sim$B = u[, p$ixFish+1]
   sim$t = times

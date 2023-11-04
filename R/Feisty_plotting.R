@@ -199,6 +199,210 @@ plotTheta = function(p) {
 }
 
 #-------------------------------------------------------------------------------
+# Bubbles plot :
+#-------------------------------------------------------------------------------
+
+plotNetwork <- function(p, sim) {
+  
+  # Number of groups and biomass:
+  ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
+  biomass <-sim# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
+  
+  #Average of the biomass : 
+  Bi <- colMeans(biomass[round(0.8*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
+  
+  my_palette_1 <- c("smallZoo" = "#FFEE58",
+                    "largeZoo" = "#F9A825",
+                    "smallBenthos" = "#795548",
+                    "largeBenthos" = "#F57C0D",
+                    "smallPel" = "#BBDEFB",
+                    "largePel" = "#2196F3",
+                    "demersals" =  "#000000")
+  
+  my_names_1 <- c("smallZoo" = "Small zooplankton",
+                  "largeZoo" = "Large zooplankton",
+                  "smallBenthos" = "Small Benthos",
+                  "largeBenthos" = "Large Benthos",
+                  "smallPel" = "Small pelagics",
+                  "largePel" = "Large pelagics",
+                  "demersals" =  "Demersals")
+  
+  my_palette_2 <- c("smallZoo" = "#FFEE58",
+                    "largeZoo" = "#F9A825",
+                    "smallBenthos" = "#795548",
+                    "largeBenthos" = "#F57C0D",
+                    "smallPel" = "#BBDEFB",
+                    "mesoPel" = "#9E9E9E",
+                    "largePel" = "#2196F3",
+                    "bathyPel" =  "#0D47A1",
+                    "demersals" =  "#000000")
+  
+  my_names_2 <- c("smallZoo" = "Small zooplankton",
+                  "largeZoo" = "Large zooplankton",
+                  "smallBenthos" = "Small Benthos",
+                  "largeBenthos" = "Large Benthos",
+                  "smallPel" = "Small pelagics",
+                  "mesoPel" = "Mesopelagics",
+                  "largePel" = "Large pelagics",
+                  "bathyPel" = "Bathypelagics",
+                  "demersals" =  "Demersals")
+  
+  
+  if (p$setup == "setupBasic"){
+    Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
+    
+    p$SpId <- c('smallPel','largePel', 'demersals')
+    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+              rep(p$SpId[1], length(p$ix[[1]])),
+              rep(p$SpId[2], length(p$ix[[2]])),
+              rep(p$SpId[3], length(p$ix[[3]])))
+    
+    p$my_palette <- my_palette_1
+    
+    p$my_names <- my_names_1
+  }  
+  
+  if (p$setup == "setupBasic2"){
+    Av_depth <- c(-1,-1,-4,-4,rep(0, length(p$ix[[1]])),rep(-2, length(p$ix[[2]])),rep(-3, length(p$ix[[3]])))
+    
+    p$SpId <- c('smallPel','largePel', 'demersals')
+    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+              rep(p$SpId[1], length(p$ix[[1]])),
+              rep(p$SpId[2], length(p$ix[[2]])),
+              rep(p$SpId[3], length(p$ix[[3]])))
+    
+    p$my_palette <- my_palette_1
+    
+    p$my_names <- my_names_1
+  }  
+  
+  
+  
+  if (p$setup == "setupVertical"){
+    
+    #Calculate average depth day/night
+    
+    Av_depth_day <- 1 : p$nStages
+    Av_depth_night <- 1 : p$nStages
+    for (i in 1:p$nStages) {
+      Av_depth_day[i] <- which.max(p$depthDay[ ,i])
+      Av_depth_night[i] <- which.max(p$depthNight[ ,i]) 
+      
+    }
+    #ce calcul prend l'indice de la matrice p$depthDay qui représente en réalité la profondeur et la valeur correspondant à l'indice est la probabilité de trouver x poisson à cette profondeur
+    Av_depth <- -(Av_depth_day + Av_depth_night) / 2
+    
+    
+    # Change a bit for visualization:
+    Av_depth[p$ix[[1]][1]:p$ix[[1]][length(p$ix[[1]])]] <- Av_depth[p$ix[[1]][1]:p$ix[[1]][length(p$ix[[1]])]] + 0.1 * p$bottom
+    Av_depth[p$ix[[3]][1]:p$ix[[3]][length(p$ix[[3]])]] <- Av_depth[p$ix[[3]][1]:p$ix[[3]][length(p$ix[[3]])]] - 0.1 * p$bottom
+    
+    # Create flux from interaction: 
+    # Coordinates for lines between points
+    # Select major interactions and scale sizes:
+    # Set color palette 
+    
+    p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'demersals')
+    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+              rep(p$SpId[1], length(p$ix[[1]])),
+              rep(p$SpId[2], length(p$ix[[2]])),
+              rep(p$SpId[3], length(p$ix[[3]])),
+              rep(p$SpId[4], length(p$ix[[4]])),
+              rep(p$SpId[5], length(p$ix[[5]])))
+    
+    p$my_palette <- my_palette_2
+    
+    p$my_names <- my_names_2
+    
+  }
+  
+  # Marker size depends on biomass: 
+  # Using real biomass yields bubles with too many orders of magnitude difference
+  # Thus we group them by quantiles
+  Msize <- Bi / max(Bi)
+  Msize[Msize == 0] <- NA
+  idxM <- quantile(Msize, prob = c(0.2, 0.4, 0.6, 0.8), na.rm = T) # get quantiles
+  
+  # Specify buble size for each quantile:
+  Msize[Msize >= idxM[4] & !is.na(Msize)] <- 20
+  Msize[Msize >= idxM[3] & Msize < idxM[4] & !is.na(Msize)] <- 15
+  Msize[Msize >= idxM[2] & Msize < idxM[3] & !is.na(Msize)] <- 8
+  Msize[Msize >= idxM[1] & Msize < idxM[2] & !is.na(Msize)] <- 3
+  Msize[Msize < idxM[1] & !is.na(Msize)] <- .8
+  
+  # Create line width: 
+  Mat <- rep(0, ngroup) 
+  Mat[Bi != 0] <- 1
+  Theta <- t(t(p$theta) * Bi) * Mat # flux equal the rate * the prey biomass (* 0 if pred <- 0)
+  Theta <- c(Theta) 
+  threshold <- 0.05 # min(tail(sort(Theta), 100)) # Alternatively, use 100 strongest relations regardless of absolute value of the threshold
+  indx <- which(Theta >= threshold) # takes the x highest values of theta
+  
+  
+  # Set values of each coordinate and put them together:
+  coord_1 <- data.frame(index = 1:p$nStages^2,
+                        mc = rep(p$mc[1:p$nStages], p$nStages), 
+                        depth = rep(Av_depth[1:p$nStages], p$nStages), 
+                        SpId = rep(SpId, p$nStages),
+                        Msize = rep(Msize, p$nStages), 
+                        LineWdth = Theta/max(Theta),
+                        Alpha = Theta/max(Theta))
+  
+  coord_2 <- data.frame(index = 1:p$nStages^2, # Notice that here repetition ys grouped by "each" to change order
+                        mc = rep(p$mc[1:p$nStages], each = p$nStages), 
+                        depth = rep(Av_depth[1:p$nStages], each = p$nStages), 
+                        SpId = rep(SpId, each = p$nStages),
+                        Msize = rep(Msize, each = p$nStages),
+                        LineWdth = Theta/max(Theta),
+                        Alpha = Theta/max(Theta))
+  
+  df <- rbind(coord_1, coord_2)
+  
+  df <- df %>% filter(index %in% indx) %>%
+    arrange(desc(Msize))
+  
+  if (length(p$ix)==3){
+    p <- ggplot(data = df) +
+      geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
+      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize)) +
+      scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
+                         labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
+      scale_size_continuous(range = c(1, 15)) +
+      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                    labels = trans_format("log10", math_format(10^.x))) +
+      annotation_logticks(sides = "b") +
+      labs(x ="Weight (grams)", y = "", color = "Group") +
+      theme_base() + 
+      guides(size = "none") +
+      theme(legend.position = "bottom",
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank())
+  }
+  
+  if (length(p$ix)==5){
+    p <- ggplot(data = df) +
+      geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
+      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize)) +
+      scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
+                         labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
+      scale_size_continuous(range = c(1, 15)) +
+      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                    labels = trans_format("log10", math_format(10^.x))) +
+      annotation_logticks(sides = "b") +
+      labs(x ="Weight (grams)", y = "Depth (m)", color = "Group") +
+      theme_base() + 
+      guides(size = "none") +
+      theme(legend.position = "bottom")
+    
+  }
+  # ggsave("plot_network.png", p, height = 45 , width = 80, units = "mm", scale = 3)
+  
+  return(p)
+}
+
+
+#-------------------------------------------------------------------------------
 # Make a basic run:
 #-------------------------------------------------------------------------------
 
