@@ -403,6 +403,212 @@ plotNetwork <- function(p, sim) {
 
 
 #-------------------------------------------------------------------------------
+# Diet plot :
+#-------------------------------------------------------------------------------
+
+plotDiet <- function(p, u) {
+  p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
+  biomass <- u#sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)]
+  Bin <- round(0.8 * nrow(biomass), digits = 0)
+  biomassend <- colMeans(biomass[Bin:nrow(biomass),])
+  biomassstage <- p$ixFish[length(p$ixFish)]
+  biomasssmall <- p$nstage - round(2/3*p$nstage, digits = 0)
+  Enc = p$V * (p$theta %*% biomassend)
+  f   = Enc / (p$Cmax + Enc)
+  f[is.na(f)] = 0  
+  #f <- calcEncounter(biomassend, p)$f
+  
+  bom <- t(t(p$theta[5:biomassstage, ]) * colMeans(biomass[Bin:nrow(biomass),])) 
+  fbom <- f[5:biomassstage] / rowSums(bom)
+  output <- bom * fbom
+  
+  if (length(p$ix)==5){
+    
+    p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'Demersals')
+    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+              rep(p$SpId[1], length(p$ix[[1]])),
+              rep(p$SpId[2], length(p$ix[[2]])),
+              rep(p$SpId[3], length(p$ix[[3]])),
+              rep(p$SpId[4], length(p$ix[[4]])),
+              rep(p$SpId[5], length(p$ix[[5]])))
+    
+    p$my_palette <- c("smallZoo" = "#BBDEFB",
+                      "largeZoo" = "#2196F3",
+                      "smallBenthos" = "#0D47A1",
+                      "largeBenthos" = "#795548",
+                      "smallPel" = "#F57C0D",
+                      "mesoPel" = "#9E9E9E",
+                      "largePel" = "#FFEE58",
+                      "bathyPel" = "#000000", 
+                      "Demersals" =  "#F9A825")
+    
+    p$RSpName <- c("Small zooplankton", "Big zooplankton", "Benthos", "Small pelagics",
+                   "Mesopelagics", "Large pelagics", "Bathypelagics", "Demersals")
+    
+  } else {
+    
+    p$SpId <- c('smallPel','largePel', 'Demersals')
+    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+              rep(p$SpId[1], length(p$ix[[1]])),
+              rep(p$SpId[2], length(p$ix[[2]])),
+              rep(p$SpId[3], length(p$ix[[3]])))
+    
+    p$my_palette <- c("smallZoo" = "#BBDEFB",
+                      "largeZoo" = "#2196F3",
+                      "smallBenthos" = "#0D47A1",
+                      "largeBenthos" = "#795548",
+                      "smallPel" = "#F57C0D",
+                      "largePel" = "#FFEE58",
+                      "Demersals" =  "#F9A825")
+    
+    p$RSpName <- c("Small zooplankton", "Big zooplankton", "Benthos", "Small pelagics",
+                   "Large pelagics", "Demersals")   
+    
+  }
+  
+  
+  # small pelagics: ---------------------------------------------------------
+  small_pel <- output[(p$ix[[1]][1] - length(p$ixR)):(p$ix[[1]][length(p$ix[[1]])] - length(p$ixR)), ] 
+  small_pel <- t(rbind(small_pel, matrix(0, biomasssmall, biomassstage)))
+  small_pel <- data.frame(val = c(small_pel), 
+                          stage = rep(1:p$nstage, each = nrow(small_pel)), 
+                          SpId = as.factor(rep(SpId, p$nstage)))
+  
+  p1 <- ggplot(data = small_pel) +
+    geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+    scale_fill_manual(values = p$my_palette) +
+    theme_base() +
+    labs(x = "", y = "Fraction of stomach", fill = "Prey group", title = p$RSpName[4]) +
+    theme(legend.position = "none")
+  
+  
+  if (length(p$ix)==5){
+    
+    # Large pelagics: --------------------------------------------------------- 
+    large_pel <- t(output[(p$ix[[3]][1] - length(p$ixR)):(p$ix[[3]][length(p$ix[[3]])] - length(p$ixR)), ])
+    large_pel <- data.frame(val = c(large_pel), 
+                            stage = rep(1:p$nstage, each = nrow(large_pel)), 
+                            SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p2 <- ggplot(data = large_pel) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[6]) +
+      theme(legend.position = "none") 
+    
+    
+    # Demersal: ---------------------------------------------------------------
+    demers <- t(output[(p$ix[[5]][1] - length(p$ixR)):(p$ix[[5]][length(p$ix[[5]])] - length(p$ixR)), ])
+    demers <- data.frame(val = c(demers), 
+                         stage = rep(1:p$nstage, each = nrow(demers)), 
+                         SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p3 <- ggplot(data = demers) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[8]) +
+      theme(legend.position = "none")
+    
+    
+    # Mesopelagics: ----------------------------------------------------------- 
+    meso_pel <- output[(p$ix[[2]][1] - length(p$ixR)):(p$ix[[2]][length(p$ix[[2]])] - length(p$ixR)), ]
+    meso_pel <- t(rbind(meso_pel, matrix(0, biomasssmall, biomassstage)))
+    meso_pel <- data.frame(val = c(meso_pel), 
+                           stage = rep(1:p$nstage, each = nrow(meso_pel)), 
+                           SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p5 <- ggplot(data = meso_pel) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[5]) +
+      theme(legend.position = "none") 
+    
+    # Bathypelagics: ---------------------------------------------------------- 
+    bathy_pel <- t(output[(p$ix[[4]][1] - length(p$ixR)):(p$ix[[4]][length(p$ix[[4]])] - length(p$ixR)), ])
+    bathy_pel <- data.frame(val = c(bathy_pel), 
+                            stage = rep(1:p$nstage, each = nrow(bathy_pel)), 
+                            SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p6 <- ggplot(data = bathy_pel) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[7]) +
+      theme(legend.position = "none") 
+    
+    
+  } else {
+    
+    # Large pelagics: --------------------------------------------------------- 
+    large_pel <- t(output[(p$ix[[2]][1] - length(p$ixR)):(p$ix[[2]][length(p$ix[[2]])] - length(p$ixR)), ])
+    large_pel <- data.frame(val = c(large_pel), 
+                            stage = rep(1:p$nstage, each = nrow(large_pel)), 
+                            SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p2 <- ggplot(data = large_pel) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[5]) +
+      theme(legend.position = "none") 
+    
+    
+    # Demersal: ---------------------------------------------------------------
+    demers <- t(output[(p$ix[[3]][1] - length(p$ixR)):(p$ix[[3]][length(p$ix[[3]])] - length(p$ixR)), ])
+    demers <- data.frame(val = c(demers), 
+                         stage = rep(1:p$nstage, each = nrow(demers)), 
+                         SpId = as.factor(rep(SpId, p$nstage)))
+    
+    p3 <- ggplot(data = demers) +
+      geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+      scale_fill_manual(values = p$my_palette) +
+      theme_base() +
+      labs(x ="size-class", y = "", fill = "Prey group", title = p$RSpName[6]) +
+      theme(legend.position = "none")
+    
+  }
+  
+  
+  # Legend: ----------------------------------------------------------------- 
+  legend_colors <- data.frame(val = 0, stage = 0, SpId = unique(large_pel$SpId))
+  
+  p7 <- ggplot(data = legend_colors) +
+    geom_bar(aes(x = stage, y = val, fill = SpId), stat = "identity") +
+    scale_fill_manual(values = p$my_palette[attr(p$my_palette, "names") %in% legend_colors$SpId]) +
+    labs(fill = "Prey group") +
+    theme_void() +
+    theme(legend.position = c(.45,.4),
+          legend.direction = "horizontal",
+          legend.text = element_text(size = 12))+
+    guides(fill = guide_legend(
+      nrow = 3,  # Spécifiez le nombre de lignes pour la légende
+      byrow = TRUE,  # Indique que les étiquettes de légende doivent être disposées par ligne
+      title.position = "top",  # Positionne le titre de la légende en haut
+    ))
+  
+  
+  # Put all panels together:
+  
+  if (length(p$ix)==5){
+    plots <- p1 + p2 + p3 + p5 + p6 +p7 & 
+      theme(plot.background = element_blank())
+    
+  } else {
+    
+    plots <- p1 + p2 + p3 +p7 & 
+      theme(plot.background = element_blank())
+  }
+  
+  
+  
+  return(plots)
+}
+
+
+#-------------------------------------------------------------------------------
 # Make a basic run:
 #-------------------------------------------------------------------------------
 

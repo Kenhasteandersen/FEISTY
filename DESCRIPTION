@@ -4,7 +4,7 @@ Title: Fisheries size and functional type model (FEISTY)
 Author: Ken Haste Andersen <kha@aqu.dtu.dk>
         Karline Soetaert <karline.soetaert@nioz.nl>
 Maintainer: Karline Soetaert <karline.soetaert@nioz.nl>
-Depends: R (>= 3.5.0), deSolve, shiny, shinyjs, dplyr, magrittr, ggplot2, scales, ggthemes
+Depends: R (>= 3.5.0), deSolve, shiny, shinyjs, dplyr, magrittr, ggplot2, scales, ggthemes, patchwork
 Imports: pracma, latex2exp
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
