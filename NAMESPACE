@@ -12,6 +12,6 @@ import(shinyjs)
 export(setupPelagicSpecies, setupVertical, setupVertical2, setupBasic, setupBasic2)
 export(simulateFeisty, derivativesFeistyR)
 export(paramInit, paramAddResource, paramAddGroup, paramAddPhysiology)
-export(plotSSBtime, plotRates, plotSpectra, plotSimulation, plotNetwork)
+export(plotSSBtime, plotRates, plotSpectra, plotSimulation, plotNetwork, plotDiet)
 
 export(webFeisty)

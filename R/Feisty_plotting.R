@@ -593,8 +593,14 @@ plotDiet <- function(p, u) {
   # Put all panels together:
   
   if (length(p$ix)==5){
+    
+    if(p$bottom > p$mesop) {
     plots <- p1 + p2 + p3 + p5 + p6 +p7 & 
       theme(plot.background = element_blank())
+    }else{
+    plots <- p1 + p2 + p3 +p7 & 
+      theme(plot.background = element_blank())
+    }
     
   } else {
     
