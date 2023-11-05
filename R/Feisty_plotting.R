@@ -201,13 +201,14 @@ plotTheta = function(p) {
 #-------------------------------------------------------------------------------
 # Network plot 
 # Revised Based on work of Daniel Ottmann Riera and Solenne Roux
+# u: sim$u simpleOutput=TRUE
 #-------------------------------------------------------------------------------
 
-plotNetwork <- function(p, sim) {
+plotNetwork <- function(p, u) {
   
   # Number of groups and biomass:
   ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
-  biomass <-sim# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
+  biomass <-u# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
   
   #Average of the biomass : 
   Bi <- colMeans(biomass[round(0.8*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
@@ -279,7 +280,7 @@ plotNetwork <- function(p, sim) {
   
   
   
-  if (p$setup == "setupVertical"){
+  if (p$setup == "setupVertical" | p$setup == "setupVertical2"){
     
     #Calculate average depth day/night
     
@@ -406,6 +407,7 @@ plotNetwork <- function(p, sim) {
 #-------------------------------------------------------------------------------
 # Diet plot 
 # Revised Based on work of Daniel Ottmann Riera and Solenne Roux
+# u: sim$u simpleOutput=TRUE
 #-------------------------------------------------------------------------------
 
 plotDiet <- function(p, u) {
