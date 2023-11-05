@@ -199,7 +199,8 @@ plotTheta = function(p) {
 }
 
 #-------------------------------------------------------------------------------
-# Bubbles plot :
+# Network plot 
+# Revised Based on work of Daniel Ottmann Riera and Solenne Roux
 #-------------------------------------------------------------------------------
 
 plotNetwork <- function(p, sim) {
@@ -403,7 +404,8 @@ plotNetwork <- function(p, sim) {
 
 
 #-------------------------------------------------------------------------------
-# Diet plot :
+# Diet plot 
+# Revised Based on work of Daniel Ottmann Riera and Solenne Roux
 #-------------------------------------------------------------------------------
 
 plotDiet <- function(p, u) {

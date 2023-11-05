@@ -94,7 +94,12 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("plotSimulation", height="600px")
+          tabsetPanel(
+            tabPanel("Rates", plotOutput(outputId = "plotSimulation", height="600px")),
+            
+            tabPanel("Network", plotOutput(outputId = "plotNetwork", height="600px")),
+            
+            tabPanel("Diet", plotOutput(outputId = "plotDiet", height="600px")))
         )
     )
 )
