@@ -69,7 +69,7 @@ plotSSBtime = function(sim, bPlot=TRUE) {
     defaultplot()
   p = sim$p
   
-  semilogypanel(xlim=sim$t, ylim=sim$SSB+1e-10,
+  semilogypanel(xlim=sim$t, ylim=c(1E-3,max(max(sim$SSB)*10,max(sim$R)*10)),
                 xlab="Time (yr)", ylab = "SSB (gww  m-2)")
   #
   # Plot fish
@@ -108,16 +108,16 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   #
   # Growth rate
   # 
-  loglogpanel(xlim = xlim, ylim=rates$g+1e-10,
+  loglogpanel(xlim = xlim, ylim=c(1e-3,max(rates$g)*10),
                 ylab="Growth rate (1/year)", xlab="-", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$g[p$ix[[i]]-length(p$ixR)], lwd=i, col='black')
   }
-  
+
   #
   # Mortalities:
   #
-  loglogpanel(xlim=xlim, ylim=rates$mortpred+1e-10,
+  loglogpanel(xlim=xlim, ylim=c(1e-3,max(rates$mortpred)*10),
               xlab="-", ylab="mort (1/year)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
@@ -152,11 +152,11 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   if (bPlot)
     defaultplot()
   p = sim$p
-  
-  loglogpanel(xlim=p$mc[p$ixFish], ylim=pmax(1e-10,sim$B[iTime,]),
+  # mean biomass of last 20% of simulation time  
+  loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(sim$B[round(0.8*iTime):iTime,])*10)),
               xlab = "Mass (gww)", ylab="Biomass (gww m-2)")
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], sim$B[iTime, p$ix[[i]]-p$ixFish[1]+1], lwd=i)
+    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.8*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]), lwd=i)
   }
 }
 
