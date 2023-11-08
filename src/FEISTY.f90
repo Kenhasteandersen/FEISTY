@@ -297,7 +297,7 @@
       real(dp), intent(inout) :: dudt(nGrid)
       real(dp):: u(nGrid)
 
-      integer :: i, j, ii, istart, istop, iGroup
+      integer :: i, j, ii, istart, istop!, iGroup
 
 ! ----------------------------------------------------------------------
 dudt=0.d0
@@ -442,7 +442,7 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: pars
+!    real(dp) :: pars
 
        feistyinitialised = .FALSE.
 
@@ -526,7 +526,7 @@ end do
     real(dp), intent(in):: t, conc(neq)
     real(dp), intent(inout):: yout(*)
     real(dp), intent(out):: dconc(neq)
-    integer              :: i
+!    integer              :: i
 !..........................................................................
 
       if (.NOT. feistyinitialised) then

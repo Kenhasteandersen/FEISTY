@@ -873,8 +873,8 @@ contains
                               idx_predat(:), idx_prey(:)
       real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
-      real(dp),allocatable :: sizes(:)
-      integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
+!      real(dp),allocatable :: sizes(:)
+      integer :: iGroup, i, j, ixjuv, ixadult!, nsize, matstageS, matstageL
 
 
       call read_namelist_setupvertical()
