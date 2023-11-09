@@ -275,7 +275,7 @@ contains
       end do
 
 ! fishing mortality
-
+      call setFishing(Fishing,etaF)
 
 ! Feeding preference matrix:
 ! assemble vectors
@@ -937,7 +937,12 @@ contains
 !      group(4)%spec%psiMature(matstageL:group(4)%spec%n) = 0.5d0 ! fishBathy
 !      group(5)%spec%psiMature(matstageL:group(5)%spec%n) = 0.5d0 ! fishDemersal
 
+
+! fishing mortality
       group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
+
+
+      call setFishing(Fishing,etaF)
 
 ! Feeding preference matrix:
 ! assemble vectors
@@ -1865,6 +1870,26 @@ contains
       allocate (group(iCurrentGroup)%spec, source=specFish)
 
    end subroutine parametersAddGroup
+
+   subroutine setFishing(F,etaF)
+     real(dp), intent(in) :: F, etaF
+     integer :: iGroup
+     real(dp),allocatable :: psiF(:)
+     real(dp) :: mFishing
+
+     if(F.eq.0.d0) then
+       RETURN
+     end if
+
+     do iGroup = 1,nGroups
+        allocate(psiF(group(iGroup)%spec%n))
+
+      mFishing = etaF*maxval(group(iGroup)%spec%mUpper)
+      psiF =( 1 + (group(iGroup)%spec%m/mFishing)**(-3) )**(-1)
+      group(iGroup)%spec%mortF=psiF*F
+      deallocate(psiF)
+     end do
+   end subroutine
 
 !
 ! =====================================
