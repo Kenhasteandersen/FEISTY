@@ -237,9 +237,10 @@ contains
 ! --------------------------------------
 ! Setup by Ken based on Petrik et al. (2019).
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprod, nStages, depth, Ts, Tb, etaMature) !
+   subroutine setupbasic2(szprod,lzprod, bprod, nStages, depth, Ts, Tb, etaMature,Fishing,etaF) !
       real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb, depth
       real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
+      real(dp), intent(in) :: Fishing, etaF ! fishing mortality, etaF * asymptotic size =fish size with 50% fishing mortality
       integer, intent(in) :: nStages
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -272,6 +273,9 @@ contains
       do iGroup = 1, nGroups
          group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p)!overwrite metabolism
       end do
+
+! fishing mortality
+
 
 ! Feeding preference matrix:
 ! assemble vectors
@@ -838,8 +842,8 @@ contains
 ! --------------------------------------
 ! Revised setup of vertical overlap based on van Denderen et al. (2020)
 ! --------------------------------------
-   subroutine setupVertical2(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature)
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical2(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature,Fishing,etaF)
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature,Fishing,etaF !  default bottom:1500m euphotic depth 150m
       integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc

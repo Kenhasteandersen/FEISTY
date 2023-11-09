@@ -119,7 +119,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        Tb     = 8,  # bottom layer depth [Celsius]
                        nStages=9,
                        etaMature=0.25,
-                       F=NA,
+                       F=0,
                        etaF=0.05) {
   
   # Initialize the parameters:
@@ -574,7 +574,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          etaMature = 0.25, # Size of matureation relative to
                          # asymptotic size. Different from
                          # van Denderen (2021), where it is 0.002
-                         F=NA,
+                         F=0,
                          etaF=0.05) {
   
   #------------------  
