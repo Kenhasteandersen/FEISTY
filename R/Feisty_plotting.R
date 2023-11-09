@@ -213,43 +213,6 @@ plotNetwork <- function(p, u) {
   #Average of the biomass : 
   Bi <- colMeans(biomass[round(0.8*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
   
-  my_palette_1 <- c("smallZoo" = "#FFEE58",
-                    "largeZoo" = "#F9A825",
-                    "smallBenthos" = "#795548",
-                    "largeBenthos" = "#F57C0D",
-                    "smallPel" = "#BBDEFB",
-                    "largePel" = "#2196F3",
-                    "demersals" =  "#000000")
-  
-  my_names_1 <- c("smallZoo" = "Small zooplankton",
-                  "largeZoo" = "Large zooplankton",
-                  "smallBenthos" = "Small Benthos",
-                  "largeBenthos" = "Large Benthos",
-                  "smallPel" = "Small pelagics",
-                  "largePel" = "Large pelagics",
-                  "demersals" =  "Demersals")
-  
-  my_palette_2 <- c("smallZoo" = "#FFEE58",
-                    "largeZoo" = "#F9A825",
-                    "smallBenthos" = "#795548",
-                    "largeBenthos" = "#F57C0D",
-                    "smallPel" = "#BBDEFB",
-                    "mesoPel" = "#9E9E9E",
-                    "largePel" = "#2196F3",
-                    "bathyPel" =  "#0D47A1",
-                    "demersals" =  "#000000")
-  
-  my_names_2 <- c("smallZoo" = "Small zooplankton",
-                  "largeZoo" = "Large zooplankton",
-                  "smallBenthos" = "Small Benthos",
-                  "largeBenthos" = "Large Benthos",
-                  "smallPel" = "Small pelagics",
-                  "mesoPel" = "Mesopelagics",
-                  "largePel" = "Large pelagics",
-                  "bathyPel" = "Bathypelagics",
-                  "demersals" =  "Demersals")
-  
-  
   if (p$setup == "setupBasic"){
     Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
     
@@ -258,10 +221,7 @@ plotNetwork <- function(p, u) {
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
-    
-    p$my_palette <- my_palette_1
-    
-    p$my_names <- my_names_1
+
   }  
   
   if (p$setup == "setupBasic2"){
@@ -273,9 +233,6 @@ plotNetwork <- function(p, u) {
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
     
-    p$my_palette <- my_palette_1
-    
-    p$my_names <- my_names_1
   }  
   
   
@@ -311,10 +268,6 @@ plotNetwork <- function(p, u) {
               rep(p$SpId[3], length(p$ix[[3]])),
               rep(p$SpId[4], length(p$ix[[4]])),
               rep(p$SpId[5], length(p$ix[[5]])))
-    
-    p$my_palette <- my_palette_2
-    
-    p$my_names <- my_names_2
     
   }
   
@@ -428,7 +381,7 @@ plotDiet <- function(p, u) {
   
   if (length(p$ix)==5){
     
-    p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'Demersals')
+    p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'demersals')
     SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
@@ -436,36 +389,18 @@ plotDiet <- function(p, u) {
               rep(p$SpId[4], length(p$ix[[4]])),
               rep(p$SpId[5], length(p$ix[[5]])))
     
-    p$my_palette <- c("smallZoo" = "#BBDEFB",
-                      "largeZoo" = "#2196F3",
-                      "smallBenthos" = "#0D47A1",
-                      "largeBenthos" = "#795548",
-                      "smallPel" = "#F57C0D",
-                      "mesoPel" = "#9E9E9E",
-                      "largePel" = "#FFEE58",
-                      "bathyPel" = "#000000", 
-                      "Demersals" =  "#F9A825")
-    
     p$RSpName <- c("Small zooplankton", "Big zooplankton", "Benthos", "Small pelagics",
                    "Mesopelagics", "Large pelagics", "Bathypelagics", "Demersals")
     
   } else {
     
-    p$SpId <- c('smallPel','largePel', 'Demersals')
+    p$SpId <- c('smallPel','largePel', 'demersals')
     SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
     
-    p$my_palette <- c("smallZoo" = "#BBDEFB",
-                      "largeZoo" = "#2196F3",
-                      "smallBenthos" = "#0D47A1",
-                      "largeBenthos" = "#795548",
-                      "smallPel" = "#F57C0D",
-                      "largePel" = "#FFEE58",
-                      "Demersals" =  "#F9A825")
-    
-    p$RSpName <- c("Small zooplankton", "Big zooplankton", "Benthos", "Small pelagics",
+    p$RSpName <- c("Small zooplankton", "Large zooplankton", "Benthos", "Small pelagics",
                    "Large pelagics", "Demersals")   
     
   }

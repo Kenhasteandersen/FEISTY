@@ -68,6 +68,26 @@ paramInit = function(...) {
   param$ixFish = list() # Indices to all fish groups
   param$ixR = NA # Indices to all resource groups
   
+  param$my_palette <- c("smallZoo" = "#FFEE58",
+                    "largeZoo" = "#F9A825",
+                    "smallBenthos" = "#795548",
+                    "largeBenthos" = "#F57C0D",
+                    "smallPel" = "#BBDEFB",
+                    "mesoPel" = "#9E9E9E",
+                    "largePel" = "#2196F3",
+                    "bathyPel" =  "#0D47A1",
+                    "demersals" =  "#000000")
+  
+  param$my_names <- c("smallZoo" = "Small zooplankton",
+                  "largeZoo" = "Large zooplankton",
+                  "smallBenthos" = "Small Benthos",
+                  "largeBenthos" = "Large Benthos",
+                  "smallPel" = "Small pelagics",
+                  "mesoPel" = "Mesopelagics",
+                  "largePel" = "Large pelagics",
+                  "bathyPel" = "Bathypelagics",
+                  "demersals" =  "Demersals")
+  
   return(param)
 }
 
