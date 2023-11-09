@@ -19,6 +19,8 @@ server <- function(input, output) {
     show("temps")
     show("tempb")
     show("sh_de")
+    hide("F")
+    hide("etaF")
   }else if (input$Setup==2) {
     hide("region")
     hide("bottom")
@@ -32,6 +34,8 @@ server <- function(input, output) {
     show("bprod")
     show("temps")
     show("tempb")
+    show("F")
+    show("etaF")
   }else if (input$Setup==3) {
     show("region")
     show("bottom")
@@ -45,6 +49,8 @@ server <- function(input, output) {
     hide("Tp")
     hide("Tb")
     hide("sh_de")
+    hide("F")
+    hide("etaF")
   }else if (input$Setup==4) {
     show("region")
     show("bottom")
@@ -58,13 +64,15 @@ server <- function(input, output) {
     hide("Tp")
     hide("Tb")
     hide("sh_de")
+    show("F")
+    show("etaF")
   }
   )
   
   sim <- eventReactive(c(
     input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
     input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent,
-    input$sh_de
+    input$sh_de,input$F,input$etaF
   ),
   {
     # setup simulation
@@ -75,9 +83,9 @@ server <- function(input, output) {
       p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
                       etaMature=input$etaMature,
-                      F=0,
-                      etaF=0.05)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,0,0.05)
+                      F=input$F,
+                      etaF=input$etaF)
+      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,input$F,input$etaF)
     }else if (input$Setup == 3) {
       p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                       nStages  = input$nSizeGroups, # Number of size groups
@@ -95,9 +103,9 @@ server <- function(input, output) {
                         mesopelagic=250,
                         visual=1.5,
                         etaMature=input$etaMature,
-                        F=0,
-                        etaF=0.05)
-      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,0,0.05)
+                        F=input$F,
+                        etaF=input$etaF)
+      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,input$F,input$etaF)
       
     }
 

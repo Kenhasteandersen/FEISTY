@@ -89,7 +89,19 @@ ui <- fluidPage(
                       min = 0,
                       max = 28,
                       step = 0.1,
-                      value = 8)
+                      value = 8),
+          sliderInput("F",
+                      "Fishing mortality (1/yr):",
+                      min = 0,
+                      max = 3,
+                      step = 0.1,
+                      value = 0),
+          sliderInput("etaF",
+                      "fish size with 50% selectivity relative to asymptotic size:",
+                      min = 0.002,
+                      max = 0.3,
+                      step = 0.01,
+                      value = 0.05)
         ),
 
         # Show a plot of the generated distribution
