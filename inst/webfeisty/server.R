@@ -74,8 +74,10 @@ server <- function(input, output) {
     }else if (input$Setup == 2) {
       p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
-                      etaMature=input$etaMature)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature)
+                      etaMature=input$etaMature,
+                      F=0,
+                      etaF=0.05)
+      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,0,0.05)
     }else if (input$Setup == 3) {
       p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                       nStages  = input$nSizeGroups, # Number of size groups
@@ -92,8 +94,10 @@ server <- function(input, output) {
                         photic   = input$photic,
                         mesopelagic=250,
                         visual=1.5,
-                        etaMature=input$etaMature)
-      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature)
+                        etaMature=input$etaMature,
+                        F=0,
+                        etaF=0.05)
+      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,0,0.05)
       
     }
 

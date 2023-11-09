@@ -57,7 +57,7 @@ setupBasic = function(szprod = 100, # small zoo production?
 
   # Add fishing mortality
   # F=NA No further process
-  param=setFishing = function(param, F=NA, etaF=0.05)
+  param=setFishing(param, F=0, etaF=0.05)
   
   
   # Setup size interaction matrix:
