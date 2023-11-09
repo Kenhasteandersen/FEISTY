@@ -55,6 +55,11 @@ setupBasic = function(szprod = 100, # small zoo production?
                            Q10m=2.35,
                            u=NA)
 
+  # Add fishing mortality
+  # F=NA No further process
+  param=setFishing = function(param, F=NA, etaF=0.05)
+  
+  
   # Setup size interaction matrix:
   #
 
@@ -113,7 +118,9 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        Tp     = 10,  # pelagic layer averaged temperature [Celsius]
                        Tb     = 8,  # bottom layer depth [Celsius]
                        nStages=9,
-                       etaMature=0.25) {
+                       etaMature=0.25,
+                       F=NA,
+                       etaF=0.05) {
   
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,etaMature=etaMature,
@@ -148,6 +155,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                      Q10m=2.35,
                      u=NA)
   
+  # Add fishing mortality
+  param=setFishing(param, F=F, etaF=etaF)
 
   # Setup size interaction matrix:
   thetaA = 0.5  # Large fish pref for medium forage fish
@@ -213,17 +222,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
           param$theta[ixLargeSizeDem, ixSmallSizeDem] = 0
    }
 
-   # additional process: 0 preference on large benthos
-   #param$theta[,4]=0
-   
-
-  #
-  # Mortality
-  #
-  param$mort0 = 0.1
-  param$mortF[param$ixFish] = 0.#*c(0,1,0,0,1,0,0,1) # Fishing only on mature stages
-  
-  
   param$metabolism[is.na(param$metabolism)]=0
   param$mortF[is.na(param$mortF)]=0
   param$psiMature[is.na(param$psiMature)]=0
@@ -573,10 +571,11 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          photic=150, # Photic zone depth
                          mesopelagic=250, # mesopelagic depth
                          visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
-                         etaMature = 0.25 # Size of matureation relative to
+                         etaMature = 0.25, # Size of matureation relative to
                          # asymptotic size. Different from
                          # van Denderen (2021), where it is 0.002
-) {
+                         F=NA,
+                         etaF=0.05) {
   
   #------------------  
   # Initialize the parameters:
@@ -627,10 +626,14 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="Demersals")
   param$mortF[length(param$mortF)]=0.5
+  
   #------------------  
   # Setup physiology:
   #------------------  
   param = paramAddPhysiology(param,am = 0.2*20) # 20% * Max. consumption coefficient)
+  
+  # Add fishing mortality
+  param=setFishing(param, F=F, etaF=etaF)
   
   #------------------  
   #------------------  

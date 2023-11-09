@@ -4,10 +4,10 @@
 
 
 #
-# F: fishing mortality 1/yr
+# F: fishing mortality 1/yr   if F=NA return the original param set
 # etaF: the coefficient determining the fish size with 50% fishing selectivity
-setFishing = function(p, F, etaF=0.05 ) {
-  
+setFishing = function(p, F=NA, etaF=0.05) {
+  if(is.na(F)) return(p)
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
     mFishing = etaF*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
