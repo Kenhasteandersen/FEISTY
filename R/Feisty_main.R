@@ -348,16 +348,10 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   sim$p = p
   
   #
-  # Calculate Spawning Stock Biomass
+  # Calculate Spawning Stock Biomass and yield
   #
-  SSB = matrix(nrow=length(times), ncol=p$nGroups)
-  yield = SSB
-  for (i in 1:p$nGroups){
-    SSB[,i]   = colSums( t(u[, p$ix[[i]]+1]) * p$psiMature[p$ix[[i]]] )
-    yield[,i] = colSums( t(u[, p$ix[[i]]+1]) * p$mortF[p$ix[[i]]] )
-  }
-  sim$SSB = SSB
-  sim$yield = yield
+  sim=calcSSB(sim=sim,etaTime=0.5)
+  sim=calcYield(sim=sim,etaTime=0.5)
   
   return(sim)
 }

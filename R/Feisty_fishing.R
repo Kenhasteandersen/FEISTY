@@ -49,7 +49,42 @@ calcYield = function(
   sim$yieldMean=yieldMean
   sim$yieldMin=yieldMin
   sim$yieldMax=yieldMax
-  sim$yield2=yield
+  sim$yield=yield
   return(sim)
 }
 
+#
+# Return the SSB of all function groups
+#
+calcSSB = function(
+    sim,          # The simulation object to analyse
+    etaTime=0.5) {# The fraction of the time series to integrate (default the last half) 
+  
+  p=sim$p
+  
+  SSBAllgrid = matrix(nrow=sim$nTime, ncol=length(p$ixFish))
+  SSB = matrix(nrow=sim$nTime, ncol=p$nGroups)
+  SSBMean = rep(data=0, p$nGroups)
+  SSBMin = SSBMean
+  SSBMax = SSBMean
+  
+  ixTime = which(sim$t>=(etaTime*sim$t[sim$nTime]))
+      
+  for (iGroup in 1:p$nGroups) {
+    ix = p$ix[[iGroup]]
+    SSBAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$psiMature[ix]) 
+    SSB[,iGroup]= rowSums(SSBAllgrid[,ix-length(p$ixR)])
+    #deltaM = p$mUpper[ix]-p$mLower[ix]
+
+    SSBMean[iGroup] = exp(mean(log(rowSums(SSBAllgrid[ixTime,ix-max(p$ixR)]+1e-10))))
+    SSBMin[iGroup] = min(rowSums( SSBAllgrid[ixTime,ix-max(p$ixR)] ))
+    SSBMax[iGroup] = max(rowSums( SSBAllgrid[ixTime,ix-max(p$ixR)] ))
+  }
+  
+  sim$SSBMean=SSBMean
+  sim$SSBMin=SSBMin
+  sim$SSBMax=SSBMax
+  sim$SSB=SSB
+
+  return(sim)
+}
