@@ -168,8 +168,7 @@ derivativesFeistyR = function(t,              # current time
 #                    (published and revised).
 #                    TRUE -> Use setups coded in R. Makes it easier to bUseRDerivativetomize
 #                    your own setup. 'setup' and 'setupini' are revoked.
-#  setup: This is the function that defines the parameters (the "setup") which is used 
-#         when bUseRDerivative = TRUE
+
 #          setup type: 1 = setupBasic: Petrik et al. (2019)
 #                      2 = setupBasic2: as (1) but with adjusted to work with arbitrary no of stages
 #                      3 = setVertical: van Denderen et al. (2020)
@@ -189,8 +188,7 @@ derivativesFeistyR = function(t,              # current time
 # ------------------------------------------------------------------------------
 
 simulateFeisty = function(bUseRDerivative    = FALSE,
-                          setup  = 1,
-                          setupini = c(100,100,5,100,10,8),# setupbasic(smzprod,lgzprod,bprod,Ts,Tb)
+                          setupini = c(100,100,5,100,10,8),# effective when bUseRDerivative = TRUE
                           p      = setupBasic(), 
                           tEnd   = 100,
                           tStep  = 1,
@@ -301,14 +299,18 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
       passresult <- passpath()
       
       # Choose the setup:
-      if (setup==1){
+      if (p$setup=="setupBasic"){
         initfunc <- "initfeistysetupbasic"
-      }else if(setup==2){
+        setupini=c(p$szprod,p$lzprod,p$bprod,p$depth,p$Tp,p$Tb)
+      }else if(p$setup=="setupBasic2"){
         initfunc <- "initfeistysetupbasic2"
-      }else if(setup==3){
+        setupini=c(p$szprod,p$lzprod,p$bprod,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$F,p$etaF)
+      }else if(p$setup=="setupVertical"){
         initfunc <- "initfeistysetupvertical"
-      }else if(setup==4){
+        setupini = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region, p$bottom, p$photic)
+      }else if(p$setup=="setupVertical2"){
         initfunc <- "initfeistysetupvertical2"
+        setupini = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region,p$bottom,p$photic,p$etaMature,p$F,p$etaF)
       }
       
       if (any(is.na(times)))  # one call and return
@@ -329,9 +331,9 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
     u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R
   }
   
-  if (any(u[,c(p$ixR,p$ixFish)+1]<0)) 
+  if (any(u[,c(p$ixR,p$ixFish)+1]<0))
     stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
-                ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))  
+                ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))
   
   #
   # Assemble output:

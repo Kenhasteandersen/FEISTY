@@ -6,7 +6,7 @@
 
 server <- function(input, output) {
   
-  observeEvent(input$Setup,if(input$Setup==1){ 
+  observeEvent(input$Setup,if(input$Setup=="setupBasic"){ 
     hide("region")
     hide("bottom")
     hide("photic")
@@ -21,7 +21,7 @@ server <- function(input, output) {
     show("sh_de")
     hide("F")
     hide("etaF")
-  }else if (input$Setup==2) {
+  }else if (input$Setup=="setupBasic2") {
     hide("region")
     hide("bottom")
     hide("photic")
@@ -36,7 +36,7 @@ server <- function(input, output) {
     show("tempb")
     show("F")
     show("etaF")
-  }else if (input$Setup==3) {
+  }else if (input$Setup=="setupVertical") {
     show("region")
     show("bottom")
     show("photic")
@@ -51,7 +51,7 @@ server <- function(input, output) {
     hide("sh_de")
     hide("F")
     hide("etaF")
-  }else if (input$Setup==4) {
+  }else if (input$Setup=="setupVertical2") {
     show("region")
     show("bottom")
     show("photic")
@@ -76,25 +76,25 @@ server <- function(input, output) {
   ),
   {
     # setup simulation
-    if (input$Setup == 1) {
+    if (input$Setup == "setupBasic") {
       p = setupBasic(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$sh_de,input$Tp,input$Tb)
-    }else if (input$Setup == 2) {
+      #setupini = c(input$szprod,input$lzprod,input$bprod,input$sh_de,input$Tp,input$Tb)
+    }else if (input$Setup == "setupBasic2") {
       p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
                       etaMature=input$etaMature,
                       F=input$F,
                       etaF=input$etaF)
-      setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,input$F,input$etaF)
-    }else if (input$Setup == 3) {
+      #setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,input$F,input$etaF)
+    }else if (input$Setup == "setupVertical") {
       p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                       nStages  = input$nSizeGroups, # Number of size groups
                       region   = as.integer(input$region),
                       depth    = input$bottom,
                       photic   = input$photic)
-      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region, input$bottom, input$photic)
+      #setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region, input$bottom, input$photic)
       
-    }else if (input$Setup == 4) {
+    }else if (input$Setup == "setupVertical2") {
       p = setupVertical2(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
                         nStages  = input$nSizeGroups, # Number of size groups
                         region   = as.integer(input$region),
@@ -105,14 +105,13 @@ server <- function(input, output) {
                         etaMature=input$etaMature,
                         F=input$F,
                         etaF=input$etaF)
-      setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,input$F,input$etaF)
+      #setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,input$F,input$etaF)
       
     }
 
     # Simulate
     return( simulateFeisty(bUseRDerivative    = FALSE,
-                           setup  = input$Setup,
-                           setupini = setupini,
+                           setupini = 0,
                            p, 
                            tEnd   = 100,
                            tStep  = 1,

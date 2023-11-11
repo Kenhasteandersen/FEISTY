@@ -45,7 +45,7 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   #
   # Fishing with a trawl selectivity
   #
-  if(p$setup=="setupBasic2") setup=2
+
   #
   # Run a yield curve:
   #
@@ -56,10 +56,8 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   
   for (i in 1:length(F)) {
     p = setFishing(p,F[i])
-    setupini=c(p$szprod,p$lzprod,p$bprod,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,F[i],p$etaF)
     sim = simulateFeisty(bUseRDerivative    = FALSE,
-                         setup  = setup,
-                         setupini = setupini,
+                         setupini = 0,
                          p, 
                          #tEnd   = 100,
                          #tStep  = 1,
