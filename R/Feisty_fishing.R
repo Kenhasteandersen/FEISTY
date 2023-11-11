@@ -2,11 +2,100 @@
 #Nov 2023
 #
 
+#
+# Analysis of the fishing mortality
+#
+
+analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
+  y = list()
+  for (i in 1:length(nStages)) {
+    y[[i]] = plotYield(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
+                                     depth  = 100,
+                                     Tp = 10,
+                                     Tb = 8, 
+                                     nStages=nStages,
+                                     etaMature=0.25,
+                                     F=0, # overwritten later
+                                     etaF=0.05))
+  }
+  F = y[[1]][[1]]
+  
+  defaultplot()
+  defaultpanel(xlim=F, ylim=c(0,max(y[[length(nStages)]][[2]])),
+               xlab="Fishing mortality (year$^{-1}$)",
+               ylab="Yield (g/$m^2$/yr)")
+  for (i in 1:length(nStages)) {
+    lines(F, y[[i]][[2]], lwd=i)
+  }
+}
+
+
+#
+# Make a yield curve
+#
+plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
+                                               depth  = 100,
+                                               Tp = 10,
+                                               Tb = 8, 
+                                               nStages=6,
+                                               etaMature=0.25,
+                                               F=0, # overwritten later
+                                               etaF=0.05), 
+                     maxF=3, nF=20, F=seq(0,maxF,length.out=nF)) {
+  #
+  # Fishing with a trawl selectivity
+  #
+  if(p$setup=="setupBasic2") setup=2
+  #
+  # Run a yield curve:
+  #
+  yield = rep(0,length(F))
+  yieldMin = rep(0,length(F))
+  yieldMax = rep(0,length(F))
+  SSB = rep(0,length(F))
+  
+  for (i in 1:length(F)) {
+    p = setFishing(p,F[i])
+    setupini=c(p$szprod,p$lzprod,p$bprod,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,F[i],p$etaF)
+    sim = simulateFeisty(bUseRDerivative    = FALSE,
+                         setup  = setup,
+                         setupini = setupini,
+                         p, 
+                         #tEnd   = 100,
+                         #tStep  = 1,
+                         #times  = seq(from=0, to=tEnd, by=tStep),  
+                         yini   = p$u0,  
+                         USEdll = TRUE,
+                         Rmodel = derivativesFeistyR,
+                         simpleOutput = TRUE) # Simulate
+    yy = calcYield(sim)
+    yield[i] = sum(sim$yieldMean)#sum(yy[[1]])
+    yieldMin[i] = sum(sim$yieldMin)#sum(yy[[2]])
+    yieldMax[i] = sum(sim$yieldMax)#sum(yy[[3]])
+    
+    SSB[i] = sum(sim$SSBMean)#sum(calcSSB(sim)[[1]])
+  }
+  #
+  # Plot
+  #
+  defaultplot()
+  defaultpanel(xlim=F, ylim=c(yieldMax,SSB),
+               xlab="Fishing mortality (year$^{-1}$)",
+               ylab="Yield (g/$m^2$/yr)")
+  lines(F,yield,lwd=3)
+  lines(F,yieldMin)
+  lines(F,yieldMax)
+  lines(F, SSB,col="red", lwd=3)
+  
+  return(list(F,yield, yieldMin, yieldMax))
+}
 
 #
 # F: fishing mortality 1/yr   if F=0 return the original param set
 # etaF: the coefficient determining the fish size with 50% fishing selectivity
 setFishing = function(p, F=0, etaF=0.05) {
+  p$F=F
+  p$etaF=etaF
   if(F==0) return(p)
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
