@@ -111,7 +111,6 @@ server <- function(input, output) {
 
     # Simulate
     return( simulateFeisty(bUseRDerivative    = FALSE,
-                           setupini = 0,
                            p, 
                            tEnd   = 100,
                            tStep  = 1,

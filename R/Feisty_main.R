@@ -173,8 +173,7 @@ derivativesFeistyR = function(t,              # current time
 #                      2 = setupBasic2: as (1) but with adjusted to work with arbitrary no of stages
 #                      3 = setVertical: van Denderen et al. (2020)
 #                      4 =           
-#  setupini: The initial parameters values for the setup coded in Fortran (if bUseRDerivative=FALSE)
-#
+
 #  p : fully populated set of parameters
 #  tEnd : time to simulate (years)
 #  times: The times steps to return. If times=NA then it just does one call, essentially
@@ -188,7 +187,6 @@ derivativesFeistyR = function(t,              # current time
 # ------------------------------------------------------------------------------
 
 simulateFeisty = function(bUseRDerivative    = FALSE,
-                          setupini = c(100,100,5,100,10,8),# effective when bUseRDerivative = TRUE
                           p      = setupBasic(), 
                           tEnd   = 100,
                           tStep  = 1,
@@ -301,24 +299,24 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
       # Choose the setup:
       if (p$setup=="setupBasic"){
         initfunc <- "initfeistysetupbasic"
-        setupini=c(p$szprod,p$lzprod,p$bprod,p$depth,p$Tp,p$Tb)
+        setupinput=c(p$szprod,p$lzprod,p$bprod,p$depth,p$Tp,p$Tb)
       }else if(p$setup=="setupBasic2"){
         initfunc <- "initfeistysetupbasic2"
-        setupini=c(p$szprod,p$lzprod,p$bprod,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$F,p$etaF)
+        setupinput=c(p$szprod,p$lzprod,p$bprod,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$F,p$etaF)
       }else if(p$setup=="setupVertical"){
         initfunc <- "initfeistysetupvertical"
-        setupini = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region, p$bottom, p$photic)
+        setupinput = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region, p$bottom, p$photic)
       }else if(p$setup=="setupVertical2"){
         initfunc <- "initfeistysetupvertical2"
-        setupini = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region,p$bottom,p$photic,p$etaMature,p$F,p$etaF)
+        setupinput = c(p$szprod,p$lzprod,p$bent,length(p$ix[[p$nGroups]]),p$region,p$bottom,p$photic,p$etaMature,p$F,p$etaF)
       }
       
       if (any(is.na(times)))  # one call and return
-        return( DLLfunc(y=yini, times=0, parms=as.double(setupini), dllname = "FeistyR",
+        return( DLLfunc(y=yini, times=0, parms=as.double(setupinput), dllname = "FeistyR",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=NULL, rpar=NULL))
       # Full simulation:
-      u = ode(y=yini, times=times, parms=as.double(setupini), dllname = "FeistyR",
+      u = ode(y=yini, times=times, parms=as.double(setupinput), dllname = "FeistyR",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=NULL, rpar=NULL) # Run by dll
     }    
