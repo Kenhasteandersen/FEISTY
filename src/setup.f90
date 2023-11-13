@@ -715,7 +715,7 @@ contains
          demmig = bottom
       end if
       allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
-      xlocvec(ixadult:size(xlocvec)) = dvm ! larvae at surface/ juvenile at bottom/ adult and middle
+      xlocvec(ixadult:size(xlocvec)) = demmig !=dvm? ! larvae at surface/ juvenile at bottom/ adult and middle
       do i = 1, size(ix)
          dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
@@ -1125,7 +1125,7 @@ contains
          demmig = bottom
       end if
       allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
-      xlocvec(ixadult:size(xlocvec)) = dvm ! larvae at surface/ juvenile at bottom/ adult and middle
+      xlocvec(ixadult:size(xlocvec)) = demmig !=dvm? ! larvae at surface/ juvenile at bottom/ adult and middle
       do i = 1, size(ix)
          dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))

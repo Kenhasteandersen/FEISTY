@@ -430,7 +430,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
    
   dem_d= matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
 
-  xlocvec[ixadult:length(xlocvec)] = param$dvm ### or demmig???
+  xlocvec[ixadult:length(xlocvec)] = demmig #param$dvm ### or demmig???
   dem_d =  VertDist(sigmap[ix], xlocvec)
 
   #if shallower than euphotic depth, adult demersals feed across-habitats
@@ -745,7 +745,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   dem_d= matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
   
-  xlocvec[ixadult:length(xlocvec)] = param$dvm ### or demmig???
+  xlocvec[ixadult:length(xlocvec)] = demmig #param$dvm ### or demmig???
   dem_d =  VertDist(sigmap[ix], xlocvec)
   
   #if shallower than euphotic depth, adult demersals feed across-habitats
