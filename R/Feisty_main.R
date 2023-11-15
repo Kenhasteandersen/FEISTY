@@ -204,6 +204,14 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   
   if (length(yini) != nGrid) 
     stop ("length of 'yini' not ok - should be ", nGrid)  
+  
+  # prepare rtol atol for ode
+    rtol = 1E-8
+    atol = 1E-8
+  if (max(sapply(p$ix, length))>=21){    
+    rtol = 1E-10
+    atol = 1E-10}
+  
   #
   # calculate in Fortran
   #
@@ -263,7 +271,8 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
       
       u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-              ipar=ipar, rpar=as.double(rpar)) # Run by dll
+              ipar=ipar, rpar=as.double(rpar),
+              method = "ode45", rtol = rtol, atol = atol) # Run by dll
     }
     
     if (bUseRDerivative==FALSE){    # If using the derivative from Fortran (fast):
@@ -318,7 +327,8 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
       # Full simulation:
       u = ode(y=yini, times=times, parms=as.double(setupinput), dllname = "FeistyR",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-              ipar=NULL, rpar=NULL) # Run by dll
+              ipar=NULL, rpar=NULL,
+              method = "ode45", rtol = rtol, atol = atol) # Run by dll
     }    
     #
     # Calculate in R:
@@ -326,12 +336,13 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   } else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
-    u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R
+    u = ode(y=yini, times=times, parms=p, func = Rmodel,
+            method = "ode45", rtol = rtol, atol = atol) #Run by R
   }
   
-  if (any(u[,c(p$ixR,p$ixFish)+1]<0))
-    stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
-                ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))
+  # if (any(u[,c(p$ixR,p$ixFish)+1]<0))
+  #   stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
+  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))
   
   #
   # Assemble output:
