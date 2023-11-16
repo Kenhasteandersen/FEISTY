@@ -164,17 +164,17 @@ derivativesFeistyR = function(t,              # current time
 # Simulate the model.
 #
 # In: 
-#  bUseRDerivative : FALSE-> Used fixed setups coded in the Fortran library 
+#  bCust : FALSE-> Used fixed setups coded in the Fortran library 
 #                    (published and revised).
-#                    TRUE -> Use setups coded in R. Makes it easier to bUseRDerivativetomize
-#                    your own setup. 'setup' and 'setupini' are revoked.
-
-#          setup type: 1 = setupBasic: Petrik et al. (2019)
-#                      2 = setupBasic2: as (1) but with adjusted to work with arbitrary no of stages
-#                      3 = setVertical: van Denderen et al. (2020)
-#                      4 =           
-
+#          TRUE -> Use customized setups. Customize your own setups by
+#                     mimicking the setup configuration in Feisty_setup.R and Feisty_parms.R.
 #  p : fully populated set of parameters
+#
+#          setup type:  setupBasic: Petrik et al. (2019)
+#                       setupBasic2: as (1) but with adjusted to work with arbitrary no of stages
+#                       setVertical: van Denderen et al. (2020)
+#                       setVertical2: revised based on van Denderen et al. (2020)  
+#
 #  tEnd : time to simulate (years)
 #  times: The times steps to return. If times=NA then it just does one call, essentially
 #          used to just get the derivate and not simulate
@@ -186,7 +186,7 @@ derivativesFeistyR = function(t,              # current time
 # 
 # ------------------------------------------------------------------------------
 
-simulateFeisty = function(bUseRDerivative    = FALSE,
+simulateFeisty = function(bCust    = FALSE,
                           p      = setupBasic(), 
                           tEnd   = 100,
                           tStep  = 1,
@@ -211,6 +211,8 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
   if (max(sapply(p$ix, length))>=21){    
     rtol = 1E-10
     atol = 1E-10}
+  if (max(sapply(p$ix, length))>=27) stop("The size number cannot be more than 27
+                                          due to the low accuracy of integration.")
   
   #
   # calculate in Fortran
@@ -260,7 +262,7 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
     # 
     # Run the simulation:
     #
-    if (bUseRDerivative==TRUE){     # If using the R code for calculating the derivative (slow):
+    if (bCust==TRUE){     # If using the R code for calculating the derivative (slow):
       
       initfunc <- "initfeisty"
       
@@ -275,7 +277,7 @@ simulateFeisty = function(bUseRDerivative    = FALSE,
               method = "ode45", rtol = rtol, atol = atol) # Run by dll
     }
     
-    if (bUseRDerivative==FALSE){    # If using the derivative from Fortran (fast):
+    if (bCust==FALSE){    # If using the derivative from Fortran (fast):
       # Oct 2023 Transmit input file path to Fortran library
       passpath <- function() {
         sys=Sys.info()['sysname']

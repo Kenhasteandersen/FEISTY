@@ -56,7 +56,7 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   
   for (i in 1:length(F)) {
     p = setFishing(p,F[i])
-    sim = simulateFeisty(bUseRDerivative    = FALSE,
+    sim = simulateFeisty(bCust    = FALSE,
                          p, 
                          #tEnd   = 100,
                          #tStep  = 1,

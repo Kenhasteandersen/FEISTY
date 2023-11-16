@@ -110,7 +110,7 @@ server <- function(input, output) {
     }
 
     # Simulate
-    return( simulateFeisty(bUseRDerivative    = FALSE,
+    return( simulateFeisty(bCust    = FALSE,
                            p, 
                            tEnd   = 100,
                            tStep  = 1,
