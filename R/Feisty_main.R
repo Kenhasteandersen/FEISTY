@@ -211,8 +211,7 @@ simulateFeisty = function(bCust    = FALSE,
   if (max(sapply(p$ix, length))>=21){    
     rtol = 1E-10
     atol = 1E-10}
-  if (max(sapply(p$ix, length))>=27) stop("The size number cannot be more than 27
-                                          due to the low accuracy of integration.")
+  if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
   
   #
   # calculate in Fortran
