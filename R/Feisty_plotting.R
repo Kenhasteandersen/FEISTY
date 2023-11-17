@@ -126,9 +126,9 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   hline(p$mort0[p$ix[[i]]][1])
   
   legend(x='bottomleft',
-         legend=c('Predation','Background'),
+         legend=c('Predation','Fishing','Background'),
          lty=c(1,dotted),
-         col=c('red','black'),
+         col=c('red','blue','black'),
          bty='n')
   #
   # Feeding level
