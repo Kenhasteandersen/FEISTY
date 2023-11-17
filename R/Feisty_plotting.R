@@ -127,7 +127,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   
   legend(x='bottomleft',
          legend=c('Predation','Fishing','Background'),
-         lty=c(1,dotted),
+         lty=c(1,1,dotted),
          col=c('red','blue','black'),
          bty='n')
   #
@@ -138,8 +138,18 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   for (i in 1:p$nGroups) {
     ix = p$ix[[i]]
     lines(p$mc[ix], rates$f[ix], lwd=i)
-    lines(p$mc[ix], p$metabolism[ix]/(p$epsAssim*p$Cmax[ix]), lwd=i, lty=dotted) # Critical feeding level
+    #lines(p$mc[ix], p$metabolism[ix]/(p$epsAssim*p$Cmax[ix]), lwd=i, lty=dotted) # Critical feeding level
   }
+  
+  i = which.max(sapply(p$ix,"length"))
+  ix = p$ix[[i]]
+  lines(p$mc[ix], p$metabolism[ix]/(p$epsAssim*p$Cmax[ix]), lwd=1, lty=dotted) # Critical feeding level
+  
+  legend(x='bottomright',
+         legend=c('Critical feeding level'),
+         lty=c(dotted),
+         col=c('black'),
+         bty='n')
   
   return(rates)
 }
