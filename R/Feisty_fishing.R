@@ -13,7 +13,7 @@ analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
                                      depth  = 100,
                                      Tp = 10,
                                      Tb = 8, 
-                                     nStages=nStages,
+                                     nStages=nStages[i],
                                      etaMature=0.25,
                                      F=0, # overwritten later
                                      etaF=0.05))
