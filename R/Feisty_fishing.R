@@ -16,7 +16,8 @@ analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
                                      nStages=nStages[i],
                                      etaMature=0.25,
                                      F=0, # overwritten later
-                                     etaF=0.05))
+                                     etaF=0.05),
+                                     maxF=maxF)
   }
   F = y[[1]][[1]]
   
