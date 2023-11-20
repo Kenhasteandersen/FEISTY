@@ -60,6 +60,50 @@ calcDerivativesR = function(t, y, p, FullOutput, ...)
   simulateFeisty(p=p, times=NA, yini=y, USEdll=FALSE, ...)
 
 #-------------------------------------------------------------------------------
+# A plot of the Biomass of all functional groups
+# as a function time.
+#-------------------------------------------------------------------------------
+plotBiomasstime = function(sim, bPlot=TRUE) {
+  if (bPlot)
+    defaultplot()
+  p = sim$p
+  
+  Btime = matrix(nrow=sim$nTime, ncol=p$nGroups)
+  for(i in 1:p$nGroups)
+    Btime[,i]=rowSums( sim$B[,p$ix[[i]]-p$nResources] )
+  
+  semilogypanel(xlim=sim$t, ylim=c(1E-3,max(max(sim$SSB)*10,max(sim$R)*10)),
+                xlab="Time (yr)", ylab = "Biomass (gww  m-2)")
+  
+  colnames(Btime)=p$groupnames[-p$ixR]
+  #
+  # Plot fish
+  #
+  for (i in 1:p$nGroups)
+    lines(sim$t, Btime[,i], col= sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i],lwd = 3)
+  #
+  # Plot resources:
+  #
+  for (i in p$ixR)
+    lines(sim$t, sim$R[,i], col=sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[sim$p$ixR]] [i],lwd = 3)
+  
+  # legend(x='bottomright',
+  #        legend=c('Resources','Fish'),
+  #        lty=c(1,1),
+  #        col=c('blue','black'),
+  #        bty='n')
+  
+  legend(x='bottom',
+         legend=sim$p$my_names[attr(sim$p$my_names,"names") %in% sim$p$groupnames],
+         lty=c(1,1),
+         col=sim$p$my_palette[attr(sim$p$my_palette,"names") %in% sim$p$groupnames],
+         bty='n',
+         ncol = 6, cex = 1,
+         lwd = 3)
+  
+}
+
+#-------------------------------------------------------------------------------
 # Makes a basic plot of the adult biomass (SSB) of all functional groups
 # as a function time.
 #-------------------------------------------------------------------------------
