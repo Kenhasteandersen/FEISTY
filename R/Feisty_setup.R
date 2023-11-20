@@ -44,7 +44,7 @@ setupBasic = function(szprod = 100, # small zoo production?
                         mortF=c(0,0.03,0.3), nStages=3, name="largePel") 
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, 
-                        mortF=c(0,0.03,0.3), nStages=3, name="Demersals")
+                        mortF=c(0,0.03,0.3), nStages=3, name="demersals")
   
   # physiology of all fish stages
   param = paramAddPhysiology(param)
@@ -75,25 +75,25 @@ setupBasic = function(szprod = 100, # small zoo production?
   param$theta["smallPel_2", "largeZoo"] = 1
   param$theta["smallPel_2", "smallPel_1"] = 1
   param$theta["smallPel_2", "largePel_1"] = 1
-  param$theta["smallPel_2", "Demersals_1"] = 1
+  param$theta["smallPel_2", "demersals_1"] = 1
 
   # Large pelagics:
   param$theta["largePel_1", "smallZoo"] = 1    
   param$theta["largePel_2", "smallZoo"] = 0.25 
   param$theta["largePel_2", "largeZoo"] = 1   
-  param$theta["largePel_2", c("smallPel_1", "largePel_1", "Demersals_1")] = 1 
+  param$theta["largePel_2", c("smallPel_1", "largePel_1", "demersals_1")] = 1 
   param$theta["largePel_3", "smallPel_2"] = 0.5 
   param$theta["largePel_3", "largePel_2"] = 1 
 
   # Demersals:
-  param$theta["Demersals_1", "smallZoo"] = 1
-  param$theta["Demersals_2", "smallBenthos"] = 1
+  param$theta["demersals_1", "smallZoo"] = 1
+  param$theta["demersals_2", "smallBenthos"] = 1
   if (param$depth < 200){ # Large demersals only eat pelagic prey in shallow water
-  param$theta["Demersals_3", "smallPel_2"] = 0.75/2
-  param$theta["Demersals_3", "largePel_2"] = 0.75 
+  param$theta["demersals_3", "smallPel_2"] = 0.75/2
+  param$theta["demersals_3", "largePel_2"] = 0.75 
   }
-  param$theta["Demersals_3", "smallBenthos"] = 1
-  param$theta["Demersals_3", "Demersals_2"] = 1 
+  param$theta["demersals_3", "smallBenthos"] = 1
+  param$theta["demersals_3", "demersals_2"] = 1 
 param$setup="setupBasic"
   return(param)
 }
@@ -144,7 +144,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                         mortF=0, nStages=nStages, name="largePel") 
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, 
-                        mortF=0, nStages=nStages, name="Demersals")
+                        mortF=0, nStages=nStages, name="demersals")
 
   # physiology of all fish stages
   param = paramAddPhysiology(param)
@@ -296,7 +296,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                         mortF=0, nStages=nStages, name="bathyPel") 
 
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
-                        mortF=0, nStages=nStages, name="Demersals")
+                        mortF=0, nStages=nStages, name="demersals")
   #param$mortF[length(param$mortF)]=0.5
   
   #------------------  
@@ -624,7 +624,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                         mortF=0, nStages=nStages, name="bathyPel") 
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
-                        mortF=0, nStages=nStages, name="Demersals")
+                        mortF=0, nStages=nStages, name="demersals")
   param$mortF[length(param$mortF)]=0.5
   
   #------------------  
