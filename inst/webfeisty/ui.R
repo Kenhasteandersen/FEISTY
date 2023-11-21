@@ -12,7 +12,6 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-          actionButton("startButton", "Start"),
           radioButtons("USEdll", 
                        ("Run by"),
                        choices = list("Fortran dll" = TRUE, "R" = FALSE),

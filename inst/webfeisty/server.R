@@ -70,12 +70,11 @@ server <- function(input, output) {
   )
   
   sim <- eventReactive(
-    input$startButton,
-  #   c(
-  #   input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
-  #   input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent,
-  #   input$sh_de,input$F,input$etaF
-  # ),
+    c(
+    input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
+    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent,
+    input$sh_de,input$F,input$etaF
+  ),
   {
     # setup simulation
     if (input$Setup == "setupBasic") {
