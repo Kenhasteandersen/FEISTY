@@ -119,18 +119,26 @@ plotSSBtime = function(sim, bPlot=TRUE) {
   # Plot fish
   #
   for (i in 1:p$nGroups)
-    lines(sim$t, sim$SSB[,i])
+    lines(sim$t, sim$SSB[,i],col= sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i],lwd = 3)
   #
   # Plot resources:
   #
   for (i in p$ixR)
-    lines(sim$t, sim$R[,i], col='blue')
+    lines(sim$t, sim$R[,i], col=sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[sim$p$ixR]] [i],lwd = 3)
 
-  legend(x='bottomright',
-         legend=c('Resources','Fish'),
-         lty=c(1,1),
-         col=c('blue','black'),
-         bty='n')
+  # legend(x='bottomright',
+  #        legend=c('Resources','Fish'),
+  #        lty=c(1,1),
+  #        col=c('blue','black'),
+  #        bty='n')
+  
+  # legend(x='bottom',
+  #        legend=sim$p$my_names[attr(sim$p$my_names,"names") %in% sim$p$groupnames],
+  #        lty=c(1,1),
+  #        col=sim$p$my_palette[attr(sim$p$my_palette,"names") %in% sim$p$groupnames],
+  #        bty='n',
+  #        ncol = 4, cex = 1,
+  #        lwd = 3)
   
 }
 
@@ -190,7 +198,8 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   loglogpanel(xlim = xlim, ylim=c(1e-1,max(rates$g)*10),
                 ylab="Growth rate (1/year)", xlab="-", xaxis = FALSE)
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], rates$g[p$ix[[i]]-length(p$ixR)], lwd=i, col='black')
+    lines(p$mc[p$ix[[i]]], rates$g[p$ix[[i]]-length(p$ixR)], lwd=i,
+          col=p$my_palette[attr(p$my_palette,"name") %in% p$groupnames[-p$ixR]] [i])
   }
 
   #
@@ -216,7 +225,8 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
                 ylab="Feeding level, f", xlab="Mass (gww)")
   for (i in 1:p$nGroups) {
     ix = p$ix[[i]]
-    lines(p$mc[ix], rates$f[ix], lwd=i)
+    lines(p$mc[ix], rates$f[ix], lwd=i,
+          col=sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i])
     #lines(p$mc[ix], p$metabolism[ix]/(p$epsAssim*p$Cmax[ix]), lwd=i, lty=dotted) # Critical feeding level
   }
   
@@ -245,20 +255,39 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(sim$B[round(0.6*iTime):iTime,])*10)),
                ylab="Biomass (gww m-2)", xlab="-", xaxis = FALSE)
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]), lwd=i)
+    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]),
+          col=sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i],
+          lwd=i)
   }
 }
+
+#-------------------------------------------------------------------------------
+# Add legends in an independent plot panel
+#-------------------------------------------------------------------------------
+addLegends=function(sim){
+  defaultpanel(xlim=c(0,10),ylim=c(0,10),xlab='', ylab='',
+             xaxis=FALSE, yaxis=FALSE, label=FALSE,bty="n")
+  
+  legend(x='top',
+         legend=sim$p$my_names[attr(sim$p$my_names,"names") %in% sim$p$groupnames],
+         lty=1,
+         col=sim$p$my_palette[attr(sim$p$my_palette,"names") %in% sim$p$groupnames],
+         bty='n',
+         ncol = 4, cex = 1.2,
+         lwd = 3) 
+}
+
 
 #-------------------------------------------------------------------------------
 # Make 4 panels of simulation
 #-------------------------------------------------------------------------------
 
 plotSimulation = function(sim) {
-  defaultplot(mfcol=c(5,1))
+  defaultplot(mfcol=c(6,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
   rates = plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
-  
+  addLegends(sim)
   return(rates)
 }
 
