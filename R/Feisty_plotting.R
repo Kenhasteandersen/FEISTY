@@ -242,10 +242,10 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
     defaultplot()
   p = sim$p
   # mean biomass of last 20% of simulation time  
-  loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(sim$B[round(0.8*iTime):iTime,])*10)),
+  loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(sim$B[round(0.6*iTime):iTime,])*10)),
                ylab="Biomass (gww m-2)", xlab="-", xaxis = FALSE)
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.8*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]), lwd=i)
+    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]), lwd=i)
   }
 }
 
@@ -300,7 +300,7 @@ plotNetwork <- function(p, u) {
   biomass <-u# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
   
   #Average of the biomass : 
-  Bi <- colMeans(biomass[round(0.8*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
+  Bi <- colMeans(biomass[round(0.6*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
   
   if (p$setup == "setupBasic"){
     Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
@@ -455,7 +455,7 @@ plotNetwork <- function(p, u) {
 plotDiet <- function(p, u) {
   p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
   biomass <- u#sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)]
-  Bin <- round(0.8 * nrow(biomass), digits = 0)
+  Bin <- round(0.6 * nrow(biomass), digits = 0)
   biomassend <- colMeans(biomass[Bin:nrow(biomass),])
   biomassstage <- p$ixFish[length(p$ixFish)]
   biomasssmall <- p$nstage - round(2/3*p$nstage, digits = 0)
