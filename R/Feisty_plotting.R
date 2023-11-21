@@ -132,7 +132,42 @@ plotSSBtime = function(sim, bPlot=TRUE) {
          col=c('blue','black'),
          bty='n')
   
-  }
+}
+
+
+#-------------------------------------------------------------------------------
+# Makes a basic plot of the Yield of all functional groups
+# as a function time.
+#-------------------------------------------------------------------------------
+
+plotYieldtime = function(sim, bPlot=TRUE) {
+  if (bPlot)
+    defaultplot()
+  p = sim$p
+  colnames(sim$yield)=p$groupnames[-p$ixR]
+  semilogypanel(xlim=sim$t, ylim=c(1E-3,max(max(sim$yiled)*10,max(sim$R)*10)),
+                xlab="Time (yr)", ylab = "Yield (gww  m-2)")
+  #
+  # Plot fish
+  #
+  for (i in 1:p$nGroups)
+    lines(sim$t, sim$yield[,i], col= sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i],lwd = 3)
+  
+  # legend(x='bottomright',
+  #        legend=c('Resources','Fish'),
+  #        lty=c(1,1),
+  #        col=c('blue','black'),
+  #        bty='n')
+  
+  legend(x='bottom',
+         legend=sim$p$my_names[attr(sim$p$my_names,"names") %in% sim$p$groupnames],
+         lty=c(1,1),
+         col=sim$p$my_palette[attr(sim$p$my_palette,"names") %in% sim$p$groupnames],
+         bty='n',
+         ncol = 6, cex = 1,
+         lwd = 3)
+  
+}
 
 #-------------------------------------------------------------------------------
 # Plots the mortalities and feeding levels
