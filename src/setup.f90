@@ -436,9 +436,9 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020)
 ! --------------------------------------
-   subroutine setupVertical(szprod,lzprod, bent, nStages, region, bottom, photic)
+   subroutine setupVertical(szprod,lzprod, bent, region, bottom, photic)
       real(dp), intent(in) :: szprod,lzprod, bottom, bent,photic !  default bottom:1500m euphotic depth 150m
-      integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
+      integer, intent(in) :: region!, nStages                    ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
        real(dp) :: ssigma
@@ -474,7 +474,7 @@ contains
       real(dp),allocatable :: sizes(:)
       integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
       real(dp), parameter :: etaMature = 0.002d0
-
+      integer, parameter :: nStages = 6
 
       call read_namelist_setupvertical()
       allocate(xrange(int(bottom) + 1))

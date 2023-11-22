@@ -242,7 +242,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 
 setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          bent = 150, # Detrital flux out of photic zone
-                         nStages=6, # No. of size groups
+                         #nStages=6, # No. of size groups    it is 6 in van Denderen et al., 2020
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
                          depth=1500, # Bottom depth
                          photic=150 # Photic zone depth
@@ -276,6 +276,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   # Add fish groups:
   #------------------  
+  nStages=6
   nSmall = round(0.66*nStages)
   # mMature=NA overrides the generic psiMature-> only adult classes 50% mature
   u0  = 0.0001

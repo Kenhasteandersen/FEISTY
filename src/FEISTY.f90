@@ -483,13 +483,13 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(7)
+    real(dp) :: parmsbasic(6)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(7,parmsbasic)
-       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),INT(parmsbasic(5)),&
-                          parmsbasic(6),parmsbasic(7))
+       call steadyparms(6,parmsbasic)
+       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),&
+                          parmsbasic(5),parmsbasic(6))
 
        feistyinitialised = .TRUE.
 
