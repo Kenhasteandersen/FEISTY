@@ -119,7 +119,7 @@ setFishing = function(p, F=0, etaF=0.05) {
 #
 calcYield = function(
     sim,          # The simulation object to analyse
-    etaTime=0.5) {# The fraction of the time series to integrate (default the last half) 
+    etaTime=0.6) {# The fraction of the time series to integrate (default the last half) 
   
   p=sim$p
   
@@ -155,7 +155,7 @@ calcYield = function(
 #
 calcSSB = function(
     sim,          # The simulation object to analyse
-    etaTime=0.5) {# The fraction of the time series to integrate (default the last half) 
+    etaTime=0.6) {# The fraction of the time series to integrate (default the last half) 
   
   p=sim$p
   

@@ -362,8 +362,8 @@ simulateFeisty = function(bCust    = FALSE,
   #
   # Calculate Spawning Stock Biomass and yield
   #
-  sim=calcSSB(sim=sim,etaTime=0.5)
-  sim=calcYield(sim=sim,etaTime=0.5)
+  sim=calcSSB(sim=sim,etaTime=0.6)
+  sim=calcYield(sim=sim,etaTime=0.6)
   
   return(sim)
 }
