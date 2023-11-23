@@ -28,6 +28,15 @@ analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
   for (i in 1:length(nStages)) {
     lines(F, y[[i]][[2]], lwd=i)
   }
+  
+  defaultplot()
+  defaultpanel(xlim=F, ylim=c(0,max(sapply(y, function(x) x[[4]]))+5),
+               xlab="Fishing mortality (year$^{-1}$)",
+               ylab="SSB (g/$m^2$/yr)")
+  for (i in 1:length(nStages)) {
+    lines(F, y[[i]][[4]], lwd=i)
+  }
+  
 }
 
 
@@ -85,7 +94,7 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   lines(F,yieldMax)
   lines(F, SSB,col="red", lwd=3)
   
-  return(list(F,yield, yieldMin, yieldMax))
+  return(list(F,yield, yieldMin, yieldMax,SSB))
 }
 
 #
@@ -125,6 +134,7 @@ calcYield = function(
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]    
     yieldAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$mortF[ix]) 
+    yieldAllgrid[,ix-length(p$ixR)][yieldAllgrid[,ix-length(p$ixR)]<0]=0
     yield[,iGroup]= rowSums(yieldAllgrid[,ix-length(p$ixR)])
 
     #deltaM = p$mUpper[ix]-p$mLower[ix]
@@ -160,6 +170,7 @@ calcSSB = function(
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
     SSBAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$psiMature[ix]) 
+    SSBAllgrid[,ix-length(p$ixR)][SSBAllgrid[,ix-length(p$ixR)]<0]=0
     SSB[,iGroup]= rowSums(SSBAllgrid[,ix-length(p$ixR)])
     #deltaM = p$mUpper[ix]-p$mLower[ix]
 
