@@ -22,7 +22,7 @@ analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
   F = y[[1]][[1]]
   
   defaultplot()
-  defaultpanel(xlim=F, ylim=c(0,max(y[[length(nStages)]][[2]])),
+  defaultpanel(xlim=F, ylim=c(0,max(sapply(y, function(x) x[[2]]))+5),
                xlab="Fishing mortality (year$^{-1}$)",
                ylab="Yield (g/$m^2$/yr)")
   for (i in 1:length(nStages)) {
