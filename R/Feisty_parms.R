@@ -76,7 +76,7 @@ paramInit = function(...) {
                     "mesoPel" = "#9E9E9E",
                     "largePel" = "#2196F3",
                     "bathyPel" =  "#0D47A1",
-                    "demersals" =  "#000000")
+                    "demersals" =  "#800080")
   
   param$my_names <- c("smallZoo" = "Small zooplankton",
                   "largeZoo" = "Large zooplankton",
