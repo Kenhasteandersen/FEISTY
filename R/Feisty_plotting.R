@@ -251,8 +251,9 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   if (bPlot)
     defaultplot()
   p = sim$p
-  
-  loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(sim$B[round(0.6*iTime):iTime,])*10)),
+  Bpositive=sim$B
+  Bpositive[Bpositive<0]=0
+  loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(Bpositive[round(0.6*iTime):iTime,])*10)),
                ylab="Biomass (gww m-2)", xlab="-", xaxis = FALSE)
   
   # Total biomass spectra
@@ -261,8 +262,8 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   totBMax=totBspec
   totBtime= matrix(nrow=iTime, ncol=max(sapply(p$ix, length)),data=0)
   for (i in 1:p$nGroups) {
-    totBspec[1:length(p$ix[[i]])] = totBspec[1:length(p$ix[[i]])] + colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1])
-    totBtime[,1:length(p$ix[[i]])] = totBtime[,1:length(p$ix[[i]])] + sim$B[,p$ix[[i]]-p$ixFish[1]+1]
+    totBspec[1:length(p$ix[[i]])] = totBspec[1:length(p$ix[[i]])] + colMeans(Bpositive[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1])
+    totBtime[,1:length(p$ix[[i]])] = totBtime[,1:length(p$ix[[i]])] + Bpositive[,p$ix[[i]]-p$ixFish[1]+1]
   }
   
   totBMin = apply((totBtime[round(0.6*iTime):iTime,]),2,min)
@@ -276,7 +277,7 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   
   # mean biomass of last 40% of simulation time  
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]),
+    lines(p$mc[p$ix[[i]]], colMeans(Bpositive[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1]),
           col=sim$p$my_palette[attr(sim$p$my_palette,"name") %in% sim$p$groupnames[-sim$p$ixR]] [i],
           lwd=i)
   }
