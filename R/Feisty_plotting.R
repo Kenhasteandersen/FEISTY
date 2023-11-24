@@ -257,10 +257,19 @@ plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
   
   # Total biomass spectra
   totBspec= matrix(nrow=1, ncol=max(sapply(p$ix, length)),data=0)
+  totBMin=totBspec
+  totBMax=totBspec
+  totBtime= matrix(nrow=iTime, ncol=max(sapply(p$ix, length)),data=0)
   for (i in 1:p$nGroups) {
-    totBspec[1:length(p$ix[[i]])] =totBspec[1:length(p$ix[[i]])]+ colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1])
+    totBspec[1:length(p$ix[[i]])] = totBspec[1:length(p$ix[[i]])] + colMeans(sim$B[round(0.6*iTime):iTime,p$ix[[i]]-p$ixFish[1]+1])
+    totBtime[,1:length(p$ix[[i]])] = totBtime[,1:length(p$ix[[i]])] + sim$B[,p$ix[[i]]-p$ixFish[1]+1]
   }
   
+  totBMin = apply((totBtime[round(0.6*iTime):iTime,]),2,min)
+  totBMax = apply((totBtime[round(0.6*iTime):iTime,]),2,max)
+  # plot shade
+  ribbon (p$mc[p$ix[[which.max(sapply(p$ix, length))]]],ymin=totBMin,ymax=totBMax,col="#ececec") 
+  # plot totBspec
   lines(p$mc[p$ix[[which.max(sapply(p$ix, length))]]], totBspec,
         col=black,
         lwd=3)
