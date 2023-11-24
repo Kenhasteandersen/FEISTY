@@ -34,7 +34,7 @@ analyseStages = function(nStages = c(3,6,9,18,36), maxF = 10) {
                xlab="Fishing mortality (year$^{-1}$)",
                ylab="SSB (g/$m^2$/yr)")
   for (i in 1:length(nStages)) {
-    lines(F, y[[i]][[4]], lwd=i)
+    lines(F, y[[i]][[5]], lwd=i)
   }
   
 }
