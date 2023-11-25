@@ -205,7 +205,7 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   #
   # Mortalities:
   #
-  loglogpanel(xlim=xlim, ylim=c(1E-3,max(rates$mortpred)+10),
+  loglogpanel(xlim=xlim, ylim=c(1E-2,max(rates$mortpred)+10),
               xlab="-", ylab="mort (1/year)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
     lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, lty="solid", col=p$my_palette[attr(p$my_palette,"name") %in% p$groupnames[-p$ixR]] [i])
