@@ -208,16 +208,17 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
   loglogpanel(xlim=xlim, ylim=c(1E-3,max(rates$mortpred)+10),
               xlab="-", ylab="mort (1/year)", xaxis = FALSE)
   for (i in 1:p$nGroups) {
-    lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, col='red')
-    lines(p$mc[p$ix[[i]]], p$mortF[p$ix[[i]]], lwd=i, col='blue')
+    lines(p$mc[p$ix[[i]]], rates$mortpred[p$ix[[i]]], lwd=i, lty="solid", col=p$my_palette[attr(p$my_palette,"name") %in% p$groupnames[-p$ixR]] [i])
+    lines(p$mc[p$ix[[i]]], p$mortF[p$ix[[i]]], lwd=i, lty="dashed", col=p$my_palette[attr(p$my_palette,"name") %in% p$groupnames[-p$ixR]] [i])
   }
   hline(p$mort0[p$ix[[i]]][1])
   
   legend(x='bottomleft',
          legend=c('Predation','Fishing','Background'),
-         lty=c(1,1,dotted),
-         col=c('red','blue','black'),
-         bty='n')
+         lty=c("solid","dashed","dotted"),
+         col=c('black','black','black'),
+         bty='n',
+         cex=0.9)
   #
   # Feeding level
   # 
