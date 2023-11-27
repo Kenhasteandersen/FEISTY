@@ -186,3 +186,48 @@ calcSSB = function(
 
   return(sim)
 }
+
+# Analyse sensitivity for fishing mortality. x: Stage number y: Biomass
+analyseStageB = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=20) {
+  y = list()
+  F= seq(0,maxF,length.out=21)
+ 
+for (iF in 1:length(F)){  
+  
+  for (i in 1:length(nStages)) {
+     sim = simulateFeisty(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
+                                     depth  = 100,
+                                     Tp = 10,
+                                     Tb = 8, 
+                                     nStages=nStages[i],
+                                     etaMature=0.25,
+                                     F=F[iF], # overwritten later
+                                     etaF=0.05),
+                          simpleOutput = TRUE)
+     p=sim$p
+     Bpositive=sim$B
+     Bpositive[Bpositive<0]=0
+# all functional types
+     for(j in 1:p$nGroups){
+     y[[paste(i)]][[j]]= sum(colMeans(Bpositive[round(0.6*sim$nTime):sim$nTime,p$ix[[j]]-p$nResources])) 
+     }
+     
+# tot B     
+     y[[paste(i)]][["totB"]]= sum(colMeans(Bpositive[round(0.6*sim$nTime):sim$nTime,p$ixFish-p$nResources])) 
+}
+  
+  defaultplot()
+  defaultpanel(xlim=nStages, ylim=c(0,max(unlist(y))+5),
+               xlab="Stage number",
+               ylab="Biomass (gww m $^{-2}$)")
+  for (i in 1:p$nGroups) {
+    lines(nStages, unlist(sapply(y, function(x) x[i])), lwd=i, type = "o", pch = 1)
+  }
+  
+  lines(nStages, unlist(sapply(y, function(x) x[["totB"]])), lwd=2, col="red", type = "o", pch = 1)
+  
+  title(main=paste("Fishing mortality", F[iF], "(year-1)"),line = -1)
+  
+ }
+  
+}
