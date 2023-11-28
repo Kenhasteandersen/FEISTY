@@ -157,9 +157,9 @@ paramAddResource = function(p,        # parameter to be updated
   p$r     = r
   p$ixR   = 1:nR 
   p$mc    = mc
-  p$mLower = p$resource$mLower
-  p$mUpper = p$resource$mUpper
-  p$u0     = p$resource$u0
+  p$mLower = p$resources$mLower
+  p$mUpper = p$resources$mUpper
+  p$u0     = p$resources$u0
   if (any(is.na(p$u0))) p$u0    = K
   names(p$u0)= names(p$mLower) = names(p$mUpper) = names
   p
