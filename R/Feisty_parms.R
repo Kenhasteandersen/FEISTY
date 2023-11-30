@@ -346,11 +346,11 @@ paramTeffect = function (p, # only for setupbasic & 2
   ix = c(p$ix[[1]],p$ix[[2]])
 
   #pelagics
-  p$V[ix]= p$fT * p$V[ix]
+  p$V[ix]= p$fT * p$Vsave[ix]
   
-  p$Cmax[ix]= p$fT * p$Cmax[ix]
+  p$Cmax[ix]= p$fT * p$Cmaxsave[ix]
   
-  p$metabolism[ix] = p$fT_met * p$metabolism[ix]
+  p$metabolism[ix] = p$fT_met * p$metabolismsave[ix]
   
   #demersal
   #small
