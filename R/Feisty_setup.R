@@ -162,19 +162,17 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   thetaA = 0.5  # Large fish pref for medium forage fish
   thetaD = 0.75 # Pref of large demersal on pelagic prey
   
-  param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  rownames(param$theta) <- colnames(param$theta) <- param$stagenames
+  #param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
 
    # Size-based interactions:  
    beta  = 400
    sigma = 1.3
-
-   for (i in param$ixFish) {
-     param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
-     param$theta[i, param$mc > param$mc[i]] = 0
-   }
-   param$theta[is.na(param$theta)] = 0
-  
+   
+   param$theta=sizePrefFeeding(p=param,           # parameter settings 
+                               beta = 400,  # preferred predator/prey mass ratio
+                               sigma = 1.3, # width of size preference for feeding
+                               type = 1)
    #
    # Setup interactions between groups and resources:
    #
@@ -323,23 +321,19 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # theta (preferences):
   #------------------  
   #------------------  
-  param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  rownames(param$theta) <- colnames(param$theta) <- param$stagenames
+  #param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
 
   beta  = 400
   sigma = 1.3
-  param$sizeprefer = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
-  for (i in param$ixFish[[1]]: param$nStages){
-       for (j in 1: param$nStages){
-            param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
-              erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
-                  - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
-  param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
-  }
-}
+  param$sizeprefer=sizePrefFeeding(p=param,           # parameter settings 
+                              beta = 400,  # preferred predator/prey mass ratio
+                              sigma = 1.3, # width of size preference for feeding
+                              type = 2)
 
   #------------------  
   # overlap from depth distribution
@@ -641,23 +635,19 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # theta (preferences):
   #------------------  
   #------------------  
-  param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  rownames(param$theta) <- colnames(param$theta) <- param$stagenames
+  #param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
   
   beta  = 400
   sigma = 1.3
-  param$sizeprefer = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
-  for (i in param$ixFish[[1]]: param$nStages){
-    for (j in 1: param$nStages){
-      param$sizeprefer[i, j] = sqrt(pi/2)*sigma*(
-        erf((log(param$mUpper[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma))
-        - erf((log(param$mLower[j]) - log(param$mc[i]/beta))/(sqrt(2)*sigma)))
-      param$sizeprefer[i, j] = param$sizeprefer[i, j]/(log(param$mUpper[j]) - log(param$mLower[j]))
-    }
-  }
+  param$sizeprefer=sizePrefFeeding(p=param,           # parameter settings 
+                                   beta = 400,  # preferred predator/prey mass ratio
+                                   sigma = 1.3, # width of size preference for feeding
+                                   type = 2)
   
   #------------------  
   # overlap from depth distribution

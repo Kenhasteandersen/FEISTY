@@ -24,8 +24,8 @@ sizePrefFeeding <- function(
       theta[i,] = exp( -(log(p$mc[i]/(beta*p$mc)))^2 / (2*sigma)^2  )
       theta[i, p$mc >p$mc[i]] = 0
     }
-  } else {
-  # calculate size-preference matrix based on erf
+  } else if (type == 2) {
+  # calculate size-preference matrix based on erf used in van Denderen et al., 2020
     for (i in p$ixFish){
        for (j in 1: p$nStages){
             theta[i, j] = sqrt(pi/2)*sigma*(
@@ -34,7 +34,10 @@ sizePrefFeeding <- function(
             theta[i, j] = theta[i, j]/(log(p$mUpper[j]) - log(p$mLower[j]))
        }
     }
-  }  
+  } else if (type == 3) {
+  #  
+  }
+  
   theta[is.na(theta)] = 0
   return(theta)  
 }
