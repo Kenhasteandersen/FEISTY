@@ -19,7 +19,7 @@ sizePrefFeeding <- function(
   
   theta = matrix(nrow=p$nStages, ncol=p$nStages, data=0)
   rownames(theta) <- colnames(theta) <- p$stagenames
-  if (type == 1){
+  if (type == 1) {
     for (i in p$ixFish) {
       theta[i,] = exp( -(log(p$mc[i]/(beta*p$mc)))^2 / (2*sigma)^2  )
       theta[i, p$mc >p$mc[i]] = 0
@@ -35,7 +35,25 @@ sizePrefFeeding <- function(
        }
     }
   } else if (type == 3) {
-  #  
+  # Calculate size preference function by integrating over both predator
+  # and prey size groups. See Andersen and Visser 2023, appendix A.  
+    s = 2*sigma*sigma
+    
+    for (i in p$ixFish[1]:p$nStages) {
+      for (j in 1:p$nStages){
+        z=p$mc[i]/p$mc[j]
+        Delta=p$mUpper[i]/p$mLower[i]
+        
+        theta[i,j] = max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
+                                  exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
+                                (sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
+                                   2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
+                                   erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
+        )
+        
+        theta[i,j] = ifelse(p$mc[j]>p$mc[i],0,theta[i,j])
+      }
+    }
   }
   
   theta[is.na(theta)] = 0
