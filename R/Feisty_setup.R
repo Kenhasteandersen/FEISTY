@@ -132,6 +132,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
         names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
         K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
+        mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
+        mUpper = c(0.001, 0.5, 125, 125),
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
 
 
@@ -173,6 +175,16 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                                beta = 400,  # preferred predator/prey mass ratio
                                sigma = 1.3, # width of size preference for feeding
                                type = 1)
+   
+  # update preference from fish to resources with the simple function
+   # for (i in param$ixFish) {
+   #   for(j in param$ixR){
+   #     param$theta[i,j] = exp( -(log(param$mc[i]/(beta*param$mc[j])))^2 / (2*sigma)^2  )
+   #   if (param$mc[j] >param$mc[i]) param$theta[i, j] = 0
+   #   }
+   # }
+   
+   
    #
    # Setup interactions between groups and resources:
    #
