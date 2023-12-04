@@ -363,8 +363,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
 
-  ixjuv = which.min(abs(sizes - etaMature*250))
-  ixadult = which.min(abs(sizes - etaMature*125000))
+  ixjuv = which.min(abs(sizes-0.5))# - etaMature*250)) # -0.5))
+  ixadult = which.min(abs(sizes-250))# - etaMature*125000)) # -250))
     
   # ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   # ixadult = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
@@ -677,8 +677,8 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
   
-  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
-  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
+  ixjuv = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
+  ixadult = which.min(abs(param$mLower[param$ix[[5]]] - 250))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
