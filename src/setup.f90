@@ -993,8 +993,11 @@ contains
       !ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
       !ixadult = minloc(abs(sizes-2.5d2),dim=1)
 
-      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*250.d0),dim=1) !predatory fish
-      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+!      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*250.d0),dim=1) !predatory fish
+!      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+
+      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-250.d0),dim=1)
 
 
 !  deallocate (sizes)!see above overwrite psimature
