@@ -56,7 +56,7 @@ ui <- fluidPage(
                       step = 1,
                       value = 100),
           sliderInput("bprod",
-                      "Small benthos carrying capacity (g/m2):",
+                      "Benthos carrying capacity (g/m2):",
                       min = 1,
                       max = 50,
                       step = 1,
