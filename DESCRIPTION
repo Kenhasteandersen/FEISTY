@@ -4,8 +4,8 @@ Title: FishErIes Size and functional TYpe model (FEISTY)
 Author: Ken Haste Andersen <kha@aqu.dtu.dk>
         Karline Soetaert <karline.soetaert@nioz.nl>
 Maintainer: Karline Soetaert <karline.soetaert@nioz.nl>
-Depends: R (>= 3.5.0)
-Imports: pracma, latex2exp, deSolve, shiny, shinyjs, dplyr, magrittr, ggplot2, scales, ggthemes, patchwork
+Depends: R (>= 3.5.0), deSolve, shiny, shinyjs, dplyr, magrittr, ggplot2, scales, ggthemes, patchwork
+Imports: pracma, latex2exp
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Description:  A size- and trait-based model of higher trophic level dynamics.
