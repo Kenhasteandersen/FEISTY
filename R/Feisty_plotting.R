@@ -353,7 +353,7 @@ plotNetwork <- function(p, u) {
   biomass <-u# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
   
   #Average of the biomass : 
-  Bi <- colMeans(biomass[round(0.6*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 20% time 
+  Bi <- colMeans(biomass[round(0.6*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 40% time 
   
   if (p$setup == "setupBasic"){
     Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
@@ -508,8 +508,8 @@ plotNetwork <- function(p, u) {
 plotDiet <- function(p, u) {
   p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
   biomass <- u#sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)]
-  Bin <- round(0.6 * nrow(biomass), digits = 0)
-  biomassend <- colMeans(biomass[Bin:nrow(biomass),])
+  Bin <- round(0.6 * nrow(biomass), digits = 0) 
+  biomassend <- colMeans(biomass[Bin:nrow(biomass),]) # mean value of the last 40% time 
   biomassstage <- p$ixFish[length(p$ixFish)]
   biomasssmall <- p$nstage - round(2/3*p$nstage, digits = 0)
   Enc = p$V * (p$theta %*% biomassend)
