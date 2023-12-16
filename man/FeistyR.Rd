@@ -3,10 +3,10 @@
 \alias{FeistyR}
 \docType{package}
 \title{
-  The Feisty model: FishErIes Size and functional TYpe. 
+  FEISTY: FishErIes Size and functional TYpe model. 
 }
 \description{
-Implements the Feisty model as described in Van Denderen et al 2020 and Petrik et al., 2019
+The FEISTY model is a size- and trait-based fish model, described in Petrik et al., 2019 and van Denderen et al., 2020.
      }
 \details{
   \tabular{ll}{
@@ -17,13 +17,14 @@ Implements the Feisty model as described in Van Denderen et al 2020 and Petrik e
   }
 }
 \author{
-  Ken H Andersen
-  Karline Soetaert 
+  Ken H Andersen,
+  Karline Soetaert, 
+  Yixin Zhao
 }
 \seealso{
 \itemize{
- \item \code{\link{simulateFeisty}} Dynamic run of the feisty model
- \item \code{\link{setupPelagicSpecies}} Parameter input of the feisty model
+ \item \code{\link{simulateFeisty}} Main function for simulations of the FEISTY model.
+ %\item \code{\link{setupPelagicSpecies}} Parameter input of the feisty model
 }
 }
 \examples{
@@ -34,11 +35,9 @@ example(simulateFeisty)
 }
 
 \references{
-Van Denderen et al. 2020. Emergent global biogeography of marine fish food webs. 
-Global Ecology and Biogeography, DOI: 10.1111/geb.13348 
+Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
 
-Petrik, CM, Stock, CA, Andersen, KH, van Denderen, PD, Watson, JR 2019. 
-Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. 
-Progress in Oceanography, 176, 102124. DOI: 10.1016/j.pocean.2019.102124
+van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+
 }
 \keyword{ package }
