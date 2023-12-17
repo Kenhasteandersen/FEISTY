@@ -181,11 +181,11 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 # Plots the mortalities and feeding levels
 #-------------------------------------------------------------------------------
 
-plotRates = function(p, u=p$u0, bPlot=TRUE) {
+plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
 #  if (p$USEdll) {
-#    rates = calcDerivativesF(0, u, p, FullOutput = TRUE)[[2]]
+#    rates = calcDerivativesF(0, y, p, FullOutput = TRUE)[[2]]
 #  }else{
-    rates = calcDerivativesR(0, u, p, FullOutput = TRUE)
+    rates = calcDerivativesR(0, y, p, FullOutput = TRUE)
 #  }
     
   if (bPlot)
@@ -248,12 +248,13 @@ plotRates = function(p, u=p$u0, bPlot=TRUE) {
 # Plot the biomasses of all groups
 #-------------------------------------------------------------------------------
 
-plotSpectra = function(sim, iTime=sim$nTime, bPlot=TRUE) {
+plotSpectra = function(sim, bPlot=TRUE) {
   if (bPlot)
     defaultplot()
   p = sim$p
   Bpositive=sim$B
   Bpositive[Bpositive<0]=0
+  iTime=sim$nTime
   loglogpanel(xlim=p$mc[p$ixFish], ylim=c(1e-3,max(colMeans(Bpositive[round(0.6*iTime):iTime,])*10)),
                ylab="Biomass (gww m-2)", xlab="-", xaxis = FALSE)
   
@@ -310,7 +311,7 @@ plotSimulation = function(sim) {
   defaultplot(mfcol=c(6,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
-  rates = plotRates(sim$p, u=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
+  rates = plotRates(sim$p, y=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
   addLegends(sim)
   return(rates)
 }
@@ -346,7 +347,7 @@ plotTheta = function(p) {
 # u: sim$u simpleOutput=TRUE
 #-------------------------------------------------------------------------------
 
-plotNetwork <- function(p, u) {
+plotNetwork <- function(p=sim$p, u=sim$u) {
   
   # Number of groups and biomass:
   ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
@@ -505,7 +506,7 @@ plotNetwork <- function(p, u) {
 # u: sim$u simpleOutput=TRUE
 #-------------------------------------------------------------------------------
 
-plotDiet <- function(p, u) {
+plotDiet <- function(p=sim$p, u=sim$u) {
   p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
   biomass <- u#sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)]
   Bin <- round(0.6 * nrow(biomass), digits = 0) 
