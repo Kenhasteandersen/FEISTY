@@ -1,9 +1,11 @@
 \name{setupFeisty}
 \alias{setupFeisty}
-\alias{setupPelagicSpecies} 
-\alias{setupVertical} 
-\alias{setupBasic} 
+\alias{setupPelagicSpecies}
+\alias{setupBasic}
 \alias{setupBasic2}
+\alias{setupVertical} 
+\alias{setupVertical2} 
+
 
 \title{
   Feisty model parameter sets.
@@ -15,6 +17,9 @@
 \code{setupVertical} sets up model parameters for pelagic+benthic species, where
 pelagic species feed from zooplankton that has a different vertical distribution day and night
 
+\code{setupVertical2} sets up model parameters for pelagic+benthic species, where
+pelagic species feed from zooplankton that has a different vertical distribution day and night
+
 \code{setupBasic} creates a basic three-species setup as described in Petrik et al (2019) 
  
 \code{setupBasic2} creates a basic three-species setup generalised to 
@@ -22,20 +27,63 @@ more realistic sizes, and size-based feeding
 }
 
 \usage{
-setupPelagicSpecies(depth = 500, pprod = 100, bprod = 5, nStages = 6,      
+setupBasic = function(szprod = 100,
+                      lzprod = 100,
+                      bprod  = 5,
+                      depth  = 100,
+                      Tp     = 10,
+                      Tb     = 8)
+                      
+setupBasic2 = function(szprod = 100,
+                       lzprod = 100,
+                       bprod  = 5,
+                       depth  = 100,
+                       Tp     = 10,
+                       Tb     = 8,
+                       nStages=9,
+                       etaMature=0.25,
+                       F=0,
+                       etaF=0.05) 
+
+setupVertical = function(szprod= 80,lzprod = 80, 
+                         bent = 150, # Detrital flux out of photic zone
+                         region = 4,
+                         depth=1500, # Bottom depth
+                         photic=150 # Photic zone depth
+                         )
+
+setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
+                         bent = 150, # Detrital flux out of photic zone
+                         nStages=6, # No. of size groups
+                         region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
+                         depth=1500, # Bottom depth
+                         photic=150, # Photic zone depth
+                         mesopelagic=250, # mesopelagic depth
+                         visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
+                         etaMature = 0.25, # Size of matureation relative to
+                         # asymptotic size. Different from
+                         # van Denderen (2021), where it is 0.002
+                         F=0,
+                         etaF=0.05)
+
+
+setupPelagicSpecies(depth = 500, pprod = 100, bprod = 5, nStages = 6,     
      mInf, names = NA, demersal = TRUE, mort0 = 0.5)
-setupVertical(pprod = 80, depth = 1500, photic = 150, mesopelagic = 250, 
-     bent = 150, visual = 1.5)
-setupBasic(pprod = 100, bprod = 5)
-setupBasic2(pprod = 100, bprod = 5, nStages = 9)
 }
 \arguments{
-  \item{depth }{bb  }
-  \item{pprod }{bb  }
-  \item{bprod }{bb  }
-  \item{mInf }{bb  }
+  \item{szprod} {small zooplankton productivity\cr Actually this represents small zooplankton carrying capacity [gww/m2] but it will mutiply growth rate \bold{r} which is always 1 [1/yr]. Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.}
+  \item{lzprod} {large zooplankton productivity }
+  \item{bprod} {benthic community productivity  }  
+  \item{depth}{water column depth [meter]. \cr 
+  For \code{setupBasic} and \code{setupBasic2}, \code{depth}>=200 is characterized as deep water, \code{depth}<200 is characterized as shallow water. \code{depth}=300 and \code{depth}=1000 do not have any different effects on simulations. \cr
+  For \code{setupVertical} and \code{setupVertical2}, .}
+  \item{Tp }{pelagic water temperature representing the top 100m average temperature [Celsius].}
+  \item{Tb }{bottom water temperature [Celsius].}
+  \item{nStages}{}
+  \item{region}{Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.}
+  \item{mInf }{bb}
   \item{demersal }{bb  }
-  \item{photic }{bb  }
+  \item{photic }{photic zone depth [meter]}
   \item{mesopelagic }{bb  }
   \item{bent }{bb  }
   \item{visual }{bb  }
@@ -85,8 +133,9 @@ parameter settings for the fish dynamics are:
 }
 
 \author{
-Ken H Andersen
-Karline Soetaert <karline.soetaert@nioz.nl>
+Ken H Andersen,
+Karline Soetaert <karline.soetaert@nioz.nl>,
+Yixin Zhao
 }
 
 \examples{ 
