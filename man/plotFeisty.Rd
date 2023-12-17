@@ -30,13 +30,24 @@ plotDiet(p=sim$p, u=sim$u)
 }
   \item{p}{ the parameter set \code{sim$p}.
 }
-  \item{y}{ the parameter set \code{sim$p}For example, \code{sim$u[,sim$nTime]}.This means the biomass data in the last time point is used for rate calculation. The time-averaged biomass data might be prefered,\code{sim$u[,sim$nTime]}.
+  \item{y}{ the parameter set \code{sim$p}For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation. The time-averaged biomass data might be prefered,\code{sim$u[,sim$nTime]}.
 }
   \item{u}{ the result matrix of the biomass, including resources and fish.\code{sim$u}. 
 }
 }
 \details{
+\code{\link{plotSSBtime}} plots the fish spawning stock biomass over the total simulation time.
+
+\code{\link{plotSpectra}} plots fish biomass over size spectrum. Data is averaged data over the last 40\% simulation time.
+
+\code{\link{plotRates}} plots growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over size spectrum. Data is calculated based on averaged biomass over the last 40\% simulation time.
+
 \code{\link{plotSimulation}} is designed for \code{\link{webFeisty}}, which includes \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.Additionally, there is a function \code{\link{addLegends}} in Feisty_plotting.R to add legends. However, this function is not universal for general plots. Users may need to define their new scripts for adding legends according to the function \code{\link{addLegends}}.
+
+\code{\link{plotNetwork}} generates a food-web plot. The circle diameter represents the relative biomass level.
+
+\code{\link{plotDiet}} shows the fraction of food sources in fish stomachs.
+
 }
 \value{
 %%  ~Describe the value returned
@@ -59,14 +70,18 @@ Yixin Zhao
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
+##---- directly executable ----
 
-## The function is currently defined as
-function (x) 
-{
-  }
+## get simulation results
+sim=simulateFeisty(p  = setupBasic(), 
+                    tEnd   = 200,
+                    USEdll = TRUE,
+                    simpleOutput = TRUE)
+## plot biomass spectrum 
+plotNetwork(p=sim$p, u=sim$u)
+## plot spawning stock biomass over time in a new plot
+plotSSBtime(sim, bPlot=TRUE)
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):
