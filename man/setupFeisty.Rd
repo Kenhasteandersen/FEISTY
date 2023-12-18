@@ -27,71 +27,76 @@ more realistic sizes, and size-based feeding
 }
 
 \usage{
-setupBasic = function(szprod = 100,
-                      lzprod = 100,
-                      bprod  = 5,
-                      depth  = 100,
-                      Tp     = 10,
-                      Tb     = 8)
+p=setupBasic(szprod = 100,
+             lzprod = 100,
+             bprod  = 5,
+             depth  = 100,
+             Tp     = 10,
+             Tb     = 8)
                       
-setupBasic2 = function(szprod = 100,
-                       lzprod = 100,
-                       bprod  = 5,
-                       depth  = 100,
-                       Tp     = 10,
-                       Tb     = 8,
-                       nStages=9,
-                       etaMature=0.25,
-                       F=0,
-                       etaF=0.05) 
+p=setupBasic2(szprod = 100,
+              lzprod = 100,
+              bprod  = 5,
+              depth  = 100,
+              Tp     = 10,
+              Tb     = 8,
+              nStages=9,
+              etaMature=0.25,
+              F=0,
+              etaF=0.05)
 
-setupVertical = function(szprod= 80,lzprod = 80, 
-                         bent = 150, # Detrital flux out of photic zone
-                         region = 4,
-                         depth=1500, # Bottom depth
-                         photic=150 # Photic zone depth
-                         )
+p=setupVertical(szprod= 80,
+                lzprod = 80,
+                bent = 150,
+                region = 4,
+                depth=1500,
+                photic=150)
 
-setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
-                         bent = 150, # Detrital flux out of photic zone
-                         nStages=6, # No. of size groups
-                         region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
-                         depth=1500, # Bottom depth
-                         photic=150, # Photic zone depth
-                         mesopelagic=250, # mesopelagic depth
-                         visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
-                         etaMature = 0.25, # Size of matureation relative to
+p=setupVertical2(szprod= 80,
+                 lzprod = 80,
+                 bent = 150,
+                 nStages=6,
+                 region = 4,
+                 depth=1500,
+                 photic=150,
+                 mesopelagic=250,
+                 visual=1.5,
+                 etaMature = 0.25, # Size of matureation relative to
                          # asymptotic size. Different from
                          # van Denderen (2021), where it is 0.002
-                         F=0,
-                         etaF=0.05)
+                 F=0,
+                 etaF=0.05)
 
 
-setupPelagicSpecies(depth = 500, pprod = 100, bprod = 5, nStages = 6,     
-     mInf, names = NA, demersal = TRUE, mort0 = 0.5)
+%setupPelagicSpecies(depth = 500, pprod = 100, bprod = 5, nStages = 6,     
+%     mInf, names = NA, demersal = TRUE, mort0 = 0.5)
 }
 \arguments{
-  \item{szprod} {small zooplankton productivity\cr Actually this represents small zooplankton carrying capacity [gww/m2] but it will mutiply growth rate \bold{r} which is always 1 [1/yr]. Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.}
-  \item{lzprod} {large zooplankton productivity }
-  \item{bprod} {benthic community productivity  }  
+  \item{szprod}{small zooplankton productivity\cr Actually this represents small zooplankton carrying capacity [gww/m2] but it will mutiply growth rate \bold{r} which is always 1 [1/yr]. Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.}
+  \item{lzprod}{large zooplankton productivity}
+  \item{bprod}{benthic community productivity}  
   \item{depth}{water column depth [meter]. \cr 
-  For \code{setupBasic} and \code{setupBasic2}, \code{depth}>=200 is characterized as deep water, \code{depth}<200 is characterized as shallow water. \code{depth}=300 and \code{depth}=1000 do not have any different effects on simulations. \cr
-  For \code{setupVertical} and \code{setupVertical2}, .}
-  \item{Tp }{pelagic water temperature representing the top 100m average temperature [Celsius].}
-  \item{Tb }{bottom water temperature [Celsius].}
-  \item{nStages}{}
-  \item{region}{Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.}
-  \item{mInf }{bb}
-  \item{demersal }{bb  }
-  \item{photic }{photic zone depth [meter]}
-  \item{mesopelagic }{bb  }
-  \item{bent }{bb  }
-  \item{visual }{bb  }
-  \item{nStages }{bb  }
-  \item{names }{the names of the functional group - will be used to label the model output
-  }
-  \item{mort0 }{natural mortality [/year]. 
-  }
+  For \code{setupBasic} and \code{setupBasic2}, \code{depth}>=200 is characterized as deep water, and \code{depth}<200 is characterized as shallow water. \code{depth}=300 and \code{depth}=1000 do not have any different effects on simulations. \cr
+  For \code{setupVertical} and \code{setupVertical2}, different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates.}
+  \item{Tp}{pelagic water temperature representing the top 100m average temperature [Celsius].}
+  \item{Tb}{bottom water temperature [Celsius].}
+  \item{nStages}{size number of large fish functional groups (e.g., large pelagic fish, demersal fish, and bathypelagic fish). The size number of small fish functional groups (e.g., small  pelagic fish and mesopelagic fish) is \code{round(2/3*nStages)}. Generally, \code{nStages} is multiples of 3 (e.g., \code{nStages = 3, 6, 9, or 12}...).}
+  \item{etaMature}{the coefficient determines the fish size \code{mMature} with a 50\% maturity level. \code{mMature = etaMature * mMax},  where \code{mMax} is the largest fish size (boundary) of a fish functional group. See \code{\link{paramAddGroup}}. In van Denderen et al. (2021), it was 0.002.}
+    
+  \item{region}{Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius. It represents the water column temperature profile for three regions. The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Ddenderen et al. (2021).}
+  \item{F}{fishing mortality [1/year]. If \code{F} is 0, there is no fishing mortality. If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function. See source code of \code{\link{setFishing}}.}
+  \item{etaF}{the coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.}
+  \item{photic}{photic zone depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical} or \code{setupVertical2}.}
+  \item{mesopelagic}{mesopelagic depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical} or \code{setupVertical2}.}
+  \item{bent}{Detrital flux out of photic zone [gww/m2/year]. \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code \code{setupVertical}.}
+  \item{visual}{\code{visual=1.5}: visual predator, predation ability is enhanced during the day and decreased in the twilight zone during the day, \code{visual=1}: non-visual predator, predation abilities are equal in day and night. It must \bold{be careful} to assign other values to \code{visual}, or the setup could crash. See source code of \code{setupVertical} or \code{setupVertical2}.}
+  
+%  \item{demersal }{bb  }
+%  \item{mInf }{bb}
+%  \item{names }{the names of the functional group - will be used to label the model output
+%  }
+%  \item{mort0 }{natural mortality [/year]. 
+%  }
 }
 
 \value{
