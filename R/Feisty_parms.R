@@ -10,7 +10,7 @@
 # size differences of prey and predator
 #-------------------------------------------------------------------------------
 
-sizePrefFeeding <- function(
+paramSizepref <- function(
     p,           # parameter settings 
     beta = 400,  # preferred predator/prey mass ratio
     sigma = 1.3, # width of size preference for feeding

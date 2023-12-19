@@ -50,10 +50,10 @@ setupBasic = function(szprod = 100, # small zoo production?
   param = paramAddPhysiology(param)
   
   param=paramTeffect(param, # only for setupbasic & 2
-                           Tref=10,
-                           Q10=1.88,
-                           Q10m=2.35,
-                           u=NA)
+                      Tref=10,
+                      Q10=1.88,
+                      Q10m=2.35,
+                      u=NA)
 
   # Add fishing mortality
   # F=NA No further process
@@ -171,7 +171,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    beta  = 400
    sigma = 1.3
    
-   param$theta=sizePrefFeeding(p=param,           # parameter settings 
+   param$theta=paramSizepref(p=param,           # parameter settings 
                                beta = 400,  # preferred predator/prey mass ratio
                                sigma = 1.3, # width of size preference for feeding
                                type = 1)
@@ -342,7 +342,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
-  param$sizeprefer=sizePrefFeeding(p=param,           # parameter settings 
+  param$sizeprefer=paramSizepref(p=param,           # parameter settings 
                               beta = 400,  # preferred predator/prey mass ratio
                               sigma = 1.3, # width of size preference for feeding
                               type = 2)
@@ -656,7 +656,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
-  param$sizeprefer=sizePrefFeeding(p=param,           # parameter settings 
+  param$sizeprefer=paramSizepref(p=param,           # parameter settings 
                                    beta = 400,  # preferred predator/prey mass ratio
                                    sigma = 1.3, # width of size preference for feeding
                                    type = 2)

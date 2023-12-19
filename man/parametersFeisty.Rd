@@ -4,14 +4,16 @@
 \alias{paramAddResource}
 \alias{paramAddGroup}
 \alias{paramAddPhysiology}
+\alias{paramTeffect}
+\alias{paramSizepref}
 
 \title{
-Creating parameter settings of the Feisty model
+Creating parameter sets of the FEISTY model
 }
 \description{
 
 Functions paramInit, paramAddResource, paramAddGroup are helper functions to 
-create the input parameter lists.
+create the input parameter lists. Instructions telling users how to customize their own setups.
 }
 
 \usage{
@@ -25,30 +27,36 @@ paramAddGroup(p, nStages, mMin, mMax, mMature=mMax,
               
 paramAddPhysiology(p, ac = 20, bc = -0.25, am = 4, bm = -0.175,
               ae = 70, be = -0.2, epsRepro = 0.01, epsAssim = 0.7)  
+
+paramTeffect(p, Tref, Q10, Q10m, u=NA)
+
+paramSizepref(p, beta = 400, sigma = 1.3, type = 1)
               
 }
 \arguments{
-  \item{p }{the model parameters, as created with e.g. \link{setupBasic}, and that need to be updated
+  \item{p}{the model parameters, as created with e.g. \link{setupBasic}, and that need to be updated
   }
   \item{K, r }{model parameters for resource dynamics, i.e. maximum resource concentration (K) and resource nudging rate (in case type="chemostat") or resource growth rate ("logistic").
   }
-  \item{u0 }{the initial condition of the resources (paramAddResource) or fish density biomass (paramAddGroup). 
+  \item{u0 }{the initial value of the resources (paramAddResource) or fish density biomass (paramAddGroup). [gWW/m2]
   }
   \item{dynamics }{how the resource should be modeled: one of "chemostat" (dR/dt=r*(K-R)) or "logistic" (dR/dt=r*R*(1-R/K)). 
   }
-  \item{mc }{mean weight of the resource - can be used for estimating food preferences. 
+  \item{mc }{geometric mean weight of resources - can be used for estimating food preferences [gWW].
   }
-  \item{mLower, mUpper }{resource weight lower and upper limit. 
+  \item{mLower, mUpper }{lower and upper limits of resource weights [gWW].
   }
-  \item{names, name }{the names of the resources or functional group - will be used to label the model output
+  \item{names, name }{the names of the resources or functional groups - will be used to label the model output
   }
-  \item{mMin, mMax }{minimal fish weight of the first (mMin) and max weight of last stage (mMax), [gWW]. 
+  \item{mMin, mMax }{minimal fish weight of the first (mMin) and max weight of last stage (mMax), [gWW].
   }
   \item{mMature }{size at which half of the individuals is mature; if NA then only the last size class is assumed 50 percent mature, [gWW]. 
   }
-  \item{mortF, mort0 }{mortality due to fishing and natural mortality [/year]. 
+  \item{mortF }{fishing mortality for all size groups [/year]. Can be revised manually or by function \code{\link{setFishing}} later. 
   }
-  \item{nStages }{Number of stages of the fish functional group. 
+  \item{mort0 }{natural mortality for all size groups (background mortality) [/year]. defult value 0.1. 
+  }
+  \item{nStages }{Number of stages of the functional group.
   }
   \item{ac, bc }{max. consumption coefficient  [g^(-n)/yr] and exponent     [-]
   }
@@ -56,9 +64,23 @@ paramAddPhysiology(p, ac = 20, bc = -0.25, am = 4, bm = -0.175,
   }
   \item{ae, be }{clearance rate coefficient (or encounter slope)  [m2*g^(q-1)/yr] and exponent [-]
   }
-  \item{epsRepro }{recruitment efficiency [-]
+  \item{epsRepro }{reproduction efficiency [-]
   }
   \item{epsAssim }{assimilation efficiency [-]
+  }
+  \item{Tref }{Reference temperature. 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.
+  }
+  \item{Q10 }{Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
+  }
+  \item{Q10m }{Q10 factor for metabolism rates \code{metabolism} [-]
+  }
+  \item{u=NA }{To be developed...
+  }
+  \item{beta }{preferred predator/prey mass ratio
+  }
+  \item{sigma }{width of size preference for feeding
+  }
+  \item{type }{1 = normal (?), 2 = errf (vanDenderen et al., 2021), 3 = double integration (Andersen and Visser 2023, appendix A.) 
   }
   \item{... }{any input argument that needs to be stored with the parameter list
   }  
@@ -106,6 +128,7 @@ parameter settings for the fish dynamics are:
 \author{
 Ken H Andersen
 Karline Soetaert <karline.soetaert@nioz.nl>
+Yixin Zhao
 }
 
 \examples{ 
