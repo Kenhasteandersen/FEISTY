@@ -94,15 +94,15 @@ a list with parameter values and model settings containing:
 \itemize{
  \item  ..,         any argument passed with paramInit
  \item  nResources,    the total number of resources
- \item  nGroups,    the total number of fish groups
- \item  nStages, the total number of resource+fish stages
- \item  ix,         for each fish group, the index to the stage class
+ \item  nGroups,    the total number of fish functional groups
+ \item  nStages, the total number of resource + fish stages
+ \item  ix,         for each fish functional type, the index to the stage classes
  \item  ixFish      the index to the stage class for all fish stages
- \item  ixR      the index to the stage class for all resources
+ \item  ixR      the index for all resources
 
 }
 
-parameter settings for the resource dynamics are:
+parameters for the resource dynamics are:
 
 \itemize{
  \item  dynamics, Rtype: the type of dynamics of the resources, as text and integer respectively
@@ -111,7 +111,7 @@ parameter settings for the resource dynamics are:
  \item  resources, a data.frame with all the above resource information (redundant)
 }
   
-parameter settings for the fish dynamics are:
+parameters for the fish dynamics are:
 
 \itemize{
  \item mc, mLower, mUpper: the mean, lower and upper size of the stages
@@ -120,6 +120,21 @@ parameter settings for the fish dynamics are:
  \item mortF, mort0, Cmax, metabolism, V: the rate parameters of the stages
  \item  fishes, a data.frame with all the above fish information (redundant)
 }
+
+parameters for the temperature effects are:
+
+\itemize{
+ \item Cmaxsave, Vsave, metabolismsave: same as \code{Cmax}, \code{V}, \code{metabolism} saved for temperature effect calculation.
+ \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
+ \item fT_met: factor of T effects on \code{metabolism}.
+ \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth>=200), and small and medium demersal fish in shallow water (depth<200).
+ \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth>=200), and small and medium demersal fish in shallow water (depth<200).
+ \item eT: effecitve temperature in shallow water (depth<200) for large demersal fish.
+ \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth<200).
+ \item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth<200).
+}
+
+
 }
 \seealso{ 
 \link{simulateFeisty} for running the model.
@@ -172,12 +187,14 @@ Persson, L., 2008. Simplifying a physiologically structured population model to 
 stage-structured biomass model. Theor. Popul Biol. 73, 47--62.
 }
 \details{
-Functions setupBasic, setupBasic2, setupVertical, setupPelagicSpecies create parameter input files.
+Functions setupBasic, setupBasic2, setupVertical, setupPelagicSpecies create parameter sets for FEISTY simulations.
 
 \itemize{
- \item setupBasic makes a basic three-species setup (small pelagics, large pelagics and demersals) 
- as described in Petrik et al (2019). There are 5 resources (small and large zooplankton and small and large benthos)
- \item setupBasic2 makes a basic three-species setup as described in Petrik et al  but..
+ \item \bold{setupBasic} makes a basic 3-species setup (small pelagics, large pelagics and demersals) 
+ as described in Petrik et al (2019). There are 4 resources (small and large zooplankton and small and large benthos)
+ \item \bold{setupBasic2} is a revised version based on \bold{setupBasic}
+ \item \bold{setupVertical} makes a 5-species setup as described in van Denderen et al., 2021.
+ \item \bold{setupVertical2} is a revised version based on \bold{setupVertical}.
  }
 
 Functions paramInit, paramAddResource, paramAddGroup and paramAddPhysiology are helper functions to 
@@ -186,11 +203,16 @@ create new input parameter lists.
 Function \code{paramInit} should be called first, followed by \code{paramAddResource}, \code{paramAddGroup} and finally \code{paramAddPhysiology}
 
 \itemize{
- \item Function \code{paramInit} initialises some elements in the list and prepares for resources and fish groups to be added. 
+ \item Function \code{paramInit} initialises some elements in the list and prepares for resources and fish groups to be added. Default palette and functional group names are in it.
  \item Function \code{paramAddResource} adds all resources with resource parameters to the list. 
  \item Function \code{paramAddGroup} adds one fish group to the list. 
- \item Function \code{paramAddPhysiology} adds the physiological parameters to the list. 
+ \item Function \code{paramAddPhysiology} adds the physiological parameters to the list. maximum consumption rate [/year], standard metabolism (basal respiration) [/year], clearance rate [m2/gWW/year] 
 }
+
+\bold{How to customize your own FEISTY setup} \cr
+
+
+
 }
 
 \note{
