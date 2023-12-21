@@ -15,7 +15,7 @@
 #'
 #' @author Karline Soetaert, Ken H Andersen, Yixin Zhao
 #'
-#' @usage 
+#' @usage
 #' webFeisty(...)
 #'
 #' @param ... No arguments are required for this shiny application. See Examples below.
@@ -31,8 +31,8 @@
 #' \code{\link{setupVertical}},
 #' \code{\link{setupVertical2}}
 #' ...
-#'
-#' @keywords manip
+#' @aliases webFeisty
+#' @export
 webFeisty <- function(...) {
   # function implementation goes here
 }

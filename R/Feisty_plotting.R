@@ -103,10 +103,28 @@ plotBiomasstime = function(sim, bPlot=TRUE) {
   
 }
 
-#-------------------------------------------------------------------------------
-# Makes a basic plot of the adult biomass (SSB) of all functional groups
-# as a function time.
-#-------------------------------------------------------------------------------
+#' Spawning stock biomass plot
+#' 
+#' Make a plot of the adult biomass (SSB) of all functional groups
+#' as a function of the whole simulation time.
+#' 
+#' @details X-axis is time. Y-axis is the SSB data in log10 scale.
+#' @author Yixin Zhao
+#'
+#' @usage plotSSBtime(sim, bPlot=TRUE)
+#' 
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' If TRUE, create a new independent plot. \cr 
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotSSBtime(sim, bPlot=TRUE)
+#' 
+#' @aliases plotSSBtime
+#' @export
+#' 
 
 plotSSBtime = function(sim, bPlot=TRUE) {
   if (bPlot)
@@ -177,9 +195,30 @@ plotYieldtime = function(sim, bPlot=TRUE) {
   
 }
 
-#-------------------------------------------------------------------------------
-# Plots the mortalities and feeding levels
-#-------------------------------------------------------------------------------
+#' Plots for growth rate, mortality, and feeding level 
+#' 
+#' Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over size spectrum.
+#' Data is calculated based on averaged biomass over the last 40% simulation time.
+#' 
+# @details
+#' @author Yixin Zhao
+#'
+#' @usage plotRates(p=sim$p, y=p$u0, bPlot=TRUE)
+#' 
+#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param y The state variable vector. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
+#' The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.
+#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' If TRUE, create a new independent plot. \cr 
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotRates(p=sim$p, y=sim$u[,sim$nTime], bPlot=TRUE)
+#' 
+#' @aliases plotRates
+#' @export
+#' 
 
 plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
 #  if (p$USEdll) {
@@ -244,9 +283,28 @@ plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
   return(rates)
 }
 
-#-------------------------------------------------------------------------------
-# Plot the biomasses of all groups
-#-------------------------------------------------------------------------------
+#' Biomass plot
+#' 
+#' Make a plot of the biomass of all functional groups over size spectrum.
+#' Data is averaged data over the last 40\% simulation time.
+#' 
+#' @details X-axis is time. Y-axis is the biomass data in log10 scale.
+#' @author Yixin Zhao
+#'
+#' @usage plotSpectra(sim, bPlot=TRUE)
+#' 
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' If TRUE, create a new independent plot. \cr 
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotSpectra(sim, bPlot=TRUE)
+#' 
+#' @aliases plotSpectra
+#' @export
+#' 
 
 plotSpectra = function(sim, bPlot=TRUE) {
   if (bPlot)
@@ -303,9 +361,26 @@ addLegends=function(sim){
 }
 
 
-#-------------------------------------------------------------------------------
-# Make 4 panels of simulation
-#-------------------------------------------------------------------------------
+#' Plot simulation results
+#' 
+#' Make a plot combo for the simulation results, including \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.\cr
+#' 
+#' @details This function is designed for \code{\link{webFeisty}}.\cr 
+#' There is a function \code{addLegends} in Feisty_plotting.R to add legends.\cr
+#' Users may need to define their new scripts for adding legends according to the function \code{\link{addLegends}}.
+#' @author Yixin Zhao
+#'
+#' @usage plotSimulation(sim)
+#' 
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotSimulation(sim)
+#' 
+#' @aliases plotSimulation
+#' @export
+#' 
 
 plotSimulation = function(sim) {
   defaultplot(mfcol=c(6,1))
@@ -341,11 +416,28 @@ plotTheta = function(p) {
   }
 }
 
-#-------------------------------------------------------------------------------
-# Network plot 
-# Revised Based on work of Daniel Ottmann Riera and Solenne Roux
-# u: sim$u simpleOutput=TRUE
-#-------------------------------------------------------------------------------
+#' Food web plot
+#' 
+#' Revised Based on work of Daniel Ottmann Riera and Solenne Roux.
+#' This function only works on four prepared setups or revised version based on these four setups.
+#' If customized setups by users has massive differences e.g., more resources and fish functional types, this plot function may not work.
+#' Users may need to update scripts based on source codes.
+#' 
+# @details
+#' @author Yixin Zhao
+#'
+#' @usage plotNetwork(p=sim$p, y=p$u0)
+#' 
+#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotNetwork(p=sim$p, u=sim$u)
+#' 
+#' @aliases plotNetwork
+#' @export
+#'
 
 plotNetwork <- function(p=sim$p, u=sim$u) {
   
@@ -499,12 +591,28 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
   return(p)
 }
 
-
-#-------------------------------------------------------------------------------
-# Diet plot 
-# Revised Based on work of Daniel Ottmann Riera and Solenne Roux
-# u: sim$u simpleOutput=TRUE
-#-------------------------------------------------------------------------------
+#' Diet plot
+#' 
+#' Revised Based on work of Daniel Ottmann Riera and Solenne Roux.
+#' This function only works on four prepared setups or revised version based on these four setups.
+#' If customized setups by users has massive differences e.g., more resources and fish functional types, this plot function may not work.
+#' Users may need to update scripts based on source codes.
+#' 
+# @details
+#' @author Yixin Zhao
+#'
+#' @usage plotDiet(p=sim$p, u=sim$u)
+#' 
+#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
+#' 
+#' @examples 
+#' sim=simulateFeisty(simpleOutput=TRUE)
+#' plotDiet(p=sim$p, u=sim$u)
+#' 
+#' @aliases plotDiet
+#' @export
+#'
 
 plotDiet <- function(p=sim$p, u=sim$u) {
   p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
