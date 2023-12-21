@@ -4,6 +4,38 @@
 # (generate specific MODEL parameter lists)
 #===============================================================================
 
+
+#' setupBasic 
+#' 
+#' \code{setupBasic} creates a basic three-species setup as described in Petrik et al (2019).
+#' 
+#' @details setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in Petrik et al (2019). 
+#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
+#' 
+#' @author Ken H Andersen, Karline Soetaert <karline.soetaert/@nioz.nl>, Yixin Zhao
+#'
+#' @usage p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
+#' 
+#' @param szprod Small zooplankton productivity. \cr
+#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
+#' @param lzprod Large zooplankton productivity.
+#' @param bprod Benthic organsim productivity.
+#' @param depth Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
+#' depth=300 and depth=1000 do not have any different effects on simulations.
+#' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius].
+#' @param Tb Bottom water temperature [Celsius].
+#' 
+#' @return A parameter list containing....................
+#' 
+#' @examples 
+#' p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
+#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' 
+#' @aliases setupBasic
+#' @export
+#' 
+
 # ------------------------------------------------------------------------------
 # Make a basic three-species setup as described in Petrik et al (2019): Bottom-up 
 # drivers of global patterns of demersal, forage, and pelagic fishes. Progress 
@@ -97,6 +129,57 @@ setupBasic = function(szprod = 100, # small zoo production?
 param$setup="setupBasic"
   return(param)
 }
+
+#' setupBasic2 
+#' 
+#' \code{setupBasic2} creates a revised setup based on setupBasic()
+#' 
+#' @details setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish and demersal fish) based on Petrik et al. (2019). 
+#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+#' Revision:
+#' \itemize{
+#' \item Generalized size-based maturity
+#' \item Generalized size-based feeding preference.
+#' \item allowing more size numbers in each functional type.
+#' \item allowing the size-based fishing mortality.
+#' }
+#' 
+#' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @usage p=setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+#' nStages=9, etaMature=0.25, F=0, etaF=0.05)
+#' 
+#' @param szprod Small zooplankton productivity. \cr
+#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
+#' @param lzprod Large zooplankton productivity.
+#' @param bprod Benthic organsim productivity.
+#' @param depth Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
+#' depth=300 and depth=1000 do not have any different effects on simulations.
+#' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius].
+#' @param Tb Bottom water temperature [Celsius].
+#' @param nStages size number of large fish functional groups (e.g., large pelagic fish, demersal fish, and bathypelagic fish). 
+#' The size number of small fish functional groups (e.g., small  pelagic fish and mesopelagic fish) is \code{round(2/3*nStages)}. 
+#' Generally, \code{nStages} is multiples of 3 (e.g., \code{nStages = 3, 6, 9, or 12}...).
+#' @param etaMature The coefficient determines the fish size \code{mMature} with a 50\% maturity level. 
+#' \code{mMature = etaMature * mMax},  where \code{mMax} is the largest fish size (boundary) of a fish functional group. See \code{\link{paramAddGroup}}. 
+#' In van Denderen et al. (2021), it was 0.002.
+#' @param F Fishing mortality [1/year]. \cr
+#' If \code{F} is 0, there is no fishing mortality.\cr 
+#' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function.
+#' See source code of \code{\link{setFishing}}.
+#' @param etaF The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
+#' 
+#' @return A parameter list containing....................
+#' 
+#' @examples 
+#' p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
+#' nStages=6, etaMature=0.25, F=0,etaF=0.05)
+#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' 
+#' @aliases setupBasic2
+#' @export
+#' 
 
 # ------------------------------------------------------------------------------
 # Make a basic three-species setup based on setupBasic(), but generalised to:
