@@ -12,7 +12,7 @@
 #' @details setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in Petrik et al (2019). 
 #' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
 #' 
-#' @author Ken H Andersen, Karline Soetaert <karline.soetaert/@nioz.nl>, Yixin Zhao
+#' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @usage p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
 #' 
@@ -26,11 +26,56 @@
 #' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius].
 #' @param Tb Bottom water temperature [Celsius].
 #' 
-#' @return A parameter list containing....................
+#' @return Added by function \code{\link{paramInit}}:
+#' \itemize{
+#' \item szprod, Small zooplankton productivity, from parameter input.
+#' \item lzprod, Large zooplankton productivity, from parameter input.
+#' \item bprod, Benthic organsim productivity, from parameter input.
+#' \item depth, Water column depth, from parameter input.
+#' \item Tp, Pelagic water temperature, from parameter input.
+#' \item Tb, Bottom water temperature, from parameter input.
+#' \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
+#' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#'}
+#' Added by function \code{\link{paramAddResource}}:
+#' \itemize{
+#' \item nResources, the total number of resources
+#' \item nGroups, the total number of fish groups
+#' \item nStages, the total number of resource+fish stages
+#' \item ix, for each fish group, the index to the stage class
+#' \item ixFish, the index to the stage class for all fish stages
+#' \item ixR, the index to the stage class for all resources
+#'}
+#' 
+#' 
+#' 
+#' 
+#' parameters for the temperature effects are:
+#'  \itemize{
+#'  \item Cmaxsave, Vsave, metabolismsave: same as initial values of \code{Cmax}, \code{V}, \code{metabolism}, saved for temperature effect calculation. To be developed...
+#'  \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
+#'  \item fT_met: factor of T effects on \code{metabolism}.
+#'  \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth>=200m), and small and medium demersal fish in shallow water (depth<200m).
+#'  \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth>=200m), and small and medium demersal fish in shallow water (depth<200m).
+#'  \item eT: effecitve temperature in shallow water (depth<200m) for large demersal fish.
+#'  \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth<200m).
+#'  \item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth<200m).
+#'}
+#' 
+#' 
+#' 
+#' 
+#' 
 #' 
 #' @examples 
 #' p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
 #' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' @seealso
+#' \code{\link{simulateFeisty}} for running the model.
 #' 
 #' @aliases setupBasic
 #' @export
@@ -136,7 +181,7 @@ param$setup="setupBasic"
 #' 
 #' @details setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish and demersal fish) based on Petrik et al. (2019). 
 #' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
-#' Revision:
+#' Main revision:
 #' \itemize{
 #' \item Generalized size-based maturity
 #' \item Generalized size-based feeding preference.
@@ -177,6 +222,12 @@ param$setup="setupBasic"
 #' nStages=6, etaMature=0.25, F=0,etaF=0.05)
 #' sim=simulateFeisty(p=p, simpleOutput=TRUE)
 #' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' @seealso
+#' \code{\link{simulateFeisty}} for running the model.
+#'
 #' @aliases setupBasic2
 #' @export
 #' 
@@ -322,6 +373,46 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   param$setup="setupBasic2"
   return(param)
 }
+
+#' setupVertical
+#' 
+#' \code{setupVertical} creates a basic five-species setup with vertical distribution as described in van Ddenderen et al. (2021).
+#' 
+#' @details setupVertical makes a basic five-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in van Ddenderen et al. (2021). 
+#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
+#' 
+#' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @usage p=setupVertical(szprod = 80, lzprod = 80, bent = 150, region = 4, depth = 1500, photic = 150)
+#' 
+#' @param szprod Small zooplankton productivity. \cr
+#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is same.
+#' @param lzprod Large zooplankton productivity.
+#' @param bent Detrital flux out of the photic zone [gww/m2/year].
+#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.
+#' @param region Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
+#' It represents the water column temperature profile for three regions. 
+#' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Ddenderen et al. (2021).
+#' @param depth  water column depth [meter]. \cr 
+#' Different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates. See source code of \code{setupVertical}
+#' @param photic Photic zone depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical}.
+#' 
+#' @return A parameter list containing....................
+#' 
+#' @references
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' @examples 
+#' p=setupVertical(szprod = 200, lzprod = 150, bent = 100, region = 1, depth = 1000, photic = 120)
+#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' 
+#' @seealso
+#' \code{\link{simulateFeisty}} for running the model.
+#' 
+#' @aliases setupVertical
+#' @export
+#' 
 
 # ------------------------------------------------------------------------------
 # Make a basic four-species setup based up setupBasic(), but generalised to:
@@ -641,7 +732,64 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
 return(param)  
 }
 
-
+#' setupVertical2
+#' 
+#' \code{setupVertical2} creates revised setup based on setupVertical().
+#' 
+#' @details setupVertical2 makes a revised five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish and demersal fish) with vertical distribution based on van Denderen et al. (2021). 
+#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+#' Main revision:
+#' \itemize{
+#' \item Generalized size-based maturity.
+# \item Generalized size-based feeding preference.
+#' \item allowing more size numbers in each functional type.
+#' \item allowing the size-based fishing mortality.
+#' }
+#' 
+#' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @usage p=setupVertical2(szprod = 80, lzprod = 80, bent = 150, nStages = 6, region = 4, depth = 1500, photic = 150, 
+#' mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF=0.05)
+#' 
+#' @param szprod Small zooplankton productivity. \cr
+#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is same.
+#' @param lzprod Large zooplankton productivity.
+#' @param bent Detrital flux out of the photic zone [gww/m2/year].
+#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.
+#' @param region Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
+#' It represents the water column temperature profile for three regions. 
+#' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Denderen et al. (2021).
+#' @param depth  water column depth [meter]. \cr 
+#' Different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates. See source code of \code{setupVertical}
+#' @param photic Photic zone depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical}.
+#' @param mesopelagic Mesopelagic depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical} or \code{setupVertical2}.
+#' @param visual \code{visual=1.5}: visual predator, predation ability is enhanced during the day and decreased in the twilight zone during the day. \cr 
+#' \code{visual=1}: non-visual predator, predation abilities are equal in day and night. \cr
+#' It must \bold{be careful} to assign other values to \code{visual}, or the setup could crash. See source code of \code{setupVertical} or \code{setupVertical2}.
+#' @param etaMature The coefficient determines the fish size \code{mMature} with a 50\% maturity level. \code{mMature = etaMature * mMax},  where \code{mMax} is the largest fish size (boundary) of a fish functional group. See \code{\link{paramAddGroup}}. 
+#' In van Denderen et al. (2021), it was 0.002.
+#' @param F fishing mortality [1/year]. \cr
+#' If \code{F} is 0, there is no fishing mortality. \cr
+#' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function. See source code of \code{\link{setFishing}}.
+#' @param etaF the coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
+#' 
+#' @return A parameter list containing....................
+#' 
+#' @examples 
+#' p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
+#' mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF = 0.05)
+#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' 
+#' @references
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' @seealso
+#' \code{\link{simulateFeisty}} for running the model.
+#' 
+#' @aliases setupVertical2
+#' @export
+#' 
 
 # ------------------------------------------------------------------------------
 # Make a basic four-species setup based up setupBasic(), but generalised to:
