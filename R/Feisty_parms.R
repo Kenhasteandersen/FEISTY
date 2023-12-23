@@ -60,6 +60,44 @@ paramSizepref <- function(
   return(theta)  
 }
 
+#' Initialize Parameters for FEISTY
+#'
+#' This function initializes a list of parameters for the FEISTY model.
+#'
+#' @usage param = paramInit(...)
+#'
+#' @param ... Additional parameters needed to be added to the list, which will be included in the returned parameter list.
+#'
+#' @return A parameter list initialized with some basic blank values, vectors, matrices, and sublists.
+#' \itemize{
+#' \item ..., as input parameters in \code{paramInit(...)}
+#' \item nResources, the total number of resources, will be updated later
+#' \item nGroups, the total number of fish functional groups, will be updated later
+#' \item nStages, the total number of resources + fish stages, will be updated later
+#' \item groupnames, a character vector of names of resources and each fish functional groups, will be updated later
+#' \item stagenames, a character vector of names of resources and each fish stages (functional groups), will be updated later
+#' \item theta, a matrix for feeding preference of each predator x to each prey y, will be updated later
+#' \item ix, index lists for size classes of each fish functional type (sublists), will be updated later
+#' \item ixFish, a vector containing indices for all fish, will be updated later
+#' \item ixR, a vector containing indices for all resources, will be updated later
+#' \item my_palette, default color palettes for all functional types
+#' \item my_names, default full name and acronyms of all functional types
+#' }
+#'
+#' @details This function prepares some basic values, vectors, matrices, and sublists for the following parameter setting up.
+#' Default color palettes and names of all resources and functional types (all stages) are defined, which will be used in visualization.
+#' The returned parameter list will be used for further updates.
+#'
+#' @examples
+#' # Initialize parameters
+#' p <- paramInit(size_1 = 500, size_2 = 1000, depth_1 = 200, depth_2 = 250) # add four extra parameters to the list
+#' 
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#' 
+#' @aliases paramInit
+#'
+#' @export
+
 #-------------------------------------------------------------------------------
 # Initialize the parameter structure
 #
@@ -263,6 +301,10 @@ paramAddGroup = function(p ,           # list of parameters to be updated
   return(p)
 }
 
+
+# \item Cmaxsave, Vsave, metabolismsave: same as initial values of \code{Cmax}, \code{V}, \code{metabolism}, saved for temperature effect calculation.
+
+
 # ------------------------------------------------------------------------------
 # Sets up physiological parameters of each fish stage
 #
@@ -332,10 +374,61 @@ paramAddPhysiology = function (p,
   return(p)
 }
 
-#--------------------------
-#
-#
-#--------------------------
+
+
+#' Add temperature effects
+#'
+#' This function adjusts temperature-dependent physiological rates based on environmental temperatures. 
+#' It applies Q10 temperature coefficients to modify metabolic rates, clearance rates, and maximum consumption rates.
+#' Currently, only works on \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
+#' 
+#' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}.
+#' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.
+#' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
+#' @param Q10m Q10 factor for metabolism rates \code{metabolism} [-]
+#' @param u Temporarily not used. To be developed...
+#'
+#' @return A updated parameter list:
+#' \itemize{
+#' \item Tref, from parameter input
+#' \item Q10, from parameter input
+#' \item Q10m, from parameter input
+#' \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
+#' \item fT_met: factor of T effects on \code{metabolism}.
+#' \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
+#' \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
+#' \item eT: effecitve temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
+#' \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
+#' \item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+#' }
+#'
+#' @details
+#' The function calculates temperature effects on physiological rates (metabolism, clearance rate, and maximum consumption rate) using 
+#' the Q10 theory, which states that a physiological process rate increases by a factor of Q10 for every 10 Celsius rise in temperature.
+#' The effects are applied differently in terms of living habitats (pelagic and demersal) and water depth (shallow and deep).
+#'
+#' The function requires a specific structure in the input parameter list `p`, such as
+#' indices of all fish and vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
+#' Therefore it only can be called after \code{\link{paramAddPhysiology}}.
+#' It might not work in customized setups other than \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
+#'
+#' @examples
+#' p = setupBasic2(Tp = 15, Tb = 13, depth = 500)
+#' p = paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
+#' sim = simulateFeisty(p, simpleOutput = TRUE)
+#' 
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#' 
+#' @references 
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' @aliases paramTeffect
+#' 
+#' @export
+#' 
+
 paramTeffect = function (p, # only for setupbasic & 2
                          Tref,
                          Q10,
