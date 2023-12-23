@@ -209,7 +209,7 @@ param$setup="setupBasic"
 #' @param etaMature The coefficient determines the fish size \code{mMature} with a 50\% maturity level. 
 #' \code{mMature = etaMature * mMax},  where \code{mMax} is the largest fish size (boundary) of a fish functional group. See \code{\link{paramAddGroup}}. 
 #' In van Denderen et al. (2021), it was 0.002.
-#' @param F Fishing mortality [1/year]. \cr
+#' @param F Baseline fishing mortality [1/year]. \cr
 #' If \code{F} is 0, there is no fishing mortality.\cr 
 #' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function.
 #' See source code of \code{\link{setFishing}}.
@@ -769,7 +769,7 @@ return(param)
 #' It must \bold{be careful} to assign other values to \code{visual}, or the setup could crash. See source code of \code{setupVertical} or \code{setupVertical2}.
 #' @param etaMature The coefficient determines the fish size \code{mMature} with a 50\% maturity level. \code{mMature = etaMature * mMax},  where \code{mMax} is the largest fish size (boundary) of a fish functional group. See \code{\link{paramAddGroup}}. 
 #' In van Denderen et al. (2021), it was 0.002.
-#' @param F fishing mortality [1/year]. \cr
+#' @param F Baseline fishing mortality [1/year]. \cr
 #' If \code{F} is 0, there is no fishing mortality. \cr
 #' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function. See source code of \code{\link{setFishing}}.
 #' @param etaF the coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.

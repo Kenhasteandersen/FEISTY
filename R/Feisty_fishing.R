@@ -97,6 +97,38 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   return(list(F,yield, yieldMin, yieldMax,SSB))
 }
 
+#' Set Fishing Mortality
+#'
+#' This function sets fishing mortality for all fish based on a baseline fishing mortality and the size-based trawl selectivity.
+#'
+#' @param p The model parameter list, as created with e.g. \link{setupBasic2}, and that need to be updated.
+#' @param F The baseline fishing mortality rate [1/year]. Default is 0, indicating no fishing.
+#' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. Default value is 0.05.
+#' 
+#' @return It returns an updated parameter list:
+#' \itemize{
+#' \item F, baseline fishing mortality, from parameter input.
+#' \item etaF, from parameter input.
+#' \item mortF, a vector containing fishing mortality of all state variables, including resources (always 0) and fish.
+#' }
+#' 
+#' @details The function sets fishing mortality for all fish.
+#' For each group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
+#' The fishing mortality \code{mortF} for each group is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{F}.
+#'
+#' @examples
+#' p = setupBasic2(F=0) # No fishing mortality
+#' p = setFishing(p, F = 1, etaF = 0.05) # add fishing mortality
+#'
+#' @references
+#' Andersen, K. H. (2019). Fish ecology, evolution, and exploitation: a new theoretical synthesis. Princeton University Press.
+#' 
+#' @author Yixin Zhao
+#' 
+#' @aliases setFishing
+#' 
+#' @export
+
 #
 # F: fishing mortality 1/yr   if F=0 return the original param set
 # etaF: the coefficient determining the fish size with 50% fishing selectivity
