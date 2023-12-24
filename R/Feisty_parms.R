@@ -64,7 +64,7 @@ paramSizepref <- function(
 #'
 #' This function initializes a list of parameters for the FEISTY model.
 #'
-#' @usage param = paramInit(...)
+#' @usage paramInit(...)
 #'
 #' @param ... Additional parameters needed to be added to the list, which will be included in the returned parameter list.
 #'
@@ -184,6 +184,60 @@ makeGrid = function(mMin,         # min size, gram
   return(list(mLower=mLower, mUpper=mUpper, z=z, mc=mc))
 }
 
+#' Add Resource Parameters
+#'
+#' This function updates the parameter list by adding resource-related parameters.
+#' 
+#' @usage paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA)
+#'
+#' @param p Parameter list to be updated.
+#' @param K A vector of carrying capacities of all resources [gww/m2].
+#' @param r A vector containing each resource nudging rate (growth rate) [1/year], default 1, do not recommend other values.
+#' @param dynamics The type of resource dynamics, either "chemostat" or "logistic".
+#' @param mc A vector containing each resource geometric mean weight [gww].
+#' @param mLower A vector containing lower limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
+#' @param mUpper A vector containing upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
+#' @param names A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.
+#' @param u0 A vector of the initial concentration of each resource. If not provided, defaults to the value of \code{K}.
+#'
+#' @return The updated parameter list \code{p}:
+#' \itemize{
+#' \item nResources, the total number of resources, which is the length of the input \code{K}.
+#' \item groupnames, a character vector of names of resources and each fish functional groups, will be updated later.
+#' \item stagenames, a character vector of names of resources and each fish stages (functional groups), will be updated later.
+#' \item dynamics, from parameter input.
+#' \item Rtype, resource growth strategy number. Default 1: chemostat, 2: logistic growth. If 'dynamics' is not specified, Rtype=1.
+#' \item K, from parameter input.
+#' \item r, from parameter input.
+#' \item ixR, indices for all resources, start from 1.
+#' \item mc, resource geometric mean weight, fish data will be added later.
+#' \item mLower, lower limit of each resource weight, fish data will be added later.
+#' \item mUpper, upper limit of each resource weight, fish data will be added later.
+#' \item u0, from parameter input or same as \code{K}, fish data will be added later.
+#' }
+#' 
+#' @details
+#' This function is designed to add parameters of resources to the parameter list.
+#' This function only can be called once in a simulation. All resources are added into the parameter list in one time.
+#' Generally, this function needs to be called after function \code{\link{paramInit}}.
+#' The returned parameter list can be used for further updates.
+#'
+#' @examples
+#' # Initialize a paramter list
+#' p = paramInit()
+#' # Add five resources. Just an example, data may not make sense.
+#' p = paramAddResource (p=p, K=c(50,100,150,200,250), r=c(1,1,1,1,1), dynamics="chemostat",
+#'    mc= c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500), 1e-07*sqrt(500)),
+#'    mLower = c(2e-06,0.001, 0.5e-03, 0.25, 1e-07),
+#'    mUpper = c(0.001, 0.5, 125, 125, 5e-05),
+#'    names=c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", "Phytoplankton"), u0=c(100,100,200,200,200))
+#'
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @aliases paramAddResource
+#'
+#' @export
+#' 
 # ------------------------------------------------------------------------------
 # Sets up resources
 #
@@ -221,8 +275,73 @@ paramAddResource = function(p,        # parameter to be updated
   p$u0     = p$resources$u0
   if (any(is.na(p$u0))) p$u0    = K
   names(p$u0)= names(p$mLower) = names(p$mUpper) = names
-  p
+  return(p)
 }
+
+#' Add Parameters of One Functional Type
+#'
+#' This function updates the parameter list by adding parameters of one functional type.
+#'
+#' @usage paramAddGroup(p, nStages, mMin, mMax, mMature=NA, mortF=0, mort0=0.1, u0=1, name=NA)
+#'
+#' @param p The parameter list to be updated.
+#' @param nStages Number of stages for this functional type.
+#' @param mMin Minimum size (mass) of this functional type (boundary value), in gram wet weight [gWW].
+#' @param mMax Maximum size (mass) of this functional type (boundary value), in gram wet weight [gWW].
+#' @param mMature Size [gWW] at which fish has 50\% maturity level, which will be used for maturity level calculation based on a S-shape function.\cr
+#' If NA, only the last size class is 50\% mature; others are 0.
+#' @param mortF Fishing mortality for all size classes [1/year]. Default value 0, indicating no fishing.
+#' @param mort0 Natural mortality (background mortality) for all size groups [1/year]. Default value 0.1.
+#' @param u0 Initial biomass value of all size classes [gWW/m2]. Default value 1.
+#' @param name The name (acronym) of the functional type. If not provided, a default name is assigned.
+#'
+#' @details
+#' This function is designed to add parameters of one functional type to the parameter list.
+#' Generally, this function needs to be called after function \code{\link{paramAddResource}}.
+#' Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times for adding more functional types.
+#'
+#' @return The updated parameter list \code{p}:
+#' \itemize{
+#' \item nGroups, number of all functional types
+#' \item groupnames, a character vector of names of resources and each fish functional groups
+#' \item stagenames, a character vector of names of resources and each fish stages (functional groups)
+#' \item ix, a list including sublists which contains indices of the size classes of each functional type.
+#' \item mLower, a vector containing lower limit of isze of each size class of resource and functional type
+#' \item mUpper, a vector containing upper limit of size of each size class of resource and functional type
+#' \item z, a vector containing the ratio between \code{mUpper} and \code{mLower}
+#' \item mc, a vector containing geometric mean size of resources and all stages of functional types
+#' \item mMature, a vector containing the size with 50\% maturity level of each functional type, from parameter input
+#' \item psiMature, a vector containing the maturity level, all resources(0) + all size classes
+#' \item mortF, a vector containing fishing mortality, all resources(0) + all size classes
+#' \item mort0, a vector containing all background mortality, all resources(0) + all size classes
+#' \item u0, a vector containing initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
+#' \item ixFish, a vector of indices of all functional type size classes, starting from \code{nResources+1}
+#' \item nStages, an integer, total number of resources and size classes.
+#' }
+#' All the parameter above will be updated if a new functional type is added by another call of \code{paramAddGroup}.
+#'
+#' @examples
+#' # Just an example, data may not make sense.
+#' p <- paramInit()
+#' # add four resources
+#' p <- paramAddResource(p,
+#'    names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+#'    K    = c(100, 120, 80, 0),
+#'    r    = c(1, 1, 1, 1),
+#'    mLower = c(2e-06,0.001, 0.5e-03, 0.25),
+#'    mUpper = c(0.001, 0.5, 125, 125),
+#'    mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
+#' # add the first functional type
+#' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
+#' # add the second functional type
+#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 10000, mMature = 10000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
+#'
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @aliases paramAddGroup
+#'
+#' @export
+#'
 
 # ------------------------------------------------------------------------------
 # Adds a group to the parameter list. 
@@ -238,7 +357,7 @@ paramAddGroup = function(p ,           # list of parameters to be updated
                          nStages,      # number of stages
                          mMin,         # minimum mass of first stage, g WW
                          mMax,         # minimum mass of last stage, gWW
-                         mMature=mMax, # size at which 50% of individuals is mature
+                         mMature=NA, # size at which 50% of individuals is mature
                                        # if NA: only last size class is for 50% mature
                          mortF=0,      # mortality imposed due to fishing
                          mort0=0.1,    # natural mortality 
@@ -291,7 +410,7 @@ paramAddGroup = function(p ,           # list of parameters to be updated
   
   p$u0[ix]        = u0 # Initial condition
   
-  names(p$u0[ix]) = paste(name, 1:nStages, sep="_") # Initial conditiona
+  names(p$u0[ix]) = paste(name, 1:nStages, sep="_") # Initial condition
   
   # indices to all fish states
   p$ixFish = min(p$ix[[1]]) : max(p$ix[[n]])
@@ -382,6 +501,8 @@ paramAddPhysiology = function (p,
 #' It applies Q10 temperature coefficients to modify metabolic rates, clearance rates, and maximum consumption rates.
 #' Currently, only works on \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
 #' 
+#' @usage paramTeffect(p, Tref, Q10, Q10m, u=NA)
+#' 
 #' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}.
 #' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.
 #' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
@@ -417,7 +538,7 @@ paramAddPhysiology = function (p,
 #' p = paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
 #' sim = simulateFeisty(p, simpleOutput = TRUE)
 #' 
-#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#' @author Yixin Zhao
 #' 
 #' @references 
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
