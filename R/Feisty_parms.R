@@ -5,6 +5,80 @@
 # 
 #===============================================================================
 
+#' Size Preference Matrix Calculation
+#'
+#' This function calculates a size preference matrix of a predator for a prey based on the size.
+#' 
+#' @usage paramSizepref(p, beta = 400, sigma = 1.3, type = 1)
+#' 
+#' @param p The parameter list to be updated.
+#' @param beta The preferred predator/prey mass ratio. Default is 400.
+#' @param sigma The width of size preference for feeding. Default is 1.3.
+#' @param type The type of size preference function. 1 for a normal distribution 
+#' based function, 2 for a function based on error function, and 3 for a 
+#' more complex function integrating over both predator and prey size groups.
+#' Default is 1.
+#'
+#' @details
+#' This function computes a size preference matrix \code{theta}.
+#' Each value represents the preference of a predator (row) for a prey (column) based on their sizes. \cr
+#' Three types of functions can be selected:
+#' \itemize{
+#' \item Type 1 (normal): Based on a normal distribution around the preferred size ratio.
+#' \item Type 2 (error function): Based on the error function as described in van Denderen et al., 2020.
+#' \item Type 3 (double integration): Based on Andersen and Visser 2023,
+#' this method integrates over both predator and prey size groups for a detailed preference calculation.
+#' }
+#' 
+#' The preference is set to 0 for prey larger than the predator.
+#' 
+#' This function only needs be called once in each simulation. It needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
+#' The returned parameter list can be used for further updates.
+#' 
+#' @return theta: feeding preference matrix for each predator x to each prey y.
+#' 
+#' @examples
+#' # Just an example, data may not make sense.
+#' p <- paramInit()
+#' # add three resources
+#' p <- paramAddResource(p,
+#'      names= c("smallZoo", "largeZoo", "smallBenthos"),
+#'      K    = c(100, 120, 80),
+#'      r    = c(1, 1, 1),
+#'      mLower = c(2e-06,0.001, 0.5e-03),
+#'      mUpper = c(0.001, 0.5, 125),
+#'      mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000)))
+#' # add the first functional type
+#' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
+#' # add the second functional type
+#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
+#' # add the third functional type
+#' p <- paramAddGroup(p, nStages = 9, mMin = 0.1, mMax = 500000, mMature = 500000*0.25, mortF=0, mort0 = 0.1, name = "giantfish")
+#' # add physiological parameters for three functional types (smallfish, largefish and giantfish)
+#' p <- paramAddPhysiology(p, 
+#'      ac = 20, bc = -0.25,       
+#'      am = 0.011*365, bm = -0.175,      
+#'      ae = 70, be = -0.2,        
+#'      epsRepro = 0.01, 
+#'      epsAssim = 0.7)
+#' # Calculate size preference matrix
+#' p$theta <- paramSizepref(p=p,
+#'            beta = 400,
+#'            sigma = 1.3,
+#'            type = 3)
+#'
+#' @author Yixin Zhao
+#' 
+#' @references 
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' Andersen, K. H., & Visser, A. W. (2023). From cell size and first principles to structure and function of unicellular plankton communities. Progress in Oceanography, 213, 102995.
+#' 
+#' @aliases paramSizepref
+#'
+#' @export
+#' 
+
 #-------------------------------------------------------------------------------
 # A function to estimate feeding preferences based on 
 # size differences of prey and predator
@@ -218,7 +292,7 @@ makeGrid = function(mMin,         # min size, gram
 #' 
 #' @details
 #' This function is designed to add parameters of resources to the parameter list.
-#' This function only can be called once in a simulation. All resources are added into the parameter list in one time.
+#' This function only can be called once in each simulation. All resources are added to the parameter list at one time.
 #' Generally, this function needs to be called after function \code{\link{paramInit}}.
 #' The returned parameter list can be used for further updates.
 #'
@@ -308,33 +382,34 @@ paramAddResource = function(p,        # parameter to be updated
 #' \item ix, a list including sublists which contains indices of the size classes of each functional type.
 #' \item mLower, a vector containing lower limit of isze of each size class of resource and functional type
 #' \item mUpper, a vector containing upper limit of size of each size class of resource and functional type
-#' \item z, a vector containing the ratio between \code{mUpper} and \code{mLower}
+#' \item z, a vector containing the ratio between \code{mUpper} and \code{mLower}, all resources (NA) + all size classes
 #' \item mc, a vector containing geometric mean size of resources and all stages of functional types
 #' \item mMature, a vector containing the size with 50\% maturity level of each functional type, from parameter input
-#' \item psiMature, a vector containing the maturity level, all resources(0) + all size classes
-#' \item mortF, a vector containing fishing mortality, all resources(0) + all size classes
-#' \item mort0, a vector containing all background mortality, all resources(0) + all size classes
+#' \item psiMature, a vector containing the maturity level, all resources (NA) + all size classes
+#' \item mortF, a vector containing fishing mortality, all resources (NA) + all size classes
+#' \item mort0, a vector containing all background mortality, all resources (NA) + all size classes
 #' \item u0, a vector containing initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
 #' \item ixFish, a vector of indices of all functional type size classes, starting from \code{nResources+1}
 #' \item nStages, an integer, total number of resources and size classes.
 #' }
-#' All the parameter above will be updated if a new functional type is added by another call of \code{paramAddGroup}.
-#'
+#' All the parameter above will be updated if a new functional type is added by another call of \code{paramAddGroup}. \cr
+#' NAs in \code{z}, \code{psiMature}, \code{mortF}, \code{mort0} will be revised to 0 in \code{\link{paramAddPhysiology}}.
+#' 
 #' @examples
 #' # Just an example, data may not make sense.
 #' p <- paramInit()
 #' # add four resources
 #' p <- paramAddResource(p,
-#'    names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
-#'    K    = c(100, 120, 80, 0),
-#'    r    = c(1, 1, 1, 1),
-#'    mLower = c(2e-06,0.001, 0.5e-03, 0.25),
-#'    mUpper = c(0.001, 0.5, 125, 125),
-#'    mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
+#'      names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+#'      K    = c(100, 120, 80, 0),
+#'      r    = c(1, 1, 1, 1),
+#'      mLower = c(2e-06,0.001, 0.5e-03, 0.25),
+#'      mUpper = c(0.001, 0.5, 125, 125),
+#'      mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
 #' # add the first functional type
 #' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
 #' # add the second functional type
-#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 10000, mMature = 10000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
+#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
 #'
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
@@ -420,9 +495,70 @@ paramAddGroup = function(p ,           # list of parameters to be updated
   return(p)
 }
 
-
-# \item Cmaxsave, Vsave, metabolismsave: same as initial values of \code{Cmax}, \code{V}, \code{metabolism}, saved for temperature effect calculation.
-
+#' Add Physiological Parameters
+#' 
+#' This function updates the parameter list by adding physiological parameters of all size classes of all functional types.
+#'
+#' @usage paramAddPhysiology(p, ac = 20, bc = -0.25, am = 0.011*365, bm = -0.175, ae = 70, be = -0.2, epsRepro = 0.01, epsAssim = 0.7)
+#'
+#' @param p  The parameter to be updated.
+#' @param ac Maximum consumption coefficient [g^bc year-1)].
+#' @param bc Maximum consumption exponent [-].
+#' @param am Metabolism coefficient [g^bm year-1].
+#' @param bm Metabolism exponent [-].
+#' @param ae Clearance rate (encounter rate) coefficient [m2 g^be year-1].
+#' @param be Clearance rate (encounter rate) exponent [-].
+#' @param epsRepro Reproduction efficiency [-].
+#' @param epsAssim Assimilation efficiency [-].
+#'
+#' @return The updated parameter list \code{p}:
+#' \itemize{
+#' \item Cmax, a vector containing maximum consumption rate values, resources (0) + all size classes of all functional types
+#' \item metabolism, a vector containing standard metabolism values, resources (0) + all size classes of all functional types
+#' \item V, a vector containing clearance rate values, resources (0) + all size classes of all functional types
+#' \item epsRepro, a vector of reproduction efficiency values of each functional types (length is the number of functional types). This value applies on all size classes.
+#' \item epsAssim, the assimilation efficiency value. This value applies on all size classes.
+#' \item Cmaxsave, same as initial values of \code{Cmax}, saved for temperature effect calculation.
+#' \item Vsave, same as initial values of \code{V}, saved for temperature effect calculation.
+#' \item metabolismsave, same as initial values of \code{metabolism}, saved for temperature effect calculation.
+#' }
+#'
+#' @details 
+#' This function is designed to add physiological parameters of all size classes of all functional types to the parameter list.
+#' It sets the maximum consumption rate, standard metabolism, and clearance rate based on the size.
+#' It ensures there are no NA values in critical parameters. \cr
+#' This function only needs be called once in each simulation. The physiological parameters of all size classes are added to the parameter list at one time.
+#' Generally, this function needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
+#' The returned parameter list can be used for further updates.
+#'
+#' @examples
+#' # Just an example, data may not make sense.
+#' p <- paramInit()
+#' # add three resources
+#' p <- paramAddResource(p,
+#'      names= c("smallZoo", "largeZoo", "smallBenthos"),
+#'      K    = c(100, 120, 80),
+#'      r    = c(1, 1, 1),
+#'      mLower = c(2e-06,0.001, 0.5e-03),
+#'      mUpper = c(0.001, 0.5, 125),
+#'      mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000)))
+#' # add the first functional type
+#' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
+#' # add the second functional type
+#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
+#' # add physiological parameters for two functional types (smallfish and largefish)
+#' p <- paramAddPhysiology(p, 
+#'      ac = 20, bc = -0.25,       
+#'      am = 0.011*365, bm = -0.175,      
+#'      ae = 70, be = -0.2,        
+#'      epsRepro = 0.01, 
+#'      epsAssim = 0.7)
+#'
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @aliases paramAddPhysiology
+#'
+#' @export
 
 # ------------------------------------------------------------------------------
 # Sets up physiological parameters of each fish stage
@@ -494,7 +630,6 @@ paramAddPhysiology = function (p,
 }
 
 
-
 #' Add temperature effects
 #'
 #' This function adjusts temperature-dependent physiological rates based on environmental temperatures. 
@@ -534,9 +669,29 @@ paramAddPhysiology = function (p,
 #' It might not work in customized setups other than \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
 #'
 #' @examples
-#' p = setupBasic2(Tp = 15, Tb = 13, depth = 500)
-#' p = paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
-#' sim = simulateFeisty(p, simpleOutput = TRUE)
+#' # Just an example, data may not make sense.
+#' p <- paramInit()
+#' # add three resources
+#' p <- paramAddResource(p,
+#'      names= c("smallZoo", "largeZoo", "smallBenthos"),
+#'      K    = c(100, 120, 80),
+#'      r    = c(1, 1, 1),
+#'      mLower = c(2e-06,0.001, 0.5e-03),
+#'      mUpper = c(0.001, 0.5, 125),
+#'      mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000)))
+#' # add the first functional type
+#' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
+#' # add the second functional type
+#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
+#' # add physiological parameters for two functional types (smallfish and largefish)
+#' p <- paramAddPhysiology(p, 
+#'      ac = 20, bc = -0.25,       
+#'      am = 0.011*365, bm = -0.175,      
+#'      ae = 70, be = -0.2,        
+#'      epsRepro = 0.01, 
+#'      epsAssim = 0.7)
+#' # add T effects on physiological rates  
+#' p <- paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
 #' 
 #' @author Yixin Zhao
 #' 
