@@ -16,6 +16,70 @@
 #
 #===============================================================================
 
+#' Calculate Derivatives of State Variables in FEISTY Model in R
+#'
+#' @description
+#' This function calculates the derivatives of state variables in FEISTY model in R. 
+#' It is used for time integration of FEISTY simulations or getting rates by computing derivatives of one time step.
+#'
+#' @usage derivativesFeistyR(t, u, p, FullOutput=TRUE)
+#'
+#' @param t Current time. Any numeric value, no use currently.
+#' @param u A numeric vector containing all state variables, all resources + all size classes.
+#' @param p The parameter list.
+#' @param FullOutput Logical flag indicating whether to return all calculation results. Default TRUE.
+#'
+#' @details
+#' This function is designed to simulate the dynamics of marine resources and fish populations in FEISTY model in R. 
+#' The derivative calculation of resources can be based on different types of dynamics (chemostat or logistic).
+#' Negative state variables and NA values are revised to zero to prevent computational errors.
+#' ODE solving is conducted by package deSolve.
+#' More theories can be found in de Roos et al. (2008) and Petrik et al. (2019).
+#'
+#' @return
+#' If \code{FullOutput} is 'TRUE', a list containing the following components:
+#' \itemize{
+#' \item deriv: a vector of derivatives [gWW/m2/year] of all resources and all functional type size classes.
+#' \item f: a vector containing feeding levels [-] of all resources (0) and all size classes of functional types.
+#' \item mortpred: a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types.
+#' \item g: Net growth rate [1/year] of  all size classes of functional types. Resources not included.
+#' \item Repro: Reproduction rate [gWW/m2/year]. Resources not included.
+#' \item Fin: Biomass flux into each size class [gWW/m2/year]. Resources not included.
+#' \item Fout: Biomass flux out of each size class [gWW/m2/year]. Resources not included.
+#' \item TotMort: a vector containing total mortality [gWW/m2/year] of each functional type, 
+#' which includes predation mortality, background mortality, and fishing mortality.
+#' \item TotGrazing: a vector containing total grazing [gWW/m2/year] of each functional type, Cmax * f (maximum consumption rate * feeding level)
+#' To be simply, the food intake before assimilation.
+#' \item TotLoss: a vector containing all biomass loss [gWW/m2/year] of each functional type, including unassimilated food and metabolism.
+#' They are released to environments. where is energy loss from reproduction (1-epsRepro), to be fixed.
+#' \item TotRepro: a vector containing total energy used for reproduction [gWW/m2] of each functional type.
+#' \item TotRecruit: a vector containing total recruitment [gWW/m2] of each functional type. 
+#' TotRecruit = TotRepro * epsRepro (reproduction efficiency)
+#' \item Fishes: a vector containing total biomass [gWW/m2] of each functional type.
+#'   }
+#' If \code{FullOutput = FALSE}, only returns \code{deriv}.
+#'
+#' @examples
+#' p = setpBasic2()
+#' # FEISTY simulation 200 years, use derivativesFeistyR
+#' sim = simulateFeisty(p=p, tEnd=200, USEdll=FALSE, simpleOutput=TRUE)
+#' # get rates of last year, based on biomass of last year 
+#' rates = derivativesFeistyR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
+#' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' de Roos, A. M., Schellekens, T., Van Kooten, T., Van De Wolfshaar, K., Claessen, D., & Persson, L. (2008). Simplifying a physiologically structured population model to a stage-structured biomass model. Theoretical population biology, 73(1), 47-62.
+#' 
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @aliases derivativesFeistyR
+#'
+#' @export
+#' 
+
 # ------------------------------------------------------------------------------
 #
 # Calculate the derivatives of all state variables in R
@@ -158,6 +222,90 @@ derivativesFeistyR = function(t,              # current time
     return( list(c(dRdt, dBdt)) )
 }
 
+#' Run FEISTY model simulations
+#'
+#' @description
+#' \code{simulateFeisty} runs simulations of the FEISTY model to resolve dynamics of marine resources and fish populations over a specified time frame. \cr
+#' It provides options of integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}).
+#' It also allows simulations for customized FEISTY setups.
+#'
+#' @usage simulateFeisty (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
+#'        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFeistyR, simpleOutput = FALSE)
+#'
+#' @param bCust Logical flag, indicates whether to use fixed setups (FALSE) or customized setups (TRUE). \cr 
+#' If \code{bCust} is TURE, FEISTY simulations based on customized setups only can be done in FORTRAN not R. \code{useDLL} input does not work.
+#' @param p A complete parameter list. \cr 
+#' The parameter of FEISTY setups can be one of the following: \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}.
+#' Or, modelers can customize new setups before call \code{simulateFeisty}.
+#' @param tEnd The end time for the simulation [year], i.e., simulation period of FEISTY, in years. Time (in years) over which the model should be simulated.
+#' @param tStep The time step for ODE solving output [year]. Default 1
+#' @param times A sequence of time points for FEISTY simulations (ODEs solving), required by function \code{\link{ode}}. Generally, it needs nothing, since it will be generated by `tEnd` and `tStep` automatically. \cr
+#'              If `NA`, the function returns only the derivative (one time step running) by `Rmodel`, default to \code{\link{derivativesFeistyR}}.
+#' @param yini A vector containing initial biomass values of all state variables (resources and all size classes). Default is from the setup parameter list, `p$u0`.
+#' @param USEdll Logical flag, determining whether the ODEs are solved in FORTRAN (`TRUE`) or R (`FALSE`). \cr
+#' The \link{deSolve} package is used for both methods.
+#' @param Rmodel The R function for computing derivatives, defaults to \code{\link{derivativesFeistyR}}. Generally, should not be changed, unless modelers modify the model profoundly.
+#' @param simpleOutput Logical flag, specifying whether to return the full output in a large matrix (FALSE) or a simplified version in list (TRUE).
+#'
+#' @details
+#' The function run the FEISTY model simulation over the specified time frame. \cr
+#' Before running the simulations, the parameter list of FEISTY model should be prepared first.
+#' The simulation supports published FEISTY setups and their revised versions:
+#' \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}, and customized setups by modelers. \cr
+#' The simulation can be conducted by either a FORTRAN-based approach or an R-based approach. Both methods are relied on \link{desolve} package for ODE solving. 
+#' For efficiency, FORTRAN dll should be used. For model development, the R-version is preferred.
+#' Simulations based on customized setups only can be done by FORTRAN-based approach.
+#' 
+#' ...............................
+#'
+#' @return
+#' A list containing the simulation results. The structure of the list depends on the `simpleOutput` parameter:
+#' If `simpleOutput` is `FALSE`, the function returns a detailed large matrix including:
+#' .................
+#' .................
+#' .................
+#' If `simpleOutput` is `TRUE`, the function returns a simplified list with the following components:
+#' \itemize{
+#' \item u: a matrix of biomass of each state variables (column) at each time point (row), including resources and all size class of functional types.
+#' \item R: a matrix of biomass of each resources (column) at each time point (row).
+#' \item B: a matrix of biomass of each size classes (column) at each time point (row).
+#' \item t: a vector containing all the simulation time points. From 0 to `tEnd`.
+#' \item nTime: The number of time points.
+#' \item p: The parameter list used in the simulation, same as the input one.
+#' \item SSBMean: 
+#' \item
+#'  ................................
+#'   }
+#' 
+#' @examples
+#' run FEISTY simulation based on setupVertical
+#' p <- 
+#' sim <- simulateFeisty(p = p, tEnd = 100, tStep = 1)
+#' print()
+#' 
+#' 
+#' 
+#' # run FEISTY simulation based on a customized set up
+#' 
+#' p_new <-
+#' 
+#' sim <- simulateFeisty(bCust = TRUE, p = p_new, tEnd = 100)
+#' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' de Roos, A. M., Schellekens, T., Van Kooten, T., Van De Wolfshaar, K., Claessen, D., & Persson, L. (2008). Simplifying a physiologically structured population model to a stage-structured biomass model. Theoretical population biology, 73(1), 47-62.
+#' 
+#' Soetaert, K., Petzoldt, T., & Setzer, R. W. (2010). Solving differential equations in R: package deSolve. Journal of statistical software, 33, 1-25.
+#' 
+#' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
+#'
+#' @aliases simulateFeisty
+#' 
+#' @export
+#'
 
 # ------------------------------------------------------------------------------
 #
@@ -216,7 +364,7 @@ simulateFeisty = function(bCust    = FALSE,
   #
   # calculate in Fortran
   #
-  if (USEdll) {    
+  if (USEdll==TRUE || bCust==TRUE) {    
     # the integers to be passed to the fortran code
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
@@ -261,7 +409,7 @@ simulateFeisty = function(bCust    = FALSE,
     # 
     # Run the simulation:
     #
-    if (bCust==TRUE){     # If using the R code for calculating the derivative (slow):
+    if (bCust==TRUE){     # for customized setups
       
       initfunc <- "initfeisty"
       
@@ -276,7 +424,7 @@ simulateFeisty = function(bCust    = FALSE,
               method = "ode45", rtol = rtol, atol = atol) # Run by dll
     }
     
-    if (bCust==FALSE){    # If using the derivative from Fortran (fast):
+    if (bCust==FALSE){     # for fixed setups
       # Oct 2023 Transmit input file path to Fortran library
       passpath <- function() {
         sys=Sys.info()['sysname']
@@ -330,7 +478,7 @@ simulateFeisty = function(bCust    = FALSE,
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=NULL, rpar=NULL,
               method = "ode45", rtol = rtol, atol = atol) # Run by dll
-    }    
+    }   
     #
     # Calculate in R:
     #
@@ -356,7 +504,7 @@ simulateFeisty = function(bCust    = FALSE,
   sim$B = u[, p$ixFish+1]
   sim$t = times
   sim$nTime = length(times)
-  p$USEdll=USEdll
+  sim$USEdll=USEdll
   sim$p = p
   
   #
