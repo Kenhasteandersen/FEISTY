@@ -533,6 +533,7 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 #'
 #' @examples
 #' # Just an example, data may not make sense.
+#' # Initialize the parameter list
 #' p <- paramInit()
 #' # add three resources
 #' p <- paramAddResource(p,
@@ -638,7 +639,8 @@ paramAddPhysiology = function (p,
 #' 
 #' @usage paramTeffect(p, Tref, Q10, Q10m, u=NA)
 #' 
-#' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}.
+#' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
+#' `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
 #' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.
 #' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
 #' @param Q10m Q10 factor for metabolism rates \code{metabolism} [-]
@@ -666,11 +668,13 @@ paramAddPhysiology = function (p,
 #' The function requires a specific structure in the input parameter list `p`, such as
 #' indices of all fish and vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
 #' Therefore it only can be called after \code{\link{paramAddPhysiology}}.
-#' It might not work in customized setups other than \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
+#' `Tp` and `Tb` are required in the input parameter list, or this function will not work.
+#' It might not work in customized setups other than \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
 #'
 #' @examples
 #' # Just an example, data may not make sense.
-#' p <- paramInit()
+#' # Initialize the parameter list. Tp and Tb are required for T effects.
+#' p <- paramInit(Tp=15, Tb=12)
 #' # add three resources
 #' p <- paramAddResource(p,
 #'      names= c("smallZoo", "largeZoo", "smallBenthos"),
@@ -684,18 +688,18 @@ paramAddPhysiology = function (p,
 #' # add the second functional type
 #' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
 #' # add physiological parameters for two functional types (smallfish and largefish)
-#' p <- paramAddPhysiology(p, 
-#'      ac = 20, bc = -0.25,       
-#'      am = 0.011*365, bm = -0.175,      
-#'      ae = 70, be = -0.2,        
-#'      epsRepro = 0.01, 
+#' p <- paramAddPhysiology(p,
+#'      ac = 20, bc = -0.25,  
+#'      am = 0.011*365, bm = -0.175,
+#'      ae = 70, be = -0.2,    
+#'      epsRepro = 0.01,
 #'      epsAssim = 0.7)
-#' # add T effects on physiological rates  
+#' # add T effects on physiological rates
 #' p <- paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
 #' 
 #' @author Yixin Zhao
 #' 
-#' @references 
+#' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
 #' 
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
