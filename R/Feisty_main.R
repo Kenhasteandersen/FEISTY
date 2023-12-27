@@ -42,20 +42,20 @@
 #' \item deriv: a vector of derivatives [gWW/m2/year] of all resources and all functional type size classes.
 #' \item f: a vector containing feeding levels [-] of all resources (0) and all size classes of functional types.
 #' \item mortpred: a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types.
-#' \item g: Net growth rate [1/year] of  all size classes of functional types. Resources not included.
-#' \item Repro: Reproduction rate [gWW/m2/year]. Resources not included.
+#' \item g: Net growth rate [1/year] of all size classes of functional types. Resources not included.
+#' \item Repro: Energy used for reproduction of all size classes of functional types, rate [gWW/m2/year]. Resources not included.
 #' \item Fin: Biomass flux into each size class [gWW/m2/year]. Resources not included.
 #' \item Fout: Biomass flux out of each size class [gWW/m2/year]. Resources not included.
-#' \item TotMort: a vector containing total mortality [gWW/m2/year] of each functional type, 
+#' \item totMort: a vector containing total mortality [gWW/m2/year] of each functional type, 
 #' which includes predation mortality, background mortality, and fishing mortality.
-#' \item TotGrazing: a vector containing total grazing [gWW/m2/year] of each functional type, Cmax * f (maximum consumption rate * feeding level)
+#' \item totGrazing: a vector containing total grazing [gWW/m2/year] of each functional type, Cmax * f (maximum consumption rate * feeding level)
 #' To be simply, the food intake before assimilation.
-#' \item TotLoss: a vector containing all biomass loss [gWW/m2/year] of each functional type, including unassimilated food and metabolism.
+#' \item totLoss: a vector containing all biomass loss [gWW/m2/year] of each functional type, including unassimilated food and metabolism.
 #' They are released to environments. where is energy loss from reproduction (1-epsRepro), to be fixed.
-#' \item TotRepro: a vector containing total energy used for reproduction [gWW/m2] of each functional type.
-#' \item TotRecruit: a vector containing total recruitment [gWW/m2] of each functional type. 
+#' \item totRepro: a vector containing total energy used for reproduction [gWW/m2] of each functional type.
+#' \item totRecruit: a vector containing total recruitment [gWW/m2] of each functional type. 
 #' TotRecruit = TotRepro * epsRepro (reproduction efficiency)
-#' \item Fishes: a vector containing total biomass [gWW/m2] of each functional type.
+#' \item totBiomass: a vector containing total biomass [gWW/m2] of each functional type.
 #'   }
 #' If \code{FullOutput = FALSE}, only returns \code{deriv}.
 #'
@@ -210,12 +210,12 @@ derivativesFeistyR = function(t,              # current time
     for (i in 1:length(p$ix))
       il <- c(il, rep(i, times=length(p$ix[[i]])))
     
-    out$TotMort    = tapply((mort   *u)[p$ixFish], INDEX=il, FUN=sum)
-    out$TotGrazing = tapply((grazing*u)[p$ixFish], INDEX=il, FUN=sum)
-    out$TotLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum)
-    out$TotRepro   = RR    
-    out$TotRecruit = out$TotRepro* p$epsRepro
-    out$Fishes     = tapply(B, INDEX=il, FUN=sum)
+    out$totMort    = tapply((mort   *u)[p$ixFish], INDEX=il, FUN=sum)
+    out$totGrazing = tapply((grazing*u)[p$ixFish], INDEX=il, FUN=sum)
+    out$totLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum)
+    out$totRepro   = RR    
+    out$totRecruit = out$totRepro* p$epsRepro
+    out$totBiomass = tapply(B, INDEX=il, FUN=sum)
     return(out)
   }
   else # Output just the derivatives
@@ -249,47 +249,89 @@ derivativesFeistyR = function(t,              # current time
 #'
 #' @details
 #' The function run the FEISTY model simulation over the specified time frame. \cr
-#' Before running the simulations, the parameter list of FEISTY model should be prepared first.
 #' The simulation supports published FEISTY setups and their revised versions:
 #' \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}, and customized setups by modelers. \cr
 #' The simulation can be conducted by either a FORTRAN-based approach or an R-based approach. Both methods are relied on \link{desolve} package for ODE solving. 
 #' For efficiency, FORTRAN dll should be used. For model development, the R-version is preferred.
-#' Simulations based on customized setups only can be done by FORTRAN-based approach.
-#' 
-#' ...............................
+#' Simulations based on customized setups only can be done by FORTRAN-based approach
+#' ...
 #'
 #' @return
 #' A list containing the simulation results. The structure of the list depends on the `simpleOutput` parameter:
-#' If `simpleOutput` is `FALSE`, the function returns a detailed large matrix including:
-#' .................
-#' .................
-#' .................
+#' If `simpleOutput` is `FALSE`, the function returns a detailed, large matrix with column names:
+#' Row: data of each time points. \cr
+#' Column: time points of result output + biomass of resource & each size class, ... 
+#' \code{f}, \code{mortpred}, \code{g}, \code{Repro}, \code{Fin}, \code{Fout}, 
+#' \code{totMort}, \code{totGrazing}, \code{totLoss}, \code{totRepro}, \code{totRecruit}, and \code{totBiomass} can be found in \code{\link{derivativesFeistyR}}.
+#' 
 #' If `simpleOutput` is `TRUE`, the function returns a simplified list with the following components:
 #' \itemize{
 #' \item u: a matrix of biomass of each state variables (column) at each time point (row), including resources and all size class of functional types.
-#' \item R: a matrix of biomass of each resources (column) at each time point (row).
-#' \item B: a matrix of biomass of each size classes (column) at each time point (row).
+#' \item R: a matrix of biomass of each resource (column) at each time point (row).
+#' \item B: a matrix of biomass of each size class (column) at each time point (row).
 #' \item t: a vector containing all the simulation time points. From 0 to `tEnd`.
 #' \item nTime: The number of time points.
-#' \item p: The parameter list used in the simulation, same as the input one.
-#' \item SSBMean: 
-#' \item
-#'  ................................
-#'   }
+#' \item USEdll: from parameter input.
+#' \item p: the parameter list used in the simulation, same as the input one.
+#' \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
+#' `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
+#' }
 #' 
 #' @examples
-#' run FEISTY simulation based on setupVertical
-#' p <- 
-#' sim <- simulateFeisty(p = p, tEnd = 100, tStep = 1)
-#' print()
+#' # Just some examples, data input and output may not make sense.
+#' 
+#' # run FEISTY simulation based on setupVertical
+#' # prepare a parameter list
+#' p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
+#' # run the simulation by R and get the simplified output
+#' sim_Vertical_R <- simulateFeisty(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE, simpleOutput = TRUE)
 #' 
 #' 
+#' # run FEISTY simulation based on setupBasic2 by Fortran and get the simplified output
+#' sim__Basic2_F <- simulateFeisty(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
+#' nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE, simpleOutput = TRUE)
+#' 
+#' # -------------------------------------------------------------------------------
 #' 
 #' # run FEISTY simulation based on a customized set up
 #' 
-#' p_new <-
+#' # Initialize the parameter list.
+#' p_cust <- paramInit()
 #' 
-#' sim <- simulateFeisty(bCust = TRUE, p = p_new, tEnd = 100)
+#' # add three resources
+#' p_cust <- paramAddResource(p_cust,
+#'           names= c("smallZoo", "largeZoo", "smallBenthos"),
+#'           K    = c(100, 120, 80),
+#'           r    = c(1, 1, 1),
+#'           mLower = c(2e-06,0.001, 0.5e-03),
+#'           mUpper = c(0.001, 0.5, 125),
+#'           mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000)))
+#'           
+#' # add two functional types of fish: small pelagic fish and demersal fish           
+#' p_cust <- paramAddGroup(p_cust, mMin=0.001, mMax=250, mMature=NA, 
+#'                         mortF=0,      nStages=6, name="smallPel")
+#' p_cust <- paramAddGroup(p_cust, mMin=0.001, mMax=125000, mMature=NA, 
+#'                         mortF=0, nStages=9, name="demersals")
+#'                         
+#' # add physiological parameters for two functional types
+#' p_cust <- paramAddPhysiology(p_cust, 
+#'           ac = 20, bc = -0.25,       
+#'           am = 0.011*365, bm = -0.175,      
+#'           ae = 70, be = -0.2,        
+#'           epsRepro = 0.01, 
+#'           epsAssim = 0.7)
+#' 
+#' # Add fishing mortality. The baseline fishing mortality is 2/year.
+#' p_cust <- setFishing(p_cust, F=2, etaF=0.05)
+#' 
+#' # Add size preference
+#' p_cust$theta <- paramSizepref(p = p_cust,   
+#'                         beta = 400,
+#'                         sigma = 1.3, 
+#'                         type = 1)
+#' 
+#' # run the simulation for 500 years and get the detailed output. 
+#' sim_cust <- simulateFeisty(bCust = TRUE, p = p_cust, tEnd = 500, simpleOutput = FALSE)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -353,14 +395,26 @@ simulateFeisty = function(bCust    = FALSE,
   if (length(yini) != nGrid) 
     stop ("length of 'yini' not ok - should be ", nGrid)  
   
-  # prepare rtol atol for ode
+  # prepare rtol atol for ode solving
     rtol = 1E-8
     atol = 1E-8
   if (max(sapply(p$ix, length))>=21){    
     rtol = 1E-10
     atol = 1E-10}
   if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
-  
+
+  # prepare output variable names
+    Sname <- p$stagenames
+    Fname <- p$stagenames[-(1:nR)]
+    Gname <- p$groupnames[-(1:nR)]
+    outnames <- c(
+      paste("f", Sname, sep="."), paste("mortpred", Sname, sep="."),
+      paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
+      paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
+      paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
+      paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
+      paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
+      
   #
   # calculate in Fortran
   #
@@ -393,18 +447,6 @@ simulateFeisty = function(bCust    = FALSE,
     
     # names of functions in fortran code to be used
     runfunc  <- "runfeisty"    # the derivative function
-    
-    # output variables
-    Sname <- p$stagenames
-    Fname <- p$stagenames[-(1:nR)]
-    Gname <- p$groupnames[-(1:nR)]
-    outnames <- c(
-      paste("f", Sname, sep="."), paste("mortpred", Sname, sep="."),
-      paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
-      paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
-      paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
-      paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
-      paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
     
     # 
     # Run the simulation:
@@ -487,6 +529,8 @@ simulateFeisty = function(bCust    = FALSE,
   } else {               # R-code
     u = ode(y=yini, times=times, parms=p, func = Rmodel,
             method = "ode45", rtol = rtol, atol = atol) #Run by R
+    # assign colnames
+    colnames(u)[(1+p$nStages+1):ncol(u)]=outnames
   }
   
   # if (any(u[,c(p$ixR,p$ixFish)+1]<0))
@@ -510,8 +554,8 @@ simulateFeisty = function(bCust    = FALSE,
   #
   # Calculate Spawning Stock Biomass and yield
   #
-  sim=calcSSB(sim=sim,etaTime=0.6)
-  sim=calcYield(sim=sim,etaTime=0.6)
+  sim=calcSSB(sim=sim,etaTime=0.4)
+  sim=calcYield(sim=sim,etaTime=0.4)
   
   return(sim)
 }

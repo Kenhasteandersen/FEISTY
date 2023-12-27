@@ -673,29 +673,21 @@ paramAddPhysiology = function (p,
 #'
 #' @examples
 #' # Just an example, data may not make sense.
-#' # Initialize the parameter list. Tp and Tb are required for T effects.
-#' p <- paramInit(Tp=15, Tb=12)
-#' # add three resources
-#' p <- paramAddResource(p,
-#'      names= c("smallZoo", "largeZoo", "smallBenthos"),
-#'      K    = c(100, 120, 80),
-#'      r    = c(1, 1, 1),
-#'      mLower = c(2e-06,0.001, 0.5e-03),
-#'      mUpper = c(0.001, 0.5, 125),
-#'      mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000)))
-#' # add the first functional type
-#' p <- paramAddGroup(p, nStages = 3, mMin = 0.1, mMax = 100, mMature = 100*0.25, mortF=0, mort0 = 0.1, name = "smallfish")
-#' # add the second functional type
-#' p <- paramAddGroup(p, nStages = 6, mMin = 0.1, mMax = 100000, mMature = 100000*0.25, mortF=0, mort0 = 0.1, name = "largefish")
-#' # add physiological parameters for two functional types (smallfish and largefish)
-#' p <- paramAddPhysiology(p,
-#'      ac = 20, bc = -0.25,  
-#'      am = 0.011*365, bm = -0.175,
-#'      ae = 70, be = -0.2,    
-#'      epsRepro = 0.01,
-#'      epsAssim = 0.7)
-#' # add T effects on physiological rates
-#' p <- paramTeffect(p, Tref = 10, Q10 = 1.88, Q10m = 2.35, u = NA)
+#' # Create a FEISTY setup by setupBasic2.
+#' p1 = setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+#' nStages=9, etaMature=0.25, F=0, etaF=0.05)
+#' 
+#' # change environmental temperatures and update T effects on physiological rates
+#' p1$Tp=15
+#' p1$Tb=12
+#' p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, u=NA)
+#' # Compare the original and updated physiological rates 
+#' p1$V
+#' p2$V
+#' p1$metabolism
+#' p2$metabolism
+#' p1$Cmax
+#' p2$Cmax
 #' 
 #' @author Yixin Zhao
 #' 
