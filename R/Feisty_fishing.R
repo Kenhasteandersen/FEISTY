@@ -145,13 +145,44 @@ setFishing = function(p, F=0, etaF=0.05) {
   return(p)
 }
 
+#' Yield Calculation
+#'
+#' This function calculates the yield for each function type based on a FEISTY simulation result.
+#'
+#' @usage calcYield(sim, etaTime = 0.4)
+#'
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFeisty}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFeisty(simpleOutput=TRUE)}.
+#' @param etaTime The last fraction of the simulation period (default the last 40\%).
+#'
+#' @details
+#' This function calculates the yield for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
+#' Yield is the product of biomass \code{u} [gww/m2] and fishing mortality \code{mortF} [1/year]. Negative values in \code{u} are revised to 0. \cr
+#' This function has been integrated into \code{\link{simulateFeisty}}. It cannot be called independently.
+#'
+#' @return 
+#' Add yield data to the result list:
+#' \itemize{
+#' \item yieldMean: a vector containing the mean yield data [gww/m2/year] of each functional type of the time range specified.
+#' \item yieldMin: a vector containing the minimum yield data [gww/m2/year] of each functional type within the time range specified.
+#' \item yieldMax: a vector containing the maximum yield data [gww/m2/year] of each functional type within the time range specified.
+#' \item yield: a matrix containing the yield data [gww/m2/year] of each functional type (column) in each time point (row)
+#' }
+#'
+#' @examples
+#' no examples
+#'
+#' @author Yixin Zhao
+#' 
+#' @aliases calcYield
+#'
+# @export
 
 #
 # Return the yield of all function groups
 #
 calcYield = function(
     sim,          # The simulation object to analyse
-    etaTime=0.4) {# The fraction of the time series to integrate (default the last 40%) 
+    etaTime=0.4) {# The last fraction of the simulation period (default the last 40%)
   
   p=sim$p
   
@@ -181,6 +212,39 @@ calcYield = function(
   sim$yield=yield
   return(sim)
 }
+
+#' Spawning Stock Biomass Calculation
+#'
+#' This function calculates the spawning stock biomass (SSB) for each function type based on a FEISTY simulation result.
+#'
+#' @usage calcSSB(sim, etaTime = 0.4)
+#'
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFeisty}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFeisty(simpleOutput=TRUE)}.
+#' @param etaTime The last fraction of the simulation period (default the last 40\%).
+#'
+#' @details
+#' This function calculates the spawning stock biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
+#' Spawning stock biomass is the product of biomass \code{u} [gww/m2] and maturity level \code{psiMature} [1/year]. Negative values in \code{u} are revised to 0. \cr
+#' Note the SSB data only represents how much biomass (energy) could be used for reproduction, rather than the amount of offspring. \cr
+#' This function has been integrated into \code{\link{simulateFeisty}}. It cannot be called independently.
+#'
+#' @return 
+#' Add SSB data to the result list:
+#' \itemize{
+#' \item SSBMean: a vector containing the mean SSB data [gww/m2/year] of each functional type of the time range specified.
+#' \item SSBMin: a vector containing the minimum SSB data [gww/m2/year] of each functional type within the time range specified.
+#' \item SSBMax: a vector containing the maximum SSB data [gww/m2/year] of each functional type within the time range specified.
+#' \item SSB: a matrix containing the SSB data [gww/m2/year] of each functional type (column) in each time point (row)
+#' }
+#'
+#' @examples
+#' no examples
+#'
+#' @author Yixin Zhao
+#' 
+#' @aliases calcSSB
+#'
+# @export
 
 #
 # Return the SSB of all function groups
