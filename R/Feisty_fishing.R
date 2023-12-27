@@ -151,7 +151,7 @@ setFishing = function(p, F=0, etaF=0.05) {
 #
 calcYield = function(
     sim,          # The simulation object to analyse
-    etaTime=0.6) {# The fraction of the time series to integrate (default the last half) 
+    etaTime=0.4) {# The fraction of the time series to integrate (default the last 40%) 
   
   p=sim$p
   
@@ -161,7 +161,7 @@ calcYield = function(
   yieldMin = yieldMean
   yieldMax = yieldMean
   
-  ixTime = which(sim$t>=(etaTime*sim$t[sim$nTime]))
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
   
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]    
@@ -187,7 +187,7 @@ calcYield = function(
 #
 calcSSB = function(
     sim,          # The simulation object to analyse
-    etaTime=0.6) {# The fraction of the time series to integrate (default the last half) 
+    etaTime=0.4) {# The last fraction of the simulation period (default the last 40%) 
   
   p=sim$p
   
@@ -197,7 +197,7 @@ calcSSB = function(
   SSBMin = SSBMean
   SSBMax = SSBMean
   
-  ixTime = which(sim$t>=(etaTime*sim$t[sim$nTime]))
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
       
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
