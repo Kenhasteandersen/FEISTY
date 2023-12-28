@@ -220,7 +220,9 @@ param$setup="setupBasic"
 #' @examples 
 #' p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
 #' nStages=6, etaMature=0.25, F=0,etaF=0.05)
-#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' sim=simulateFeisty(p=p, simpleOutput=FALSE)
+#' # plot dynamics of four resources and small pelagic fish.
+#' plot(sim, sim, which=1:8, lty=1, mfrow=c(2,4), subset=time >= 0)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
