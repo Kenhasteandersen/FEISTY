@@ -1,0 +1,69 @@
+#'
+#' 
+#' @docType package
+#' 
+#' @name FeistyR
+#' 
+#' @title FEISTY: FishErIes Size and functional TYpe model.
+#' 
+#' @description 
+#' The FEISTY model is a size- and trait-based model of marine higher trophic level dynamics, described in Petrik et al., 2019 and van Denderen et al., 2020. 
+#' 
+#' @details 
+#' The Fishes in FEISTY are defined by their functional type, size, and maturity stage. 
+#' 
+#' The number of fish functional types as well as the number of size classes in each functional type can be chosen.
+#' 
+#' The biological rates in the model are based on allometry using the mass, w (g), of each size class.  
+#' 
+#' Fish size classes are defined using logarithmic size bins appropriate for the life history stage it represents
+#' by holding the ratio of initial and final body sizes of each size-class, constant across all stages.
+#' 
+#' The stage-structured formulation is as in de Roos et al. (2008).  
+#' 
+#' Each fish functional type is modeled as a collection of size-classes, with smaller classes growing into larger size classes. 
+#' 
+#' This package provides four setups for FEISTY, including two published setups and their revised versions.
+#' Furthermore, this package allows users to define their own setups to simulate and develop their new ideas within the FEISTY model frame.
+#' 
+#' In this package, two approaches for FEISTY simulations (ODEs solving) are provided. Both are relied on \link{desolve} package. 
+#' For simulation efficiency, the simulations can be done by compiled language (FORTRAN).
+#' For development reasons, the R version is preferred.
+#' 
+#' ...
+#' ...
+#' ...
+#' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
+#' 
+#' de Roos, A. M., Schellekens, T., Van Kooten, T., Van De Wolfshaar, K., Claessen, D., & Persson, L. (2008). Simplifying a physiologically structured population model to a stage-structured biomass model. Theoretical population biology, 73(1), 47-62.
+#' 
+#' Soetaert, K., Petzoldt, T., & Setzer, R. W. (2010). Solving differential equations in R: package deSolve. Journal of statistical software, 33, 1-25.
+#' 
+#' @author Ken H Andersen,
+#'         Karline Soetaert <karline.soetaert@nioz.nl>,
+#'         Yixin Zhao
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
+#' 
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019). \cr
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`. \cr
+#' \code{\link{setupVertical}} The setup following van Ddenderen et al. (2021). \cr
+#' \code{\link{setupVertical2}} A revised setup based on `setupVertical`. \cr
+#' 
+#' \code{\link{webFeisty}} A shiny interface for visualizing FEISTY model results.
+#' 
+#' \code{\link{derivativesFeistyR}} The derivative function of FEISTY.
+#' 
+#' ...
+#' ...
+#' ...
+#' 
+#' 
+#' 
+#' 
+NULL # This 'NULL' is important in R package documentation file when using roxygen2.
