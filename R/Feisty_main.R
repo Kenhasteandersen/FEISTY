@@ -280,6 +280,25 @@ derivativesFeistyR = function(t,              # current time
 #' @examples
 #' # Just some examples, data input and output may not make sense.
 #' 
+#' 
+#' #-----------------------------------------------
+#' # run model with default parameter settings
+#' #-----------------------------------------------
+#' sim <- simulateFeisty()
+#' 
+#' colnames(sim)
+#' 
+#' plot(sim, which = 1:9) # plot first 9 state variables
+#' 
+#' plot(sim, which=c( "smallZoo",  "largeZoo", "smallBenthos", "largeBenthos",
+#'                   "totBiomass.smallPel", "totBiomass.largePel", "totBiomass.demersals"))
+#'                   
+#' par(mfrow = c(1, 1))
+#' matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
+#'          which=c("largePel_1", "largePel_2", "largePel_3", "totBiomass.largePel"))
+#' 
+#' # -------------------------------------------------------------------------------
+#' 
 #' # run FEISTY simulation based on setupVertical
 #' # prepare a parameter list
 #' p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
