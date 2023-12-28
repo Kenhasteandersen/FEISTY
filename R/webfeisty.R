@@ -32,10 +32,9 @@
 #' \code{\link{setupVertical2}}
 #' ...
 #' @aliases webFeisty
+#' 
 #' @export
-webFeisty <- function(...) {
-  # function implementation goes here
-}
+#' 
 
 
 ## ====================================================================
