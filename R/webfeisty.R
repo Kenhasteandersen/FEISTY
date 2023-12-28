@@ -26,10 +26,15 @@
 #' webFeisty()
 #'
 #' @seealso 
-#' \code{\link{setupBasic}},
-#' \code{\link{setupBasic2}},
-#' \code{\link{setupVertical}},
-#' \code{\link{setupVertical2}}
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019).
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`.
+#' \code{\link{setupVertical}} The setup following van Ddenderen et al. (2021).
+#' \code{\link{setupVertical2}} A revised setup based on `setupVertical`.
+#' 
+#' \code{\link{plotSimulation}}
+#' \code{\link{plotNetwork}}
+#' \code{\link{plotDiet}}
+#' 
 #' ...
 #' @aliases webFeisty
 #' 
