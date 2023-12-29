@@ -15,7 +15,7 @@ paramAddGroup(p, nStages, mMin, mMax, mMature=NA, mortF=0, mort0=0.1, u0=1, name
 
 \item{mMax}{Maximum size (mass) of this functional type (boundary value), in gram wet weight [gWW].}
 
-\item{mMature}{Size [gWW] at which fish has 50\% maturity level, which will be used for maturity level calculation based on a S-shape function.\cr
+\item{mMature}{Size [gWW] at which fish has a 50\% maturity level, which will be used for maturity level calculation based on an S-shape function.\cr
 If NA, only the last size class is 50\% mature; others are 0.}
 
 \item{mortF}{Fishing mortality for all size classes [1/year]. Default value 0, indicating no fishing.}
@@ -31,30 +31,30 @@ The updated parameter list \code{p}:
 \itemize{
 \item nGroups, number of all functional types
 \item groupnames, a character vector of names of resources and each fish functional groups
-\item stagenames, a character vector of names of resources and each fish stages (functional groups)
+\item stagenames, a character vector of names of resources and each fish stage (functional groups)
 \item ix, a list including sublists which contains indices of the size classes of each functional type.
-\item mLower, a vector containing lower limit of isze of each size class of resource and functional type
-\item mUpper, a vector containing upper limit of size of each size class of resource and functional type
+\item mLower, a vector containing the lower limit of size of each size class of resource and functional type
+\item mUpper, a vector containing the upper limit of size of each size class of resource and functional type
 \item z, a vector containing the ratio between \code{mUpper} and \code{mLower}, all resources (NA) + all size classes
-\item mc, a vector containing geometric mean size of resources and all stages of functional types
-\item mMature, a vector containing the size with 50\% maturity level of each functional type, from parameter input
+\item mc, a vector containing the geometric mean size of resources and all stages of functional types
+\item mMature, a vector containing the size with a 50\% maturity level of each functional type, from parameter input
 \item psiMature, a vector containing the maturity level, all resources (NA) + all size classes
 \item mortF, a vector containing fishing mortality, all resources (NA) + all size classes
 \item mort0, a vector containing all background mortality, all resources (NA) + all size classes
-\item u0, a vector containing initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
+\item u0, a vector containing the initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
 \item ixFish, a vector of indices of all functional type size classes, starting from \code{nResources+1}
 \item nStages, an integer, total number of resources and size classes.
 }
-All the parameter above will be updated if a new functional type is added by another call of \code{paramAddGroup}. \cr
-NAs in \code{z}, \code{psiMature}, \code{mortF}, \code{mort0} will be revised to 0 in \code{\link{paramAddPhysiology}}.
+All the parameters above will be updated if a new functional type is added by another call of \code{paramAddGroup}. \cr
+NAs in \code{z}, \code{psiMature}, \code{mortF}, and \code{mort0} will be revised to 0 in \code{\link{paramAddPhysiology}}.
 }
 \description{
 This function updates the parameter list by adding parameters of one functional type.
 }
 \details{
 This function is designed to add parameters of one functional type to the parameter list.
-Generally, this function needs to be called after function \code{\link{paramAddResource}}.
-Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times for adding more functional types.
+Generally, this function needs to be called after the function \code{\link{paramAddResource}}.
+Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times to add more functional types.
 }
 \examples{
 # Just an example, data may not make sense.

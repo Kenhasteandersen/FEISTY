@@ -9,14 +9,14 @@ paramSizepref(p, beta = 400, sigma = 1.3, type = 1)
 \arguments{
 \item{p}{The parameter list to be updated.}
 
-\item{beta}{The preferred predator/prey mass ratio. Default is 400.}
+\item{beta}{The preferred predator/prey mass ratio. Default 400.}
 
-\item{sigma}{The width of size preference for feeding. Default is 1.3.}
+\item{sigma}{The width of size preference for feeding. Default 1.3.}
 
 \item{type}{The type of size preference function. 1 for a normal distribution 
 based function, 2 for a function based on error function, and 3 for a 
 more complex function integrating over both predator and prey size groups.
-Default is 1.}
+Default 1.}
 }
 \value{
 theta: feeding preference matrix for each predator x to each prey y.
@@ -37,7 +37,7 @@ this method integrates over both predator and prey size groups for a detailed pr
 
 The preference is set to 0 for prey larger than the predator.
 
-This function only needs be called once in each simulation. It needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
+This function only needs to be called once in each simulation. It needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
 The returned parameter list can be used for further updates.
 }
 \examples{

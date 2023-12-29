@@ -9,7 +9,7 @@ nStages=9, etaMature=0.25, F=0, etaF=0.05)
 }
 \arguments{
 \item{szprod}{Small zooplankton productivity. \cr
-Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
 Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.}
 
 \item{lzprod}{Large zooplankton productivity.}
@@ -39,7 +39,7 @@ See source code of \code{\link{setFishing}}.}
 \item{etaF}{The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.}
 }
 \value{
-Additional parameters added by function \code{\link{paramInit}}:
+Additional parameters added by the function \code{\link{paramInit}}:
 \itemize{
 \item szprod, Small zooplankton productivity, from parameter input.
 \item lzprod, Large zooplankton productivity, from parameter input.
@@ -52,12 +52,12 @@ Additional parameters added by function \code{\link{paramInit}}:
 \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 }
 
-Added by function \code{\link{paramSizepref}}:
+Added by the function \code{\link{paramSizepref}}:
 \itemize{
 \item theta, the size preference matrix
 }
 
-Added by function \code{\link{setupBasic2}}:
+Added by the function \code{\link{setupBasic2}}:
 \itemize{
 \item setup, name (character) of this setup
 }
@@ -66,11 +66,11 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 \code{\link{paramAddPhysiology}}, \code{\link{paramTeffect}}, \code{\link{setFishing}}, and \code{\link{paramSizepref}}.
 }
 \description{
-\code{setupBasic2} creates a revised setup based on setupBasic()
+\code{setupBasic2} creates a revised setup based on \code{setupBasic}.
 }
 \details{
-setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish and demersal fish) based on Petrik et al. (2019). 
-There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+The setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish, and demersal fish) based on Petrik et al. (2019). 
+There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 Main revision:
 \itemize{
 \item Generalized size-based maturity

@@ -12,12 +12,12 @@
 #' @usage paramSizepref(p, beta = 400, sigma = 1.3, type = 1)
 #' 
 #' @param p The parameter list to be updated.
-#' @param beta The preferred predator/prey mass ratio. Default is 400.
-#' @param sigma The width of size preference for feeding. Default is 1.3.
+#' @param beta The preferred predator/prey mass ratio. Default 400.
+#' @param sigma The width of size preference for feeding. Default 1.3.
 #' @param type The type of size preference function. 1 for a normal distribution 
 #' based function, 2 for a function based on error function, and 3 for a 
 #' more complex function integrating over both predator and prey size groups.
-#' Default is 1.
+#' Default 1.
 #'
 #' @details
 #' This function computes a size preference matrix \code{theta}.
@@ -32,7 +32,7 @@
 #' 
 #' The preference is set to 0 for prey larger than the predator.
 #' 
-#' This function only needs be called once in each simulation. It needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
+#' This function only needs to be called once in each simulation. It needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
 #' The returned parameter list can be used for further updates.
 #' 
 #' @return theta: feeding preference matrix for each predator x to each prey y.
@@ -146,15 +146,15 @@ paramSizepref <- function(
 #'
 #' @param ... Additional parameters needed to be added to the list, which will be included in the returned parameter list.
 #'
-#' @return A parameter list initialized with some basic blank values, vectors, matrices, and sublists.
+#' @return A parameter list is initialized with some basic blank values, vectors, matrices, and sublists.
 #' \itemize{
 #' \item ..., as input parameters in \code{paramInit(...)}
 #' \item nResources, the total number of resources, will be updated later
 #' \item nGroups, the total number of fish functional groups, will be updated later
 #' \item nStages, the total number of resources + fish stages, will be updated later
-#' \item groupnames, a character vector of names of resources and each fish functional groups, will be updated later
-#' \item stagenames, a character vector of names of resources and each fish stages (functional groups), will be updated later
-#' \item theta, a matrix for feeding preference of each predator x to each prey y, will be updated later
+#' \item groupnames, a character vector of names of resources and each fish functional group, will be updated later
+#' \item stagenames, a character vector of names of resources and each fish stage (functional group), will be updated later
+#' \item theta, a matrix for the feeding preference of each predator x to each prey y, will be updated later
 #' \item ix, index lists for size classes of each fish functional type (sublists), will be updated later
 #' \item ixFish, a vector containing indices for all fish, will be updated later
 #' \item ixR, a vector containing indices for all resources, will be updated later
@@ -273,34 +273,34 @@ makeGrid = function(mMin,         # min size, gram
 #'
 #' @param p Parameter list to be updated.
 #' @param K A vector of carrying capacities of all resources [gww/m2].
-#' @param r A vector containing each resource nudging rate (growth rate) [1/year], default 1, do not recommend other values.
+#' @param r A vector containing each resource nudging rate (growth rate) [1/year], default 1, does not recommend other values.
 #' @param dynamics The type of resource dynamics, either "chemostat" or "logistic".
 #' @param mc A vector containing each resource geometric mean weight [gww].
-#' @param mLower A vector containing lower limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
-#' @param mUpper A vector containing upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
+#' @param mLower A vector containing the lower limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
+#' @param mUpper A vector containing the upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
 #' @param names A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.
 #' @param u0 A vector of the initial concentration of each resource. If not provided, defaults to the value of \code{K}.
 #'
 #' @return The updated parameter list \code{p}:
 #' \itemize{
 #' \item nResources, the total number of resources, which is the length of the input \code{K}.
-#' \item groupnames, a character vector of names of resources and each fish functional groups, will be updated later.
-#' \item stagenames, a character vector of names of resources and each fish stages (functional groups), will be updated later.
+#' \item groupnames, a character vector of names of resources and each fish functional group, will be updated later.
+#' \item stagenames, a character vector of names of resources and each fish stage (functional group), will be updated later.
 #' \item dynamics, from parameter input.
 #' \item Rtype, resource growth strategy number. Default 1: chemostat, 2: logistic growth. If 'dynamics' is not specified, Rtype=1.
 #' \item K, from parameter input.
 #' \item r, from parameter input.
 #' \item ixR, indices for all resources, start from 1.
-#' \item mc, resource geometric mean weight, fish data will be added later.
-#' \item mLower, lower limit of each resource weight, fish data will be added later.
-#' \item mUpper, upper limit of each resource weight, fish data will be added later.
+#' \item mc, resource geometric mean weight, and fish data will be added later.
+#' \item mLower, the lower limit of each resource weight, fish data will be added later.
+#' \item mUpper, the upper limit of each resource weight, fish data will be added later.
 #' \item u0, from parameter input or same as \code{K}, fish data will be added later.
 #' }
 #' 
 #' @details
 #' This function is designed to add parameters of resources to the parameter list.
 #' This function only can be called once in each simulation. All resources are added to the parameter list at one time.
-#' Generally, this function needs to be called after function \code{\link{paramInit}}.
+#' Generally, this function needs to be called after the function \code{\link{paramInit}}.
 #' The returned parameter list can be used for further updates.
 #'
 #' @examples
@@ -372,7 +372,7 @@ paramAddResource = function(p,        # parameter to be updated
 #' @param nStages Number of stages for this functional type.
 #' @param mMin Minimum size (mass) of this functional type (boundary value), in gram wet weight [gWW].
 #' @param mMax Maximum size (mass) of this functional type (boundary value), in gram wet weight [gWW].
-#' @param mMature Size [gWW] at which fish has 50\% maturity level, which will be used for maturity level calculation based on a S-shape function.\cr
+#' @param mMature Size [gWW] at which fish has a 50\% maturity level, which will be used for maturity level calculation based on an S-shape function.\cr
 #' If NA, only the last size class is 50\% mature; others are 0.
 #' @param mortF Fishing mortality for all size classes [1/year]. Default value 0, indicating no fishing.
 #' @param mort0 Natural mortality (background mortality) for all size groups [1/year]. Default value 0.1.
@@ -381,29 +381,29 @@ paramAddResource = function(p,        # parameter to be updated
 #'
 #' @details
 #' This function is designed to add parameters of one functional type to the parameter list.
-#' Generally, this function needs to be called after function \code{\link{paramAddResource}}.
-#' Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times for adding more functional types.
+#' Generally, this function needs to be called after the function \code{\link{paramAddResource}}.
+#' Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times to add more functional types.
 #'
 #' @return The updated parameter list \code{p}:
 #' \itemize{
 #' \item nGroups, number of all functional types
 #' \item groupnames, a character vector of names of resources and each fish functional groups
-#' \item stagenames, a character vector of names of resources and each fish stages (functional groups)
+#' \item stagenames, a character vector of names of resources and each fish stage (functional groups)
 #' \item ix, a list including sublists which contains indices of the size classes of each functional type.
-#' \item mLower, a vector containing lower limit of isze of each size class of resource and functional type
-#' \item mUpper, a vector containing upper limit of size of each size class of resource and functional type
+#' \item mLower, a vector containing the lower limit of size of each size class of resource and functional type
+#' \item mUpper, a vector containing the upper limit of size of each size class of resource and functional type
 #' \item z, a vector containing the ratio between \code{mUpper} and \code{mLower}, all resources (NA) + all size classes
-#' \item mc, a vector containing geometric mean size of resources and all stages of functional types
-#' \item mMature, a vector containing the size with 50\% maturity level of each functional type, from parameter input
+#' \item mc, a vector containing the geometric mean size of resources and all stages of functional types
+#' \item mMature, a vector containing the size with a 50\% maturity level of each functional type, from parameter input
 #' \item psiMature, a vector containing the maturity level, all resources (NA) + all size classes
 #' \item mortF, a vector containing fishing mortality, all resources (NA) + all size classes
 #' \item mort0, a vector containing all background mortality, all resources (NA) + all size classes
-#' \item u0, a vector containing initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
+#' \item u0, a vector containing the initial value of biomass, all resources (from \code{\link{paramAddResource}}) + all size classes
 #' \item ixFish, a vector of indices of all functional type size classes, starting from \code{nResources+1}
 #' \item nStages, an integer, total number of resources and size classes.
 #' }
-#' All the parameter above will be updated if a new functional type is added by another call of \code{paramAddGroup}. \cr
-#' NAs in \code{z}, \code{psiMature}, \code{mortF}, \code{mort0} will be revised to 0 in \code{\link{paramAddPhysiology}}.
+#' All the parameters above will be updated if a new functional type is added by another call of \code{paramAddGroup}. \cr
+#' NAs in \code{z}, \code{psiMature}, \code{mortF}, and \code{mort0} will be revised to 0 in \code{\link{paramAddPhysiology}}.
 #' 
 #' @examples
 #' # Just an example, data may not make sense.
@@ -531,8 +531,8 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 #' \item Cmax, a vector containing maximum consumption rate values, resources (0) + all size classes of all functional types
 #' \item metabolism, a vector containing standard metabolism values, resources (0) + all size classes of all functional types
 #' \item V, a vector containing clearance rate values, resources (0) + all size classes of all functional types
-#' \item epsRepro, a vector of reproduction efficiency values of each functional types (length is the number of functional types). This value applies on all size classes.
-#' \item epsAssim, the assimilation efficiency value. This value applies on all size classes.
+#' \item epsRepro, a vector of reproduction efficiency values of each functional type (length is the number of functional types). This value applies to all size classes.
+#' \item epsAssim, the assimilation efficiency value. This value applies to all size classes.
 #' \item Cmaxsave, same as initial values of \code{Cmax}, saved for temperature effect calculation.
 #' \item Vsave, same as initial values of \code{V}, saved for temperature effect calculation.
 #' \item metabolismsave, same as initial values of \code{metabolism}, saved for temperature effect calculation.
@@ -542,7 +542,7 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 #' This function is designed to add physiological parameters of all size classes of all functional types to the parameter list.
 #' It sets the maximum consumption rate, standard metabolism, and clearance rate based on the size.
 #' It ensures there are no NA values in critical parameters. \cr
-#' This function only needs be called once in each simulation. The physiological parameters of all size classes are added to the parameter list at one time.
+#' This function only needs to be called once in each simulation. The physiological parameters of all size classes are added to the parameter list at one time.
 #' Generally, this function needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
 #' The returned parameter list can be used for further updates.
 #'
@@ -659,12 +659,12 @@ paramAddPhysiology = function (p,
 #' 
 #' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
 #' `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
-#' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.
+#' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on another reference temperature.
 #' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
 #' @param Q10m Q10 factor for metabolism rates \code{metabolism} [-]
 #' @param u Temporarily not used. To be developed...
 #'
-#' @return A updated parameter list:
+#' @return An updated parameter list:
 #' \itemize{
 #' \item Tref, from parameter input
 #' \item Q10, from parameter input
@@ -673,9 +673,9 @@ paramAddPhysiology = function (p,
 #' \item fT_met: factor of T effects on \code{metabolism}.
 #' \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
 #' \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
-#' \item eT: effecitve temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
+#' \item eT: effective temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
 #' \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
-#' \item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+#' \item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
 #' }
 #'
 #' @details

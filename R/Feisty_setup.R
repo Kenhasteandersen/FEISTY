@@ -7,17 +7,17 @@
 
 #' setupBasic 
 #' 
-#' \code{setupBasic} creates a basic three-species setup as described in Petrik et al (2019).
+#' \code{setupBasic} creates a basic three-species setup as described by Petrik et al (2019).
 #' 
-#' @details setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in Petrik et al (2019). 
-#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
+#' @details The setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish, and demersal fish) as described in Petrik et al (2019). 
+#' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @usage p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
-#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
 #' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
 #' @param lzprod Large zooplankton productivity.
 #' @param bprod Benthic organism productivity.
@@ -27,7 +27,7 @@
 #' @param Tb Bottom water temperature [Celsius].
 #' 
 #' @return
-#' Additional parameters added by function \code{\link{paramInit}}:
+#' Additional parameters added by the function \code{\link{paramInit}}:
 #' \itemize{
 #' \item szprod, Small zooplankton productivity, from parameter input.
 #' \item lzprod, Large zooplankton productivity, from parameter input.
@@ -39,7 +39,7 @@
 #' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 #'}
 #' 
-#' Added by function \code{\link{setupBasic}}:
+#' Added by the  function \code{\link{setupBasic}}:
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' \item theta, size preference matrix added manually.
@@ -164,10 +164,10 @@ param$setup="setupBasic"
 
 #' setupBasic2 
 #' 
-#' \code{setupBasic2} creates a revised setup based on setupBasic()
+#' \code{setupBasic2} creates a revised setup based on \code{setupBasic}.
 #' 
-#' @details setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish and demersal fish) based on Petrik et al. (2019). 
-#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+#' @details The setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish, and demersal fish) based on Petrik et al. (2019). 
+#' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
 #' \item Generalized size-based maturity
@@ -182,7 +182,7 @@ param$setup="setupBasic"
 #' nStages=9, etaMature=0.25, F=0, etaF=0.05)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
-#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+#' Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
 #' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
 #' @param lzprod Large zooplankton productivity.
 #' @param bprod Benthic organism productivity.
@@ -203,7 +203,7 @@ param$setup="setupBasic"
 #' @param etaF The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
 #' 
 #' @return 
-#' Additional parameters added by function \code{\link{paramInit}}:
+#' Additional parameters added by the function \code{\link{paramInit}}:
 #' \itemize{
 #' \item szprod, Small zooplankton productivity, from parameter input.
 #' \item lzprod, Large zooplankton productivity, from parameter input.
@@ -216,12 +216,12 @@ param$setup="setupBasic"
 #' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 #'}
 #'
-#' Added by function \code{\link{paramSizepref}}:
+#' Added by the function \code{\link{paramSizepref}}:
 #' \itemize{
 #' \item theta, the size preference matrix
 #' }
 #'
-#' Added by function \code{\link{setupBasic2}}:
+#' Added by the function \code{\link{setupBasic2}}:
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' }
@@ -399,19 +399,19 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' 
 #' \code{setupVertical} creates a basic five-species setup with vertical distribution as described in van Denderen et al. (2021).
 #' 
-#' @details setupVertical makes a basic five-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in van Denderen et al. (2021). 
-#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
+#' @details The setupVertical makes a basic five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish, and demersal fish) as described in van Denderen et al. (2021). 
+#' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @usage p=setupVertical(szprod = 80, lzprod = 80, bent = 150, region = 4, depth = 1500, photic = 150)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
-#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
-#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is same.
+#' Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is the same.
 #' @param lzprod Large zooplankton productivity.
 #' @param bent Detrital flux out of the photic zone [gww/m2/year].
-#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.
+#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching the bottom for driving benthic communities. See source code of \code{setupVertical}.
 #' @param region Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 #' It represents the water column temperature profile for three regions. 
 #' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Denderen et al. (2021).
@@ -444,9 +444,9 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
-#' \item dayout, a matrix containing overlap data during day time for each predator x to each prey y
-#' \item depthNight, a matrix containing vertical distribution data during night for each resource and size class (column) in water (row)
-#' \item nightout, a matrix containing overlap data during night for each predator x to each prey y
+#' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
+#' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
+#' \item nightout, a matrix containing overlap data during the night for each predator x to each prey y
 #' \item vertover, the average vertical overlap matrix for each predator x to each prey y. `(dayout+nightout)/2`
 #' \item theta, the feeding preference matrix for each predator x to each prey y. It is the product of `sizeprefer` and `vertover`.
 #' }
@@ -794,10 +794,10 @@ return(param)
 
 #' setupVertical2
 #' 
-#' \code{setupVertical2} creates revised setup based on setupVertical().
+#' \code{setupVertical2} creates a revised setup based on \code{setupVertical}.
 #' 
-#' @details setupVertical2 makes a revised five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish and demersal fish) with vertical distribution based on van Denderen et al. (2021). 
-#' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+#' @details The setupVertical2 makes a revised five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish, and demersal fish) with vertical distribution based on van Denderen et al. (2021). 
+#' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
 #' \item Generalized size-based maturity.
@@ -812,11 +812,11 @@ return(param)
 #' mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF=0.05)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
-#' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
-#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is same.
+#' Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
+#' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is the same.
 #' @param lzprod Large zooplankton productivity.
 #' @param bent Detrital flux out of the photic zone [gww/m2/year].
-#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.
+#' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching the bottom for driving benthic communities. See source code of \code{setupVertical}.
 #' @param region Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 #' It represents the water column temperature profile for three regions. 
 #' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Denderen et al. (2021).
@@ -858,9 +858,9 @@ return(param)
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
-#' \item dayout, a matrix containing overlap data during day time for each predator x to each prey y
-#' \item depthNight, a matrix containing vertical distribution data during night for each resource and size class (column) in water (row)
-#' \item nightout, a matrix containing overlap data during night for each predator x to each prey y
+#' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
+#' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
+#' \item nightout, a matrix containing overlap data during the night for each predator x to each prey y
 #' \item vertover, the average vertical overlap matrix for each predator x to each prey y. `(dayout+nightout)/2`
 #' \item theta, the feeding preference matrix for each predator x to each prey y. It is the product of `sizeprefer` and `vertover`.
 #' }

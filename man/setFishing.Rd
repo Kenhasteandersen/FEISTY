@@ -7,11 +7,11 @@
 setFishing(p, F = 0, etaF = 0.05)
 }
 \arguments{
-\item{p}{The model parameter list, as created with e.g. \link{setupBasic2}, and that need to be updated.}
+\item{p}{The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.}
 
-\item{F}{The baseline fishing mortality rate [1/year]. Default is 0, indicating no fishing.}
+\item{F}{The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.}
 
-\item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. Default value is 0.05.}
+\item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.}
 }
 \value{
 It returns an updated parameter list:

@@ -9,13 +9,13 @@ mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF=0.05)
 }
 \arguments{
 \item{szprod}{Small zooplankton productivity. \cr
-Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
-Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is same.}
+Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
+Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} is the same.}
 
 \item{lzprod}{Large zooplankton productivity.}
 
 \item{bent}{Detrital flux out of the photic zone [gww/m2/year].
-\code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.}
+\code{bent} will be further calculated based on the Martin curve to get detrital flux reaching the bottom for driving benthic communities. See source code of \code{setupVertical}.}
 
 \item{region}{Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 It represents the water column temperature profile for three regions. 
@@ -65,9 +65,9 @@ Added by function \code{\link{setupVertical}}:
 \item setup, name (character) of this setup
 \item dvm, diel vertical migration depth [m]
 \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
-\item dayout, a matrix containing overlap data during day time for each predator x to each prey y
-\item depthNight, a matrix containing vertical distribution data during night for each resource and size class (column) in water (row)
-\item nightout, a matrix containing overlap data during night for each predator x to each prey y
+\item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
+\item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
+\item nightout, a matrix containing overlap data during the night for each predator x to each prey y
 \item vertover, the average vertical overlap matrix for each predator x to each prey y. `(dayout+nightout)/2`
 \item theta, the feeding preference matrix for each predator x to each prey y. It is the product of `sizeprefer` and `vertover`.
 }
@@ -76,11 +76,11 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 \code{\link{paramAddPhysiology}}, and \code{\link{setFishing}}.
 }
 \description{
-\code{setupVertical2} creates revised setup based on setupVertical().
+\code{setupVertical2} creates a revised setup based on \code{setupVertical}.
 }
 \details{
-setupVertical2 makes a revised five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish and demersal fish) with vertical distribution based on van Denderen et al. (2021). 
-There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).\cr
+The setupVertical2 makes a revised five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish, and demersal fish) with vertical distribution based on van Denderen et al. (2021). 
+There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 Main revision:
 \itemize{
 \item Generalized size-based maturity.

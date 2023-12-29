@@ -12,12 +12,12 @@ plotRates(p=sim$p, y=p$u0, bPlot=TRUE)
 \item{y}{The state variable vector. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
 The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.}
 
-\item{bPlot}{Boolean option determining whether create a new plot panel. \cr 
+\item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
 If TRUE, create a new independent plot. \cr 
 If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.}
 }
 \description{
-Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over size spectrum.
+Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over the size spectrum.
 Data is calculated based on averaged biomass over the last 40% simulation time.
 }
 \examples{

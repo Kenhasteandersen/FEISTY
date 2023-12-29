@@ -114,7 +114,7 @@ plotBiomasstime = function(sim, bPlot=TRUE) {
 #' @usage plotSSBtime(sim, bPlot=TRUE)
 #' 
 #' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
-#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
 #' 
@@ -202,7 +202,7 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 
 #' Plots for growth rate, mortality, and feeding level 
 #' 
-#' Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over size spectrum.
+#' Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over the size spectrum.
 #' Data is calculated based on averaged biomass over the last 40% simulation time.
 #' 
 # @details
@@ -213,7 +213,7 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
 #' @param y The state variable vector. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
 #' The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.
-#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
 #' 
@@ -295,16 +295,16 @@ plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
 
 #' Biomass plot
 #' 
-#' Make a plot of the biomass of all functional groups over size spectrum.
+#' Make a plot of the biomass of all functional groups over the size spectrum.
 #' Data is averaged data over the last 40\% simulation time.
 #' 
-#' @details X-axis is time. Y-axis is the biomass data in log10 scale.
+#' @details The X-axis is time. The Y-axis is the biomass data in the log10 scale.
 #' @author Yixin Zhao
 #'
 #' @usage plotSpectra(sim, bPlot=TRUE)
 #' 
 #' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
-#' @param bPlot Boolean option determining whether create a new plot panel. \cr 
+#' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
 #' 
@@ -439,9 +439,9 @@ plotTheta = function(p) {
 
 #' Food web plot
 #' 
-#' Revised Based on work of Daniel Ottmann Riera and Solenne Roux.
-#' This function only works on four prepared setups or revised version based on these four setups.
-#' If customized setups by users has massive differences e.g., more resources and fish functional types, this plot function may not work.
+#' Revised Based on the work of Daniel Ottmann Riera and Solenne Roux.
+#' This function only works on four prepared setups or revised versions based on these four setups.
+#' If customized setups by users have massive differences e.g., more resources and fish functional types, this plot function may not work.
 #' Users may need to update scripts based on source codes.
 #' 
 # @details
@@ -618,9 +618,9 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
 
 #' Diet plot
 #' 
-#' Revised Based on work of Daniel Ottmann Riera and Solenne Roux.
-#' This function only works on four prepared setups or revised version based on these four setups.
-#' If customized setups by users has massive differences e.g., more resources and fish functional types, this plot function may not work.
+#' Revised Based on the work of Daniel Ottmann Riera and Solenne Roux.
+#' This function only works on four prepared setups or revised versions based on these four setups.
+#' If customized setups by users have massive differences e.g., more resources and fish functional types, this plot function may not work.
 #' Users may need to update scripts based on source codes.
 #' 
 # @details

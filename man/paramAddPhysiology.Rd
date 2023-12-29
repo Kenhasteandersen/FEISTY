@@ -31,8 +31,8 @@ The updated parameter list \code{p}:
 \item Cmax, a vector containing maximum consumption rate values, resources (0) + all size classes of all functional types
 \item metabolism, a vector containing standard metabolism values, resources (0) + all size classes of all functional types
 \item V, a vector containing clearance rate values, resources (0) + all size classes of all functional types
-\item epsRepro, a vector of reproduction efficiency values of each functional types (length is the number of functional types). This value applies on all size classes.
-\item epsAssim, the assimilation efficiency value. This value applies on all size classes.
+\item epsRepro, a vector of reproduction efficiency values of each functional type (length is the number of functional types). This value applies to all size classes.
+\item epsAssim, the assimilation efficiency value. This value applies to all size classes.
 \item Cmaxsave, same as initial values of \code{Cmax}, saved for temperature effect calculation.
 \item Vsave, same as initial values of \code{V}, saved for temperature effect calculation.
 \item metabolismsave, same as initial values of \code{metabolism}, saved for temperature effect calculation.
@@ -45,7 +45,7 @@ This function updates the parameter list by adding physiological parameters of a
 This function is designed to add physiological parameters of all size classes of all functional types to the parameter list.
 It sets the maximum consumption rate, standard metabolism, and clearance rate based on the size.
 It ensures there are no NA values in critical parameters. \cr
-This function only needs be called once in each simulation. The physiological parameters of all size classes are added to the parameter list at one time.
+This function only needs to be called once in each simulation. The physiological parameters of all size classes are added to the parameter list at one time.
 Generally, this function needs to be called after all functional types are added, i.e., after the last call of the function \code{\link{paramAddGroup}}.
 The returned parameter list can be used for further updates.
 }

@@ -101,9 +101,9 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
 #'
 #' This function sets fishing mortality for all fish based on a baseline fishing mortality and the size-based trawl selectivity.
 #'
-#' @param p The model parameter list, as created with e.g. \link{setupBasic2}, and that need to be updated.
-#' @param F The baseline fishing mortality rate [1/year]. Default is 0, indicating no fishing.
-#' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. Default value is 0.05.
+#' @param p The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.
+#' @param F The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.
+#' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.
 #' 
 #' @return It returns an updated parameter list:
 #' \itemize{

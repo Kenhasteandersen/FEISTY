@@ -9,16 +9,16 @@ plotSpectra(sim, bPlot=TRUE)
 \arguments{
 \item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().}
 
-\item{bPlot}{Boolean option determining whether create a new plot panel. \cr 
+\item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
 If TRUE, create a new independent plot. \cr 
 If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.}
 }
 \description{
-Make a plot of the biomass of all functional groups over size spectrum.
+Make a plot of the biomass of all functional groups over the size spectrum.
 Data is averaged data over the last 40\% simulation time.
 }
 \details{
-X-axis is time. Y-axis is the biomass data in log10 scale.
+The X-axis is time. The Y-axis is the biomass data in the log10 scale.
 }
 \examples{
 sim=simulateFeisty(simpleOutput=TRUE)

@@ -10,7 +10,7 @@ paramTeffect(p, Tref, Q10, Q10m, u=NA)
 \item{p}{A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
 `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.}
 
-\item{Tref}{Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on other reference temperature.}
+\item{Tref}{Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on another reference temperature.}
 
 \item{Q10}{Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]}
 
@@ -19,7 +19,7 @@ paramTeffect(p, Tref, Q10, Q10m, u=NA)
 \item{u}{Temporarily not used. To be developed...}
 }
 \value{
-A updated parameter list:
+An updated parameter list:
 \itemize{
 \item Tref, from parameter input
 \item Q10, from parameter input
@@ -28,9 +28,9 @@ A updated parameter list:
 \item fT_met: factor of T effects on \code{metabolism}.
 \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
 \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
-\item eT: effecitve temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
+\item eT: effective temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
 \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
-\item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+\item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
 }
 }
 \description{

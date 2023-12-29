@@ -9,7 +9,7 @@ plotSSBtime(sim, bPlot=TRUE)
 \arguments{
 \item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().}
 
-\item{bPlot}{Boolean option determining whether create a new plot panel. \cr 
+\item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
 If TRUE, create a new independent plot. \cr 
 If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.}
 }

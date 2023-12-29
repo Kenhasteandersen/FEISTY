@@ -11,15 +11,15 @@ paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = N
 
 \item{K}{A vector of carrying capacities of all resources [gww/m2].}
 
-\item{r}{A vector containing each resource nudging rate (growth rate) [1/year], default 1, do not recommend other values.}
+\item{r}{A vector containing each resource nudging rate (growth rate) [1/year], default 1, does not recommend other values.}
 
 \item{dynamics}{The type of resource dynamics, either "chemostat" or "logistic".}
 
 \item{mc}{A vector containing each resource geometric mean weight [gww].}
 
-\item{mLower}{A vector containing lower limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.}
+\item{mLower}{A vector containing the lower limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.}
 
-\item{mUpper}{A vector containing upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.}
+\item{mUpper}{A vector containing the upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.}
 
 \item{names}{A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.}
 
@@ -29,16 +29,16 @@ paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = N
 The updated parameter list \code{p}:
 \itemize{
 \item nResources, the total number of resources, which is the length of the input \code{K}.
-\item groupnames, a character vector of names of resources and each fish functional groups, will be updated later.
-\item stagenames, a character vector of names of resources and each fish stages (functional groups), will be updated later.
+\item groupnames, a character vector of names of resources and each fish functional group, will be updated later.
+\item stagenames, a character vector of names of resources and each fish stage (functional group), will be updated later.
 \item dynamics, from parameter input.
 \item Rtype, resource growth strategy number. Default 1: chemostat, 2: logistic growth. If 'dynamics' is not specified, Rtype=1.
 \item K, from parameter input.
 \item r, from parameter input.
 \item ixR, indices for all resources, start from 1.
-\item mc, resource geometric mean weight, fish data will be added later.
-\item mLower, lower limit of each resource weight, fish data will be added later.
-\item mUpper, upper limit of each resource weight, fish data will be added later.
+\item mc, resource geometric mean weight, and fish data will be added later.
+\item mLower, the lower limit of each resource weight, fish data will be added later.
+\item mUpper, the upper limit of each resource weight, fish data will be added later.
 \item u0, from parameter input or same as \code{K}, fish data will be added later.
 }
 }
@@ -48,7 +48,7 @@ This function updates the parameter list by adding resource-related parameters.
 \details{
 This function is designed to add parameters of resources to the parameter list.
 This function only can be called once in each simulation. All resources are added to the parameter list at one time.
-Generally, this function needs to be called after function \code{\link{paramInit}}.
+Generally, this function needs to be called after the function \code{\link{paramInit}}.
 The returned parameter list can be used for further updates.
 }
 \examples{

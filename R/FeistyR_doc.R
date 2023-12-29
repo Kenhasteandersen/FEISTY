@@ -7,7 +7,7 @@
 #' @title FEISTY: FishErIes Size and functional TYpe model.
 #' 
 #' @description 
-#' The FEISTY model is a size- and trait-based model of marine higher trophic level dynamics, described in Petrik et al., 2019 and van Denderen et al., 2020.
+#' The FEISTY model is a size- and trait-based model of marine higher trophic level dynamics, described by Petrik et al., 2019 and van Denderen et al., 2020.
 #' This package is developed for FEISTY model simulations and development.
 #' 
 #' @details 
@@ -15,7 +15,7 @@
 #' Furthermore, this package allows users to customize their own setups to simulate and develop their new ideas within the FEISTY model frame.
 #' Functions of parameter setting are offered for customization.
 #' 
-#' In this package, two approaches for FEISTY simulations (ODEs solving) are provided. Both are relied on \link{deSolve} package. 
+#' In this package, two approaches for FEISTY simulations (ODEs solving) are provided. Both rely on the \link{deSolve} package. 
 #' For simulation efficiency, the simulations can be done by compiled language (FORTRAN).
 #' For development reasons, the R version is preferred.
 #' The Fishes in FEISTY are defined by their functional type, size, and maturity stage. 

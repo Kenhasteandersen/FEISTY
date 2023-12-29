@@ -8,7 +8,7 @@ p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8
 }
 \arguments{
 \item{szprod}{Small zooplankton productivity. \cr
-Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
+Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
 Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.}
 
 \item{lzprod}{Large zooplankton productivity.}
@@ -23,7 +23,7 @@ depth=300 and depth=1000 do not have any different effects on simulations.}
 \item{Tb}{Bottom water temperature [Celsius].}
 }
 \value{
-Additional parameters added by function \code{\link{paramInit}}:
+Additional parameters added by the function \code{\link{paramInit}}:
 \itemize{
 \item szprod, Small zooplankton productivity, from parameter input.
 \item lzprod, Large zooplankton productivity, from parameter input.
@@ -35,7 +35,7 @@ Additional parameters added by function \code{\link{paramInit}}:
 \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 }
 
-Added by function \code{\link{setupBasic}}:
+Added by the  function \code{\link{setupBasic}}:
 \itemize{
 \item setup, name (character) of this setup
 \item theta, size preference matrix added manually.
@@ -45,11 +45,11 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 \code{\link{paramAddGroup}}, \code{\link{paramAddPhysiology}}, and \code{\link{paramTeffect}}.
 }
 \description{
-\code{setupBasic} creates a basic three-species setup as described in Petrik et al (2019).
+\code{setupBasic} creates a basic three-species setup as described by Petrik et al (2019).
 }
 \details{
-setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in Petrik et al (2019). 
-There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
+The setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish, and demersal fish) as described in Petrik et al (2019). 
+There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
 }
 \examples{
 p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)

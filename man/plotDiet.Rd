@@ -12,9 +12,9 @@ plotDiet(p=sim$p, u=sim$u)
 \item{u}{the result matrix of the biomass, including resources and fish.\code{sim$u}.}
 }
 \description{
-Revised Based on work of Daniel Ottmann Riera and Solenne Roux.
-This function only works on four prepared setups or revised version based on these four setups.
-If customized setups by users has massive differences e.g., more resources and fish functional types, this plot function may not work.
+Revised Based on the work of Daniel Ottmann Riera and Solenne Roux.
+This function only works on four prepared setups or revised versions based on these four setups.
+If customized setups by users have massive differences e.g., more resources and fish functional types, this plot function may not work.
 Users may need to update scripts based on source codes.
 }
 \examples{
