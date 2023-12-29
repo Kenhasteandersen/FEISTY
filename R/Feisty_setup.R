@@ -20,52 +20,33 @@
 #' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
 #' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
 #' @param lzprod Large zooplankton productivity.
-#' @param bprod Benthic organsim productivity.
+#' @param bprod Benthic organism productivity.
 #' @param depth Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
 #' depth=300 and depth=1000 do not have any different effects on simulations.
 #' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius].
 #' @param Tb Bottom water temperature [Celsius].
 #' 
-#' @return Added by function \code{\link{paramInit}}:
+#' @return
+#' Additional parameters added by function \code{\link{paramInit}}:
 #' \itemize{
 #' \item szprod, Small zooplankton productivity, from parameter input.
 #' \item lzprod, Large zooplankton productivity, from parameter input.
-#' \item bprod, Benthic organsim productivity, from parameter input.
+#' \item bprod, Benthic organism productivity, from parameter input.
 #' \item depth, Water column depth, from parameter input.
 #' \item Tp, Pelagic water temperature, from parameter input.
 #' \item Tb, Bottom water temperature, from parameter input.
 #' \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
 #' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 #'}
-#' Added by function \code{\link{paramAddResource}}:
+#' 
+#' Added by function \code{\link{setupBasic}}:
 #' \itemize{
-#' \item nResources, the total number of resources
-#' \item nGroups, the total number of fish groups
-#' \item nStages, the total number of resource+fish stages
-#' \item ix, for each fish group, the index to the stage class
-#' \item ixFish, the index to the stage class for all fish stages
-#' \item ixR, the index to the stage class for all resources
-#'}
+#' \item setup, name (character) of this setup
+#' \item theta, size preference matrix added manually.
+#' }
 #' 
-#' 
-#' 
-#' 
-#' parameters for the temperature effects are:
-#'  \itemize{
-#'  \item Cmaxsave, Vsave, metabolismsave: same as initial values of \code{Cmax}, \code{V}, \code{metabolism}, saved for temperature effect calculation. To be developed...
-#'  \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
-#'  \item fT_met: factor of T effects on \code{metabolism}.
-#'  \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth>=200m), and small and medium demersal fish in shallow water (depth<200m).
-#'  \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth>=200m), and small and medium demersal fish in shallow water (depth<200m).
-#'  \item eT: effecitve temperature in shallow water (depth<200m) for large demersal fish.
-#'  \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth<200m).
-#'  \item fT_met_dem_shallow: factor of T effects on \code{metabolism} of large demersal fish in shallow water (depth<200m).
-#'}
-#' 
-#' 
-#' 
-#' 
-#' 
+#' Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{paramAddResource}},
+#' \code{\link{paramAddGroup}}, \code{\link{paramAddPhysiology}}, and \code{\link{paramTeffect}}.
 #' 
 #' @examples 
 #' p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
@@ -75,9 +56,15 @@
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
 #' 
 #' @seealso
-#' \code{\link{simulateFeisty}} for running the model.
+#' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
+#' \code{\link{paramAddResource}} 	Add resource parameters \cr
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
+#' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
+#' \code{\link{paramTeffect}} 	Add temperature effects \cr
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupBasic
+#' 
 #' @export
 #' 
 
@@ -133,7 +120,7 @@ setupBasic = function(szprod = 100, # small zoo production?
                       u=NA)
 
   # Add fishing mortality
-  # F=NA No further process
+  # if F=0 No further process, return the input param set
   param=setFishing(param, F=0, etaF=0.05)
   
   
@@ -198,7 +185,7 @@ param$setup="setupBasic"
 #' Actually this represents small zooplankton carrying capacity [gww/m2] but it will multiply growth rate \bold{r} which is always 1 [1/yr]. 
 #' Therefore, it is described as small zooplankton productivity [gww/m2/year]. \code{lzprod} and \code{bprod} are same.
 #' @param lzprod Large zooplankton productivity.
-#' @param bprod Benthic organsim productivity.
+#' @param bprod Benthic organism productivity.
 #' @param depth Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
 #' depth=300 and depth=1000 do not have any different effects on simulations.
 #' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius].
@@ -215,7 +202,32 @@ param$setup="setupBasic"
 #' See source code of \code{\link{setFishing}}.
 #' @param etaF The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
 #' 
-#' @return A parameter list containing....................
+#' @return 
+#' Additional parameters added by function \code{\link{paramInit}}:
+#' \itemize{
+#' \item szprod, Small zooplankton productivity, from parameter input.
+#' \item lzprod, Large zooplankton productivity, from parameter input.
+#' \item bprod, Benthic organism productivity, from parameter input.
+#' \item depth, Water column depth, from parameter input.
+#' \item Tp, Pelagic water temperature, from parameter input.
+#' \item Tb, Bottom water temperature, from parameter input.
+#' \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level, from parameter input.
+#' \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
+#' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#'}
+#'
+#' Added by function \code{\link{paramSizepref}}:
+#' \itemize{
+#' \item theta, the size preference matrix
+#' }
+#'
+#' Added by function \code{\link{setupBasic2}}:
+#' \itemize{
+#' \item setup, name (character) of this setup
+#' }
+#' 
+#' Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{paramAddResource}}, \code{\link{paramAddGroup}},
+#' \code{\link{paramAddPhysiology}}, \code{\link{paramTeffect}}, \code{\link{setFishing}}, and \code{\link{paramSizepref}}.
 #' 
 #' @examples 
 #' p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
@@ -228,7 +240,14 @@ param$setup="setupBasic"
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
 #' 
 #' @seealso
-#' \code{\link{simulateFeisty}} for running the model.
+#' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
+#' \code{\link{paramAddResource}} 	Add resource parameters \cr
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
+#' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
+#' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
+#' \code{\link{paramTeffect}} 	Add temperature effects \cr
+#' \code{\link{setFishing}} 	Set fishing mortality \cr
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
 #'
 #' @aliases setupBasic2
 #' @export
@@ -378,9 +397,9 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 
 #' setupVertical
 #' 
-#' \code{setupVertical} creates a basic five-species setup with vertical distribution as described in van Ddenderen et al. (2021).
+#' \code{setupVertical} creates a basic five-species setup with vertical distribution as described in van Denderen et al. (2021).
 #' 
-#' @details setupVertical makes a basic five-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in van Ddenderen et al. (2021). 
+#' @details setupVertical makes a basic five-species setup (small pelagic fish, large pelagic fish and demersal fish) as described in van Denderen et al. (2021). 
 #' There are four resources including small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually does \bold{not exist} (always 0).
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
@@ -395,12 +414,46 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' \code{bent} will be further calculated based on the Martin curve to get detrital flux reaching to the bottom for driving benthic communities. See source code of \code{setupVertical}.
 #' @param region Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 #' It represents the water column temperature profile for three regions. 
-#' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Ddenderen et al. (2021).
+#' The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Denderen et al. (2021).
 #' @param depth  water column depth [meter]. \cr 
 #' Different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates. See source code of \code{setupVertical}
 #' @param photic Photic zone depth [meter]. The value affects the diel vertical migration depth. See source code of \code{setupVertical}.
 #' 
-#' @return A parameter list containing....................
+#' @return
+#' Additional parameters added by function \code{\link{paramInit}}:
+#' \itemize{
+#' \item szprod, Small zooplankton productivity, from parameter input.
+#' \item lzprod, Large zooplankton productivity, from parameter input.
+#' \item bent,  Detrital flux out of the photic zone, from parameter input.
+#' \item bottom, Water column depth, from parameter input (depth).
+#' \item photic, Photic zone depth, from parameter input.
+#' \item mesop, mesopelagic zone depth.
+#' \item visual, visual=1.5: visual predator. visual=1: non-visual predator.
+#' \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level. 
+#' It is a constant 0.002, following van Denderen et al. (2021).
+#' \item region, water region index, from parameter input.
+#'}
+#'
+#' Added by function \code{\link{paramSizepref}}:
+#' \itemize{
+#' \item sizepref, the size preference matrix for each predator x to each prey y.
+#' }
+#'
+#' Added by function \code{\link{setupVertical}}:
+#' \itemize{
+#' \item setup, name (character) of this setup
+#' \item dvm, diel vertical migration depth [m]
+#' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
+#' \item dayout, a matrix containing overlap data during day time for each predator x to each prey y
+#' \item depthNight, a matrix containing vertical distribution data during night for each resource and size class (column) in water (row)
+#' \item nightout, a matrix containing overlap data during night for each predator x to each prey y
+#' \item vertover, the average vertical overlap matrix for each predator x to each prey y. `(dayout+nightout)/2`
+#' \item theta, the feeding preference matrix for each predator x to each prey y. It is the product of `sizeprefer` and `vertover`.
+#' }
+#' 
+#' Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{paramAddResource}}, \code{\link{paramAddGroup}}, and
+#' \code{\link{paramAddPhysiology}}.
+#' 
 #' 
 #' @references
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
@@ -410,7 +463,12 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' sim=simulateFeisty(p=p, simpleOutput=TRUE)
 #' 
 #' @seealso
-#' \code{\link{simulateFeisty}} for running the model.
+#' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
+#' \code{\link{paramAddResource}} 	Add resource parameters \cr
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
+#' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
+#' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupVertical
 #' @export
@@ -776,7 +834,39 @@ return(param)
 #' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function. See source code of \code{\link{setFishing}}.
 #' @param etaF the coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
 #' 
-#' @return A parameter list containing....................
+#' @return
+#' Additional parameters added by function \code{\link{paramInit}}:
+#' \itemize{
+#' \item szprod, Small zooplankton productivity, from parameter input.
+#' \item lzprod, Large zooplankton productivity, from parameter input.
+#' \item bent,  Detrital flux out of the photic zone, from parameter input.
+#' \item bottom, Water column depth, from parameter input (depth).
+#' \item photic, Photic zone depth, from parameter input.
+#' \item mesop, mesopelagic zone depth. from parameter input.
+#' \item visual, visual=1.5: visual predator. visual=1: non-visual predator. from parameter input.
+#' \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level, from parameter input.
+#' \item region, water region index, from parameter input.
+#'}
+#'
+#' Added by function \code{\link{paramSizepref}}:
+#' \itemize{
+#' \item sizepref, the size preference matrix for each predator x to each prey y.
+#' }
+#'
+#' Added by function \code{\link{setupVertical}}:
+#' \itemize{
+#' \item setup, name (character) of this setup
+#' \item dvm, diel vertical migration depth [m]
+#' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
+#' \item dayout, a matrix containing overlap data during day time for each predator x to each prey y
+#' \item depthNight, a matrix containing vertical distribution data during night for each resource and size class (column) in water (row)
+#' \item nightout, a matrix containing overlap data during night for each predator x to each prey y
+#' \item vertover, the average vertical overlap matrix for each predator x to each prey y. `(dayout+nightout)/2`
+#' \item theta, the feeding preference matrix for each predator x to each prey y. It is the product of `sizeprefer` and `vertover`.
+#' }
+#' 
+#' Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{paramAddResource}}, \code{\link{paramAddGroup}},
+#' \code{\link{paramAddPhysiology}}, and \code{\link{setFishing}}.
 #' 
 #' @examples 
 #' p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
@@ -787,7 +877,13 @@ return(param)
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
 #' 
 #' @seealso
-#' \code{\link{simulateFeisty}} for running the model.
+#' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
+#' \code{\link{paramAddResource}} 	Add resource parameters \cr
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
+#' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
+#' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
+#' \code{\link{setFishing}} 	Set fishing mortality \cr
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupVertical2
 #' @export

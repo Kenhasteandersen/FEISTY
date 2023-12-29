@@ -123,6 +123,11 @@ plotBiomasstime = function(sim, bPlot=TRUE) {
 #' plotSSBtime(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSSBtime
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
+#' \code{\link{calcSSB}} 	Spawning stock biomass calculation
+#' 
 #' @export
 #' 
 
@@ -217,6 +222,11 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' plotRates(p=sim$p, y=sim$u[,sim$nTime], bPlot=TRUE)
 #' 
 #' @aliases plotRates
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
+#' \code{\link{derivativesFeistyR}} The derivative function of FEISTY
+#' 
 #' @export
 #' 
 
@@ -303,6 +313,10 @@ plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
 #' plotSpectra(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSpectra
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' 
 #' @export
 #' 
 
@@ -379,6 +393,13 @@ addLegends=function(sim){
 #' plotSimulation(sim)
 #' 
 #' @aliases plotSimulation
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
+#' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
+#' \code{\link{plotSpectra}} Biomass plot \cr
+#' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level
+#' 
 #' @export
 #' 
 
@@ -436,6 +457,10 @@ plotTheta = function(p) {
 #' plotNetwork(p=sim$p, u=sim$u)
 #' 
 #' @aliases plotNetwork
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' 
 #' @export
 #'
 
@@ -611,6 +636,10 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
 #' plotDiet(p=sim$p, u=sim$u)
 #' 
 #' @aliases plotDiet
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' 
 #' @export
 #'
 

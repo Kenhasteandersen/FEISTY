@@ -127,6 +127,9 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
 #' 
 #' @aliases setFishing
 #' 
+#' @seealso 
+#' \code{\link{calcYield}} Yield calculation
+#' 
 #' @export
 
 #
@@ -172,6 +175,9 @@ setFishing = function(p, F=0, etaF=0.05) {
 #' no examples
 #'
 #' @author Yixin Zhao
+#' 
+#' @seealso 
+#' \code{\link{setFishing}} 	Set fishing mortality
 #' 
 #' @aliases calcYield
 #'
@@ -243,6 +249,9 @@ calcYield = function(
 #' @author Yixin Zhao
 #' 
 #' @aliases calcSSB
+#' 
+#' @seealso 
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type
 #'
 # @export
 

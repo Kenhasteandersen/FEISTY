@@ -371,7 +371,7 @@ derivativesFeistyR = function(t,              # current time
 #' 
 #' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
 #' \code{\link{setupBasic2}} A revised setup based on `setupBasic` \cr
-#' \code{\link{setupVertical}} The setup following van Ddenderen et al. (2021) \cr
+#' \code{\link{setupVertical}} The setup following van Denderen et al. (2021) \cr
 #' \code{\link{setupVertical2}} A revised setup based on `setupVertical` \cr
 #' 
 #' \code{\link{calcSSB}} Spawning stock biomass calculation \cr

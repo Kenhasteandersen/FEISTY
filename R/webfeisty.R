@@ -26,14 +26,20 @@
 #' webFeisty()
 #'
 #' @seealso 
-#' \code{\link{setupBasic}} The setup following Petrik et al. (2019).
-#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`.
-#' \code{\link{setupVertical}} The setup following van Ddenderen et al. (2021).
-#' \code{\link{setupVertical2}} A revised setup based on `setupVertical`.
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic` \cr
+#' \code{\link{setupVertical}} The setup following van Denderen et al. (2021) \cr
+#' \code{\link{setupVertical2}} A revised setup based on `setupVertical`
 #' 
-#' \code{\link{plotSimulation}}
-#' \code{\link{plotNetwork}}
-#' \code{\link{plotDiet}}
+#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations \cr
+#' \code{\link{derivativesFeistyR}} The derivative function of FEISTY
+#' 
+#' \code{\link{plotSimulation}} Plot simulation results \cr
+#' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
+#' \code{\link{plotSpectra}} Biomass plot \cr
+#' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level \cr
+#' \code{\link{plotNetwork}} Food web plot \cr
+#' \code{\link{plotDiet}} Diet plot
 #' 
 #' ...
 #' @aliases webFeisty
