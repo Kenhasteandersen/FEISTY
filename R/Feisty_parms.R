@@ -174,6 +174,9 @@ paramSizepref <- function(
 #' 
 #' @aliases paramInit
 #'
+#' @seealso 
+#' \code{\link{paramAddResource}} Add Resource Parameters
+#'
 #' @export
 
 #-------------------------------------------------------------------------------
@@ -313,6 +316,9 @@ makeGrid = function(mMin,         # min size, gram
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @aliases paramAddResource
+#' 
+#' @seealso 
+#' \code{\link{paramAddGroup}} Add Parameters of One Functional Type
 #'
 #' @export
 #' 
@@ -418,7 +424,12 @@ paramAddResource = function(p,        # parameter to be updated
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @aliases paramAddGroup
-#'
+#' 
+#' @seealso 
+#' \code{\link{paramAddPhysiology}} Add Physiological Parameters
+#' 
+#' \code{\link{paramSizepref}} Size Preference Matrix Calculation
+#' 
 #' @export
 #'
 
@@ -562,6 +573,9 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @aliases paramAddPhysiology
+#' 
+#' @seealso 
+#' \code{\link{paramTeffect}} Add temperature effects
 #'
 #' @export
 
@@ -701,6 +715,10 @@ paramAddPhysiology = function (p,
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
 #' 
 #' @aliases paramTeffect
+#' 
+#' @seealso 
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`
 #' 
 #' @export
 #' 
