@@ -5,9 +5,9 @@
 #===============================================================================
 
 
-#' setupBasic 
+#' setupBasic (Petrik et al., 2019)
 #' 
-#' \code{setupBasic} creates a basic three-species setup as described by Petrik et al (2019).
+#' \code{setupBasic} creates a basic three-species setup as described by Petrik et al. (2019).
 #' 
 #' @details The setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish, and demersal fish) as described in Petrik et al (2019). 
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
@@ -395,7 +395,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   return(param)
 }
 
-#' setupVertical
+#' setupVertical (van Denderen et al., 2021)
 #' 
 #' \code{setupVertical} creates a basic five-species setup with vertical distribution as described in van Denderen et al. (2021).
 #' 

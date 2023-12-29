@@ -2,7 +2,7 @@
 % Please edit documentation in R/Feisty_setup.R
 \name{setupBasic}
 \alias{setupBasic}
-\title{setupBasic}
+\title{setupBasic (Petrik et al., 2019)}
 \usage{
 p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
 }
@@ -45,7 +45,7 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 \code{\link{paramAddGroup}}, \code{\link{paramAddPhysiology}}, and \code{\link{paramTeffect}}.
 }
 \description{
-\code{setupBasic} creates a basic three-species setup as described by Petrik et al (2019).
+\code{setupBasic} creates a basic three-species setup as described by Petrik et al. (2019).
 }
 \details{
 The setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish, and demersal fish) as described in Petrik et al (2019). 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Feisty_setup.R
 \name{setupVertical}
 \alias{setupVertical}
-\title{setupVertical}
+\title{setupVertical (van Denderen et al., 2021)}
 \usage{
 p=setupVertical(szprod = 80, lzprod = 80, bent = 150, region = 4, depth = 1500, photic = 150)
 }
