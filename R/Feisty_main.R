@@ -504,8 +504,9 @@ simulateFeisty = function(bCust    = FALSE,
           }
         }
         # if not re-load it will always crash, remember debug in fortran
+        dyn.load(sLibname)
         # is.loaded("symbol") symbol is the subroutine name in the library not the dll path
-        if(!is.loaded("passpath")) dyn.load(sLibname)
+        #if(!is.loaded("passpath")) dyn.load(sLibname)
         
         file_path=system.file("data", "input.nml", package = "FeistyR")
         dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
