@@ -58,10 +58,26 @@
 #' 
 #' \code{\link{derivativesFeistyR}} The derivative function of FEISTY
 #' 
+#' Parameters: \cr
+#' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
+#' \code{\link{paramAddResource}} 	Add resource parameters \cr
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
+#' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
+#' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
+#' \code{\link{paramTeffect}} 	Add temperature effects \cr
+#' \code{\link{setFishing}} 	Set fishing mortality \cr
+#' 
+#' Plotting: \cr
+#' \code{\link{plotSimulation}} Plot simulation results \cr
+#' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
+#' \code{\link{plotSpectra}} Biomass plot \cr
+#' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level \cr
+#' \code{\link{plotNetwork}} Food web plot \cr
+#' \code{\link{plotDiet}} Diet plot
 #' 
 #' 
-#' ... ... ...
-#' 
+#' \code{\link{calcSSB}} 	Spawning stock biomass calculation \cr
+#' \code{\link{calcYield}} Yield calculation
 #' 
 #' 
 #' 
