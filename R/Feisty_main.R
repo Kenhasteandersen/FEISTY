@@ -76,6 +76,9 @@
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @aliases derivativesFeistyR
+#' 
+#' @seealso 
+#' \code{\link{simulateFeisty}} The main function for running FEISTY simulations
 #'
 #' @export
 #' 
@@ -253,8 +256,7 @@ derivativesFeistyR = function(t,              # current time
 #' \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}, and customized setups by modelers. \cr
 #' The simulation can be conducted by either a FORTRAN-based approach or an R-based approach. Both methods are relied on \link{desolve} package for ODE solving. 
 #' For efficiency, FORTRAN dll should be used. For model development, the R-version is preferred.
-#' Simulations based on customized setups only can be done by FORTRAN-based approach
-#' ...
+#' Simulations based on customized setups only can be done by FORTRAN-based approach.
 #'
 #' @return
 #' A list containing the simulation results. The structure of the list depends on the `simpleOutput` parameter:
@@ -364,6 +366,23 @@ derivativesFeistyR = function(t,              # current time
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
 #' @aliases simulateFeisty
+#' 
+#' @seealso
+#' 
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic` \cr
+#' \code{\link{setupVertical}} The setup following van Ddenderen et al. (2021) \cr
+#' \code{\link{setupVertical2}} A revised setup based on `setupVertical` \cr
+#' 
+#' \code{\link{calcSSB}} Spawning stock biomass calculation \cr
+#' \code{\link{calcYield}} Yield calculation
+#' 
+#' \code{\link{deSolve}} The package for ODEs solving \cr
+#' \code{\link{derivativesFeistyR}} The derivative function of state variables in FEISTY model
+#' 
+#' \code{\link{webFeisty}} A shiny interface for visualizing FEISTY model results
+#' 
+#' \code{\link{plotSimulation}} Plot simulation results including rates, biomass, and SSB data
 #' 
 #' @export
 #'
