@@ -4,12 +4,16 @@
 \alias{plotRates}
 \title{Plots for growth rate, mortality, and feeding level}
 \usage{
-plotRates(p=sim$p, y=p$u0, bPlot=TRUE)
+plotRates(sim, avg=TRUE, y=p$u0, bPlot=TRUE)
 }
 \arguments{
-\item{p}{The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().}
+\item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().}
 
-\item{y}{The state variable vector. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
+\item{avg}{Logistic flag. Default TRUE. \cr 
+TRUE: Rates are averaged values of selected time points. \cr 
+FALSE: Running the derivative function once to get rates based on biomass \code{y} input.}
+
+\item{y}{The state variable vector, only works when `avg=FALSE`. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
 The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.}
 
 \item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
@@ -18,11 +22,21 @@ If FALSE, users need to define the subplot layout first by \code{defaultplot(mfc
 }
 \description{
 Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over the size spectrum.
-Data is calculated based on averaged biomass over the last 40% simulation time.
+}
+\details{
+There are two approaches for rate calculation:
+\itemize{
+\item Averaged values of rate data at each selected time points (Default last 40% simulation time).
+This method is preferred.
+\item Running the derivative function once to get rate data based on the biomass vector input.
+}
 }
 \examples{
 sim=simulateFeisty(simpleOutput=TRUE)
-plotRates(p=sim$p, y=sim$u[,sim$nTime], bPlot=TRUE)
+# averaged rate data of last 40\%  simulation time
+plotRates(sim=sim, avg=TRUE, y=sim$u[,sim$nTime], bPlot=TRUE)
+# rate data based on last time point biomass
+plotRates(sim=sim, avg=FALSE, y=sim$u[,sim$nTime], bPlot=TRUE)
 
 }
 \seealso{

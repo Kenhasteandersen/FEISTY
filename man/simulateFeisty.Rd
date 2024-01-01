@@ -48,6 +48,12 @@ If `simpleOutput` is `TRUE`, the function returns a simplified list with the fol
 \item nTime: The number of time points.
 \item USEdll: from parameter input.
 \item p: the parameter list used in the simulation, the same as the input one.
+\item rates: a list containing rate and feeding level data:
+\itemize{
+\item g: A matrix containing the net growth rate [1/year] of all size classes of functional types over each time point. Resources not included.
+\item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point.
+\item f: A matrix containing feeding levels [-] of all resources (0) and all size classes of functional types over each time point.
+}
 \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
 `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 }

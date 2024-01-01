@@ -275,6 +275,12 @@ derivativesFeistyR = function(t,              # current time
 #' \item nTime: The number of time points.
 #' \item USEdll: from parameter input.
 #' \item p: the parameter list used in the simulation, the same as the input one.
+#' \item rates: a list containing rate and feeding level data:
+#' \itemize{
+#' \item g: A matrix containing the net growth rate [1/year] of all size classes of functional types over each time point. Resources not included.
+#' \item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point.
+#' \item f: A matrix containing feeding levels [-] of all resources (0) and all size classes of functional types over each time point.
+#' }
 #' \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
 #' `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 #' }
@@ -590,6 +596,17 @@ simulateFeisty = function(bCust    = FALSE,
   sim$nTime = length(times)
   sim$USEdll=USEdll
   sim$p = p
+  
+  # net growth rate
+  # "^xx" extracting data starts with "xx"
+  col_g=grep("^g.", colnames(u), value = TRUE)
+  sim$rates$g=u[,col_g]
+  # predation mortality rate
+  col_mortpred=grep("^mortpred", colnames(u), value = TRUE)
+  sim$rates$mortpred=u[,col_mortpred]
+  # feeding level
+  col_f=grep("^f.", colnames(u), value = TRUE)
+  sim$rates$f=u[,col_f]
   
   #
   # Calculate Spawning Stock Biomass and yield

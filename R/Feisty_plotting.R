@@ -203,15 +203,24 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' Plots for growth rate, mortality, and feeding level 
 #' 
 #' Plot growth rate (1/year), mortality (1/year), and feeding level (dimensionless) over the size spectrum.
-#' Data is calculated based on averaged biomass over the last 40% simulation time.
 #' 
-# @details
+#' @details
+#' There are two approaches for rate calculation:
+#' \itemize{
+#' \item Averaged values of rate data at each selected time points (Default last 40% simulation time).
+#' This method is preferred.
+#' \item Running the derivative function once to get rate data based on the biomass vector input.
+#' }
+#' 
 #' @author Yixin Zhao
 #'
-#' @usage plotRates(p=sim$p, y=p$u0, bPlot=TRUE)
+#' @usage plotRates(sim, avg=TRUE, y=p$u0, bPlot=TRUE)
 #' 
-#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
-#' @param y The state variable vector. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param avg Logistic flag. Default TRUE. \cr 
+#' TRUE: Rates are averaged values of selected time points. \cr 
+#' FALSE: Running the derivative function once to get rates based on biomass \code{y} input.
+#' @param y The state variable vector, only works when `avg=FALSE`. For example, \code{sim$u[,sim$nTime]}. This means the biomass data in the last time point is used for rate calculation.
 #' The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
@@ -219,7 +228,10 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' 
 #' @examples 
 #' sim=simulateFeisty(simpleOutput=TRUE)
-#' plotRates(p=sim$p, y=sim$u[,sim$nTime], bPlot=TRUE)
+#' # averaged rate data of last 40%  simulation time
+#' plotRates(sim=sim, avg=TRUE, y=sim$u[,sim$nTime], bPlot=TRUE)
+#' # rate data based on last time point biomass
+#' plotRates(sim=sim, avg=FALSE, y=sim$u[,sim$nTime], bPlot=TRUE)
 #' 
 #' @aliases plotRates
 #' 
@@ -230,12 +242,23 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' @export
 #' 
 
-plotRates = function(p=sim$p, y=p$u0, bPlot=TRUE) {
+plotRates = function(sim, avg=TRUE, y=p$u0, bPlot=TRUE) {
+  
+  p = sim$p
+  etaTime=0.4
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
+  rates=list()
+  rates$g =        colMeans(sim$rates$g[ixTime,])
+  rates$mortpred = colMeans(sim$rates$mortpred[ixTime,])
+  rates$f =        colMeans(sim$rates$f[ixTime,])
+  
+  if (!avg) {
 #  if (p$USEdll) {
 #    rates = calcDerivativesF(0, y, p, FullOutput = TRUE)[[2]]
 #  }else{
     rates = calcDerivativesR(0, y, p, FullOutput = TRUE)
 #  }
+  }
     
   if (bPlot)
     defaultplot(mfcol=c(3,1))
@@ -407,7 +430,7 @@ plotSimulation = function(sim) {
   defaultplot(mfcol=c(6,1))
   plotSSBtime(sim,bPlot=FALSE)
   plotSpectra(sim, bPlot=FALSE)
-  rates = plotRates(sim$p, y=c( sim$R[sim$nTime,], sim$B[sim$nTime,]),bPlot=FALSE)
+  rates = plotRates(sim, avg=TRUE, y=NA, bPlot=FALSE)
   addLegends(sim)
   return(rates)
 }
