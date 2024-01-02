@@ -1,4 +1,4 @@
-useDynLib(FeistyR, .registration = TRUE)
+useDynLib(FEISTY, .registration = TRUE)
 importFrom("grDevices", "dev.off", "pdf")
 importFrom("graphics", "axis", "box", "image", "legend", "lines",
              "mtext", "par", "points", "polygon")

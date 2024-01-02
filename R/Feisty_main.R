@@ -500,11 +500,11 @@ simulateFeisty = function(bCust    = FALSE,
       initfunc <- "initfeisty"
       
       if (any(is.na(times)))  # one call and return
-        return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FeistyR",
+        return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FEISTY",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
       
-      u = ode(y=yini, times=times, parms=NULL, dllname = "FeistyR",
+      u = ode(y=yini, times=times, parms=NULL, dllname = "FEISTY",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=ipar, rpar=as.double(rpar),
               method = "ode45", rtol = rtol, atol = atol) # Run by dll
@@ -516,22 +516,22 @@ simulateFeisty = function(bCust    = FALSE,
         sys=Sys.info()['sysname']
         
         if (sys=='Darwin') {
-          sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+          sLibname = system.file("libs", "FEISTY.so", package = "FEISTY")
         }
         if (sys=='Linux') {
-          sLibname = system.file("libs", "FeistyR.so", package = "FeistyR")
+          sLibname = system.file("libs", "FEISTY.so", package = "FEISTY")
         }
         if (sys=='Windows'){
           if (Sys.info()['machine']=='x86-64'){
-            sLibname = system.file("libs/x64", "FeistyR.dll", package = "FeistyR")
+            sLibname = system.file("libs/x64", "FEISTY.dll", package = "FEISTY")
           }else{
-            sLibname = system.file("libs/i386", "FeistyR.dll", package = "FeistyR")
+            sLibname = system.file("libs/i386", "FEISTY.dll", package = "FEISTY")
           }
         }
 
-        file_path=system.file("data", "input.nml", package = "FeistyR")
+        file_path=system.file("data", "input.nml", package = "FEISTY")
         dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
-        file_path_V=system.file("data", "tempdata.dat", package = "FeistyR")
+        file_path_V=system.file("data", "tempdata.dat", package = "FEISTY")
         dummy=.C("passpathv", length=nchar(file_path_V), file_path_in=charToRaw(file_path_V))
       }
       
@@ -554,11 +554,11 @@ simulateFeisty = function(bCust    = FALSE,
       }
       
       if (any(is.na(times)))  # one call and return
-        return( DLLfunc(y=yini, times=0, parms=as.double(setupinput), dllname = "FeistyR",
+        return( DLLfunc(y=yini, times=0, parms=as.double(setupinput), dllname = "FEISTY",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=NULL, rpar=NULL))
       # Full simulation:
-      u = ode(y=yini, times=times, parms=as.double(setupinput), dllname = "FeistyR",
+      u = ode(y=yini, times=times, parms=as.double(setupinput), dllname = "FEISTY",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=NULL, rpar=NULL,
               method = "ode45", rtol = rtol, atol = atol) # Run by dll

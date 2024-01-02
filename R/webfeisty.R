@@ -53,4 +53,4 @@
 ## ====================================================================
 
 webFeisty <- function(...)
- runApp(system.file('webfeisty', package = 'FeistyR'))
+ runApp(system.file('webfeisty', package = 'FEISTY'))
