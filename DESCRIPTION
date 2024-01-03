@@ -1,4 +1,4 @@
-Package: FeistyR
+Package: FEISTY
 Version: 0.0
 Title: FishErIes Size and functional TYpe model (FEISTY)
 Author: Ken Haste Andersen <kha@aqu.dtu.dk>
@@ -8,7 +8,8 @@ Depends: R (>= 3.5.0), deSolve, shiny, shinyjs, dplyr, magrittr, ggplot2, scales
 Imports: pracma, latex2exp
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-Description:  A size- and trait-based model of higher trophic level dynamics.
+Description: A size- and trait-based model of higher trophic level dynamics.
 License: GPL (>=3.0)
 LazyData: yes
 NeedsCompilation: yes
+RoxygenNote: 7.2.3

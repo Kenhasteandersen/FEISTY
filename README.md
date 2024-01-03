@@ -1,16 +1,3 @@
 # FEISTY R package
 
-10/2023
-
----
-
-Currently barely functional
-
----
-
-Todo:
-
-- Update setups in R codes
-- ~Fix Shiny App~
-- More clever way to implement fixed setups and customized setups
-- Non-negative constraints
+The FEISTY model (FishErIes Size and functional TYpe model) is documented as an R package. The package includes four FEISTY model setups: two published FEISTY model setups ([Petrik et al., 2019](https://doi.org/10.1016/j.pocean.2019.102124); [van Denderen et al., 2021](https://doi.org/10.1111/geb.13348)) and their modified versions. Also, it allows researchers to customize and simulate new FEISTY model setups, for model development and other marine science research.

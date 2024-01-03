@@ -1,7 +1,7 @@
 #===============================================================================
 # Global routines for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FeistyR package is loaded)
+# use webFeisty() to trigger it from anywhere (if the FEISTY R package is loaded)
 #===============================================================================
 
 #-------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ black <- grey(0)
 #===============================================================================
 # Global routines for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FeistyR package is loaded)
+# use webFeisty() to trigger it from anywhere (if the FEISTY R package is loaded)
 #===============================================================================
 
 calcDerivativesF = function(t, y, p, FullOutput, ...) 

@@ -2,7 +2,7 @@
 #' 
 #' @docType package
 #' 
-#' @name FeistyR
+#' @name FEISTY
 #' 
 #' @title FEISTY: FishErIes Size and functional TYpe model.
 #' 
@@ -14,29 +14,28 @@
 #' 
 #' @details 
 #' The package provides four setups for FEISTY, including two published setups and their revised versions.
-#' Furthermore, this package allows users to customize their own setups to simulate and develop their new ideas within the FEISTY model frame.
+#' Furthermore, this package allows users to customize their setups to simulate and develop their new ideas within the FEISTY model frame.
 #' Functions of parameter setting are offered for customization.
 #' 
-#' The fish in FEISTY are defined by their functional type, size, and maturity stage. The number of fish
-#' functional types is defined by each of the predefined setups (see below), but can also be
-#' adapted by the user.  The physiological rates of each size class are based on allometry using 
-#' the mass (gram wet weight) of each size class.  The fish eat on resources of zooplankton or benthos, or, for
-#' larger size-classes, on smaller fish.  Fish size classes are defined using logarithmic size bins appropriate for the life history stage it represents
-#' by holding the ratio of initial and final body sizes of each size-class, constant across all stages.
-#' #' Each fish functional type is modeled as a collection of size-classes, with smaller classes growing into larger size classes. 
+#' The fish in FEISTY are defined by their functional type, size, and maturity stage. 
+#' The number of fish functional types is defined by each of the predefined setups (see below), but can also be adapted by the user.
+#' The physiological rates of each size class are based on allometry using the mass (gram wet weight) of each size class. 
+#' The fish eat on resources of zooplankton or benthos, or, for larger size classes, on smaller fish. 
+#' Fish size classes are defined using logarithmic size bins appropriate for the life history stage; 
+#' they are represented by holding the ratio of initial and final body sizes of each size class, constant across all stages.
+#' Each fish functional type is modeled as a collection of size classes, with smaller classes growing into larger size classes. 
 #' The stage-structured formulation is as in de Roos et al. (2008).
 #' 
-#' The package provides two simulation approaches: either using a compiled Fortran code (very fast) or 
-#' by running everything in R (slow, but easier to modify) . Both rely on the \link{deSolve} package. 
+#' The package provides two simulation approaches: either using a compiled Fortran code (very fast) or running everything in R (slow, but easier to modify).
+#' Both rely on the \link{deSolve} package. 
 #' 
-#' The package operates with two main structures: the parameters structure and the simulation structure. 
-#' The parameters are set with a call to one of four "setup" function. The parameters structure
-#' is passed to the `simulateFeisty`, which returns the results in a `sim` structure. This structure contains
-#' all the information of the simulation, and can be passed to routines for plotting. A simulation can be 
-#' as simple as:
-#' ´p = setupBasic()´
-#' ´sim = simulateFeisty(p)´
-#' ´plotSimulation(sim)´
+#' The package operates with two main structures: the parameters structure and the simulation structure. \cr
+#' The parameters are set with a call to one of four "setup" functions. The parameters structure is passed to the `simulateFeisty`, which returns the results in a `sim` structure.
+#' This structure contains all the information of the simulation and can be passed to routines for plotting. \cr
+#' A simulation can be as simple as:
+#' `p = setupBasic()` \cr
+#' `sim = simulateFeisty(p)` \cr
+#' `plotSimulation(sim)`
 #' 
 #' 
 #' ... ... ...
