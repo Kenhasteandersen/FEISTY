@@ -30,15 +30,20 @@
 #' Both rely on the \link{deSolve} package. 
 #' 
 #' The package operates with two main structures: the parameters structure and the simulation structure. \cr
-#' The parameters are set with a call to one of four "setup" functions. The parameters structure is passed to the `simulateFeisty`, which returns the results in a `sim` structure.
+#' The parameters are set with a call to one of four "setup" functions. The parameters structure is passed to the `simulateFEISTY`, which returns the results in a `sim` structure.
 #' This structure contains all the information of the simulation and can be passed to routines for plotting. \cr
-#' A simulation can be as simple as:
-#' `p = setupBasic()` \cr
-#' `sim = simulateFeisty(p)` \cr
-#' `plotSimulation(sim)`
+#' 
+#' The simplest simulation example can be found below.
 #' 
 #' 
 #' ... ... ...
+#' 
+#' @examples
+#' # A simulation can be as simple as:
+#'   p = setupBasic()
+#'   sim = simulateFEISTY(p)
+#'   plotSimulation(sim)
+#' # To see what 'sim' contains, please check the help page of the function 'simulateFEISTY'.
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -54,16 +59,25 @@
 #'         Yixin Zhao
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
-#' 
+#' Setups and simulations: \cr
 #' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
 #' \code{\link{setupBasic2}} A revised setup based on `setupBasic` \cr
 #' \code{\link{setupVertical}} The setup following van Denderen et al. (2021) \cr
 #' \code{\link{setupVertical2}} A revised setup based on `setupVertical` \cr
+#' \code{\link{simulateFEISTY}} The main function to run FEISTY simulations \cr
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results
 #' 
-#' \code{\link{webFeisty}} A shiny interface for visualizing FEISTY model results
+#' Plotting: \cr
+#' \code{\link{plotSimulation}} Plot simulation results \cr
+#' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
+#' \code{\link{plotSpectra}} Biomass plot \cr
+#' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level \cr
+#' \code{\link{plotNetwork}} Food web plot \cr
+#' \code{\link{plotDiet}} Diet plot
 #' 
-#' \code{\link{derivativesFeistyR}} The derivative function of FEISTY
+#' Fishing and diagnostics: \cr
+#' \code{\link{calcSSB}} 	Spawning stock biomass calculation \cr
+#' \code{\link{calcYield}} Yield calculation
 #' 
 #' Parameters: \cr
 #' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
@@ -74,18 +88,7 @@
 #' \code{\link{paramTeffect}} 	Add temperature effects \cr
 #' \code{\link{setFishing}} 	Set fishing mortality \cr
 #' 
-#' Plotting: \cr
-#' \code{\link{plotSimulation}} Plot simulation results \cr
-#' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
-#' \code{\link{plotSpectra}} Biomass plot \cr
-#' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level \cr
-#' \code{\link{plotNetwork}} Food web plot \cr
-#' \code{\link{plotDiet}} Diet plot
-#' 
-#' 
-#' \code{\link{calcSSB}} 	Spawning stock biomass calculation \cr
-#' \code{\link{calcYield}} Yield calculation
-#' 
+#' \code{\link{derivativesFEISTYR}} The derivative function of FEISTY
 #' 
 #' 
 NULL # This 'NULL' is important in R package documentation file when using roxygen2.

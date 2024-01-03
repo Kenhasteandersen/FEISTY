@@ -1,7 +1,7 @@
 #===============================================================================
 # Server for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FeistyR package is loaded)
+# use webFEISTY() to trigger it from anywhere (if the FEISTYR package is loaded)
 #===============================================================================
 
 server <- function(input, output) {
@@ -111,14 +111,14 @@ server <- function(input, output) {
     }
 
     # Simulate
-    return( simulateFeisty(bCust    = FALSE,
+    return( simulateFEISTY(bCust    = FALSE,
                            p, 
                            tEnd   = 100,
                            tStep  = 0.1,
                            times  = seq(from=0, to=100, by=0.1), #to=tEnd but must give a number directly
                            yini   = p$u0,  
                            USEdll = input$USEdll,
-                           Rmodel = derivativesFeistyR,
+                           Rmodel = derivativesFEISTYR,
                            simpleOutput = TRUE) )
   })
   

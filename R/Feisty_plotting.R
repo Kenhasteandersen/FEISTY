@@ -1,7 +1,7 @@
 #===============================================================================
 # Global routines for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FEISTY R package is loaded)
+# use webFEISTY() to trigger it from anywhere (if the FEISTY R package is loaded)
 #===============================================================================
 
 #-------------------------------------------------------------------------------
@@ -50,14 +50,14 @@ black <- grey(0)
 #===============================================================================
 # Global routines for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FEISTY R package is loaded)
+# use webFEISTY() to trigger it from anywhere (if the FEISTY R package is loaded)
 #===============================================================================
 
 calcDerivativesF = function(t, y, p, FullOutput, ...) 
-  simulateFeisty(p=p, times=NA, yini=y, USEdll=TRUE, ...)
+  simulateFEISTY(p=p, times=NA, yini=y, USEdll=TRUE, ...)
   
 calcDerivativesR = function(t, y, p, FullOutput, ...) 
-  simulateFeisty(p=p, times=NA, yini=y, USEdll=FALSE, ...)
+  simulateFEISTY(p=p, times=NA, yini=y, USEdll=FALSE, ...)
 
 #-------------------------------------------------------------------------------
 # A plot of the Biomass of all functional groups
@@ -113,19 +113,19 @@ plotBiomasstime = function(sim, bPlot=TRUE) {
 #'
 #' @usage plotSSBtime(sim, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
-#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' plotSSBtime(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSSBtime
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
 #' \code{\link{calcSSB}} 	Spawning stock biomass calculation
 #' 
 #' @export
@@ -216,7 +216,7 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #'
 #' @usage plotRates(sim, avg=TRUE, y=p$u0, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' @param avg Logistic flag. Default TRUE. \cr 
 #' TRUE: Rates are averaged values of selected time points. \cr 
 #' FALSE: Running the derivative function once to get rates based on biomass \code{y} input.
@@ -224,10 +224,10 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' The time-averaged biomass data might be preferred, \code{colMeans(sim$u[,round(0.6*iTime):sim$nTime])}.
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
-#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' # averaged rate data of last 40%  simulation time
 #' plotRates(sim=sim, avg=TRUE, y=sim$u[,sim$nTime], bPlot=TRUE)
 #' # rate data based on last time point biomass
@@ -236,8 +236,8 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' @aliases plotRates
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
-#' \code{\link{derivativesFeistyR}} The derivative function of FEISTY
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
+#' \code{\link{derivativesFEISTYR}} The derivative function of FEISTY
 #' 
 #' @export
 #' 
@@ -326,19 +326,19 @@ plotRates = function(sim, avg=TRUE, y=p$u0, bPlot=TRUE) {
 #'
 #' @usage plotSpectra(sim, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
-#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in Feisty_plotting.R.
+#' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' plotSpectra(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSpectra
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations
 #' 
 #' @export
 #' 
@@ -402,23 +402,23 @@ addLegends=function(sim){
 #' 
 #' Make a plot combo for the simulation results, including \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.\cr
 #' 
-#' @details This function is designed for \code{\link{webFeisty}}.\cr 
-#' There is a function \code{addLegends} in Feisty_plotting.R to add legends.\cr
+#' @details This function is designed for \code{\link{webFEISTY}}.\cr 
+#' There is a function \code{addLegends} in FEISTY_plotting.R to add legends.\cr
 #' Users may need to define their new scripts for adding legends according to the function \code{\link{addLegends}}.
 #' @author Yixin Zhao
 #'
 #' @usage plotSimulation(sim)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' plotSimulation(sim)
 #' 
 #' @aliases plotSimulation
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations \cr
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
 #' \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
 #' \code{\link{plotSpectra}} Biomass plot \cr
 #' \code{\link{plotRates}} Plots for growth rate, mortality, and feeding level
@@ -472,17 +472,17 @@ plotTheta = function(p) {
 #'
 #' @usage plotNetwork(p=sim$p, y=p$u0)
 #' 
-#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' plotNetwork(p=sim$p, u=sim$u)
 #' 
 #' @aliases plotNetwork
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations
 #' 
 #' @export
 #'
@@ -651,17 +651,17 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
 #'
 #' @usage plotDiet(p=sim$p, u=sim$u)
 #' 
-#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFeisty().
+#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
 #' 
 #' @examples 
-#' sim=simulateFeisty(simpleOutput=TRUE)
+#' sim=simulateFEISTY(simpleOutput=TRUE)
 #' plotDiet(p=sim$p, u=sim$u)
 #' 
 #' @aliases plotDiet
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} Run FEISTY model simulations
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations
 #' 
 #' @export
 #'

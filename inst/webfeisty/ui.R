@@ -1,7 +1,7 @@
 #===============================================================================
 # User interface for the Shiny web application. 
 # You can run the application by clicking  the 'Run App' button above, OR:.
-# use webFeisty() to trigger it from anywhere (if the FeistyR package is loaded)
+# use webFEISTY() to trigger it from anywhere (if the FEISTYR package is loaded)
 #===============================================================================
 
 ui <- fluidPage(

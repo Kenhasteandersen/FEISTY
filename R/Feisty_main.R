@@ -1,5 +1,5 @@
 #===============================================================================
-# The Feisty model as described in 
+# The FEISTY model as described in 
 # Van Denderen et al. 2020 Global Ecology and Biogeography, DOI: 10.1111/geb.13348 
 # Emergent global biogeography of marine fish food webs.
 
@@ -10,9 +10,9 @@
 # Slightly rewritten by Karline Soetaert, based on code from Ken H. Andersen
 # 
 # Main model routines
-#      derivativesFeistyR  : derivative code in R
-#      derivativesFeistyF  : derivative code in Fortran
-#      simulateFeisty      : run the feisty model
+#      derivativesFEISTYR  : derivative code in R
+#      derivativesFEISTYF  : derivative code in Fortran
+#      simulateFEISTY      : run the feisty model
 #
 #===============================================================================
 
@@ -22,7 +22,7 @@
 #' This function calculates the derivatives of state variables in FEISTY model in R. 
 #' It is used for time integration of FEISTY simulations or getting rates by computing derivatives of one time step.
 #'
-#' @usage derivativesFeistyR(t, u, p, FullOutput=TRUE)
+#' @usage derivativesFEISTYR(t, u, p, FullOutput=TRUE)
 #'
 #' @param t Current time. Any numeric value, no use currently.
 #' @param u A numeric vector containing all state variables, all resources + all size classes.
@@ -61,10 +61,10 @@
 #'
 #' @examples
 #' p = setpBasic2()
-#' # FEISTY simulation 200 years, use derivativesFeistyR
-#' sim = simulateFeisty(p=p, tEnd=200, USEdll=FALSE, simpleOutput=TRUE)
+#' # FEISTY simulation 200 years, use derivativesFEISTYR
+#' sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE, simpleOutput=TRUE)
 #' # get rates of last year, based on biomass of last year 
-#' rates = derivativesFeistyR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
+#' rates = derivativesFEISTYR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -75,10 +75,10 @@
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @aliases derivativesFeistyR
+#' @aliases derivativesFEISTYR
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} The main function for running FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function for running FEISTY simulations
 #'
 #' @export
 #' 
@@ -97,7 +97,7 @@
 #
 # ------------------------------------------------------------------------------
 
-derivativesFeistyR = function(t,              # current time
+derivativesFEISTYR = function(t,              # current time
                               u,              # all state variables
                               p,              # parameters
                               FullOutput=TRUE) {
@@ -228,26 +228,26 @@ derivativesFeistyR = function(t,              # current time
 #' Run FEISTY model simulations
 #'
 #' @description
-#' \code{simulateFeisty} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
+#' \code{simulateFEISTY} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
 #' It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}).
 #' It also allows simulations for customized FEISTY setups.
 #'
-#' @usage simulateFeisty (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
-#'        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFeistyR, simpleOutput = FALSE)
+#' @usage simulateFEISTY (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
+#'        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFEISTYR, simpleOutput = FALSE)
 #'
 #' @param bCust Logical flag, indicates whether to use fixed setups (FALSE) or customized setups (TRUE). \cr 
 #' If \code{bCust} is TURE, FEISTY simulations based on customized setups only can be done in FORTRAN, not R. \code{useDLL} input does not work.
 #' @param p A complete parameter list. \cr 
 #' The parameter of FEISTY setups can be one of the following: \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}.
-#' Or, modelers can customize new setups before calling \code{simulateFeisty}.
+#' Or, modelers can customize new setups before calling \code{simulateFEISTY}.
 #' @param tEnd The end time for the simulation [year], i.e., simulation period of FEISTY, in years. Time (in years) over which the model should be simulated.
 #' @param tStep The time step for ODE solving output [year]. Default 1
 #' @param times A sequence of time points for FEISTY simulations (ODEs solving), required by function \code{\link{ode}}. Generally, it needs nothing, since it will be generated by `tEnd` and `tStep` automatically. \cr
-#'              If `NA`, the function returns only the derivative (one time step running) by `Rmodel`. Default \code{\link{derivativesFeistyR}}.
+#'              If `NA`, the function returns only the derivative (one time step running) by `Rmodel`. Default \code{\link{derivativesFEISTYR}}.
 #' @param yini A vector containing initial biomass values of all state variables (resources and all size classes). The default is from the setup parameter list, `p$u0`.
 #' @param USEdll Logical flag, determining whether the ODEs are solved in FORTRAN (`TRUE`) or R (`FALSE`). \cr
 #' The \link{deSolve} package is used for both methods.
-#' @param Rmodel The R function for computing derivatives, defaults to \code{\link{derivativesFeistyR}}. Generally, should not be changed, unless modelers modify the model profoundly.
+#' @param Rmodel The R function for computing derivatives, defaults to \code{\link{derivativesFEISTYR}}. Generally, should not be changed, unless modelers modify the model profoundly.
 #' @param simpleOutput Logical flag, specifying whether to return the full output in a large matrix (FALSE) or a simplified version in the list (TRUE).
 #'
 #' @details
@@ -264,7 +264,7 @@ derivativesFeistyR = function(t,              # current time
 #' Row: data of each time point. \cr
 #' Column: time points of result output + biomass of resource & each size class, ... 
 #' \code{f}, \code{mortpred}, \code{g}, \code{Repro}, \code{Fin}, \code{Fout}, 
-#' \code{totMort}, \code{totGrazing}, \code{totLoss}, \code{totRepro}, \code{totRecruit}, and \code{totBiomass} can be found in \code{\link{derivativesFeistyR}}.
+#' \code{totMort}, \code{totGrazing}, \code{totLoss}, \code{totRepro}, \code{totRecruit}, and \code{totBiomass} can be found in \code{\link{derivativesFEISTYR}}.
 #' 
 #' If `simpleOutput` is `TRUE`, the function returns a simplified list with the following components:
 #' \itemize{
@@ -292,7 +292,7 @@ derivativesFeistyR = function(t,              # current time
 #' #-----------------------------------------------
 #' # run model with default parameter settings
 #' #-----------------------------------------------
-#' sim <- simulateFeisty()
+#' sim <- simulateFEISTY()
 #' 
 #' colnames(sim)
 #' 
@@ -311,11 +311,11 @@ derivativesFeistyR = function(t,              # current time
 #' # prepare a parameter list
 #' p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
 #' # run the simulation by R and get the simplified output
-#' sim_Vertical_R <- simulateFeisty(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE, simpleOutput = TRUE)
+#' sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE, simpleOutput = TRUE)
 #' 
 #' 
 #' # run FEISTY simulation based on setupBasic2 by Fortran and get the simplified output
-#' sim__Basic2_F <- simulateFeisty(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
+#' sim__Basic2_F <- simulateFEISTY(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
 #' nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE, simpleOutput = TRUE)
 #' 
 #' # -------------------------------------------------------------------------------
@@ -358,7 +358,7 @@ derivativesFeistyR = function(t,              # current time
 #'                         type = 1)
 #' 
 #' # run the simulation for 500 years and get the detailed output. 
-#' sim_cust <- simulateFeisty(bCust = TRUE, p = p_cust, tEnd = 500, simpleOutput = FALSE)
+#' sim_cust <- simulateFEISTY(bCust = TRUE, p = p_cust, tEnd = 500, simpleOutput = FALSE)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -371,7 +371,7 @@ derivativesFeistyR = function(t,              # current time
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @aliases simulateFeisty
+#' @aliases simulateFEISTY
 #' 
 #' @seealso
 #' 
@@ -384,9 +384,9 @@ derivativesFeistyR = function(t,              # current time
 #' \code{\link{calcYield}} Yield calculation
 #' 
 #' \code{\link{deSolve}} The package for ODEs solving \cr
-#' \code{\link{derivativesFeistyR}} The derivative function of state variables in FEISTY model
+#' \code{\link{derivativesFEISTYR}} The derivative function of state variables in FEISTY model
 #' 
-#' \code{\link{webFeisty}} A shiny interface for visualizing FEISTY model results
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results
 #' 
 #' \code{\link{plotSimulation}} Plot simulation results including rates, biomass, and SSB data
 #' 
@@ -401,7 +401,7 @@ derivativesFeistyR = function(t,              # current time
 #  bCust : FALSE-> Used fixed setups coded in the Fortran library 
 #                    (published and revised).
 #          TRUE -> Use customized setups. Customize your own setups by
-#                     mimicking the setup configuration in Feisty_setup.R and Feisty_parms.R.
+#                     mimicking the setup configuration in FEISTY_setup.R and FEISTY_parms.R.
 #  p : fully populated set of parameters
 #
 #          setup type:  setupBasic: Petrik et al. (2019)
@@ -420,14 +420,14 @@ derivativesFeistyR = function(t,              # current time
 # 
 # ------------------------------------------------------------------------------
 
-simulateFeisty = function(bCust    = FALSE,
+simulateFEISTY = function(bCust    = FALSE,
                           p      = setupBasic(), 
                           tEnd   = 100,
                           tStep  = 1,
                           times  = seq(from=0, to=tEnd, by=tStep),  
                           yini   = p$u0,  
                           USEdll = TRUE,
-                          Rmodel = derivativesFeistyR,
+                          Rmodel = derivativesFEISTYR,
                           simpleOutput = FALSE) 
 {
   
@@ -577,7 +577,7 @@ simulateFeisty = function(bCust    = FALSE,
   
   # if (any(u[,c(p$ixR,p$ixFish)+1]<0))
   #   stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
-  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))
+  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFEISTY(..., tStep = ", tStep/10, ").",sep=""))
   
   #
   # Assemble output:

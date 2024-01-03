@@ -66,14 +66,14 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
   
   for (i in 1:length(F)) {
     p = setFishing(p,F[i])
-    sim = simulateFeisty(bCust    = FALSE,
+    sim = simulateFEISTY(bCust    = FALSE,
                          p, 
                          #tEnd   = 100,
                          #tStep  = 1,
                          #times  = seq(from=0, to=tEnd, by=tStep),  
                          yini   = p$u0,  
                          USEdll = TRUE,
-                         Rmodel = derivativesFeistyR,
+                         Rmodel = derivativesFEISTYR,
                          simpleOutput = TRUE) # Simulate
     yy = calcYield(sim)
     yield[i] = sum(sim$yieldMean)#sum(yy[[1]])
@@ -154,13 +154,13 @@ setFishing = function(p, F=0, etaF=0.05) {
 #'
 #' @usage calcYield(sim, etaTime = 0.4)
 #'
-#' @param sim The FEISTY simulation result list from \code{\link{simulateFeisty}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFeisty(simpleOutput=TRUE)}.
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFEISTY(simpleOutput=TRUE)}.
 #' @param etaTime The last fraction of the simulation period (default the last 40\%).
 #'
 #' @details
 #' This function calculates the yield for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
 #' Yield is the product of biomass \code{u} [gww/m2] and fishing mortality \code{mortF} [1/year]. Negative values in \code{u} are revised to 0. \cr
-#' This function has been integrated into \code{\link{simulateFeisty}}. It cannot be called independently.
+#' This function has been integrated into \code{\link{simulateFEISTY}}. It cannot be called independently.
 #'
 #' @return 
 #' Add yield data to the result list:
@@ -225,14 +225,14 @@ calcYield = function(
 #'
 #' @usage calcSSB(sim, etaTime = 0.4)
 #'
-#' @param sim The FEISTY simulation result list from \code{\link{simulateFeisty}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFeisty(simpleOutput=TRUE)}.
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFEISTY(simpleOutput=TRUE)}.
 #' @param etaTime The last fraction of the simulation period (default the last 40\%).
 #'
 #' @details
 #' This function calculates the spawning stock biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
 #' Spawning stock biomass is the product of biomass \code{u} [gww/m2] and maturity level \code{psiMature} [1/year]. Negative values in \code{u} are revised to 0. \cr
 #' Note the SSB data only represents how much biomass (energy) could be used for reproduction, rather than the amount of offspring. \cr
-#' This function has been integrated into \code{\link{simulateFeisty}}. It cannot be called independently.
+#' This function has been integrated into \code{\link{simulateFEISTY}}. It cannot be called independently.
 #'
 #' @return 
 #' Add SSB data to the result list:
@@ -300,7 +300,7 @@ analyseStageB = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=20) {
 for (iF in 1:length(F)){  
   
   for (i in 1:length(nStages)) {
-     sim = simulateFeisty(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
+     sim = simulateFEISTY(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
                                      depth  = 100,
                                      Tp = 10,
                                      Tb = 8, 
@@ -361,7 +361,7 @@ analyseSizepref = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=0) {
 
   for (isp in 1:3){  
     for (i in 1:length(nStages)) {
-      # sim = simulateFeisty(bCust=TRUE,p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
+      # sim = simulateFEISTY(bCust=TRUE,p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
       #                                    depth  = 100,
       #                                    Tp = 10,
       #                                    Tb = 8, 
@@ -370,7 +370,7 @@ analyseSizepref = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=0) {
       #                                    F=F, # overwritten later
       #                                    etaF=0.05  ,sptype=isp),
       #                      simpleOutput = TRUE)
-      sim = simulateFeisty(bCust=TRUE,p=setupVertical2(szprod= 80,lzprod = 80, # Pelagic productivities
+      sim = simulateFEISTY(bCust=TRUE,p=setupVertical2(szprod= 80,lzprod = 80, # Pelagic productivities
                                                        bent = 150, # Detrital flux out of photic zone
                                                        nStages=nStages[i], # No. of size groups
                                                        region = 1, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
