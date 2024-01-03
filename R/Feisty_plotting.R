@@ -491,7 +491,7 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
   
   # Number of groups and biomass:
   ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
-  biomass <-u# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
+  biomass <-u
   
   #Average of the biomass : 
   Bi <- colMeans(biomass[round(0.6*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 40% time 
@@ -531,7 +531,6 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
       Av_depth_night[i] <- which.max(p$depthNight[ ,i]) 
       
     }
-    #ce calcul prend l'indice de la matrice p$depthDay qui représente en réalité la profondeur et la valeur correspondant à l'indice est la probabilité de trouver x poisson à cette profondeur
     Av_depth <- -(Av_depth_day + Av_depth_night) / 2
     
     
@@ -826,9 +825,9 @@ plotDiet <- function(p=sim$p, u=sim$u) {
           legend.direction = "horizontal",
           legend.text = element_text(size = 12))+
     guides(fill = guide_legend(
-      nrow = 3,  # Spécifiez le nombre de lignes pour la légende
-      byrow = TRUE,  # Indique que les étiquettes de légende doivent être disposées par ligne
-      title.position = "top",  # Positionne le titre de la légende en haut
+      nrow = 3,  
+      byrow = TRUE,  
+      title.position = "top",  
     ))
   
   
