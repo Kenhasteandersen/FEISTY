@@ -298,7 +298,7 @@ plotRates = function(sim, avg=TRUE, y=p$u0, bPlot=TRUE) {
                 ylab="Feeding level, f", xlab="Mass (gww)")
   for (i in 1:p$nGroups) {
     ix = p$ix[[i]]
-    lines(p$mc[ix], rates$f[ix], lwd=i,
+    lines(p$mc[ix], rates$f[ix-p$nResources], lwd=i,
           col=p$my_palette[attr(p$my_palette,"name") %in% p$groupnames[-p$ixR]] [i])
     #lines(p$mc[ix], p$metabolism[ix]/(p$epsAssim*p$Cmax[ix]), lwd=i, lty=dotted) # Critical feeding level
   }

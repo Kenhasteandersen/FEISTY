@@ -550,8 +550,8 @@ end do
 
 !..........................................................................
     ir = 1
-    do i = 1, nGrid
-     yout(ir) = flvl(i)
+    do i = 1, nFGrid
+     yout(ir) = flvl(nResources+i)
      ir = ir + 1
     end do
     do i = 1, nGrid

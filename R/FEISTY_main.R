@@ -198,7 +198,7 @@ derivativesFEISTYR = function(t,              # current time
   if (FullOutput) { # Output everything
     out = list()
     out$deriv = c(dRdt, dBdt)
-    out$f     = f # Feeding level all stages
+    out$f     = f[-p$ixR] # Feeding level only all fish stages, no resources
     out$mortpred = mortpred
     out$g     = g # net growth rate fish stages
     out$Repro = Repro
@@ -279,7 +279,7 @@ derivativesFEISTYR = function(t,              # current time
 #' \itemize{
 #' \item g: A matrix containing the net growth rate [1/year] of all size classes of functional types over each time point. Resources not included.
 #' \item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point.
-#' \item f: A matrix containing feeding levels [-] of all resources (0) and all size classes of functional types over each time point.
+#' \item f: A matrix containing feeding levels [-] of all size classes of functional types over each time point.
 #' }
 #' \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
 #' `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
@@ -452,7 +452,7 @@ simulateFEISTY = function(bCust    = FALSE,
     Fname <- p$stagenames[-(1:nR)]
     Gname <- p$groupnames[-(1:nR)]
     outnames <- c(
-      paste("f", Sname, sep="."), paste("mortpred", Sname, sep="."),
+      paste("f", Fname, sep="."), paste("mortpred", Sname, sep="."),
       paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
       paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
       paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
