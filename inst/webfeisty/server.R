@@ -124,6 +124,6 @@ server <- function(input, output) {
   
   # Make plots
   output$plotSimulation <- renderPlot( plotSimulation(sim()) )
-  output$plotNetwork <- renderPlot( plotNetwork(sim()$p, sim()$u) )
-  output$plotDiet <- renderPlot( plotDiet(sim()$p, sim()$u) )
+  output$plotNetwork <- renderPlot( plotNetwork(sim()) )
+  output$plotDiet <- renderPlot( plotDiet(sim()) )
 }

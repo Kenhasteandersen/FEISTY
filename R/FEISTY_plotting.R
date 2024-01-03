@@ -470,14 +470,13 @@ plotTheta = function(p) {
 # @details
 #' @author Yixin Zhao
 #'
-#' @usage plotNetwork(p=sim$p, y=p$u0)
+#' @usage plotNetwork(sim)
 #' 
-#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFEISTY().
-#' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' 
 #' @examples 
 #' sim=simulateFEISTY(simpleOutput=TRUE)
-#' plotNetwork(p=sim$p, u=sim$u)
+#' plotNetwork(sim)
 #' 
 #' @aliases plotNetwork
 #' 
@@ -487,8 +486,9 @@ plotTheta = function(p) {
 #' @export
 #'
 
-plotNetwork <- function(p=sim$p, u=sim$u) {
-  
+plotNetwork <- function(sim) {
+  p=sim$p
+  u=sim$u
   # Number of groups and biomass:
   ngroup <- p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])] #ressources (4) + fish 
   biomass <-u# sim[,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)] #ressources + poissons car se mangent entre eux (+1 car première colonne = temps)
@@ -649,14 +649,13 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
 # @details
 #' @author Yixin Zhao
 #'
-#' @usage plotDiet(p=sim$p, u=sim$u)
+#' @usage plotDiet(sim)
 #' 
-#' @param p The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFEISTY().
-#' @param u the result matrix of the biomass, including resources and fish.\code{sim$u}.
+#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
 #' 
 #' @examples 
 #' sim=simulateFEISTY(simpleOutput=TRUE)
-#' plotDiet(p=sim$p, u=sim$u)
+#' plotDiet(sim)
 #' 
 #' @aliases plotDiet
 #' 
@@ -666,7 +665,9 @@ plotNetwork <- function(p=sim$p, u=sim$u) {
 #' @export
 #'
 
-plotDiet <- function(p=sim$p, u=sim$u) {
+plotDiet <- function(sim) {
+  p=sim$p
+  u=sim$u
   p$nstage <-lengths <- max(sapply(p$ix, length)) #maximum number of stages for one group
   biomass <- u#sim [,2:(p$ix[[length(p$ix)]][length(p$ix[[length(p$ix)]])]+1)]
   Bin <- round(0.6 * nrow(biomass), digits = 0) 
