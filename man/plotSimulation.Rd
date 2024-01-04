@@ -10,12 +10,12 @@ plotSimulation(sim)
 \item{sim}{The data frame of FEISTY simulation results.}
 }
 \description{
-Make a plot combo for the simulation results, including \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.\cr
+Make a plot combo for the simulation results, including \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.
 }
 \details{
-This function is designed for \code{\link{webFEISTY}}.\cr 
-There is a function \code{addLegends} in FEISTY_plotting.R to add legends.\cr
-Users may need to define their new scripts for adding legends according to the function \code{\link{addLegends}}.
+This function is designed to give a quick visualization of a simulation output. \cr 
+There is a function \code{addLegends} in FEISTY_plotting.R to add legends. \cr
+Users may need to define their new scripts for adding legends according to the function \code{addLegends}.
 }
 \examples{
 sim=simulateFEISTY()
@@ -23,6 +23,7 @@ plotSimulation(sim)
 
 }
 \seealso{
+\code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results \cr
 \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
 \code{\link{plotSSBtime}} Spawning stock biomass plot \cr
 \code{\link{plotSpectra}} Biomass plot \cr
