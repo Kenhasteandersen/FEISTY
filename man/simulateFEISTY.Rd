@@ -81,16 +81,18 @@ Simulations based on customized setups only can be done by the FORTRAN-based app
 #-----------------------------------------------
 sim <- simulateFEISTY()
 
-colnames(sim)
+simulateFEISTY(sim)
 
-plot(sim, which = 1:9) # plot first 9 state variables
+#colnames(sim)
 
-plot(sim, which=c( "smallZoo",  "largeZoo", "smallBenthos", "largeBenthos",
-                  "totBiomass.smallPel", "totBiomass.largePel", "totBiomass.demersals"))
+#plot(sim, which = 1:9) # plot first 9 state variables
+
+#plot(sim, which=c( "smallZoo",  "largeZoo", "smallBenthos", "largeBenthos",
+#                  "totBiomass.smallPel", "totBiomass.largePel", "totBiomass.demersals"))
                   
-par(mfrow = c(1, 1))
-matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
-         which=c("largePel_1", "largePel_2", "largePel_3", "totBiomass.largePel"))
+#par(mfrow = c(1, 1))
+#matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
+#         which=c("largePel_1", "largePel_2", "largePel_3", "totBiomass.largePel"))
 
 # -------------------------------------------------------------------------------
 
@@ -98,12 +100,14 @@ matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
 # prepare a parameter list
 p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
 # run the simulation by R and get the simplified output
-sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE)
-
+sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p_V$u0, USEdll = FALSE)
+plotSimulation(sim_Vertical_R)
 
 # run FEISTY simulation based on setupBasic2 by Fortran and get the simplified output
-sim__Basic2_F <- simulateFEISTY(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
-nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE)
+sim_Basic2_F <- simulateFEISTY(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
+nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1, USEdll = TRUE)
+
+plotSimulation(sim_Basic2_F)
 
 # -------------------------------------------------------------------------------
 
@@ -146,6 +150,8 @@ p_cust$theta <- paramSizepref(p = p_cust,
 
 # run the simulation for 500 years and get the detailed output. 
 sim_cust <- simulateFEISTY(bCust = TRUE, p = p_cust, tEnd = 500)
+
+plotSimulation(sim)
 
 }
 \references{

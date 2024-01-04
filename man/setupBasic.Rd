@@ -54,6 +54,7 @@ There are four resources: small zooplankton, large zooplankton, small benthos, a
 \examples{
 p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
 sim=simulateFEISTY(p=p)
+plotSimulation(sim)
 
 }
 \references{

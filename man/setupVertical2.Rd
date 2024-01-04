@@ -92,6 +92,7 @@ Main revision:
 p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
 mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF = 0.05)
 sim=simulateFEISTY(p=p)
+plotSimulation(sim)
 
 }
 \references{
