@@ -118,8 +118,7 @@ server <- function(input, output) {
                            times  = seq(from=0, to=100, by=0.1), #to=tEnd but must give a number directly
                            yini   = p$u0,  
                            USEdll = input$USEdll,
-                           Rmodel = derivativesFEISTYR,
-                           simpleOutput = TRUE) )
+                           Rmodel = derivativesFEISTYR) )
   })
   
   # Make plots

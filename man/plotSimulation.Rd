@@ -7,7 +7,7 @@
 plotSimulation(sim)
 }
 \arguments{
-\item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().}
+\item{sim}{The data frame of FEISTY simulation results.}
 }
 \description{
 Make a plot combo for the simulation results, including \code{\link{plotSSBtime}}, \code{\link{plotSpectra}}, and \code{\link{plotRates}}.\cr
@@ -18,7 +18,7 @@ There is a function \code{addLegends} in FEISTY_plotting.R to add legends.\cr
 Users may need to define their new scripts for adding legends according to the function \code{\link{addLegends}}.
 }
 \examples{
-sim=simulateFEISTY(simpleOutput=TRUE)
+sim=simulateFEISTY()
 plotSimulation(sim)
 
 }

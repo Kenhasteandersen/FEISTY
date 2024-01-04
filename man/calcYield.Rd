@@ -7,7 +7,7 @@
 calcYield(sim, etaTime = 0.4)
 }
 \arguments{
-\item{sim}{The FEISTY simulation result list from \code{\link{simulateFEISTY}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFEISTY(simpleOutput=TRUE)}.}
+\item{sim}{The FEISTY simulation result list from \code{\link{simulateFEISTY}}.}
 
 \item{etaTime}{The last fraction of the simulation period (default the last 40\%).}
 }

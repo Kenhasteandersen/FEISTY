@@ -4,12 +4,10 @@
 \alias{plotDiet}
 \title{Diet plot}
 \usage{
-plotDiet(p=sim$p, u=sim$u)
+plotDiet(sim)
 }
 \arguments{
-\item{p}{The parameter set \code{sim$p}. The \code{simpleOutput} must be TRUE in simulateFEISTY().}
-
-\item{u}{the result matrix of the biomass, including resources and fish.\code{sim$u}.}
+\item{sim}{The data frame of FEISTY simulation results.}
 }
 \description{
 Revised Based on the work of Daniel Ottmann Riera and Solenne Roux.
@@ -18,8 +16,8 @@ If customized setups by users have massive differences e.g., more resources and 
 Users may need to update scripts based on source codes.
 }
 \examples{
-sim=simulateFEISTY(simpleOutput=TRUE)
-plotDiet(p=sim$p, u=sim$u)
+sim=simulateFEISTY()
+plotDiet(sim)
 
 }
 \seealso{

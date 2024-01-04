@@ -7,7 +7,7 @@
 plotSpectra(sim, bPlot=TRUE)
 }
 \arguments{
-\item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().}
+\item{sim}{The data frame of FEISTY simulation results.}
 
 \item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
 If TRUE, create a new independent plot. \cr 
@@ -21,7 +21,7 @@ Data is averaged data over the last 40\% simulation time.
 The X-axis is time. The Y-axis is the biomass data in the log10 scale.
 }
 \examples{
-sim=simulateFEISTY(simpleOutput=TRUE)
+sim=simulateFEISTY()
 plotSpectra(sim, bPlot=TRUE)
 
 }

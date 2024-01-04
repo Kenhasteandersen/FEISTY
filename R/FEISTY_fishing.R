@@ -73,8 +73,7 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
                          #times  = seq(from=0, to=tEnd, by=tStep),  
                          yini   = p$u0,  
                          USEdll = TRUE,
-                         Rmodel = derivativesFEISTYR,
-                         simpleOutput = TRUE) # Simulate
+                         Rmodel = derivativesFEISTYR) # Simulate
     yy = calcYield(sim)
     yield[i] = sum(sim$yieldMean)#sum(yy[[1]])
     yieldMin[i] = sum(sim$yieldMin)#sum(yy[[2]])
@@ -154,7 +153,7 @@ setFishing = function(p, F=0, etaF=0.05) {
 #'
 #' @usage calcYield(sim, etaTime = 0.4)
 #'
-#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFEISTY(simpleOutput=TRUE)}.
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}.
 #' @param etaTime The last fraction of the simulation period (default the last 40\%).
 #'
 #' @details
@@ -225,7 +224,7 @@ calcYield = function(
 #'
 #' @usage calcSSB(sim, etaTime = 0.4)
 #'
-#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}. Note `simpleOutput` must be `TRUE` e.g., \code{sim=simulateFEISTY(simpleOutput=TRUE)}.
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}.
 #' @param etaTime The last fraction of the simulation period (default the last 40\%).
 #'
 #' @details
@@ -307,8 +306,7 @@ for (iF in 1:length(F)){
                                      nStages=nStages[i],
                                      etaMature=0.25,
                                      F=F[iF], # overwritten later
-                                     etaF=0.05),
-                          simpleOutput = TRUE)
+                                     etaF=0.05))
      p=sim$p
      Bpositive=sim$B
      Bpositive[Bpositive<0]=0
@@ -368,8 +366,7 @@ analyseSizepref = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=0) {
       #                                    nStages=nStages[i],
       #                                    etaMature=0.25,
       #                                    F=F, # overwritten later
-      #                                    etaF=0.05  ,sptype=isp),
-      #                      simpleOutput = TRUE)
+      #                                    etaF=0.05  ,sptype=isp))
       sim = simulateFEISTY(bCust=TRUE,p=setupVertical2(szprod= 80,lzprod = 80, # Pelagic productivities
                                                        bent = 150, # Detrital flux out of photic zone
                                                        nStages=nStages[i], # No. of size groups
@@ -382,8 +379,7 @@ analyseSizepref = function(nStages = c(3,6,9,12,15,18,21,24,27),maxF=0) {
                                                        # asymptotic size. Different from
                                                        # van Denderen (2021), where it is 0.002
                                                        F=0,
-                                                       etaF=0.05,sptype=isp),
-                           simpleOutput = TRUE)
+                                                       etaF=0.05,sptype=isp))
       p=sim$p
       Bpositive=sim$B
       Bpositive[Bpositive<0]=0

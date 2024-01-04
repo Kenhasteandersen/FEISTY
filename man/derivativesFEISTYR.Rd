@@ -52,7 +52,7 @@ More theories can be found in de Roos et al. (2008) and Petrik et al. (2019).
 \examples{
 p = setpBasic2()
 # FEISTY simulation 200 years, use derivativesFEISTYR
-sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE, simpleOutput=TRUE)
+sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE)
 # get rates of last year, based on biomass of last year 
 rates = derivativesFEISTYR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
 

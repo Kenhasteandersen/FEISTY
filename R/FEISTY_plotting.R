@@ -113,13 +113,13 @@ plotBiomasstime = function(sim, bPlot=TRUE) {
 #'
 #' @usage plotSSBtime(sim, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' plotSSBtime(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSSBtime
@@ -216,7 +216,7 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #'
 #' @usage plotRates(sim, avg=TRUE, y=p$u0, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' @param avg Logistic flag. Default TRUE. \cr 
 #' TRUE: Rates are averaged values of selected time points. \cr 
 #' FALSE: Running the derivative function once to get rates based on biomass \code{y} input.
@@ -227,7 +227,7 @@ plotYieldtime = function(sim, bPlot=TRUE) {
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' # averaged rate data of last 40%  simulation time
 #' plotRates(sim=sim, avg=TRUE, y=sim$u[,sim$nTime], bPlot=TRUE)
 #' # rate data based on last time point biomass
@@ -248,9 +248,9 @@ plotRates = function(sim, avg=TRUE, y=p$u0, bPlot=TRUE) {
   etaTime=0.4
   ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
   rates=list()
-  rates$g =        colMeans(sim$rates$g[ixTime,])
-  rates$mortpred = colMeans(sim$rates$mortpred[ixTime,])
-  rates$f =        colMeans(sim$rates$f[ixTime,])
+  rates$g =        colMeans(sim$g[ixTime,])
+  rates$mortpred = colMeans(sim$mortpred[ixTime,])
+  rates$f =        colMeans(sim$f[ixTime,])
   
   if (!avg) {
 #  if (p$USEdll) {
@@ -326,13 +326,13 @@ plotRates = function(sim, avg=TRUE, y=p$u0, bPlot=TRUE) {
 #'
 #' @usage plotSpectra(sim, bPlot=TRUE)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' @param bPlot Boolean option determining whether to create a new plot panel. \cr 
 #' If TRUE, create a new independent plot. \cr 
 #' If FALSE, users need to define the subplot layout first by \code{defaultplot(mfcol=c(x,y))}. See an example \code{\link{plotSimulation}} in FEISTY_plotting.R.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' plotSpectra(sim, bPlot=TRUE)
 #' 
 #' @aliases plotSpectra
@@ -409,10 +409,10 @@ addLegends=function(sim){
 #'
 #' @usage plotSimulation(sim)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' plotSimulation(sim)
 #' 
 #' @aliases plotSimulation
@@ -472,10 +472,10 @@ plotTheta = function(p) {
 #'
 #' @usage plotNetwork(sim)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' plotNetwork(sim)
 #' 
 #' @aliases plotNetwork
@@ -651,10 +651,10 @@ plotNetwork <- function(sim) {
 #'
 #' @usage plotDiet(sim)
 #' 
-#' @param sim The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().
+#' @param sim The data frame of FEISTY simulation results.
 #' 
 #' @examples 
-#' sim=simulateFEISTY(simpleOutput=TRUE)
+#' sim=simulateFEISTY()
 #' plotDiet(sim)
 #' 
 #' @aliases plotDiet

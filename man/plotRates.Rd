@@ -7,7 +7,7 @@
 plotRates(sim, avg=TRUE, y=p$u0, bPlot=TRUE)
 }
 \arguments{
-\item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().}
+\item{sim}{The data frame of FEISTY simulation results.}
 
 \item{avg}{Logistic flag. Default TRUE. \cr 
 TRUE: Rates are averaged values of selected time points. \cr 
@@ -32,7 +32,7 @@ This method is preferred.
 }
 }
 \examples{
-sim=simulateFEISTY(simpleOutput=TRUE)
+sim=simulateFEISTY()
 # averaged rate data of last 40\%  simulation time
 plotRates(sim=sim, avg=TRUE, y=sim$u[,sim$nTime], bPlot=TRUE)
 # rate data based on last time point biomass

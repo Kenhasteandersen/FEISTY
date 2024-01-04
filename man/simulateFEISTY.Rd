@@ -5,7 +5,7 @@
 \title{Run FEISTY model simulations}
 \usage{
 simulateFEISTY (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
-       yini = p$u0, USEdll = TRUE, Rmodel = derivativesFEISTYR, simpleOutput = FALSE)
+       yini = p$u0, USEdll = TRUE, Rmodel = derivativesFEISTYR)
 }
 \arguments{
 \item{bCust}{Logical flag, indicates whether to use fixed setups (FALSE) or customized setups (TRUE). \cr 
@@ -28,18 +28,9 @@ If `NA`, the function returns only the derivative (one time step running) by `Rm
 The \link{deSolve} package is used for both methods.}
 
 \item{Rmodel}{The R function for computing derivatives, defaults to \code{\link{derivativesFEISTYR}}. Generally, should not be changed, unless modelers modify the model profoundly.}
-
-\item{simpleOutput}{Logical flag, specifying whether to return the full output in a large matrix (FALSE) or a simplified version in the list (TRUE).}
 }
 \value{
-A list containing the simulation results. The structure of the list depends on the `simpleOutput` parameter:
-If `simpleOutput` is `FALSE`, the function returns a detailed, large matrix with column names:
-Row: data of each time point. \cr
-Column: time points of result output + biomass of resource & each size class, ... 
-\code{f}, \code{mortpred}, \code{g}, \code{Repro}, \code{Fin}, \code{Fout}, 
-\code{totMort}, \code{totGrazing}, \code{totLoss}, \code{totRepro}, \code{totRecruit}, and \code{totBiomass} can be found in \code{\link{derivativesFEISTYR}}.
-
-If `simpleOutput` is `TRUE`, the function returns a simplified list with the following components:
+A list containing the simulation results:
 \itemize{
 \item u: a matrix of biomass of each state variable (column) at each time point (row), including resources and all size classes of functional types.
 \item R: a matrix of biomass of each resource (column) at each time point (row).
@@ -48,12 +39,22 @@ If `simpleOutput` is `TRUE`, the function returns a simplified list with the fol
 \item nTime: The number of time points.
 \item USEdll: from parameter input.
 \item p: the parameter list used in the simulation, the same as the input one.
-\item rates: a list containing rate and feeding level data:
-\itemize{
+\item f: A matrix containing feeding levels [-] of all size classes of functional types over each time point. Resources not included.
+\item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point. Resources not included.
 \item g: A matrix containing the net growth rate [1/year] of all size classes of functional types over each time point. Resources not included.
-\item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point.
-\item f: A matrix containing feeding levels [-] of all resources (0) and all size classes of functional types over each time point.
-}
+\item Repro: A matrix containing the energy used for reproduction of all size classes of functional types over each time point, rate [gWW/m2/year]. Resources not included.
+\item Fin: A matrix containing the biomass flux into each size class over each time point [gWW/m2/year]. Resources not included.
+\item Fout: A matrix containing the biomass flux out of each size class over each time point [gWW/m2/year]. Resources not included.
+\item totMort: a matrix containing the total mortality [gWW/m2/year] of each functional type over each time point, 
+which includes predation mortality, background mortality, and fishing mortality.
+\item totGrazing: a matrix containing the total grazing [gWW/m2/year] of each functional type over each time point, Cmax * f (maximum consumption rate * feeding level)
+To be simply, the food intake before assimilation.
+\item totLoss: a matrix containing all biomass loss [gWW/m2/year] of each functional type over each time point, including unassimilated food and metabolism.
+They are released to environments. where is energy loss from reproduction (1-epsRepro), to be fixed.
+\item totRepro: a matrix containing the total energy used for reproduction [gWW/m2] of each functional type over each time point.
+\item totRecruit: a matrix containing the total recruitment [gWW/m2] of each functional type over each time point. 
+TotRecruit = TotRepro * epsRepro (reproduction efficiency)
+\item totBiomass: a matrix containing the total biomass [gWW/m2] of each functional type over each time point.
 \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
 `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 }
@@ -97,12 +98,12 @@ matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
 # prepare a parameter list
 p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
 # run the simulation by R and get the simplified output
-sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE, simpleOutput = TRUE)
+sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE)
 
 
 # run FEISTY simulation based on setupBasic2 by Fortran and get the simplified output
 sim__Basic2_F <- simulateFEISTY(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
-nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE, simpleOutput = TRUE)
+nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE)
 
 # -------------------------------------------------------------------------------
 
@@ -144,7 +145,7 @@ p_cust$theta <- paramSizepref(p = p_cust,
                         type = 1)
 
 # run the simulation for 500 years and get the detailed output. 
-sim_cust <- simulateFEISTY(bCust = TRUE, p = p_cust, tEnd = 500, simpleOutput = FALSE)
+sim_cust <- simulateFEISTY(bCust = TRUE, p = p_cust, tEnd = 500)
 
 }
 \references{

@@ -7,7 +7,7 @@
 plotSSBtime(sim, bPlot=TRUE)
 }
 \arguments{
-\item{sim}{The data frame of FEISTY simulation results. The \code{simpleOutput} must be TRUE in simulateFEISTY().}
+\item{sim}{The data frame of FEISTY simulation results.}
 
 \item{bPlot}{Boolean option determining whether to create a new plot panel. \cr 
 If TRUE, create a new independent plot. \cr 
@@ -21,7 +21,7 @@ as a function of the whole simulation time.
 X-axis is time. Y-axis is the SSB data in log10 scale.
 }
 \examples{
-sim=simulateFEISTY(simpleOutput=TRUE)
+sim=simulateFEISTY()
 plotSSBtime(sim, bPlot=TRUE)
 
 }

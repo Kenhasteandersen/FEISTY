@@ -50,7 +50,7 @@
 #' 
 #' @examples 
 #' p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
-#' sim=simulateFEISTY(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -232,9 +232,8 @@ param$setup="setupBasic"
 #' @examples 
 #' p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
 #' nStages=6, etaMature=0.25, F=0,etaF=0.05)
-#' sim=simulateFEISTY(p=p, simpleOutput=FALSE)
-#' # plot dynamics of four resources and small pelagic fish.
-#' plot(sim, sim, which=1:8, lty=1, mfrow=c(2,4), subset=time >= 0)
+#' sim=simulateFEISTY(p=p)
+#' plotSimulation(sim)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -460,7 +459,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' 
 #' @examples 
 #' p=setupVertical(szprod = 200, lzprod = 150, bent = 100, region = 1, depth = 1000, photic = 120)
-#' sim=simulateFEISTY(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
 #' 
 #' @seealso
 #' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
@@ -871,7 +870,7 @@ return(param)
 #' @examples 
 #' p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
 #' mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF = 0.05)
-#' sim=simulateFEISTY(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
 #' 
 #' @references
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
