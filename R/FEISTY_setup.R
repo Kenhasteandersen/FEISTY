@@ -153,7 +153,9 @@ setupBasic = function(szprod = 100, # small zoo production?
   # Demersals:
   param$theta["demersals_1", "smallZoo"] = 1
   param$theta["demersals_2", "smallBenthos"] = 1
-  if (param$depth < 200){ # Large demersals only eat pelagic prey in shallow water
+  # Large demersal fish have reduced feeding preference on large-size small pelagic fish and medium-size large pelagic fish in shallow water,
+  # but do not eat them in deep water (depth>=200m).
+  if (param$depth < 200){ 
   param$theta["demersals_3", "smallPel_2"] = 0.75/2
   param$theta["demersals_3", "largePel_2"] = 0.75 
   }
@@ -171,10 +173,40 @@ param$setup="setupBasic"
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
+#' \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
 #' \item Generalized size-based maturity
-#' \item Generalized size-based feeding preference.
-#' \item allowing more size numbers in each functional type.
-#' \item allowing the size-based fishing mortality.
+#' \deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
+#' where `mc` is the vector containing the geometric mean size of each class of a functional type, `mMature` is the body size with 50\% maturity level. \cr
+#' See \code{\link{paramAddGroup}}.
+#' \item Generalized size-based feeding preference
+#' \deqn{\theta_{i,j} = \exp\left( -\frac{(\log(\frac{mc{i}}{\beta \cdot mc{_j}}))^2}{(2 \cdot \sigma)^2} \right)}{\theta[i,j] = exp(-(log(mc[i]/(beta*mc[j])))^2/(2*sigma)^2)}
+#' \deqn{\theta_{i,j} = 0, if {mc_j} > {mc_i}}{\theta[i,j] = 0, if mc[j] > mc[i]}
+#' where \eqn{\theta} is the size preference for a predator i to a prey j. The  'mc[i]' and 'mc[j]' are the geometric mean size of a size class of predator `i` and prey `j`.
+#' `beta` and `sigma` are the preferred predator/prey mass ratio and the width of size preference for feeding, respectively. Default 400 and 1.3. \cr
+#' The second equation indicates that the predator cannot prey on an organism larger than itself.
+#' See \code{\link{paramSizepref}}.
+#' \item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
+#' \item Further process of size preference \eqn{\theta} for feeding preference. \cr
+#' Fish with same size can conduct cannibalism (except medium-size demersal fish). \cr
+#' Small pelagics and large pelagics do \bold{not} prey on benthic resources and medium-size demersal fish. \cr
+#' The size preference of the large pelagic fish on small pelagic fish (functional type) is reduced by multiplying a coefficient 0.5. \cr
+#' Medium-size demersal fish do \bold{not} prey on zooplankton and all fish (no cannibalism as well); only eat benthic resources. \cr
+#' 
+#' Shallow water and deep water:
+#' \itemize{
+#' \item In shallow water (depth<200): \cr
+#' Large demersal fish eat everything. They have reduced feeding preference on all small pelagics (\eqn{\theta}*0.5*0.75) and all large pelagics (\eqn{\theta}*0.75). \cr
+#' Large demersal fish have feeding preference on zooplankton although the values are small. \cr
+#' 
+#' \item In deep water (depth>=200): \cr
+#' Large-size demersal fish do not eat pelagic prey, only eat benthic resources, medium- and large- size demersals.
+#' 
+#' }
+#' 
+#' Small, medium and large fish are differentiated according to `mMedium = 0.5gww` and `mLarge = 250gww`. \cr
+#' `mMedium`: The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge). \cr
+#' `mLarge`: The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#' 
 #' }
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
@@ -372,14 +404,14 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    param$theta[ixMediumSizeDem, 1:2] = 0 
    param$theta[ixMediumSizeDem, param$ixFish] = 0 
    
-   # Large demersals feed have reduced feeding efficiency on pelagic species:
-   if(param$depth<200){ # Large demersals only eat pelagic prey in shallow water
+   # Large demersal fish have reduced feeding preference on all small pelagic fish and all large pelagic fish in shallow water
+   if(param$depth<200){
           param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
           param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
         
           #param$theta[ixLargeSizeDem, 1:2] = 
           #param$theta[ixLargeSizeDem, ixSmallSizeDem] =
-   }else{
+   }else{ # Large-size demersal fish do not eat pelagic prey in deep water (depth>=200m).
           param$theta[ixLargeSizeDem, ixSmall] = 0
           param$theta[ixLargeSizeDem, ixLarge] = 0 
      
@@ -801,10 +833,10 @@ return(param)
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
+#' \item Allowing more size numbers in each functional type.
+#' \item Allowing the size-based fishing mortality.
 #' \item Generalized size-based maturity.
 # \item Generalized size-based feeding preference.
-#' \item allowing more size numbers in each functional type.
-#' \item allowing the size-based fishing mortality.
 #' }
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
