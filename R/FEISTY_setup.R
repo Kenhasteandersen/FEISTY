@@ -176,7 +176,7 @@ param$setup="setupBasic"
 #' \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
 #' \item Generalized size-based maturity
 #' \deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
-#' where `mc` is the vector containing the geometric mean size of each class of a functional type, `mMature` is the body size with 50\% maturity level. \cr
+#' where `mc` is the vector containing the geometric mean size of each class of a functional type, and `mMature` is the body size with a 50\% maturity level. \cr
 #' See \code{\link{paramAddGroup}}.
 #' \item Generalized size-based feeding preference
 #' \deqn{\theta_{i,j} = \exp\left( -\frac{(\log(\frac{mc{i}}{\beta \cdot mc{_j}}))^2}{(2 \cdot \sigma)^2} \right)}{\theta[i,j] = exp(-(log(mc[i]/(beta*mc[j])))^2/(2*sigma)^2)}
@@ -187,9 +187,9 @@ param$setup="setupBasic"
 #' See \code{\link{paramSizepref}}.
 #' \item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
 #' \item Further process of size preference \eqn{\theta} for feeding preference. \cr
-#' Fish with same size can conduct cannibalism (except medium-size demersal fish). \cr
+#' Fish of same size can conduct cannibalism (except medium-size demersal fish). \cr
 #' Small pelagics and large pelagics do \bold{not} prey on benthic resources and medium-size demersal fish. \cr
-#' The size preference of the large pelagic fish on small pelagic fish (functional type) is reduced by multiplying a coefficient 0.5. \cr
+#' The size preference for the large pelagic fish on small pelagic fish (functional type) is reduced by multiplying a coefficient 0.5 (\eqn{\theta}*0.5). \cr
 #' Medium-size demersal fish do \bold{not} prey on zooplankton and all fish (no cannibalism as well); only eat benthic resources. \cr
 #' 
 #' Shallow water and deep water:
@@ -199,11 +199,11 @@ param$setup="setupBasic"
 #' Large demersal fish have feeding preference on zooplankton although the values are small. \cr
 #' 
 #' \item In deep water (depth>=200): \cr
-#' Large-size demersal fish do not eat pelagic prey, only eat benthic resources, medium- and large- size demersals.
+#' Large-size demersal fish do not eat pelagic prey, only eat benthic resources, medium- and large-size demersals.
 #' 
 #' }
 #' 
-#' Small, medium and large fish are differentiated according to `mMedium = 0.5gww` and `mLarge = 250gww`. \cr
+#' Small, medium, and large fish are differentiated according to `mMedium = 0.5gww` and `mLarge = 250gww`. \cr
 #' `mMedium`: The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge). \cr
 #' `mLarge`: The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
 #' 
@@ -833,10 +833,14 @@ return(param)
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
-#' \item Allowing more size numbers in each functional type.
-#' \item Allowing the size-based fishing mortality.
-#' \item Generalized size-based maturity.
+#' \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
+#' \item Generalized size-based maturity
+#' \deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
+#' where `mc` is the vector containing the geometric mean size of each class of a functional type, and `mMature` is the body size with a 50\% maturity level. \cr
+#' See \code{\link{paramAddGroup}}.
 # \item Generalized size-based feeding preference.
+#' \item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
+#' 
 #' }
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao

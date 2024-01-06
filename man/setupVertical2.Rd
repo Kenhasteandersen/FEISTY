@@ -83,9 +83,13 @@ The setupVertical2 makes a revised five-species setup (small pelagic fish, mesop
 There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 Main revision:
 \itemize{
-\item Generalized size-based maturity.
-\item allowing more size numbers in each functional type.
-\item allowing the size-based fishing mortality.
+\item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
+\item Generalized size-based maturity
+\deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
+where `mc` is the vector containing the geometric mean size of each class of a functional type, and `mMature` is the body size with a 50\% maturity level. \cr
+See \code{\link{paramAddGroup}}.
+\item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
+
 }
 }
 \examples{
