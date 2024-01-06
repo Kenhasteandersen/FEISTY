@@ -75,11 +75,11 @@ plotYield = function(p=setupBasic2(szprod = 100,lzprod = 100, bprod  = 5,
                          USEdll = TRUE,
                          Rmodel = derivativesFEISTYR) # Simulate
     yy = calcYield(sim)
-    yield[i] = sum(sim$yieldMean)#sum(yy[[1]])
+    yield[i] = sum(sim$yieldAMean)#sum(yy[[1]])
     yieldMin[i] = sum(sim$yieldMin)#sum(yy[[2]])
     yieldMax[i] = sum(sim$yieldMax)#sum(yy[[3]])
     
-    SSB[i] = sum(sim$SSBMean)#sum(calcSSB(sim)[[1]])
+    SSB[i] = sum(sim$SSBAMean)#sum(calcSSB(sim)[[1]])
   }
   #
   # Plot
@@ -164,7 +164,8 @@ setFishing = function(p, F=0, etaF=0.05) {
 #' @return 
 #' Add yield data to the result list:
 #' \itemize{
-#' \item yieldMean: a vector containing the mean yield data [gww/m2/year] of each functional type of the time range specified.
+#' \item yieldAMean: a vector containing the arithmetic mean yield data [gww/m2/year] of each functional type of the time range specified.
+#' \item yieldGMean: a vector containing the natural log-based geometric mean yield data [gww/m2/year] of each functional type of the time range specified.
 #' \item yieldMin: a vector containing the minimum yield data [gww/m2/year] of each functional type within the time range specified.
 #' \item yieldMax: a vector containing the maximum yield data [gww/m2/year] of each functional type within the time range specified.
 #' \item yield: a matrix containing the yield data [gww/m2/year] of each functional type (column) in each time point (row)
@@ -193,9 +194,10 @@ calcYield = function(
   
   yieldAllgrid = matrix(nrow=sim$nTime, ncol=length(p$ixFish))
   yield = matrix(nrow=sim$nTime, ncol=p$nGroups)
-  yieldMean = rep(data=0, p$nGroups)
-  yieldMin = yieldMean
-  yieldMax = yieldMean
+  yieldAMean = rep(data=0, p$nGroups)
+  yieldGMean = yieldAMean
+  yieldMin = yieldAMean
+  yieldMax = yieldAMean
   
   ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
   
@@ -206,12 +208,14 @@ calcYield = function(
     yield[,iGroup]= rowSums(yieldAllgrid[,ix-length(p$ixR)])
 
     #deltaM = p$mUpper[ix]-p$mLower[ix]
-    yieldMean[iGroup] = exp(mean(log(rowSums(yieldAllgrid[ixTime,ix-max(p$ixR)]+1e-10))))
+    yieldAMean[iGroup] = mean(rowSums(yieldAllgrid[ixTime,ix-max(p$ixR)]))
+    yieldGMean[iGroup] = exp(mean(log(rowSums(yieldAllgrid[ixTime,ix-max(p$ixR)]))))
     yieldMin[iGroup] = min(rowSums( yieldAllgrid[ixTime,ix-max(p$ixR)] ))
     yieldMax[iGroup] = max(rowSums( yieldAllgrid[ixTime,ix-max(p$ixR)] ))
   }
 
-  sim$yieldMean=yieldMean
+  sim$yieldAMean=yieldAMean
+  sim$yieldGMean=yieldGMean  
   sim$yieldMin=yieldMin
   sim$yieldMax=yieldMax
   sim$yield=yield
@@ -236,7 +240,8 @@ calcYield = function(
 #' @return 
 #' Add SSB data to the result list:
 #' \itemize{
-#' \item SSBMean: a vector containing the mean SSB data [gww/m2/year] of each functional type of the time range specified.
+#' \item SSBAMean: a vector containing the arithmetic mean SSB data [gww/m2/year] of each functional type of the time range specified.
+#' \item SSBGMean: a vector containing the natural log-based geometric mean SSB data [gww/m2/year] of each functional type of the time range specified.
 #' \item SSBMin: a vector containing the minimum SSB data [gww/m2/year] of each functional type within the time range specified.
 #' \item SSBMax: a vector containing the maximum SSB data [gww/m2/year] of each functional type within the time range specified.
 #' \item SSB: a matrix containing the SSB data [gww/m2/year] of each functional type (column) in each time point (row)
@@ -265,9 +270,10 @@ calcSSB = function(
   
   SSBAllgrid = matrix(nrow=sim$nTime, ncol=length(p$ixFish))
   SSB = matrix(nrow=sim$nTime, ncol=p$nGroups)
-  SSBMean = rep(data=0, p$nGroups)
-  SSBMin = SSBMean
-  SSBMax = SSBMean
+  SSBAMean = rep(data=0, p$nGroups)
+  SSBGMean = SSBAMean
+  SSBMin = SSBAMean
+  SSBMax = SSBAMean
   
   ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
       
@@ -277,13 +283,15 @@ calcSSB = function(
     SSBAllgrid[,ix-length(p$ixR)][SSBAllgrid[,ix-length(p$ixR)]<0]=0
     SSB[,iGroup]= rowSums(SSBAllgrid[,ix-length(p$ixR)])
     #deltaM = p$mUpper[ix]-p$mLower[ix]
-
-    SSBMean[iGroup] = exp(mean(log(rowSums(SSBAllgrid[ixTime,ix-max(p$ixR)]+1e-10))))
+    
+    SSBAMean[iGroup] = mean(rowSums(SSBAllgrid[ixTime,ix-max(p$ixR)]))
+    SSBGMean[iGroup] = exp(mean(log(rowSums(SSBAllgrid[ixTime,ix-max(p$ixR)]))))
     SSBMin[iGroup] = min(rowSums( SSBAllgrid[ixTime,ix-max(p$ixR)] ))
     SSBMax[iGroup] = max(rowSums( SSBAllgrid[ixTime,ix-max(p$ixR)] ))
   }
   
-  sim$SSBMean=SSBMean
+  sim$SSBAMean=SSBAMean
+  sim$SSBGMean=SSBGMean
   sim$SSBMin=SSBMin
   sim$SSBMax=SSBMax
   sim$SSB=SSB

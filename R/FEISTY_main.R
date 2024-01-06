@@ -283,8 +283,8 @@ derivativesFEISTYR = function(t,              # current time
 #' \item totRecruit: a matrix containing the total recruitment [gWW/m2] of each functional type over each time point. 
 #' TotRecruit = TotRepro * epsRepro (reproduction efficiency)
 #' \item totBiomass: a matrix containing the total biomass [gWW/m2] of each functional type over each time point.
-#' \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
-#' `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
+#' \item `SSBAMean`, `SSBGMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
+#' `yieldAMean`, `yieldGMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 #' }
 #' 
 #' @examples
