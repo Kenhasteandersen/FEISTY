@@ -9,6 +9,7 @@
 #' @param p The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.
 #' @param F The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.
 #' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.
+#' @param groups The indices of functional types that fishing mortality will be assigned to. Default is all functional types.
 #' 
 #' @return It returns an updated parameter list:
 #' \itemize{
@@ -18,12 +19,12 @@
 #' }
 #' 
 #' @details The function sets fishing mortality for all fish.
-#' For each group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
-#' The fishing mortality \code{mortF} for each group is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{F}.
+#' For each specified groups, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
+#' The fishing mortality \code{mortF} for specified groups is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{F}.
 #'
 #' @examples
 #' p = setupBasic2(F=0) # No fishing mortality
-#' p = setFishing(p, F = 1, etaF = 0.05) # add fishing mortality
+#' p = setFishing(p, F = 1, etaF = 0.05, groups=c(3)) # add fishing mortality to demersals only.
 #'
 #' @references
 #' Andersen, K. H. (2019). Fish ecology, evolution, and exploitation: a new theoretical synthesis. Princeton University Press.
@@ -40,12 +41,12 @@
 #
 # F: fishing mortality 1/yr   if F=0 return the original param set
 # etaF: the coefficient determining the fish size with 50% fishing selectivity
-setFishing = function(p, F=0, etaF=0.05) {
+setFishing = function(p, F=0, etaF=0.05,groups=c(1:p$nGroups)) {
   p$F=F
   p$etaF=etaF
   if(F==0) return(p)
-  for (iGroup in 1:p$nGroups) {
-    ix = p$ix[[iGroup]]
+  for (iGroup in 1:length(groups)) {
+    ix = p$ix[[groups[iGroup]]]
     mFishing = etaF*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
     psi = ( 1 + (p$mc[ix]/mFishing)^(-3) )^(-1) # Standard trawl selectivity from Andersen (2019) Fig 5.2
     p$mortF[ix] = psi*F

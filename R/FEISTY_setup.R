@@ -776,15 +776,15 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$theta = param$sizeprefer*param$vertover
   
   #  specific revision of feeding preference
-  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and larval demersals
-  param$theta[idx_be, 3:4] = 0 # all pelagic and larval demersals do not eat benthos,
-                               # only juvenile & adult demersals eat benthos
+  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and small demersals
+  param$theta[idx_be, 3:4] = 0 # all pelagic and small demersals do not eat benthos,
+                               # only small & large demersals eat benthos
   
   # small demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixjuv - 1)): (param$ix[[5]][1] + (ixadult - 2)) #
   param$theta[idx_be, idx_smd] = param$theta[idx_be, idx_smd]*0.25
   
-  # juvenile & adult demersals do not eat zooplankton
+  # medium & large demersals do not eat zooplankton
   param$theta[(param$ix[[5]][1] + (ixjuv - 1)) : param$ix[[5]][length(param$ix[[5]])], 1:2] = 0
   
   # provide benefit to forage and mesopelagic fish (predator avoidance)
@@ -1187,15 +1187,15 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$theta = param$sizeprefer*param$vertover
   
   #  specific revision of feeding preference
-  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and larval demersals
-  param$theta[idx_be, 3:4] = 0 # all pelagic and larval demersals do not eat benthos,
-  # only juvenile & adult demersals eat benthos
+  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and small demersals
+  param$theta[idx_be, 3:4] = 0 # all pelagic and small demersals do not eat benthos,
+  # only medium & adult demersals eat benthos
   
-  # small demersals are less preyed on
+  # medium demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixjuv - 1)): (param$ix[[5]][1] + (ixadult - 2)) #
   param$theta[idx_be, idx_smd] = param$theta[idx_be, idx_smd]*0.25
   
-  # juvenile & adult demersals do not eat zooplankton
+  # small & large demersals do not eat zooplankton
   param$theta[(param$ix[[5]][1] + (ixjuv - 1)) : param$ix[[5]][length(param$ix[[5]])], 1:2] = 0
   
   # provide benefit to forage and mesopelagic fish (predator avoidance)
