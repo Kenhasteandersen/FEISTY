@@ -44,7 +44,7 @@
 setFishing = function(p, F=0, etaF=0.05,groups=c(1:p$nGroups)) {
   p$F=F
   p$etaF=etaF
-  if(F==0) return(p)
+  # if(F==0) return(p)
   for (iGroup in 1:length(groups)) {
     ix = p$ix[[groups[iGroup]]]
     mFishing = etaF*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
