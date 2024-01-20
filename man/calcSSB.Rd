@@ -14,7 +14,8 @@ calcSSB(sim, etaTime = 0.4)
 \value{
 Add SSB data to the result list:
 \itemize{
-\item SSBMean: a vector containing the mean SSB data [gww/m2/year] of each functional type of the time range specified.
+\item SSBAMean: a vector containing the arithmetic mean SSB data [gww/m2/year] of each functional type of the time range specified.
+\item SSBGMean: a vector containing the natural log-based geometric mean SSB data [gww/m2/year] of each functional type of the time range specified.
 \item SSBMin: a vector containing the minimum SSB data [gww/m2/year] of each functional type within the time range specified.
 \item SSBMax: a vector containing the maximum SSB data [gww/m2/year] of each functional type within the time range specified.
 \item SSB: a matrix containing the SSB data [gww/m2/year] of each functional type (column) in each time point (row)

@@ -14,7 +14,8 @@ calcYield(sim, etaTime = 0.4)
 \value{
 Add yield data to the result list:
 \itemize{
-\item yieldMean: a vector containing the mean yield data [gww/m2/year] of each functional type of the time range specified.
+\item yieldAMean: a vector containing the arithmetic mean yield data [gww/m2/year] of each functional type of the time range specified.
+\item yieldGMean: a vector containing the natural log-based geometric mean yield data [gww/m2/year] of each functional type of the time range specified.
 \item yieldMin: a vector containing the minimum yield data [gww/m2/year] of each functional type within the time range specified.
 \item yieldMax: a vector containing the maximum yield data [gww/m2/year] of each functional type within the time range specified.
 \item yield: a matrix containing the yield data [gww/m2/year] of each functional type (column) in each time point (row)

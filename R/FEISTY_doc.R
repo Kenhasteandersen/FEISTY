@@ -41,7 +41,7 @@
 #' @examples
 #' # A simulation can be as simple as:
 #'   p = setupBasic()
-#'   sim = simulateFEISTY(p)
+#'   sim = simulateFEISTY(p=p)
 #'   plotSimulation(sim)
 #' # To see what 'sim' contains, please check the help page of the function 'simulateFEISTY'.
 #' 

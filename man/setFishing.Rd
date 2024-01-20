@@ -4,7 +4,7 @@
 \alias{setFishing}
 \title{Set Fishing Mortality}
 \usage{
-setFishing(p, F = 0, etaF = 0.05)
+setFishing(p, F = 0, etaF = 0.05, groups = c(1:p$nGroups))
 }
 \arguments{
 \item{p}{The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.}
@@ -12,6 +12,8 @@ setFishing(p, F = 0, etaF = 0.05)
 \item{F}{The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.}
 
 \item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.}
+
+\item{groups}{The indices of functional types that fishing mortality will be assigned to. Default is all functional types.}
 }
 \value{
 It returns an updated parameter list:
@@ -26,12 +28,12 @@ This function sets fishing mortality for all fish based on a baseline fishing mo
 }
 \details{
 The function sets fishing mortality for all fish.
-For each group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
-The fishing mortality \code{mortF} for each group is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{F}.
+For each specified groups, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
+The fishing mortality \code{mortF} for specified groups is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{F}.
 }
 \examples{
 p = setupBasic2(F=0) # No fishing mortality
-p = setFishing(p, F = 1, etaF = 0.05) # add fishing mortality
+p = setFishing(p, F = 1, etaF = 0.05, groups=c(3)) # add fishing mortality to demersals only.
 
 }
 \references{
