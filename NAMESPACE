@@ -10,8 +10,8 @@ import(shiny)
 import(shinyjs)
 
 export(setupPelagicSpecies, setupVertical, setupVertical2, setupBasic, setupBasic2)
-export(simulateFeisty, derivativesFeistyR)
+export(simulateFEISTY, derivativesFEISTYR)
 export(paramInit, paramAddResource, paramAddGroup, paramAddPhysiology, paramSizepref, paramTeffect)
-export(plotSSBtime, plotRates, plotSpectra, plotSimulation, plotNetwork, plotDiet,plotYield,analyseStages,analyseStageB)
-
-export(webFeisty)
+export(plotSSBtime, plotRates, plotSpectra, plotSimulation, plotNetwork, plotDiet)
+export(setFishing)
+export(webFEISTY)

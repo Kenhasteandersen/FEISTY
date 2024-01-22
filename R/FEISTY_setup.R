@@ -50,7 +50,8 @@
 #' 
 #' @examples 
 #' p=setupBasic(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9)
-#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
+#' plotSimulation(sim)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -61,7 +62,7 @@
 #' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
 #' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
 #' \code{\link{paramTeffect}} 	Add temperature effects \cr
-#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupBasic
 #' 
@@ -121,7 +122,7 @@ setupBasic = function(szprod = 100, # small zoo production?
 
   # Add fishing mortality
   # if F=0 No further process, return the input param set
-  param=setFishing(param, F=0, etaF=0.05)
+  #setparam=setFishing(param, F=0, etaF=0.05)
   
   
   # Setup size interaction matrix:
@@ -152,7 +153,9 @@ setupBasic = function(szprod = 100, # small zoo production?
   # Demersals:
   param$theta["demersals_1", "smallZoo"] = 1
   param$theta["demersals_2", "smallBenthos"] = 1
-  if (param$depth < 200){ # Large demersals only eat pelagic prey in shallow water
+  # Large demersal fish have reduced feeding preference on large-size small pelagic fish and medium-size large pelagic fish in shallow water,
+  # but do not eat them in deep water (depth>=200m).
+  if (param$depth < 200){ 
   param$theta["demersals_3", "smallPel_2"] = 0.75/2
   param$theta["demersals_3", "largePel_2"] = 0.75 
   }
@@ -170,10 +173,40 @@ param$setup="setupBasic"
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
+#' \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
 #' \item Generalized size-based maturity
-#' \item Generalized size-based feeding preference.
-#' \item allowing more size numbers in each functional type.
-#' \item allowing the size-based fishing mortality.
+#' \deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
+#' where `mc` is the vector containing the geometric mean size of each class of a functional type, and `mMature` is the body size with a 50\% maturity level. \cr
+#' See \code{\link{paramAddGroup}}.
+#' \item Generalized size-based feeding preference
+#' \deqn{\theta_{i,j} = \exp\left( -\frac{(\log(\frac{mc{i}}{\beta \cdot mc{_j}}))^2}{(2 \cdot \sigma)^2} \right)}{\theta[i,j] = exp(-(log(mc[i]/(beta*mc[j])))^2/(2*sigma)^2)}
+#' \deqn{\theta_{i,j} = 0, if {mc_j} > {mc_i}}{\theta[i,j] = 0, if mc[j] > mc[i]}
+#' where \eqn{\theta} is the size preference for a predator i to a prey j. The  'mc[i]' and 'mc[j]' are the geometric mean size of a size class of predator `i` and prey `j`.
+#' `beta` and `sigma` are the preferred predator/prey mass ratio and the width of size preference for feeding, respectively. Default 400 and 1.3. \cr
+#' The second equation indicates that the predator cannot prey on an organism larger than itself.
+#' See \code{\link{paramSizepref}}.
+#' \item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
+#' \item Further process of size preference \eqn{\theta} for feeding preference. \cr
+#' Fish of same size can conduct cannibalism (except medium-size demersal fish). \cr
+#' Small pelagics and large pelagics do \bold{not} prey on benthic resources and medium-size demersal fish. \cr
+#' The size preference for the large pelagic fish on small pelagic fish (functional type) is reduced by multiplying a coefficient 0.5 (\eqn{\theta}*0.5). \cr
+#' Medium-size demersal fish do \bold{not} prey on zooplankton and all fish (no cannibalism as well); only eat benthic resources. \cr
+#' 
+#' Shallow water and deep water:
+#' \itemize{
+#' \item In shallow water (depth<200): \cr
+#' Large demersal fish eat everything. They have reduced feeding preference on all small pelagics (\eqn{\theta}*0.5*0.75) and all large pelagics (\eqn{\theta}*0.75). \cr
+#' Large demersal fish have feeding preference on zooplankton although the values are small. \cr
+#' 
+#' \item In deep water (depth>=200): \cr
+#' Large-size demersal fish do not eat pelagic prey, only eat benthic resources, medium- and large-size demersals.
+#' 
+#' }
+#' 
+#' Small, medium, and large fish are differentiated according to `mMedium = 0.5gww` and `mLarge = 250gww`. \cr
+#' `mMedium`: The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge). \cr
+#' `mLarge`: The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#' 
 #' }
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
@@ -232,9 +265,8 @@ param$setup="setupBasic"
 #' @examples 
 #' p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
 #' nStages=6, etaMature=0.25, F=0,etaF=0.05)
-#' sim=simulateFeisty(p=p, simpleOutput=FALSE)
-#' # plot dynamics of four resources and small pelagic fish.
-#' plot(sim, sim, which=1:8, lty=1, mfrow=c(2,4), subset=time >= 0)
+#' sim=simulateFEISTY(p=p)
+#' plotSimulation(sim)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -247,7 +279,7 @@ param$setup="setupBasic"
 #' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
 #' \code{\link{paramTeffect}} 	Add temperature effects \cr
 #' \code{\link{setFishing}} 	Set fishing mortality \cr
-#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function to run FEISTY simulations
 #'
 #' @aliases setupBasic2
 #' @export
@@ -372,14 +404,14 @@ setupBasic2 = function(szprod = 100, # small zoo production?
    param$theta[ixMediumSizeDem, 1:2] = 0 
    param$theta[ixMediumSizeDem, param$ixFish] = 0 
    
-   # Large demersals feed have reduced feeding efficiency on pelagic species:
-   if(param$depth<200){ # Large demersals only eat pelagic prey in shallow water
+   # Large demersal fish have reduced feeding preference on all small pelagic fish and all large pelagic fish in shallow water
+   if(param$depth<200){
           param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
           param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
         
           #param$theta[ixLargeSizeDem, 1:2] = 
           #param$theta[ixLargeSizeDem, ixSmallSizeDem] =
-   }else{
+   }else{ # Large-size demersal fish do not eat pelagic prey in deep water (depth>=200m).
           param$theta[ixLargeSizeDem, ixSmall] = 0
           param$theta[ixLargeSizeDem, ixLarge] = 0 
      
@@ -460,7 +492,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' 
 #' @examples 
 #' p=setupVertical(szprod = 200, lzprod = 150, bent = 100, region = 1, depth = 1000, photic = 120)
-#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
+#' plotSimulation(sim)
 #' 
 #' @seealso
 #' \code{\link{paramInit}} 	Initialize parameters for FEISTY \cr
@@ -468,7 +501,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' \code{\link{paramAddGroup}} 	Add parameters of one functional type \cr
 #' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
 #' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
-#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupVertical
 #' @export
@@ -743,15 +776,15 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$theta = param$sizeprefer*param$vertover
   
   #  specific revision of feeding preference
-  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and larval demersals
-  param$theta[idx_be, 3:4] = 0 # all pelagic and larval demersals do not eat benthos,
-                               # only juvenile & adult demersals eat benthos
+  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and small demersals
+  param$theta[idx_be, 3:4] = 0 # all pelagic and small demersals do not eat benthos,
+                               # only small & large demersals eat benthos
   
   # small demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixjuv - 1)): (param$ix[[5]][1] + (ixadult - 2)) #
   param$theta[idx_be, idx_smd] = param$theta[idx_be, idx_smd]*0.25
   
-  # juvenile & adult demersals do not eat zooplankton
+  # medium & large demersals do not eat zooplankton
   param$theta[(param$ix[[5]][1] + (ixjuv - 1)) : param$ix[[5]][length(param$ix[[5]])], 1:2] = 0
   
   # provide benefit to forage and mesopelagic fish (predator avoidance)
@@ -800,10 +833,14 @@ return(param)
 #' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
 #' Main revision:
 #' \itemize{
-#' \item Generalized size-based maturity.
+#' \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
+#' \item Generalized size-based maturity
+#' \deqn{maturity level = (1 + ({mc}/mMature)^{-5})^{-1}}{maturity level = (1 + (mc/mMature)^(-5))^(-1)} 
+#' where `mc` is the vector containing the geometric mean size of each class of a functional type, and `mMature` is the body size with a 50\% maturity level. \cr
+#' See \code{\link{paramAddGroup}}.
 # \item Generalized size-based feeding preference.
-#' \item allowing more size numbers in each functional type.
-#' \item allowing the size-based fishing mortality.
+#' \item Allowing the size-based fishing mortality. See \code{\link{setFishing}}.
+#' 
 #' }
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
@@ -871,7 +908,8 @@ return(param)
 #' @examples 
 #' p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
 #' mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF = 0.05)
-#' sim=simulateFeisty(p=p, simpleOutput=TRUE)
+#' sim=simulateFEISTY(p=p)
+#' plotSimulation(sim)
 #' 
 #' @references
 #' van Denderen, P. D., Petrik, C. M., Stock, C. A., & Andersen, K. H. (2021). Emergent global biogeography of marine fish food webs. Global Ecology and Biogeography, 30(9), 1822-1834.
@@ -883,7 +921,7 @@ return(param)
 #' \code{\link{paramAddPhysiology}} 	Add physiological parameters \cr
 #' \code{\link{paramSizepref}} 	Size preference matrix calculation \cr
 #' \code{\link{setFishing}} 	Set fishing mortality \cr
-#' \code{\link{simulateFeisty}} The main function to run FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function to run FEISTY simulations
 #' 
 #' @aliases setupVertical2
 #' @export
@@ -1149,15 +1187,15 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$theta = param$sizeprefer*param$vertover
   
   #  specific revision of feeding preference
-  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and larval demersals
-  param$theta[idx_be, 3:4] = 0 # all pelagic and larval demersals do not eat benthos,
-  # only juvenile & adult demersals eat benthos
+  idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixjuv - 2)) # all pelagic and small demersals
+  param$theta[idx_be, 3:4] = 0 # all pelagic and small demersals do not eat benthos,
+  # only medium & adult demersals eat benthos
   
-  # small demersals are less preyed on
+  # medium demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixjuv - 1)): (param$ix[[5]][1] + (ixadult - 2)) #
   param$theta[idx_be, idx_smd] = param$theta[idx_be, idx_smd]*0.25
   
-  # juvenile & adult demersals do not eat zooplankton
+  # small & large demersals do not eat zooplankton
   param$theta[(param$ix[[5]][1] + (ixjuv - 1)) : param$ix[[5]][length(param$ix[[5]])], 1:2] = 0
   
   # provide benefit to forage and mesopelagic fish (predator avoidance)

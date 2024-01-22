@@ -502,7 +502,7 @@ contains
       allocate (mc(nGrid))
       allocate (mL(nGrid))
       allocate (mU(nGrid))
-      allocate (vertover(nGrid, nGrid)) !
+      !allocate (vertover(nGrid, nGrid)) !
 
       vertover = 0.d0
       sizeprefer = 0.d0

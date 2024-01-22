@@ -1,5 +1,5 @@
 #===============================================================================
-# Functions to creating parameter settings for the Feisty model
+# Functions to creating parameter settings for the FEISTY model
 #
 # Slightly rewritten by Karline Soetaert, based on code from Ken H. Andersen
 # 
@@ -67,7 +67,7 @@
 #'            sigma = 1.3,
 #'            type = 3)
 #' # Run the simulation for this customized FEISTY setup.           
-#'  sim=simulateFeisty(bCust=TRUE,p=p, tEnd=100)
+#'  sim=simulateFEISTY(bCust=TRUE,p=p, tEnd=100)
 #' # Plot dynamics of resources and small fish.
 #'  plot(sim, sim, which=1:6, lty=1, mfrow=c(2,3), subset=time >= 0)       
 #'

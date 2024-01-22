@@ -1,5 +1,5 @@
 #===============================================================================
-# The Feisty model as described in 
+# The FEISTY model as described in 
 # Van Denderen et al. 2020 Global Ecology and Biogeography, DOI: 10.1111/geb.13348 
 # Emergent global biogeography of marine fish food webs.
 
@@ -10,9 +10,9 @@
 # Slightly rewritten by Karline Soetaert, based on code from Ken H. Andersen
 # 
 # Main model routines
-#      derivativesFeistyR  : derivative code in R
-#      derivativesFeistyF  : derivative code in Fortran
-#      simulateFeisty      : run the feisty model
+#      derivativesFEISTYR  : derivative code in R
+#      derivativesFEISTYF  : derivative code in Fortran
+#      simulateFEISTY      : run the feisty model
 #
 #===============================================================================
 
@@ -22,7 +22,7 @@
 #' This function calculates the derivatives of state variables in FEISTY model in R. 
 #' It is used for time integration of FEISTY simulations or getting rates by computing derivatives of one time step.
 #'
-#' @usage derivativesFeistyR(t, u, p, FullOutput=TRUE)
+#' @usage derivativesFEISTYR(t, u, p, FullOutput=TRUE)
 #'
 #' @param t Current time. Any numeric value, no use currently.
 #' @param u A numeric vector containing all state variables, all resources + all size classes.
@@ -61,10 +61,10 @@
 #'
 #' @examples
 #' p = setpBasic2()
-#' # FEISTY simulation 200 years, use derivativesFeistyR
-#' sim = simulateFeisty(p=p, tEnd=200, USEdll=FALSE, simpleOutput=TRUE)
+#' # FEISTY simulation 200 years, use derivativesFEISTYR
+#' sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE)
 #' # get rates of last year, based on biomass of last year 
-#' rates = derivativesFeistyR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
+#' rates = derivativesFEISTYR(t=0, p=p, u=sim$u[sim$nTime,], FullOutput=TRUE)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -75,10 +75,10 @@
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @aliases derivativesFeistyR
+#' @aliases derivativesFEISTYR
 #' 
 #' @seealso 
-#' \code{\link{simulateFeisty}} The main function for running FEISTY simulations
+#' \code{\link{simulateFEISTY}} The main function for running FEISTY simulations
 #'
 #' @export
 #' 
@@ -97,7 +97,7 @@
 #
 # ------------------------------------------------------------------------------
 
-derivativesFeistyR = function(t,              # current time
+derivativesFEISTYR = function(t,              # current time
                               u,              # all state variables
                               p,              # parameters
                               FullOutput=TRUE) {
@@ -198,7 +198,7 @@ derivativesFeistyR = function(t,              # current time
   if (FullOutput) { # Output everything
     out = list()
     out$deriv = c(dRdt, dBdt)
-    out$f     = f # Feeding level all stages
+    out$f     = f[-p$ixR] # Feeding level only all fish stages, no resources
     out$mortpred = mortpred
     out$g     = g # net growth rate fish stages
     out$Repro = Repro
@@ -228,27 +228,26 @@ derivativesFeistyR = function(t,              # current time
 #' Run FEISTY model simulations
 #'
 #' @description
-#' \code{simulateFeisty} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
+#' \code{simulateFEISTY} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
 #' It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}).
 #' It also allows simulations for customized FEISTY setups.
 #'
-#' @usage simulateFeisty (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
-#'        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFeistyR, simpleOutput = FALSE)
+#' @usage simulateFEISTY (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep),
+#'        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFEISTYR)
 #'
 #' @param bCust Logical flag, indicates whether to use fixed setups (FALSE) or customized setups (TRUE). \cr 
 #' If \code{bCust} is TURE, FEISTY simulations based on customized setups only can be done in FORTRAN, not R. \code{useDLL} input does not work.
 #' @param p A complete parameter list. \cr 
 #' The parameter of FEISTY setups can be one of the following: \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}.
-#' Or, modelers can customize new setups before calling \code{simulateFeisty}.
+#' Or, modelers can customize new setups before calling \code{simulateFEISTY}.
 #' @param tEnd The end time for the simulation [year], i.e., simulation period of FEISTY, in years. Time (in years) over which the model should be simulated.
 #' @param tStep The time step for ODE solving output [year]. Default 1
 #' @param times A sequence of time points for FEISTY simulations (ODEs solving), required by function \code{\link{ode}}. Generally, it needs nothing, since it will be generated by `tEnd` and `tStep` automatically. \cr
-#'              If `NA`, the function returns only the derivative (one time step running) by `Rmodel`. Default \code{\link{derivativesFeistyR}}.
+#'              If `NA`, the function returns only the derivative (one time step running) by `Rmodel`. Default \code{\link{derivativesFEISTYR}}.
 #' @param yini A vector containing initial biomass values of all state variables (resources and all size classes). The default is from the setup parameter list, `p$u0`.
 #' @param USEdll Logical flag, determining whether the ODEs are solved in FORTRAN (`TRUE`) or R (`FALSE`). \cr
 #' The \link{deSolve} package is used for both methods.
-#' @param Rmodel The R function for computing derivatives, defaults to \code{\link{derivativesFeistyR}}. Generally, should not be changed, unless modelers modify the model profoundly.
-#' @param simpleOutput Logical flag, specifying whether to return the full output in a large matrix (FALSE) or a simplified version in the list (TRUE).
+#' @param Rmodel The R function for computing derivatives, defaults to \code{\link{derivativesFEISTYR}}. Generally, should not be changed, unless modelers modify the model profoundly.
 #'
 #' @details
 #' The function runs the FEISTY model simulation over the specified time frame. \cr
@@ -259,14 +258,7 @@ derivativesFeistyR = function(t,              # current time
 #' Simulations based on customized setups only can be done by the FORTRAN-based approach.
 #'
 #' @return
-#' A list containing the simulation results. The structure of the list depends on the `simpleOutput` parameter:
-#' If `simpleOutput` is `FALSE`, the function returns a detailed, large matrix with column names:
-#' Row: data of each time point. \cr
-#' Column: time points of result output + biomass of resource & each size class, ... 
-#' \code{f}, \code{mortpred}, \code{g}, \code{Repro}, \code{Fin}, \code{Fout}, 
-#' \code{totMort}, \code{totGrazing}, \code{totLoss}, \code{totRepro}, \code{totRecruit}, and \code{totBiomass} can be found in \code{\link{derivativesFeistyR}}.
-#' 
-#' If `simpleOutput` is `TRUE`, the function returns a simplified list with the following components:
+#' A list containing the simulation results:
 #' \itemize{
 #' \item u: a matrix of biomass of each state variable (column) at each time point (row), including resources and all size classes of functional types.
 #' \item R: a matrix of biomass of each resource (column) at each time point (row).
@@ -275,14 +267,24 @@ derivativesFeistyR = function(t,              # current time
 #' \item nTime: The number of time points.
 #' \item USEdll: from parameter input.
 #' \item p: the parameter list used in the simulation, the same as the input one.
-#' \item rates: a list containing rate and feeding level data:
-#' \itemize{
+#' \item f: A matrix containing feeding levels [-] of all size classes of functional types over each time point. Resources not included.
+#' \item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point. Resources not included.
 #' \item g: A matrix containing the net growth rate [1/year] of all size classes of functional types over each time point. Resources not included.
-#' \item mortpred: A matrix containing a vector containing predation mortality rate [1/year] of all resources and all size classes of functional types over each time point.
-#' \item f: A matrix containing feeding levels [-] of all resources (0) and all size classes of functional types over each time point.
-#' }
-#' \item `SSBMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
-#' `yieldMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
+#' \item Repro: A matrix containing the energy used for reproduction of all size classes of functional types over each time point, rate [gWW/m2/year]. Resources not included.
+#' \item Fin: A matrix containing the biomass flux into each size class over each time point [gWW/m2/year]. Resources not included.
+#' \item Fout: A matrix containing the biomass flux out of each size class over each time point [gWW/m2/year]. Resources not included.
+#' \item totMort: a matrix containing the total mortality [gWW/m2/year] of each functional type over each time point, 
+#' which includes predation mortality, background mortality, and fishing mortality.
+#' \item totGrazing: a matrix containing the total grazing [gWW/m2/year] of each functional type over each time point, Cmax * f (maximum consumption rate * feeding level)
+#' To be simply, the food intake before assimilation.
+#' \item totLoss: a matrix containing all biomass loss [gWW/m2/year] of each functional type over each time point, including unassimilated food and metabolism.
+#' They are released to environments. where is energy loss from reproduction (1-epsRepro), to be fixed.
+#' \item totRepro: a matrix containing the total energy used for reproduction [gWW/m2] of each functional type over each time point.
+#' \item totRecruit: a matrix containing the total recruitment [gWW/m2] of each functional type over each time point. 
+#' TotRecruit = TotRepro * epsRepro (reproduction efficiency)
+#' \item totBiomass: a matrix containing the total biomass [gWW/m2] of each functional type over each time point.
+#' \item `SSBAMean`, `SSBGMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
+#' `yieldAMean`, `yieldGMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 #' }
 #' 
 #' @examples
@@ -292,18 +294,20 @@ derivativesFeistyR = function(t,              # current time
 #' #-----------------------------------------------
 #' # run model with default parameter settings
 #' #-----------------------------------------------
-#' sim <- simulateFeisty()
+#' sim <- simulateFEISTY()
 #' 
-#' colnames(sim)
+#' simulateFEISTY(sim)
 #' 
-#' plot(sim, which = 1:9) # plot first 9 state variables
+#' #colnames(sim)
 #' 
-#' plot(sim, which=c( "smallZoo",  "largeZoo", "smallBenthos", "largeBenthos",
-#'                   "totBiomass.smallPel", "totBiomass.largePel", "totBiomass.demersals"))
+#' #plot(sim, which = 1:9) # plot first 9 state variables
+#' 
+#' #plot(sim, which=c( "smallZoo",  "largeZoo", "smallBenthos", "largeBenthos",
+#' #                  "totBiomass.smallPel", "totBiomass.largePel", "totBiomass.demersals"))
 #'                   
-#' par(mfrow = c(1, 1))
-#' matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
-#'          which=c("largePel_1", "largePel_2", "largePel_3", "totBiomass.largePel"))
+#' #par(mfrow = c(1, 1))
+#' #matplot.0D(sim, type= "l", lty=1, ylab="g/m2", log="y", main="Large Pelagics",
+#' #         which=c("largePel_1", "largePel_2", "largePel_3", "totBiomass.largePel"))
 #' 
 #' # -------------------------------------------------------------------------------
 #' 
@@ -311,12 +315,14 @@ derivativesFeistyR = function(t,              # current time
 #' # prepare a parameter list
 #' p_V <- setupVertical(szprod = 100, lzprod = 120, bent = 200, region = 2, depth = 1000, photic = 150)
 #' # run the simulation by R and get the simplified output
-#' sim_Vertical_R <- simulateFeisty(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p$u0, USEdll = FALSE, simpleOutput = TRUE)
-#' 
+#' sim_Vertical_R <- simulateFEISTY(bCust = FALSE, p = p_V, tEnd = 1000, tStep = 1,yini = p_V$u0, USEdll = FALSE)
+#' plotSimulation(sim_Vertical_R)
 #' 
 #' # run FEISTY simulation based on setupBasic2 by Fortran and get the simplified output
-#' sim__Basic2_F <- simulateFeisty(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
-#' nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1,yini = p$u0, USEdll = TRUE, simpleOutput = TRUE)
+#' sim_Basic2_F <- simulateFEISTY(bCust = FALSE, p = setupBasic2(szprod = 90, lzprod = 100, bprod = 15, depth = 500, Tp = 11, Tb = 9, 
+#' nStages=9, etaMature=0.25, F=0, etaF=0.05), tEnd = 1000, tStep = 1, USEdll = TRUE)
+#' 
+#' plotSimulation(sim_Basic2_F)
 #' 
 #' # -------------------------------------------------------------------------------
 #' 
@@ -358,7 +364,9 @@ derivativesFeistyR = function(t,              # current time
 #'                         type = 1)
 #' 
 #' # run the simulation for 500 years and get the detailed output. 
-#' sim_cust <- simulateFeisty(bCust = TRUE, p = p_cust, tEnd = 500, simpleOutput = FALSE)
+#' sim_cust <- simulateFEISTY(bCust = TRUE, p = p_cust, tEnd = 500)
+#' 
+#' plotSimulation(sim)
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
@@ -371,7 +379,7 @@ derivativesFeistyR = function(t,              # current time
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @aliases simulateFeisty
+#' @aliases simulateFEISTY
 #' 
 #' @seealso
 #' 
@@ -384,9 +392,9 @@ derivativesFeistyR = function(t,              # current time
 #' \code{\link{calcYield}} Yield calculation
 #' 
 #' \code{\link{deSolve}} The package for ODEs solving \cr
-#' \code{\link{derivativesFeistyR}} The derivative function of state variables in FEISTY model
+#' \code{\link{derivativesFEISTYR}} The derivative function of state variables in FEISTY model
 #' 
-#' \code{\link{webFeisty}} A shiny interface for visualizing FEISTY model results
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results
 #' 
 #' \code{\link{plotSimulation}} Plot simulation results including rates, biomass, and SSB data
 #' 
@@ -401,7 +409,7 @@ derivativesFeistyR = function(t,              # current time
 #  bCust : FALSE-> Used fixed setups coded in the Fortran library 
 #                    (published and revised).
 #          TRUE -> Use customized setups. Customize your own setups by
-#                     mimicking the setup configuration in Feisty_setup.R and Feisty_parms.R.
+#                     mimicking the setup configuration in FEISTY_setup.R and FEISTY_parms.R.
 #  p : fully populated set of parameters
 #
 #          setup type:  setupBasic: Petrik et al. (2019)
@@ -413,22 +421,20 @@ derivativesFeistyR = function(t,              # current time
 #  times: The times steps to return. If times=NA then it just does one call, essentially
 #          used to just get the derivate and not simulate
 #  USEdll : TRUE -> ODE solved by Fortran dll / FALSE -> ODE solved by R
-#  simpleOutput: boolean that states whether the full output is needed or not
 #
 # Out:
 #  A simulation list
 # 
 # ------------------------------------------------------------------------------
 
-simulateFeisty = function(bCust    = FALSE,
+simulateFEISTY = function(bCust    = FALSE,
                           p      = setupBasic(), 
                           tEnd   = 100,
                           tStep  = 1,
                           times  = seq(from=0, to=tEnd, by=tStep),  
                           yini   = p$u0,  
                           USEdll = TRUE,
-                          Rmodel = derivativesFeistyR,
-                          simpleOutput = FALSE) 
+                          Rmodel = derivativesFEISTYR) 
 {
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
@@ -452,7 +458,7 @@ simulateFeisty = function(bCust    = FALSE,
     Fname <- p$stagenames[-(1:nR)]
     Gname <- p$groupnames[-(1:nR)]
     outnames <- c(
-      paste("f", Sname, sep="."), paste("mortpred", Sname, sep="."),
+      paste("f", Fname, sep="."), paste("mortpred", Sname, sep="."),
       paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
       paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
       paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
@@ -577,12 +583,11 @@ simulateFeisty = function(bCust    = FALSE,
   
   # if (any(u[,c(p$ixR,p$ixFish)+1]<0))
   #   stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
-  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFeisty(..., tStep = ", tStep/10, ").",sep=""))
+  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFEISTY(..., tStep = ", tStep/10, ").",sep=""))
   
   #
   # Assemble output:
   #
-  if (! simpleOutput) return(u)
  
   sim   = list()
   sim$u = u[,c(p$ixR,p$ixFish)+1]
@@ -592,17 +597,44 @@ simulateFeisty = function(bCust    = FALSE,
   sim$nTime = length(times)
   sim$USEdll=USEdll
   sim$p = p
-  
-  # net growth rate
+
+  # feeding level
   # "^xx" extracting data starts with "xx"
-  col_g=grep("^g.", colnames(u), value = TRUE)
-  sim$rates$g=u[,col_g]
+  col_f=grep("^f.", colnames(u), value = TRUE)
+  sim$f=u[,col_f]  
   # predation mortality rate
   col_mortpred=grep("^mortpred", colnames(u), value = TRUE)
-  sim$rates$mortpred=u[,col_mortpred]
-  # feeding level
-  col_f=grep("^f.", colnames(u), value = TRUE)
-  sim$rates$f=u[,col_f]
+  sim$mortpred=u[,col_mortpred]
+  # net growth rate
+  col_g=grep("^g.", colnames(u), value = TRUE)
+  sim$g=u[,col_g]
+  # Energy used for reproduction [gWW/m2/year]
+  col_Repro=grep("^Repro", colnames(u), value = TRUE)
+  sim$Repro=u[,col_Repro]
+  # Biomass flux into each size class
+  col_Fin=grep("^Fin", colnames(u), value = TRUE)
+  sim$Fin=u[,col_Fin]
+  # Biomass flux out of each size class
+  col_Fout=grep("^Fout", colnames(u), value = TRUE)
+  sim$Fout=u[,col_Fout]
+  # total mortality of each functional group [gWW/m2/year],which includes predation mortality, background mortality, and fishing mortality.
+  col_totMort=grep("^totMort", colnames(u), value = TRUE)
+  sim$totMort=u[,col_totMort]
+  # total grazing of each functional group [gWW/m2/year], Cmax * f (maximum consumption rate * feeding level), the food intake before assimilation.
+  col_totGrazing=grep("^totGrazing", colnames(u), value = TRUE)
+  sim$totGrazing=u[,col_totGrazing]
+  # total biomass loss of each functional group [gWW/m2/year], including unassimilated food and metabolism. They are released to environments. where is energy loss from reproduction (1-epsRepro), to be fixed.
+  col_totLoss=grep("^totLoss", colnames(u), value = TRUE)
+  sim$totLoss=u[,col_totLoss]
+  # total energy used for reproduction of each functional group [gWW/m2]
+  col_totRepro=grep("^totRepro", colnames(u), value = TRUE)
+  sim$totRepro=u[,col_totRepro]
+  # total recruitment of each functional group [gWW/m2], TotRecruit = TotRepro * epsRepro (reproduction efficiency)
+  col_totRecruit=grep("^totRecruit", colnames(u), value = TRUE)
+  sim$totRecruit=u[,col_totRecruit] 
+  # total biomass of each functional group [gWW/m2]
+  col_totBiomass=grep("^totBiomass", colnames(u), value = TRUE)
+  sim$totBiomass=u[,col_totBiomass]  
   
   #
   # Calculate Spawning Stock Biomass and yield
