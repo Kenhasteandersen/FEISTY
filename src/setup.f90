@@ -957,12 +957,21 @@ contains
       mU(1:nResources) = [0.001d0, 0.5d0, 125.d0, 125.d0]  ! resource mass upper limit
       mL(1:nResources) = [2.d-6, 0.001d0, 0.5d-3, 0.25d0] ! resource mass lower limit
 !! basic feeding preference matrix theta
+!      do i = idxF, nGrid
+!         do j = 1, nGrid
+!            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
+!                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
+!                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
+!            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+!         end do
+!      end do
+
       do i = idxF, nGrid
          do j = 1, nGrid
-            sizeprefer(i, j) = sqrt(pi/2.d0)*sigma*( &
-                               erf((log(mU(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)) &
-                               - erf((log(mL(j)) - log(mc(i)/beta))/(sqrt(2.d0)*sigma)))
-            sizeprefer(i, j) = sizeprefer(i, j)/(log(mU(j)) - log(mL(j)))
+            sizeprefer(i, j) = exp(-(log(mc(i)/(beta*mc(j))))**2/(2*sigma)**2)
+            if (mc(j) .gt. mc(i)) then                   !small can't eat large
+               sizeprefer(i, j) = 0.d0
+            end if
          end do
       end do
 
