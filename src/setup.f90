@@ -939,7 +939,7 @@ contains
 
 
 ! fishing mortality
-      group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
+      !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
 
       call setFishing(Fishing,etaF)
@@ -1889,9 +1889,9 @@ contains
      real(dp),allocatable :: psiF(:)
      real(dp) :: mFishing
 
-     if(F.eq.0.d0) then
-       RETURN
-     end if
+!     if(F.eq.0.d0) then
+!       RETURN
+!     end if
 
      do iGroup = 1,nGroups
         allocate(psiF(group(iGroup)%spec%n))

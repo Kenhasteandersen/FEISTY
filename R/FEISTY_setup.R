@@ -999,7 +999,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="demersals")
-  param$mortF[length(param$mortF)]=0.5
+  #param$mortF[length(param$mortF)]=0.5
   
   #------------------  
   # Setup physiology:
