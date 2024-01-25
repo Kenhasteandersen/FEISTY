@@ -999,7 +999,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="demersals")
-  param$mortF[length(param$mortF)]=0.5
+  #param$mortF[length(param$mortF)]=0.5
   
   #------------------  
   # Setup physiology:
@@ -1026,7 +1026,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$sizeprefer=paramSizepref(p=param,           # parameter settings 
                                    beta = 400,  # preferred predator/prey mass ratio
                                    sigma = 1.3, # width of size preference for feeding
-                                   type = 2)
+                                   type = 1)
   
   #------------------  
   # overlap from depth distribution
