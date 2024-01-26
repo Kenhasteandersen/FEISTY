@@ -452,12 +452,12 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(6)
+    real(dp) :: parmsbasic(7)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(6,parmsbasic)
-       call setupbasic(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),parmsbasic(6))
+       call steadyparms(7,parmsbasic)
+       call setupbasic(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),parmsbasic(6),parmsbasic(7))
 
        feistyinitialised = .TRUE.
 
@@ -467,13 +467,13 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(10)
+    real(dp) :: parmsbasic(11)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(10,parmsbasic)
-       call setupbasic2(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),parmsbasic(5),&
-                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10))
+       call steadyparms(11,parmsbasic)
+       call setupbasic2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),INT(parmsbasic(5)),&
+                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10),parmsbasic(11))
 
        feistyinitialised = .TRUE.
 
@@ -483,13 +483,13 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(6)
+    real(dp) :: parmsbasic(8)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(6,parmsbasic)
-       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),&
-                          parmsbasic(5),parmsbasic(6))
+       call steadyparms(8,parmsbasic)
+       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),&
+                          parmsbasic(5),INT(parmsbasic(6)),parmsbasic(7),parmsbasic(8))
 
        feistyinitialised = .TRUE.
 
@@ -499,13 +499,14 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(10)
+    real(dp) :: parmsbasic(12)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(10,parmsbasic)
-       call setupVertical2(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),INT(parmsbasic(5)),&
-                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10))
+       call steadyparms(12,parmsbasic)
+       call setupVertical2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),&
+                           INT(parmsbasic(6)),INT(parmsbasic(7)),parmsbasic(8),parmsbasic(9),parmsbasic(10),&
+                           parmsbasic(11),parmsbasic(12))
 
        feistyinitialised = .TRUE.
 

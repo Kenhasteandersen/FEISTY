@@ -98,8 +98,9 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al. (2019)
 ! --------------------------------------
-   subroutine setupbasic(szprod, lzprod, bprod, depth, Ts, Tb)
-      real(dp), intent(in)::szprod,lzprod, bprod, depth, Ts, Tb
+   subroutine setupbasic(szprod, lzprod, bprodin, dfbot, depth, Ts, Tb)
+      real(dp), intent(in)::szprod,lzprod, bprodin, dfbot, depth, Ts, Tb ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
+      real(dp) :: bprod                                                  ! only one of them works, keep the unused arguments negative e.g., bprodin = 100.d0, dfbot = -1.d0
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -108,6 +109,14 @@ contains
 !      real(dp),parameter ::   thetaS = 0.25d0 ! Medium fish pref for small zooplankton
 !      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+
+      !benthic productivity
+      if (bprodin >0.d0) then
+        bprod=bprodin
+      end if
+      if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+      end if
 
       call read_namelist_setupbasic()
       call parametersInit(3, 2 + 3 + 3, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, szprod,lzprod, bprod,none)
@@ -237,17 +246,28 @@ contains
 ! --------------------------------------
 ! Setup by Ken based on Petrik et al. (2019).
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprod, nStages, depth, Ts, Tb, etaMature,Fishing,etaF) !
-      real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb, depth
+   subroutine setupbasic2(szprod,lzprod, bprodin, dfbot, nStages, depth, Ts, Tb, etaMature,Fishing,etaF) !
+      real(dp), intent(in) :: szprod,lzprod, bprodin, dfbot, Ts, Tb, depth ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
+                                                                           ! only one of them works, keep the unused arguments negative e.g., bprodin = 100.d0, dfbot = -1.d0
+
       real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
       real(dp), intent(in) :: Fishing, etaF ! fishing mortality, etaF * asymptotic size =fish size with 50% fishing mortality
       integer, intent(in) :: nStages
+      real(dp) :: bprod
       integer :: iGroup, i, j
 ! predation preference coefficient
       real(dp) :: thetaA
       real(dp) :: thetaD
 !      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+
+      !benthic productivity
+      if (bprodin >0.d0) then
+        bprod=bprodin
+      end if
+      if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+      end if
 
       call read_namelist_setupbasic2()    !
       call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages, 4 resources,szprod,lzprod, bprod,none)
@@ -436,8 +456,10 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020)
 ! --------------------------------------
-   subroutine setupVertical(szprod,lzprod, bent, region, bottom, photic)
-      real(dp), intent(in) :: szprod,lzprod, bottom, bent,photic !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical(szprod,lzprod, bprodin, dfbot, dfpho, region, bottom, photic)
+     !  default bottom:1500m euphotic depth 150m
+      real(dp), intent(in) :: szprod,lzprod, bottom, bprodin, dfbot, dfpho, photic ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
+                                                                                   ! only one of them works, keep the unused arguments negative e.g., bprodin = -1.d0, dfbot = -1.d0, dfpho = 100.d0
       integer, intent(in) :: region!, nStages                    ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
@@ -480,9 +502,17 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
-      if (bprod .ge. bent*0.1d0) then
-         bprod = bent*0.1d0
+      if (bprodin >0.d0) then
+        bprod=bprodin
+      end if
+      if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+      end if
+      if (dfpho > 0.d0) then
+       bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+       if (bprod .ge. dfpho*0.1d0) then
+          bprod = dfpho*0.1d0
+       end if
       end if
 
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
@@ -842,8 +872,10 @@ contains
 ! --------------------------------------
 ! Revised setup of vertical overlap based on van Denderen et al. (2020)
 ! --------------------------------------
-   subroutine setupVertical2(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature,Fishing,etaF)
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature,Fishing,etaF !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical2(szprod,lzprod, bprodin, dfbot, dfpho, nStages, region, bottom, photic, etaMature,Fishing,etaF)
+     !  default bottom:1500m euphotic depth 150m
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bprodin, dfbot, dfpho, etaMature,Fishing,etaF ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
+                                                                                                           ! only one of them works, keep the unused arguments negative e.g., bprodin = -1.d0, dfbot = -1.d0, dfpho = 100.d0
       integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
@@ -885,9 +917,17 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
-      if (bprod .ge. bent*0.1d0) then
-         bprod = bent*0.1d0
+      if (bprodin >0.d0) then
+        bprod=bprodin
+      end if
+      if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+      end if
+      if (dfpho > 0.d0) then
+       bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+       if (bprod .ge. dfpho*0.1d0) then
+          bprod = dfpho*0.1d0
+       end if
       end if
 
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!

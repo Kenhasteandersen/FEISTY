@@ -83,13 +83,24 @@
 
 setupBasic = function(szprod = 100, # small zoo production?
                       lzprod = 100, # large zoo production?
-                      bprod  = 5,   # benthos production?
+                      bprodin  = NA,  # benthos production?
+                      dfbot  = NA,  # detrital flux reaching the bottom
                       depth  = 100, # water column depth [m]
                       Tp     = 10,  # pelagic layer averaged temperature [Celsius]
                       Tb     = 8)  # bottom layer depth [Celsius]
   {
+  # benthic production calc
+  if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
+    bprod = 5; bprodin =  -1; dfbot = -1
+  } else {
+    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
+    if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
+  }
+  
+  
   # Initialize the parameters:
-  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,
+  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod,Tp=Tp,Tb=Tb,
                     mMedium = 0.5, mLarge = 250)
   
   # Add resource:
@@ -300,7 +311,8 @@ param$setup="setupBasic"
 
 setupBasic2 = function(szprod = 100, # small zoo production?
                        lzprod = 100, # large zoo production?
-                       bprod  = 5,   # benthos production?
+                       bprodin  = NA,   # benthos production?
+                       dfbot  = NA,  # detrital flux reaching the bottom
                        depth  = 100, # water column depth [m]
                        Tp     = 10,  # pelagic layer averaged temperature [Celsius]
                        Tb     = 8,  # bottom layer depth [Celsius]
@@ -308,9 +320,18 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        etaMature=0.25,
                        F=0,
                        etaF=0.05) {
+  # benthic production calc
+  if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
+    bprod = 5; bprodin = -1; dfbot = -1
+   } else {
+    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
+    if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
+   }
   
+    
   # Initialize the parameters:
-  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprod=bprod,Tp=Tp,Tb=Tb,etaMature=etaMature,
+  param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod, Tp=Tp,Tb=Tb,etaMature=etaMature,
                     mMedium = 0.5, mLarge = 250)
 
   # Setup resource groups:
@@ -518,23 +539,36 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 # ------------------------------------------------------------------------------
 
 setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
-                         bent = 150, # Detrital flux out of photic zone
+                         bprodin  = NA, # benthos production
+                         dfbot  = NA, # detrital flux reaching the bottom
+                         dfpho  = NA, # detrital flux out of photic zone
                          #nStages=6, # No. of size groups    it is 6 in van Denderen et al., 2020
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
                          depth=1500, # Bottom depth
                          photic=150 # Photic zone depth
                          ){
+  # benthic production calc
+  if (is.na(bprodin) & is.na(dfbot) & is.na(dfpho)){ # if all benthic arguments are NA, assign bprod to 5
+    bprodin = -1; dfbot = -1; dfpho = 150
+    bprod=0.1*(dfpho*(depth/photic)^-0.86)
+    if(bprod>=0.1*dfpho) bprod=0.1*dfpho
+  } else {
+    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
+    if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
+    if (!is.na(dfpho)) {bprod=0.1*(dfpho*(depth/photic)^-0.86); if(bprod>=0.1*dfpho) bprod=0.1*dfpho} else {dfpho = -1}
+  }
   
   #------------------  
   # Initialize the parameters:
   # habitat and small benthos
   #------------------  
   etaMature=0.002
-  bprod=0.1*(bent*(depth/photic)^-0.86)
-  if(bprod>=0.1*bent)bprod=0.1*bent
+  # bprod=0.1*(bent*(depth/photic)^-0.86)
+  # if(bprod>=0.1*bent)bprod=0.1*bent
 
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
-                    mesop=250, visual=1.5, bent=bent,etaMature=etaMature,region=region)
+                    mesop=250, visual=1.5, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
@@ -938,7 +972,9 @@ return(param)
 # ------------------------------------------------------------------------------
 
 setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
-                         bent = 150, # Detrital flux out of photic zone
+                         bprodin  = NA, # benthos production
+                         dfbot  = NA, # detrital flux reaching the bottom
+                         dfpho  = NA, # detrital flux out of photic zone
                          nStages=6, # No. of size groups
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
                          depth=1500, # Bottom depth
@@ -950,16 +986,27 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          # van Denderen (2021), where it is 0.002
                          F=0,
                          etaF=0.05) {
-  
+  # benthic production calc
+  if (is.na(bprodin) & is.na(dfbot) & is.na(dfpho)){ # if all benthic arguments are NA, assign bprod to 5
+    bprodin = -1; dfbot = -1; dfpho = 150
+    bprod=0.1*(dfpho*(depth/photic)^-0.86)
+    if(bprod>=0.1*dfpho) bprod=0.1*dfpho
+  } else {
+    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
+    if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
+    if (!is.na(dfpho)) {bprod=0.1*(dfpho*(depth/photic)^-0.86); if(bprod>=0.1*dfpho) bprod=0.1*dfpho} else {dfpho = -1}
+  }
+    
   #------------------  
   # Initialize the parameters:
   # habitat and small benthos
   #------------------  
-  bprod=0.1*(bent*(depth/photic)^-0.86)
-  if(bprod>=0.1*bent)bprod=0.1*bent
+  # bprod=0.1*(bent*(depth/photic)^-0.86)
+  # if(bprod>=0.1*bent)bprod=0.1*bent
   
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
-                    mesop=mesopelagic, visual=visual, bent=bent,etaMature=etaMature,region=region)
+                    mesop=mesopelagic, visual=visual, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
