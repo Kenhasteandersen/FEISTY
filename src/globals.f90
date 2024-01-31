@@ -77,23 +77,23 @@ contains
 !   end subroutine updateTemperature
 
 ! update temperature setupbasic (Petrik et al., 2019) and setupbasic2
-subroutine updateTemp(Ts, Tb)
-      real(dp), intent(in) :: Ts, Tb
+subroutine updateTemp(Tp, Tb)
+      real(dp), intent(in) :: Tp, Tb
       real(dp) :: eT, lambda
-      real(dp), save :: Tolds = -1000.d0
+      real(dp), save :: Toldp = -1000.d0
       real(dp), save :: Toldb = -1000.d0
 
-      if (Ts .ne. Tolds .OR. Tb .ne. Toldb) then
-         Tolds = Ts
+      if (Tp .ne. Toldp .OR. Tb .ne. Toldb) then
+         Toldp = Tp
          Toldb = Tb
-         fTemp = calfTemp(Q10, Ts)  !Q10=1.88 clearance rate,  maximum consumption rate
-         fTempm = calfTemp(Q10mPetrik, Ts) !Q10m=2.35 for metabolism    Petrik
+         fTemp = calfTemp(Q10, Tp)  !Q10=1.88 clearance rate,  maximum consumption rate
+         fTempm = calfTemp(Q10mPetrik, Tp) !Q10m=2.35 for metabolism    Petrik
          fTempdem = calfTemp(Q10, Tb)  !for demersal
          fTempmdem = calfTemp(Q10mPetrik, Tb) !for demersal
 
           !lambda should depend on B but temporarily set as 0.5
           lambda = 0.5d0
-          eT     = Ts * lambda + Tb * (1-lambda)
+          eT     = Tp * lambda + Tb * (1-lambda)
           fTempdem_shallow  = calfTemp(Q10, eT)
           fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
       end if

@@ -104,7 +104,9 @@ derivativesFEISTYR = function(t,              # current time
   
   # split state variable vector into resource and fish
   u[u<0]=0
-  if(p$depth<200 & p$eT==TRUE) p=updateET(p=p,u=u)
+  if (!is.null(p$depth) & !is.null(p$eT)) {
+   if(p$depth<200 & p$eT==TRUE) p=updateET(p=p,u=u)
+  }
   R     = u[p$ixR]       # resource, prey
   iFish = p$ixFish
   B     = u[iFish]       # fish, 

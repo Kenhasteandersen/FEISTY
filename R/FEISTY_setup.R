@@ -102,7 +102,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod,Tp=Tp,Tb=Tb,
-                    mMedium = 0.5, mLarge = 250)
+                    mMedium = 0.5, mLarge = 250, eT=eT)
   
   # Add resource:
   param = paramAddResource(
@@ -131,7 +131,6 @@ setupBasic = function(szprod = 100, # small zoo production?
                       Q10=1.88,
                       Q10m=2.35)#,
                       #u=NA)
-  param$eT=eT
 
   # Add fishing mortality
   # if F=0 No further process, return the input param set
@@ -335,7 +334,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
     
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod, Tp=Tp,Tb=Tb,etaMature=etaMature,
-                    mMedium = 0.5, mLarge = 250)
+                    mMedium = 0.5, mLarge = 250, eT=eT)
 
   # Setup resource groups:
   param = paramAddResource(
@@ -367,7 +366,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                      Q10=1.88,
                      Q10m=2.35)#,
                      #u=NA)
-  param$eT=eT
   
   # Add fishing mortality
   param=setFishing(param, F=F, etaF=etaF)
