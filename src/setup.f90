@@ -111,11 +111,17 @@ contains
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
       !benthic productivity
-      if (bprodin >0.d0) then
+      if (bprodin < 0.d0 .and. dfbot<0.d0) then
+        bprod = 5.d0
+      else if (bprodin .gt. 0.d0 .and. dfbot.gt.0.d0) then
+        stop
+      else
+       if (bprodin .ge. 0.d0) then
         bprod=bprodin
-      end if
-      if (dfbot >0.d0) then
+       end if
+       if (dfbot .ge. 0.d0) then
         bprod=dfbot*0.1d0
+       end if
       end if
 
       call read_namelist_setupbasic()
@@ -262,11 +268,17 @@ contains
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
 
       !benthic productivity
-      if (bprodin >0.d0) then
+      if (bprodin < 0.d0 .and. dfbot<0.d0) then
+        bprod = 5.d0
+      else if (bprodin .gt. 0.d0 .and. dfbot.gt.0.d0) then
+        stop
+      else
+       if (bprodin .ge. 0.d0) then
         bprod=bprodin
-      end if
-      if (dfbot >0.d0) then
+       end if
+       if (dfbot .ge. 0.d0) then
         bprod=dfbot*0.1d0
+       end if
       end if
 
       call read_namelist_setupbasic2()    !
@@ -502,16 +514,26 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      if (bprodin >0.d0) then
+      if (bprodin < 0.d0 .and. dfbot < 0.d0 .and. dfpho < 0.d0) then
+        !dfpho = 150.d0
+        bprod = 0.1d0*(150.d0*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. 150.d0*0.1d0) then
+           bprod = 150.d0*0.1d0
+        end if
+      else if (bprodin .gt. 0.d0 .and. dfbot .gt. 0.d0 .and. dfpho .gt. 0.d0) then
+        stop
+      else
+       if (bprodin >0.d0) then
         bprod=bprodin
-      end if
-      if (dfbot >0.d0) then
+       end if
+       if (dfbot >0.d0) then
         bprod=dfbot*0.1d0
-      end if
-      if (dfpho > 0.d0) then
-       bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
-       if (bprod .ge. dfpho*0.1d0) then
-          bprod = dfpho*0.1d0
+       end if
+       if (dfpho > 0.d0) then
+        bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. dfpho*0.1d0) then
+           bprod = dfpho*0.1d0
+        end if
        end if
       end if
 
@@ -917,16 +939,26 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      if (bprodin >0.d0) then
+      if (bprodin < 0.d0 .and. dfbot < 0.d0 .and. dfpho < 0.d0) then
+        !dfpho = 150.d0
+        bprod = 0.1d0*(150.d0*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. 150.d0*0.1d0) then
+           bprod = 150.d0*0.1d0
+        end if
+      else if (bprodin .gt. 0.d0 .and. dfbot .gt. 0.d0 .and. dfpho .gt. 0.d0) then
+        stop
+      else
+       if (bprodin >0.d0) then
         bprod=bprodin
-      end if
-      if (dfbot >0.d0) then
+       end if
+       if (dfbot >0.d0) then
         bprod=dfbot*0.1d0
-      end if
-      if (dfpho > 0.d0) then
-       bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
-       if (bprod .ge. dfpho*0.1d0) then
-          bprod = dfpho*0.1d0
+       end if
+       if (dfpho > 0.d0) then
+        bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. dfpho*0.1d0) then
+           bprod = dfpho*0.1d0
+        end if
        end if
       end if
 

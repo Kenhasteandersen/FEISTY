@@ -87,7 +87,8 @@ setupBasic = function(szprod = 100, # small zoo production?
                       dfbot  = NA,  # detrital flux reaching the bottom
                       depth  = 100, # water column depth [m]
                       Tp     = 10,  # pelagic layer averaged temperature [Celsius]
-                      Tb     = 8)  # bottom layer depth [Celsius]
+                      Tb     = 8,   # bottom layer depth [Celsius]
+                      eT     = TRUE)# effective T on large demersals, logical  
   {
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
@@ -128,8 +129,9 @@ setupBasic = function(szprod = 100, # small zoo production?
   param=paramTeffect(param, # only for setupbasic & 2
                       Tref=10,
                       Q10=1.88,
-                      Q10m=2.35,
-                      u=NA)
+                      Q10m=2.35)#,
+                      #u=NA)
+  param$eT=eT
 
   # Add fishing mortality
   # if F=0 No further process, return the input param set
@@ -319,7 +321,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        nStages=9,
                        etaMature=0.25,
                        F=0,
-                       etaF=0.05) {
+                       etaF=0.05,
+                       eT     = TRUE) { # effective T on large demersals, logical)
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin = -1; dfbot = -1
@@ -362,8 +365,9 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   param=paramTeffect(param, # only for setupbasic & 2
                      Tref=10,
                      Q10=1.88,
-                     Q10m=2.35,
-                     u=NA)
+                     Q10m=2.35)#,
+                     #u=NA)
+  param$eT=eT
   
   # Add fishing mortality
   param=setFishing(param, F=F, etaF=etaF)

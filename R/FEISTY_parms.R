@@ -727,61 +727,108 @@ paramTeffect = function (p, # only for setupbasic & 2
                          Tref,
                          Q10,
                          Q10m,
-                         u=NA){ # B container: R+fish
+                         pelidx=c(1:(p$nGroups-1)), # pelagic groups idx, default all group-last group
+                         demidx=p$nGroups){     # demseal group idx, default last group
   
   p$Q10  = Q10
   p$Q10m = Q10m
   p$Tref = Tref
+  p$pelidx=pelidx
+  p$demidx=demidx
   # 
   p$fT = Q10^((p$Tp - Tref)/10) # factor of T effects on V Cmax
   p$fT_met = Q10m^((p$Tp - Tref)/10) # factor of T effects on metabolism
   p$fT_dem = Q10^((p$Tb - Tref)/10) # demersal
   p$fT_met_dem = Q10m^((p$Tb - Tref)/10)
   
-  if (p$depth<200){
-  
-  lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]))/
-         (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]) + 
-          sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]]) + sum(u[3:4])) #Eq. 15
-  
-  lambda=0.5 #
-  p$eT = p$Tp * lambda + p$Tb * (1-lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
-  
-  p$fT_dem_shallow=Q10^((p$eT - Tref)/10) # demersal
-  p$fT_met_dem_shallow=Q10m^((p$eT - Tref)/10)
+  if (p$depth<200){# effective temperature for large demersals in shallow water (<200m) Eq. 16
+                   # default no effective T eT=(Tp+Tb)*0.5
+    lambda=0.5 #
+    eT = p$Tp * lambda + p$Tb * (1-lambda) 
+    
+    p$fT_dem_shallow=Q10^((eT - Tref)/10) # demersal
+    p$fT_met_dem_shallow=Q10m^((eT - Tref)/10)
   }
   
-  ix = c(p$ix[[1]],p$ix[[2]])
-
   #pelagics
+  ix=unlist(lapply(pelidx, function(i) p$ix[[i]]))  
+  
   p$V[ix]= p$fT * p$Vsave[ix]
-  
   p$Cmax[ix]= p$fT * p$Cmaxsave[ix]
-  
   p$metabolism[ix] = p$fT_met * p$metabolismsave[ix]
   
   #demersal
+  ix=unlist(lapply(demidx, function(i) p$ix[[i]])) 
+  
+  ix_small  = ix[which(p$mc[ix] <= p$mMedium)]
+  ix_medium = ix[which(p$mc[ix] > p$mMedium & p$mc[ix] < p$mLarge)]
+  ix_large  = ix[which(p$mc[ix] >= p$mLarge)]
+  
+  p$lgdemidx=ix_large
+  
   #small
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT_met * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
+  p$V[ix_small] = p$fT * p$Vsave[ix_small] # small demersal are pelagic
+  p$Cmax[ix_small] = p$fT * p$Cmaxsave[ix_small]
+  p$metabolism[ix_small] = p$fT_met * p$metabolismsave[ix_small]
   #medium
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
+  p$V[ix_medium] = p$fT_dem * p$Vsave[ix_medium] # medium demersal stay at bottom
+  p$Cmax[ix_medium] = p$fT_dem * p$Cmaxsave[ix_medium]
+  p$metabolism[ix_medium] = p$fT_met_dem * p$metabolismsave[ix_medium]
   #Large  
   if (p$depth < 200){
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem_shallow * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
+    p$V[ix_large] = p$fT_dem_shallow * p$Vsave[ix_large] #
+    p$Cmax[ix_large] = p$fT_dem_shallow * p$Cmaxsave[ix_large]
+    p$metabolism[ix_large] = p$fT_met_dem_shallow * p$metabolismsave[ix_large]
   }else{
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-    
+    p$V[ix_large] = p$fT_dem * p$Vsave[ix_large] #
+    p$Cmax[ix_large] = p$fT_dem * p$Cmaxsave[ix_large]
+    p$metabolism[ix_large] = p$fT_met_dem * p$metabolismsave[ix_large]
   }
-  
   
   return(p)
 }
 
+updateET = function (p, # 
+                     u=NA){ # B container: R+fish
+
+ # depth < 200m
+
+  # p$lgdemidx
+  # p$pelidx
+  
+  #dem idx
+  ix=unlist(lapply(p$demidx, function(i) p$ix[[i]])) 
+  ix_small  = ix[which(p$mc[ix] <= p$mMedium)]
+  ix_medium = ix[which(p$mc[ix] > p$mMedium & p$mc[ix] < p$mLarge)]
+  ix_large  = ix[which(p$mc[ix] >= p$mLarge)]
+
+  pelidx=c(1,2,unlist(lapply(p$pelidx, function(i) p$ix[[i]])), ix_small) # zoo + pelagic fish + small dem
+  #allpreyidx=c(1,2,3,4,unlist(lapply(pelidx, function(i) p$ix[[i]])), ix_small,ix_medium,ilgdem) # zoo + benthos + pelagic fish + small dem + medium dem + self
+  allidx=c(p$ixR,p$ixFish)#(1:ncol(p$theta))
+    for (ilgdem in p$lgdemidx){
+
+     pelpreyidx = (pelidx)[which(p$theta[ilgdem,pelidx]!=0)]
+     allpreyidx = (allidx)[which(p$theta[ilgdem,]!=0)]
+      
+  # lambda = total pelagic pery B / total prey B  # Eq. 15
+    lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]))/
+      (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]) + 
+         sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]]) + sum(u[3:4]))
+    
+    lambda = sum(u[pelpreyidx])/sum(u[allpreyidx])
+    
+    eT = p$Tp * lambda + p$Tb * (1-lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
+    
+    p$fT_dem_shallow=p$Q10^((eT - p$Tref)/10) # demersal
+    p$fT_met_dem_shallow=p$Q10m^((eT - p$Tref)/10)
+  
+  #demersal
+
+    p$V[ilgdem] = p$fT_dem_shallow * p$Vsave[ilgdem] #
+    p$Cmax[ilgdem] = p$fT_dem_shallow * p$Cmaxsave[ilgdem]
+    p$metabolism[ilgdem] = p$fT_met_dem_shallow * p$metabolismsave[ilgdem]
+  
+}
+
+  return(p)
+}
