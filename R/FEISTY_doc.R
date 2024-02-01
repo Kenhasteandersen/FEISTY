@@ -93,7 +93,7 @@
 #' @importFrom grDevices dev.off pdf
 #' @importFrom graphics axis box image legend lines mtext par points polygon
 #' @importFrom stats na.omit simulate
-#' @importFrom pracma erf size linspace
+#' @importFrom pracma erf size linspace isempty
 #' @importFrom latex2exp TeX
 #' @import deSolve
 #' @import shiny

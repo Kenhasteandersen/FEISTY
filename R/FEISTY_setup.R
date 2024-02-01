@@ -87,8 +87,7 @@ setupBasic = function(szprod = 100, # small zoo production?
                       dfbot  = NA,  # detrital flux reaching the bottom
                       depth  = 100, # water column depth [m]
                       Tp     = 10,  # pelagic layer averaged temperature [Celsius]
-                      Tb     = 8,   # bottom layer depth [Celsius]
-                      eT     = TRUE)# effective T on large demersals, logical  
+                      Tb     = 8)   # bottom layer depth [Celsius]
   {
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
@@ -102,7 +101,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod,Tp=Tp,Tb=Tb,
-                    mMedium = 0.5, mLarge = 250, eT=eT)
+                    mMedium = 0.5, mLarge = 250, bET=TRUE) # bET:  # boolean, effective T on large demersals in Petrik et al., 2019
   
   # Add resource:
   param = paramAddResource(
@@ -129,7 +128,9 @@ setupBasic = function(szprod = 100, # small zoo production?
   param=paramTeffect(param, # only for setupbasic & 2
                       Tref=10,
                       Q10=1.88,
-                      Q10m=2.35)#,
+                      Q10m=2.35,
+                      pelgroupidx=c(1:(param$nGroups-1)),
+                      demgroupidx=param$nGroups)#,
                       #u=NA)
 
   # Add fishing mortality
@@ -321,7 +322,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                        etaMature=0.25,
                        F=0,
                        etaF=0.05,
-                       eT     = TRUE) { # effective T on large demersals, logical)
+                       bET     = TRUE) { # boolean, effective T on large demersals)
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin = -1; dfbot = -1
@@ -334,7 +335,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
     
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod, Tp=Tp,Tb=Tb,etaMature=etaMature,
-                    mMedium = 0.5, mLarge = 250, eT=eT)
+                    mMedium = 0.5, mLarge = 250, bET=bET)
 
   # Setup resource groups:
   param = paramAddResource(
@@ -364,7 +365,9 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   param=paramTeffect(param, # only for setupbasic & 2
                      Tref=10,
                      Q10=1.88,
-                     Q10m=2.35)#,
+                     Q10m=2.35,
+                     pelgroupidx=c(1:(param$nGroups-1)),
+                     demgroupidx=param$nGroups)#,
                      #u=NA)
   
   # Add fishing mortality
