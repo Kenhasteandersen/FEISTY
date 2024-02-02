@@ -90,6 +90,12 @@ Module setup
          real(dp):: tmp(12)
          logical :: feistyinitialised  = .FALSE.
 
+!===================================
+!for temperature effects
+         integer, allocatable :: pelgroupidx(:)
+         integer, allocatable :: demgroupidx(:)
+
+
 contains
 ! ======================================
 !  Different Setups
@@ -192,34 +198,34 @@ contains
       theta(12, 11) = 1.d0          ! medium demersals
 
 ! update temperature
-call updateTemp(Ts,Tb)
+call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
 
-  !all fish group
-  !pelagic
-do iGroup = 1, nGroups-1
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-end do
-  !demersal
-  !small
-    group(3)%spec%V(1)=group(3)%spec%V(1)*fTemp
-    group(3)%spec%Cmax(1)=group(3)%spec%Cmax(1)*fTemp
-    group(3)%spec%metabolism(1)=group(3)%spec%metabolism(1)*fTempm
-  !medium
-    group(3)%spec%V(2)=group(3)%spec%V(2)*fTempdem
-    group(3)%spec%Cmax(2)=group(3)%spec%Cmax(2)*fTempdem
-    group(3)%spec%metabolism(2)=group(3)%spec%metabolism(2)*fTempmdem
-  !large
-   if (depth .lt. 200.d0) then
-    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem_shallow
-    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem_shallow
-    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem_shallow
-   else
-    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem
-    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem
-    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem
-   end if
+!  !all fish group
+!  !pelagic
+!do iGroup = 1, nGroups-1
+!    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
+!    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
+!    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
+!end do
+!  !demersal
+!  !small
+!    group(3)%spec%V(1)=group(3)%spec%V(1)*fTemp
+!    group(3)%spec%Cmax(1)=group(3)%spec%Cmax(1)*fTemp
+!    group(3)%spec%metabolism(1)=group(3)%spec%metabolism(1)*fTempm
+!  !medium
+!    group(3)%spec%V(2)=group(3)%spec%V(2)*fTempdem
+!    group(3)%spec%Cmax(2)=group(3)%spec%Cmax(2)*fTempdem
+!    group(3)%spec%metabolism(2)=group(3)%spec%metabolism(2)*fTempmdem
+!  !large
+!   if (depth .lt. 200.d0) then
+!    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem_shallow
+!    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem_shallow
+!    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem_shallow
+!   else
+!    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem
+!    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem
+!    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem
+!   end if
 
 !update vector V Cmax for T effects
       do iGroup = 1, nGroups
@@ -401,42 +407,42 @@ contains
 !      theta(:,4) = 0.d0
 
 ! update temperature
-call updateTemp(Ts, Tb)
-  !all fish group
-  !pelagic
-do iGroup = 1, nGroups-1
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-end do
-
-  !demersal
-do i = 1, group(3)%spec%n
-
-  if (group(3)%spec%m(i) .le. mMedium) then
-  !small
-    group(3)%spec%V(i)=group(3)%spec%V(i)*fTemp
-    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTemp
-    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempm
-
-  elseif (group(3)%spec%m(i) .gt. mMedium .and. group(3)%spec%m(i) .lt. mLarge)then
-  !medium
-    group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-  elseif (group(3)%spec%m(i) .ge. mLarge)then
-  !large
-     if (depth .lt. 200.d0) then
-     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem_shallow
-     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem_shallow
-     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem_shallow
-     else
-     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-     end if
-  end if
-end do
+call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
+!  !all fish group
+!  !pelagic
+!do iGroup = 1, nGroups-1
+!    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
+!    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
+!    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
+!end do
+!
+!  !demersal
+!do i = 1, group(3)%spec%n
+!
+!  if (group(3)%spec%m(i) .le. mMedium) then
+!  !small
+!    group(3)%spec%V(i)=group(3)%spec%V(i)*fTemp
+!    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTemp
+!    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempm
+!
+!  elseif (group(3)%spec%m(i) .gt. mMedium .and. group(3)%spec%m(i) .lt. mLarge)then
+!  !medium
+!    group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
+!    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
+!    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
+!  elseif (group(3)%spec%m(i) .ge. mLarge)then
+!  !large
+!     if (depth .lt. 200.d0) then
+!     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem_shallow
+!     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem_shallow
+!     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem_shallow
+!     else
+!     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
+!     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
+!     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
+!     end if
+!  end if
+!end do
 
 !update vector V Cmax for T effects
       do iGroup = 1, nGroups
@@ -2056,6 +2062,166 @@ z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spe
 
 end do
 end subroutine set2vec
+
+
+!--------------------------------------------------------------------
+!     Temperature
+!--------------------------------------------------------------------
+
+
+   ! -----------------------------------------------
+   ! Temperature Q10 function
+   ! -----------------------------------------------
+   function calfTemp(Q10, T) result(f) !calculate temperature factor
+      real(dp), intent(in):: Q10, T
+      real(dp):: f
+
+      f = Q10**((T - Tref)/10.d0)
+   end function calfTemp
+
+! update temperature effects on physiological rates, setupbasic (Petrik et al., 2019) and setupbasic2
+subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
+      real(dp), intent(in) :: Tp, Tb, depth
+      integer, intent(in) :: npelgroup,ndemgroup
+      integer, intent(in) ::  pelgroup(npelgroup), demgroup(ndemgroup)
+      real(dp) :: eT, lambda
+      real(dp), save :: Toldp = -1000.d0
+      real(dp), save :: Toldb = -1000.d0
+      integer:: i,ii,iGroup
+
+      if (allocated (pelgroupidx))    deallocate (pelgroupidx)
+      allocate (pelgroupidx(npelgroup))
+      pelgroupidx=pelgroup
+      if (allocated (demgroupidx))    deallocate (demgroupidx)
+      allocate (demgroupidx(ndemgroup))
+      demgroupidx=demgroup
+
+
+
+      if (Tp .ne. Toldp .OR. Tb .ne. Toldb) then
+         Toldp = Tp
+         Toldb = Tb
+         fTemp = calfTemp(Q10, Tp)  !Q10=1.88 clearance rate,  maximum consumption rate
+         fTempm = calfTemp(Q10mPetrik, Tp) !Q10m=2.35 for metabolism    Petrik
+         fTempdem = calfTemp(Q10, Tb)  !for demersal
+         fTempmdem = calfTemp(Q10mPetrik, Tb) !for demersal
+
+          !lambda should depend on B but temporarily set as 0.5
+          lambda = 0.5d0
+          eT     = Tp * lambda + Tb * (1-lambda)
+          fTempdem_shallow  = calfTemp(Q10, eT)
+          fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
+      end if
+
+    !all fish group
+      !pelagic
+    if (npelgroup.gt.0) then
+     do i = 1, size(pelgroup)
+
+        iGroup=pelgroup(i)
+
+        group(iGroup)%spec%V=group(iGroup)%spec%V /fTempold *fTemp
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax /fTempold *fTemp
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism /fTempmold *fTempm
+     end do
+    end if
+
+
+      !demersal
+   if (ndemgroup.gt.0) then
+    do ii= 1, size(demgroup)
+        iGroup=demgroup(ii)
+
+     do i = 1, group(iGroup)%spec%n
+
+       if (group(iGroup)%spec%m(i) .le. mMedium) then
+      !small
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempold *fTemp
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempold *fTemp
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmold *fTempm
+
+       elseif (group(iGroup)%spec%m(i) .gt. mMedium .and. group(iGroup)%spec%m(i) .lt. mLarge)then
+      !medium
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdemold *fTempdem
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdemold *fTempdem
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdemold *fTempmdem
+       elseif (group(iGroup)%spec%m(i) .ge. mLarge)then
+      !large
+          if (depth .lt. 200.d0) then
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdem_shallowold *fTempdem_shallow
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdem_shallowold *fTempdem_shallow
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdem_shallowold *fTempmdem_shallow
+          else
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdemold *fTempdem
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdemold *fTempdem
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdemold *fTempmdem
+          end if
+       end if
+     end do
+    end do
+   end if
+
+   fTempold=fTemp
+   fTempmold=fTempm
+   fTempdemold=fTempdem
+   fTempmdemold=fTempmdem
+   fTempdem_shallowold=fTempdem_shallow
+   fTempmdem_shallowold=fTempmdem_shallow
+
+
+end subroutine updateTemp
+
+! update Temperature for vertical version van Denderen et al., 2021
+subroutine updateTempV(depthDay, depthNight, bottom, region)
+ real(dp), intent(in) :: depthDay(:, :), depthNight(:, :), bottom
+ integer :: i,region
+ real(dp), allocatable :: dist(:,:), TQ10(:), TQ10m(:), fTemp_stepV(:,:), fTempm_stepV(:,:)
+ real(dp) :: tempdata(5501,5) ! contain tempdata from van Denderen et al., 2021 + default(10 celcius)
+
+    if (allocated (fTempV)) then
+        deallocate (fTempV)
+        deallocate (fTempmV)
+    end if
+
+allocate (dist(size(depthDay,1), size(depthDay,2)))
+allocate (TQ10(int(bottom+1)))
+allocate (TQ10m(int(bottom+1)))
+allocate (fTemp_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempm_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempV(size(depthDay,2)))
+allocate (fTempmV(size(depthDay,2)))
+
+    dist = 0.d0
+    TQ10 = 0.d0
+    TQ10m = 0.d0
+    fTemp_stepV = 0.d0
+    fTempm_stepV = 0.d0
+    fTempV = 0.d0
+    fTempmV  = 0.d0
+
+open(unit=1,action='read', file=file_path_V,status="old")!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main
+do i = 1,5501
+    read(1,*) tempdata(i,1),tempdata(i,2),tempdata(i,3),tempdata(i,4) !depth 0-5500(no use), tropical, temperate, boreal, default(10 celcius)
+end do
+close(1)
+tempdata(:,5)=10.d0 !default temp, so no temp-effects
+
+dist = (depthDay + depthNight)/2.d0
+! region+1: 1+1 tropical, 2+1 temperate, 3+1 boreal, 4+1 default(10 celcius)
+TQ10 =  Q10**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+TQ10m =  Q10m**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+
+
+do i=1,size(dist,2)
+fTemp_stepV(:,i) = dist(:,i) * TQ10
+fTempm_stepV(:,i) = dist(:,i) * TQ10m
+end do
+
+fTempV = sum(fTemp_stepV,1)
+fTempmV = sum(fTempm_stepV,1)
+
+end subroutine updateTempV
+
 
 
 end module setup
