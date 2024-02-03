@@ -31,6 +31,11 @@ module spectrum
       real(dp), dimension(:), allocatable:: Jin, Jout                 !
       real(dp), dimension(:), allocatable:: nu, nupositive, Repro, g  !nu = Eavail
 
+      ! save for temperature (Feb 2024 added)
+      real(dp), allocatable :: Cmaxsave(:)             !
+      real(dp), allocatable :: Vsave(:)                !
+      real(dp), allocatable :: metabolismsave(:)      !
+
    contains
 
       procedure, pass :: initSpectrum
@@ -72,6 +77,10 @@ contains
 
       allocate (this%Jin(n))
       allocate (this%Jout(n))
+
+      allocate (this%Cmaxsave(n))
+      allocate (this%Vsave(n))
+      allocate (this%metabolismsave(n))
 
    contains
 !

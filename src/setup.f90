@@ -91,9 +91,18 @@ Module setup
          logical :: feistyinitialised  = .FALSE.
 
 !===================================
-!for temperature effects
+!for temperature effects (Feb 2024)
          integer, allocatable :: pelgroupidx(:)
          integer, allocatable :: demgroupidx(:)
+         real(dp) :: pelagicT
+         real(dp) :: benthicT
+         integer, allocatable :: smdemidx(:)
+         integer, allocatable :: lgdemidx(:)
+         integer, allocatable :: pelRidx(:)
+         integer(dp), allocatable :: pelgrididx(:), allgrididx(:)
+         real(dp), allocatable:: metabolismsave(:)
+         real(dp), allocatable:: Vsave(:)
+         real(dp), allocatable:: Cmaxsave(:)
 
 
 contains
@@ -153,6 +162,7 @@ contains
 ! Overwrite
       do iGroup = 1, nGroups
          group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p) ! overwrite metabolism
+         group(iGroup)%spec%metabolismsave =   group(iGroup)%spec%metabolism
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
          group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0 ! only adults reproduce
@@ -198,7 +208,9 @@ contains
       theta(12, 11) = 1.d0          ! medium demersals
 
 ! update temperature
-call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
+    if(allocated(pelRidx)) deallocate (pelRidx)
+    pelRidx=[1,2]! hard coded, used in effective Temperature
+    call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
 
 !  !all fish group
 !  !pelagic
@@ -310,6 +322,7 @@ contains
 ! Overwrite
       do iGroup = 1, nGroups
          group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p)!overwrite metabolism
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
       end do
 
 ! fishing mortality
@@ -407,7 +420,9 @@ contains
 !      theta(:,4) = 0.d0
 
 ! update temperature
-call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
+    if(allocated(pelRidx)) deallocate (pelRidx)
+    pelRidx=[1,2]! hard coded, used in effective Temperature
+    call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
 !  !all fish group
 !  !pelagic
 !do iGroup = 1, nGroups-1
@@ -1881,6 +1896,11 @@ contains
          deallocate(mortRes)
 !-----------------------------------------
 
+!-----------------Feb 2024 add-----------
+         deallocate(metabolismsave)
+         deallocate(Vsave)
+         deallocate(Cmaxsave)
+
       end if
 
       allocate (group(nGroups))
@@ -1925,6 +1945,12 @@ contains
       allocate(totRecruit(nGroups))
       allocate(totBiomass(nGroups))
 !---------------------------------------
+
+!-----------------Feb 2024 add-----------
+      allocate(metabolismsave(nGrid))
+      allocate(Vsave(nGrid))
+      allocate(Cmaxsave(nGrid))
+
 
       ! define resources:
       K = [szprod, lzprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
@@ -2061,6 +2087,11 @@ psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(
 z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
 
 end do
+
+metabolismsave=metabolism
+Vsave=V
+Cmaxsave=Cmax
+
 end subroutine set2vec
 
 
@@ -2087,7 +2118,10 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
       real(dp) :: eT, lambda
       real(dp), save :: Toldp = -1000.d0
       real(dp), save :: Toldb = -1000.d0
-      integer:: i,ii,iGroup
+      integer:: i,ii,j,iGroup
+
+      if (allocated (smdemidx))  deallocate (smdemidx)
+      if (allocated (lgdemidx))  deallocate (lgdemidx)
 
       if (allocated (pelgroupidx))    deallocate (pelgroupidx)
       allocate (pelgroupidx(npelgroup))
@@ -2095,8 +2129,8 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
       if (allocated (demgroupidx))    deallocate (demgroupidx)
       allocate (demgroupidx(ndemgroup))
       demgroupidx=demgroup
-
-
+      pelagicT=Tp
+      benthicT=Tb
 
       if (Tp .ne. Toldp .OR. Tb .ne. Toldb) then
          Toldp = Tp
@@ -2120,11 +2154,12 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
 
         iGroup=pelgroup(i)
 
-        group(iGroup)%spec%V=group(iGroup)%spec%V /fTempold *fTemp
-        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax /fTempold *fTemp
-        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism /fTempmold *fTempm
+        group(iGroup)%spec%V=group(iGroup)%spec%Vsave *fTemp
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmaxsave *fTemp
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave *fTempm
      end do
     end if
+
 
 
       !demersal
@@ -2132,44 +2167,102 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
     do ii= 1, size(demgroup)
         iGroup=demgroup(ii)
 
+      ! form small & large demersal index array
+        smdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        smdemidx=smdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .le. mMedium))
+        lgdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        lgdemidx=lgdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .ge. mLarge))
+         if (ii.ne.1) then
+          smdemidx = [smdemidx,smdemidx]
+          lgdemidx = [lgdemidx,lgdemidx]
+         end if
+
+
      do i = 1, group(iGroup)%spec%n
 
        if (group(iGroup)%spec%m(i) .le. mMedium) then
       !small
-         group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempold *fTemp
-         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempold *fTemp
-         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmold *fTempm
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTemp
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTemp
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempm
 
        elseif (group(iGroup)%spec%m(i) .gt. mMedium .and. group(iGroup)%spec%m(i) .lt. mLarge)then
       !medium
-         group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdemold *fTempdem
-         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdemold *fTempdem
-         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdemold *fTempmdem
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem
        elseif (group(iGroup)%spec%m(i) .ge. mLarge)then
       !large
           if (depth .lt. 200.d0) then
-          group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdem_shallowold *fTempdem_shallow
-          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdem_shallowold *fTempdem_shallow
-          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdem_shallowold *fTempmdem_shallow
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem_shallow
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem_shallow
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem_shallow
           else
-          group(iGroup)%spec%V(i)=group(iGroup)%spec%V(i) /fTempdemold *fTempdem
-          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmax(i) /fTempdemold *fTempdem
-          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolism(i) /fTempmdemold *fTempmdem
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem
           end if
        end if
      end do
     end do
    end if
 
-   fTempold=fTemp
-   fTempmold=fTempm
-   fTempdemold=fTempdem
-   fTempmdemold=fTempmdem
-   fTempdem_shallowold=fTempdem_shallow
-   fTempmdem_shallowold=fTempmdem_shallow
+!   fTempold=fTemp
+!   fTempmold=fTempm
+!   fTempdemold=fTempdem
+!   fTempmdemold=fTempmdem
+!   fTempdem_shallowold=fTempdem_shallow
+!   fTempmdem_shallowold=fTempmdem_shallow
+
+   !prepare index for effective temperature
+   if (allocated (pelgrididx)) deallocate (pelgrididx)
+   if (allocated (allgrididx)) deallocate (allgrididx)
+
+! assemble pelgrididx vector
+   pelgrididx = pelRidx ! all pelagic resources (zoop)
+   do ii= 1, size(pelgroupidx) ! add pelagic fish
+       iGroup=pelgroupidx(ii)
+        pelgrididx=[int(pelgrididx,4),(i, i = ixStart(iGroup), ixEnd(iGroup))]
+   end do
+   pelgrididx=[int(pelgrididx,4),smdemidx] ! add small demersal fish (pelagic)
+   ! Note pelgrididx is integer(8)
+
+   allgrididx=[(i, i = 1, nResources), (j, j = ixStart(1), ixEnd(nGroups))]
+
 
 
 end subroutine updateTemp
+
+
+subroutine updateET(u)
+    real(dp), intent(in) :: u(nGrid)
+    real(dp) :: eT, lambda
+    integer :: i,ii,j,iGroup
+    integer, allocatable :: pelpreyidx(:), allpreyidx(:)
+
+   do ii= 1,size(lgdemidx)
+    i=lgdemidx(ii)
+
+    if (allocated (pelpreyidx)) deallocate (pelpreyidx)
+    if (allocated (allpreyidx)) deallocate (allpreyidx)
+
+    pelpreyidx = pack(pelgrididx, theta(i, pelgrididx) /= 0.d0)
+    allpreyidx = pack(allgrididx, theta(i, allgrididx) /= 0.d0)
+
+    lambda = sum(u(pelpreyidx)) / sum(u(allpreyidx)) ! Eq. 15
+    eT = pelagicT * lambda + benthicT * (1 - lambda)
+    fTempdem_shallow  = calfTemp(Q10, eT)
+    fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
+
+    !update vectors
+    V(i)          = Vsave(i) * fTempdem_shallow
+    Cmax(i)       = Cmaxsave(i) * fTempdem_shallow
+    metabolism(i) = metabolismsave(i) * fTempmdem_shallow
+
+   end do
+
+
+end subroutine
 
 ! update Temperature for vertical version van Denderen et al., 2021
 subroutine updateTempV(depthDay, depthNight, bottom, region)
