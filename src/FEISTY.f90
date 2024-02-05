@@ -305,7 +305,7 @@ do i = 1, nGrid
   u(i) = max(0.d0 , uin(i))
 end do
 
-!call updateET(u)
+call updateET(u)
 
 ! ----------------------------------------------
 ! Feeding $ losses for resources and fish grids:

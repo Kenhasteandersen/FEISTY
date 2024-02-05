@@ -177,13 +177,13 @@ contains
 
 ! Feeding preference matrix:
 ! assemble vectors
-!      do iGroup = 1, nGroups
-!         select type (spec => group(iGroup)%spec)
-!         type is (spectrumfish)
-!            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-!         end select
-!      end do
-!      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
+      do iGroup = 1, nGroups
+         select type (spec => group(iGroup)%spec)
+         type is (spectrumfish)
+            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+         end select
+      end do
+      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
       !mU(1:nResources) = [2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)] ! weight central size
       !mL(1:nResources) = [2e-06,0.001, 0.5e-03, 0.25] ! weight lower limit)
 
@@ -2078,6 +2078,10 @@ mortF=0.d0
 psiMature=0.d0
 z=0.d0
 
+metabolismsave=0.d0
+Vsave=0.d0
+Cmaxsave=0.d0
+
 do iGroup=1,nGroups
 
 metabolism( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%metabolism
@@ -2086,11 +2090,12 @@ mortF( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mortF
 psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(iGroup)%spec%psiMature
 z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
 
+metabolismsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%metabolismsave
+Vsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Vsave
+Cmaxsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Cmaxsave
+
 end do
 
-metabolismsave=metabolism
-Vsave=V
-Cmaxsave=Cmax
 
 end subroutine set2vec
 
