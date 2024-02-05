@@ -103,6 +103,10 @@ Module setup
          real(dp), allocatable:: metabolismsave(:)
          real(dp), allocatable:: Vsave(:)
          real(dp), allocatable:: Cmaxsave(:)
+         logical :: bET
+         real(dp) :: Q10ET
+         real(dp) :: Q10mET
+         real(dp) :: depthET
 
 
 contains
@@ -211,6 +215,7 @@ contains
     if(allocated(pelRidx)) deallocate (pelRidx)
     pelRidx=[1,2]! hard coded, used in effective Temperature
     call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
+    bET = .TRUE.
 
 !  !all fish group
 !  !pelagic
@@ -270,13 +275,13 @@ contains
 ! --------------------------------------
 ! Setup by Ken based on Petrik et al. (2019).
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprodin, dfbot, nStages, depth, Ts, Tb, etaMature,Fishing,etaF) !
+   subroutine setupbasic2(szprod,lzprod, bprodin, dfbot, nStages, depth, Ts, Tb, etaMature,Fishing,etaF,bETin) !
       real(dp), intent(in) :: szprod,lzprod, bprodin, dfbot, Ts, Tb, depth ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
                                                                            ! only one of them works, keep the unused arguments negative e.g., bprodin = 100.d0, dfbot = -1.d0
 
       real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
       real(dp), intent(in) :: Fishing, etaF ! fishing mortality, etaF * asymptotic size =fish size with 50% fishing mortality
-      integer, intent(in) :: nStages
+      integer, intent(in) :: nStages,bETin
       real(dp) :: bprod
       integer :: iGroup, i, j
 ! predation preference coefficient
@@ -423,6 +428,8 @@ contains
     if(allocated(pelRidx)) deallocate (pelRidx)
     pelRidx=[1,2]! hard coded, used in effective Temperature
     call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
+    if(bETin .eq. 1) bET = .TRUE.
+    if(bETin .eq. 0) bET = .FALSE.
 !  !all fish group
 !  !pelagic
 !do iGroup = 1, nGroups-1
@@ -1900,6 +1907,7 @@ contains
          deallocate(metabolismsave)
          deallocate(Vsave)
          deallocate(Cmaxsave)
+         bET=.FALSE.
 
       end if
 
@@ -2234,7 +2242,9 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
 
    allgrididx=[(i, i = 1, nResources), (j, j = ixStart(1), ixEnd(nGroups))]
 
-
+   Q10ET=Q10
+   Q10mET=Q10mPetrik
+   depthET=depth
 
 end subroutine updateTemp
 
@@ -2256,8 +2266,8 @@ subroutine updateET(u)
 
     lambda = sum(u(pelpreyidx)) / sum(u(allpreyidx)) ! Eq. 15
     eT = pelagicT * lambda + benthicT * (1 - lambda)
-    fTempdem_shallow  = calfTemp(Q10, eT)
-    fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
+    fTempdem_shallow  = calfTemp(Q10ET, eT)
+    fTempmdem_shallow = calfTemp(Q10mET, eT)
 
     !update vectors
     V(i)          = Vsave(i) * fTempdem_shallow

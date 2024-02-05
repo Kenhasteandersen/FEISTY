@@ -217,7 +217,7 @@ paramInit = function(...) {
                     "largePel" = "#2196F3",
                     "bathyPel" =  "#0D47A1",
                     "demersals" =  "#800080")
-  
+
   param$my_names <- c("smallZoo" = "Small zooplankton",
                   "largeZoo" = "Large zooplankton",
                   "smallBenthos" = "Small Benthos",
@@ -227,6 +227,7 @@ paramInit = function(...) {
                   "largePel" = "Large pelagics",
                   "bathyPel" = "Bathypelagics",
                   "demersals" =  "Demersals")
+
   
   return(param)
 }
@@ -800,6 +801,9 @@ paramTeffect = function (p, # only for setupbasic & 2
     }
     
   }
+  
+  p$pelgrididx = c(p$ixpelR, unlist(lapply(p$pelgroupidx, function(i) p$ix[[i]])), p$smdemidx) # zoop + pelagic fish + small dem
+  p$allgrididx = c(p$ixR, p$ixFish) #(1:ncol(p$theta))
   
   return(p)
 }

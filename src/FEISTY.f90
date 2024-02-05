@@ -94,6 +94,40 @@
       nGrid  = nFgrid + nResources
 !CALL intpr ("nFgrid ", 7, nFgrid, 1)  ! to check if correctly passed
 
+      if (allocated (pelgrididx))    deallocate (pelgrididx)
+      allocate (pelgrididx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(pelgrididx)
+        pelgrididx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if (allocated (allgrididx))    deallocate (allgrididx)
+      allocate (allgrididx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(allgrididx)
+        allgrididx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if (allocated (lgdemidx))    deallocate (lgdemidx)
+      allocate (lgdemidx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(lgdemidx)
+        lgdemidx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if(ipar(ii) .eq. 1) bET= .TRUE.
+      if(ipar(ii) .eq. 0) bET= .FALSE.
+
+
      !--------------------------
      ! resource parameters
      !--------------------------
@@ -264,6 +298,41 @@
       if (allocated (totBiomass)) deallocate (totBiomass)
       allocate (totBiomass(nGroups))
 
+!   Feb 2024 added
+      if (allocated (Vsave))           deallocate (Vsave)
+      allocate (Vsave(nGrid))
+
+      if (allocated (Cmaxsave))        deallocate (Cmaxsave)
+      allocate (Cmaxsave(nGrid))
+
+      if (allocated (metabolismsave))  deallocate (metabolismsave)
+      allocate (metabolismsave(nGrid))
+
+      call getVec(Vsave,           rpar, ir, nGrid)
+      call getVec(Cmaxsave,        rpar, ir, nGrid)
+      call getVec(metabolismsave,  rpar, ir, nGrid)
+
+!      call getVec(depthET,  rpar, ir, 1)
+!      call getVec(Q10ET,  rpar, ir, 1)
+!      call getVec(Q10mET,  rpar, ir, 1)
+!      call getVec(pelagicT,  rpar, ir, 1)
+!      call getVec(benthicT,  rpar, ir, 1)
+
+      depthET=rpar(ir)
+      ir=ir+1
+      Q10ET=rpar(ir)
+      ir=ir+1
+      Q10mET=rpar(ir)
+      ir=ir+1
+      pelagicT=rpar(ir)
+      ir=ir+1
+      benthicT=rpar(ir)
+      ir=ir+1
+
+
+
+
+
    end subroutine allocfeisty
 
 !--------------------------------------
@@ -305,7 +374,7 @@ do i = 1, nGrid
   u(i) = max(0.d0 , uin(i))
 end do
 
-call updateET(u)
+if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
 ! ----------------------------------------------
 ! Feeding $ losses for resources and fish grids:
@@ -469,13 +538,13 @@ call updateET(u)
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(11)
+    real(dp) :: parmsbasic(12)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(11,parmsbasic)
+       call steadyparms(12,parmsbasic)
        call setupbasic2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),INT(parmsbasic(5)),&
-                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10),parmsbasic(11))
+                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10),parmsbasic(11),INT(parmsbasic(12)))
 
        feistyinitialised = .TRUE.
 

@@ -476,10 +476,17 @@ simulateFEISTY = function(bCust    = FALSE,
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
               unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
-              p$Rtype)                           # type of resource dynamics
+              p$Rtype,                          # type of resource dynamics
+              length(p$pelgrididx),
+              p$pelgrididx,
+              length(p$allgrididx),
+              p$allgrididx,
+              length(p$lgdemidx),
+              p$lgdemidx,
+              as.integer(p$bET))
     ipar <- as.integer(ipar)
-    if (length(ipar) != 3 + nGroups) 
-      stop ("length of 'ipar' not ok -check parameters")  
+    # if (length(ipar) != 3 + nGroups) 
+    #   stop ("length of 'ipar' not ok -check parameters")  
     
     if (any(dim(p$theta)-c(nGrid, nGrid) != 0))
       stop ("dimension of 'theta' not ok: should be (", nGrid, ",", nGrid, ")")  
@@ -496,7 +503,15 @@ simulateFEISTY = function(bCust    = FALSE,
                 rep(p$Cmax,       length.out=nGrid),
                 rep(p$metabolism, length.out=nGrid),
                 rep(p$mort0,      length.out=nGrid),
-                rep(p$mortF,      length.out=nGrid))  
+                rep(p$mortF,      length.out=nGrid),
+                rep(p$Vsave,          length.out=nGrid), 
+                rep(p$Cmaxsave,       length.out=nGrid),
+                rep(p$metabolismsave, length.out=nGrid),
+                p$depth,
+                p$Q10,
+                p$Q10m,
+                p$Tp,
+                p$Tb)  
     
     # names of functions in fortran code to be used
     runfunc  <- "runfeisty"    # the derivative function
@@ -553,7 +568,7 @@ simulateFEISTY = function(bCust    = FALSE,
         setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$depth,p$Tp,p$Tb)
       }else if(p$setup=="setupBasic2"){
         initfunc <- "initfeistysetupbasic2"
-        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$F,p$etaF)
+        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$F,p$etaF,as.integer(p$bET))
       }else if(p$setup=="setupVertical"){
         initfunc <- "initfeistysetupvertical"
         setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,p$region, p$bottom, p$photic)
