@@ -808,22 +808,82 @@ paramTeffect = function (p, # only for setupbasic & 2
   return(p)
 }
 
+#' Update effective temperature
+#'
+#' This function updates temperature-dependent physiological rates of large demersal fish in shallow water (< 200m) based on effective temperatures.
+#' It is called in each time step of ODE solving. Q10 temperature coefficients are applied to modify metabolic rates, clearance rates, and maximum consumption rates.
+#' It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
+#' 
+#' @usage paramTeffect(p, Tref, Q10, Q10m, u=NA)
+#' 
+#' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
+#' `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
+#' @param u Temporarily not used. To be developed...
+#'
+#' @return An updated parameter list:
+#' \itemize{
+#' \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
+#' \item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+#' \item Cmax, a vector containing maximum consumption rate values, resources (0) + all size classes of all functional types.
+#' \item metabolism, a vector containing standard metabolism values, resources (0) + all size classes of all functional types.
+#' \item V, a vector containing clearance rate values, resources (0) + all size classes of all functional types.
+#' }
+#'
+#' @details
+#' The function calculates temperature effects on physiological rates (metabolism, clearance rate, and maximum consumption rate) using 
+#' the Q10 theory, which states that a physiological process rate increases by a factor of Q10 for every 10 Celsius rise in temperature.
+#' The effects are applied differently in terms of living habitats (pelagic and demersal) and water depth (shallow and deep).
+#' This function is embedded into the \code{\link{derivativesFEISTYR}} to update the effective temperature on 
+#' large demersal fish physiological rates (metabolism, clearance rate, and maximum consumption rate) in shallow water.\cr
+#' It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
+#' To use UpdateET please use paramTeffect when doing the parameter setup.
+#' 
+#' Please make sure the indices have been assigned properly, otherwise the 
+#'
+#' The function requires a specific structure in the input parameter list `p`, such as
+#' indices of all fish and vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
+#' Therefore it only can be called after \code{\link{paramAddPhysiology}}.
+#' `Tp` and `Tb` are required in the input parameter list, or this function will not work.
+#' It might not work in customized setups other than \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
+#'
+#' @examples
+#' # Just an example, data may not make sense.
+#' # Create a FEISTY setup by setupBasic2.
+#' p1 = setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+#' nStages=9, etaMature=0.25, F=0, etaF=0.05)
+#' 
+#' # change environmental temperatures and update T effects on physiological rates
+#' p1$Tp=15
+#' p1$Tb=12
+#' p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, u=NA)
+#' # Compare the original and updated physiological rates 
+#' p1$V
+#' p2$V
+#' p1$metabolism
+#' p2$metabolism
+#' p1$Cmax
+#' p2$Cmax
+#' 
+#' @author Yixin Zhao
+#' 
+#' @references
+#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+#' 
+#' @aliases updateET
+#' 
+#' @seealso 
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
+#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`
+#'
+
 updateET = function (p, # 
                      u=NA){ # B container: R+fish
 
   # depth < 200m
   
-  pelgrididx = c(p$ixpelR, unlist(lapply(p$pelgroupidx, function(i) p$ix[[i]])), p$smdemidx) # zoop + pelagic fish + small dem
-  allgrididx = c(p$ixR, p$ixFish) #(1:ncol(p$theta))
-  
   for (ilgdem in p$lgdemidx) {
-    pelpreyidx = (pelgrididx)[which(p$theta[ilgdem, pelgrididx] != 0)]
-    allpreyidx = (allgrididx)[which(p$theta[ilgdem, ] != 0)]
-    
-    # lambda = total pelagic pery B / total prey B  # 
-    # lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]))/
-    #   (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]) +
-    #      sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]]) + sum(u[3:4]))
+    pelpreyidx = (p$pelgrididx)[which(p$theta[ilgdem, p$pelgrididx] != 0)]
+    allpreyidx = (p$allgrididx)[which(p$theta[ilgdem, ] != 0)]
     
     lambda = sum(u[pelpreyidx]) / sum(u[allpreyidx]) # Eq. 15
     
