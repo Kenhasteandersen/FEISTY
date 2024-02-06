@@ -217,33 +217,6 @@ contains
     call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
     bET = .TRUE.
 
-!  !all fish group
-!  !pelagic
-!do iGroup = 1, nGroups-1
-!    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-!    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-!    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-!end do
-!  !demersal
-!  !small
-!    group(3)%spec%V(1)=group(3)%spec%V(1)*fTemp
-!    group(3)%spec%Cmax(1)=group(3)%spec%Cmax(1)*fTemp
-!    group(3)%spec%metabolism(1)=group(3)%spec%metabolism(1)*fTempm
-!  !medium
-!    group(3)%spec%V(2)=group(3)%spec%V(2)*fTempdem
-!    group(3)%spec%Cmax(2)=group(3)%spec%Cmax(2)*fTempdem
-!    group(3)%spec%metabolism(2)=group(3)%spec%metabolism(2)*fTempmdem
-!  !large
-!   if (depth .lt. 200.d0) then
-!    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem_shallow
-!    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem_shallow
-!    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem_shallow
-!   else
-!    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem
-!    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem
-!    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem
-!   end if
-
 !update vector V Cmax for T effects
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
@@ -430,41 +403,6 @@ contains
     call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
     if(bETin .eq. 1) bET = .TRUE.
     if(bETin .eq. 0) bET = .FALSE.
-!  !all fish group
-!  !pelagic
-!do iGroup = 1, nGroups-1
-!    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-!    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-!    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-!end do
-!
-!  !demersal
-!do i = 1, group(3)%spec%n
-!
-!  if (group(3)%spec%m(i) .le. mMedium) then
-!  !small
-!    group(3)%spec%V(i)=group(3)%spec%V(i)*fTemp
-!    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTemp
-!    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempm
-!
-!  elseif (group(3)%spec%m(i) .gt. mMedium .and. group(3)%spec%m(i) .lt. mLarge)then
-!  !medium
-!    group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-!    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-!    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-!  elseif (group(3)%spec%m(i) .ge. mLarge)then
-!  !large
-!     if (depth .lt. 200.d0) then
-!     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem_shallow
-!     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem_shallow
-!     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem_shallow
-!     else
-!     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-!     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-!     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-!     end if
-!  end if
-!end do
 
 !update vector V Cmax for T effects
       do iGroup = 1, nGroups

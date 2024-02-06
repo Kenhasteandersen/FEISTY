@@ -485,7 +485,7 @@ simulateFEISTY = function(bCust    = FALSE,
               p$lgdemidx,
               if (is.null(p$bET)) NULL else as.integer(p$bET))
     ipar <- as.integer(ipar)
-    if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype) != 3 + nGroups))
+    if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype)) != 3 + nGroups)
       stop ("length of 'ipar' not ok -check parameters")
     
     if (any(dim(p$theta)-c(nGrid, nGrid) != 0))
