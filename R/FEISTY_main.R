@@ -104,12 +104,12 @@ derivativesFEISTYR = function(t,              # current time
   
   # split state variable vector into resource and fish
   u[u<0]=0
-  if (!is.null(p$depth) & !is.null(p$bET)) {
-   if(p$depth<200 & p$bET==TRUE) p=updateET(p=p,u=u)
-  }
   R     = u[p$ixR]       # resource, prey
   iFish = p$ixFish
-  B     = u[iFish]       # fish, 
+  B     = u[iFish]       # fish
+  
+  # update effective temperature for large demersal fish in shallow water
+  if(!is.null(p$depth) & !is.null(p$bET) & p$depth<200 & p$bET==TRUE) p=updateET(p=p,u=u)
   
   # ----------------------------------------------
   # Consumption of all fish groups
@@ -476,17 +476,17 @@ simulateFEISTY = function(bCust    = FALSE,
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
               unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
-              p$Rtype,                          # type of resource dynamics
-              length(p$pelgrididx),
+              p$Rtype,                           # type of resource dynamics
+              if (is.null(p$pelgrididx)) NULL else length(p$pelgrididx),
               p$pelgrididx,
-              length(p$allgrididx),
+              if (is.null(p$allgrididx)) NULL else length(p$allgrididx),
               p$allgrididx,
-              length(p$lgdemidx),
+              if (is.null(p$lgdemidx)) NULL else length(p$lgdemidx),
               p$lgdemidx,
-              as.integer(p$bET))
+              if (is.null(p$bET)) NULL else as.integer(p$bET))
     ipar <- as.integer(ipar)
-    # if (length(ipar) != 3 + nGroups) 
-    #   stop ("length of 'ipar' not ok -check parameters")  
+    if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype) != 3 + nGroups))
+      stop ("length of 'ipar' not ok -check parameters")
     
     if (any(dim(p$theta)-c(nGrid, nGrid) != 0))
       stop ("dimension of 'theta' not ok: should be (", nGrid, ",", nGrid, ")")  
@@ -497,7 +497,7 @@ simulateFEISTY = function(bCust    = FALSE,
                 rep(p$epsRepro, length.out=nGroups), # group-specific parameter
                 p$psiMature[-(1:nR)],                # fish-stage parameter
                 p$z[-(1:nR)], 
-                t(p$theta),                              # check if not transpose
+                t(p$theta),                          # check if not transpose
                 rep(p$epsAssim,   length.out=nGrid), # all  
                 rep(p$V,          length.out=nGrid), 
                 rep(p$Cmax,       length.out=nGrid),
@@ -511,7 +511,7 @@ simulateFEISTY = function(bCust    = FALSE,
                 p$Q10,
                 p$Q10m,
                 p$Tp,
-                p$Tb)  
+                p$Tb)
     
     # names of functions in fortran code to be used
     runfunc  <- "runfeisty"    # the derivative function
@@ -598,10 +598,6 @@ simulateFEISTY = function(bCust    = FALSE,
     # assign colnames
     colnames(u)[(1+p$nStages+1):ncol(u)]=outnames
   }
-  
-  # if (any(u[,c(p$ixR,p$ixFish)+1]<0))
-  #   stop (paste("Negative biomass occurs! The current timestep length is tStep = ", tStep,
-  #               ". Try shortening the timestep length to increase accuracy, e.g., sim = simulateFEISTY(..., tStep = ", tStep/10, ").",sep=""))
   
   #
   # Assemble output:

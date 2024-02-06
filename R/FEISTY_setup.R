@@ -376,9 +376,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   # Setup size interaction matrix:
   thetaA = 0.5  # Large fish pref for medium forage fish
   thetaD = 0.75 # Pref of large demersal on pelagic prey
-  
-  #param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
 
    # Size-based interactions:  
    beta  = 400
@@ -388,15 +385,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                                beta = 400,  # preferred predator/prey mass ratio
                                sigma = 1.3, # width of size preference for feeding
                                type = 1)
-   
-  # update preference from fish to resources with the simple function
-   # for (i in param$ixFish) {
-   #   for(j in param$ixR){
-   #     param$theta[i,j] = exp( -(log(param$mc[i]/(beta*param$mc[j])))^2 / (2*sigma)^2  )
-   #   if (param$mc[j] >param$mc[i]) param$theta[i, j] = 0
-   #   }
-   # }
-   
    
    #
    # Setup interactions between groups and resources:
@@ -569,8 +557,6 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # habitat and small benthos
   #------------------  
   etaMature=0.002
-  # bprod=0.1*(bent*(depth/photic)^-0.86)
-  # if(bprod>=0.1*bent)bprod=0.1*bent
 
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
                     mesop=250, visual=1.5, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
@@ -639,8 +625,6 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # theta (preferences):
   #------------------  
   #------------------  
-  #param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
 
   beta  = 400
   sigma = 1.3
@@ -1007,8 +991,6 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # Initialize the parameters:
   # habitat and small benthos
   #------------------  
-  # bprod=0.1*(bent*(depth/photic)^-0.86)
-  # if(bprod>=0.1*bent)bprod=0.1*bent
   
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
                     mesop=mesopelagic, visual=visual, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
@@ -1066,8 +1048,6 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # theta (preferences):
   #------------------  
   #------------------  
-  #param$theta  = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  #rownames(param$theta) <- colnames(param$theta) <- param$stagenames
   
   beta  = 400
   sigma = 1.3
