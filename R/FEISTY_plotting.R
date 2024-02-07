@@ -555,19 +555,26 @@ plotNetwork <- function(sim) {
     
   }
   
-  # Marker size depends on biomass: 
+  # # Marker size depends on biomass:
+  # # Using real biomass yields bubles with too many orders of magnitude difference
+  # # Thus we group them by quantiles
+  # Msize <- Bi / max(Bi)
+  # Msize[Msize == 0] <- NA
+  # idxM <- quantile(Msize, prob = c(0.2, 0.4, 0.6, 0.8), na.rm = T) # get quantiles
+  # 
+  # # Specify buble size for each quantile:
+  # Msize[Msize >= idxM[4] & !is.na(Msize)] <- 20
+  # Msize[Msize >= idxM[3] & Msize < idxM[4] & !is.na(Msize)] <- 15
+  # Msize[Msize >= idxM[2] & Msize < idxM[3] & !is.na(Msize)] <- 8
+  # Msize[Msize >= idxM[1] & Msize < idxM[2] & !is.na(Msize)] <- 3
+  # Msize[Msize < idxM[1] & !is.na(Msize)] <- .8
+
+  # Marker size depends on biomass:
   # Using real biomass yields bubles with too many orders of magnitude difference
-  # Thus we group them by quantiles
+  # Thus we apply a cubic square:
   Msize <- Bi / max(Bi)
   Msize[Msize == 0] <- NA
-  idxM <- quantile(Msize, prob = c(0.2, 0.4, 0.6, 0.8), na.rm = T) # get quantiles
-  
-  # Specify buble size for each quantile:
-  Msize[Msize >= idxM[4] & !is.na(Msize)] <- 20
-  Msize[Msize >= idxM[3] & Msize < idxM[4] & !is.na(Msize)] <- 15
-  Msize[Msize >= idxM[2] & Msize < idxM[3] & !is.na(Msize)] <- 8
-  Msize[Msize >= idxM[1] & Msize < idxM[2] & !is.na(Msize)] <- 3
-  Msize[Msize < idxM[1] & !is.na(Msize)] <- .8
+  Msize <- Msize^(1/3)
   
   # Create line width: 
   Mat <- rep(0, ngroup) 
@@ -584,7 +591,7 @@ plotNetwork <- function(sim) {
                         depth = rep(Av_depth[1:p$nStages], p$nStages), 
                         SpId = rep(SpId, p$nStages),
                         Msize = rep(Msize, p$nStages), 
-                        LineWdth = Theta/max(Theta),
+                        LineWdth = Theta/max(Theta) /30, # shrink
                         Alpha = Theta/max(Theta))
   
   coord_2 <- data.frame(index = 1:p$nStages^2, # Notice that here repetition ys grouped by "each" to change order
@@ -592,7 +599,7 @@ plotNetwork <- function(sim) {
                         depth = rep(Av_depth[1:p$nStages], each = p$nStages), 
                         SpId = rep(SpId, each = p$nStages),
                         Msize = rep(Msize, each = p$nStages),
-                        LineWdth = Theta/max(Theta),
+                        LineWdth = Theta/max(Theta) /30, # shrink
                         Alpha = Theta/max(Theta))
   
   df <- rbind(coord_1, coord_2)

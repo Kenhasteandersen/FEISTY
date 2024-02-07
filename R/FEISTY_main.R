@@ -109,7 +109,8 @@ derivativesFEISTYR = function(t,              # current time
   B     = u[iFish]       # fish
   
   # update effective temperature for large demersal fish in shallow water
-  if(!is.null(p$depth) & !is.null(p$bET) & p$depth<200 & p$bET==TRUE) p=updateET(p=p,u=u)
+  if(!is.null(p$depth) & !is.null(p$bET))
+    if (p$depth<200 & p$bET==TRUE) p=updateET(p=p,u=u)
   
   # ----------------------------------------------
   # Consumption of all fish groups
