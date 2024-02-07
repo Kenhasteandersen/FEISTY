@@ -98,7 +98,6 @@ setupBasic = function(szprod = 100, # small zoo production?
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
   }
   
-  
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod,Tp=Tp,Tb=Tb,
                     mMedium = 0.5, mLarge = 250, bET=TRUE) # bET:  # boolean, effective T on large demersals in Petrik et al., 2019
@@ -130,14 +129,12 @@ setupBasic = function(szprod = 100, # small zoo production?
                       Q10=1.88,
                       Q10m=2.35,
                       pelgroupidx=c(1:(param$nGroups-1)),
-                      demgroupidx=param$nGroups)#,
-                      #u=NA)
+                      demgroupidx=param$nGroups)
 
   # Add fishing mortality
-  # if F=0 No further process, return the input param set
-  #setparam=setFishing(param, F=0, etaF=0.05)
-  
-  
+  # Has been assigned by param = paramAddGroup(..., mortF=c()), hard coded
+
+  #
   # Setup size interaction matrix:
   #
 
@@ -332,7 +329,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
    }
   
-    
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod, Tp=Tp,Tb=Tb,etaMature=etaMature,
                     mMedium = 0.5, mLarge = 250, bET=bET)
@@ -346,7 +342,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
         mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
         mUpper = c(0.001, 0.5, 125, 125),
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
-
 
 # Add fish groups:
   nSmall = round(0.66*nStages)
@@ -367,8 +362,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
                      Q10=1.88,
                      Q10m=2.35,
                      pelgroupidx=c(1:(param$nGroups-1)),
-                     demgroupidx=param$nGroups)#,
-                     #u=NA)
+                     demgroupidx=param$nGroups)
   
   # Add fishing mortality
   param=setFishing(param, F=F, etaF=etaF)
@@ -378,9 +372,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   thetaD = 0.75 # Pref of large demersal on pelagic prey
 
    # Size-based interactions:  
-   beta  = 400
-   sigma = 1.3
-   
    param$theta=paramSizepref(p=param,           # parameter settings 
                                beta = 400,  # preferred predator/prey mass ratio
                                sigma = 1.3, # width of size preference for feeding
@@ -433,11 +424,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
           param$theta[ixLargeSizeDem, ixSmallSizeDem] = 0
    }
 
-  param$metabolism[is.na(param$metabolism)]=0
-  param$mortF[is.na(param$mortF)]=0
-  param$psiMature[is.na(param$psiMature)]=0
-  param$z[is.na(param$z)]=0
   param$setup="setupBasic2"
+  
   return(param)
 }
 
@@ -559,7 +547,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   etaMature=0.002
 
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
-                    mesop=250, visual=1.5, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
+                    mesop=250, visual=1.5, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod,
+                    etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
@@ -585,7 +574,6 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0,
                         mortF=0,      nStages=nSmall, name="smallPel")
   
-
   u0M = u0  # initial condition = 0 if no mesopelagic zone
   if (param$bottom <= param$mesop) u0M <- 0
   
@@ -607,7 +595,6 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   param = paramAddPhysiology(param,am = 0.2*20) # 20% * Max. consumption coefficient)
   
-  
   #overwrite psiMature only for setupVertical
   nsize= nStages+1
   sizes = 10^(linspace(log10(0.001), log10(125000), nsize))
@@ -621,14 +608,8 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$psiMature[param$ix[[5]][matstageL:max(param$ix[[5]])]]=0.5
     
   #------------------  
-  #------------------  
   # theta (preferences):
   #------------------  
-  #------------------  
-
-  beta  = 400
-  sigma = 1.3
-
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
@@ -993,7 +974,8 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
-                    mesop=mesopelagic, visual=visual, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod, etaMature=etaMature,region=region)
+                    mesop=mesopelagic, visual=visual, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod,
+                    etaMature=etaMature,region=region)
   
   #------------------  
   # Setup resource groups:
@@ -1044,13 +1026,8 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param=setFishing(param, F=F, etaF=etaF)
   
   #------------------  
-  #------------------  
   # theta (preferences):
   #------------------  
-  #------------------  
-  
-  beta  = 400
-  sigma = 1.3
 
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   

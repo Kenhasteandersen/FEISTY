@@ -655,7 +655,6 @@ paramAddPhysiology = function (p,
   p$metabolismsave=p$metabolism
   
   # remove the NAs
-  # remove the NAs
   p$mc       [is.na(p$mc)]        <- 0 
   p$u0       [is.na(p$u0)]        <- 0 
   p$z        [is.na(p$z)]         <- 0 
