@@ -106,7 +106,7 @@ setupBasic = function(szprod = 100, # small zoo production?
   # Add resource:
   param = paramAddResource(
         param, 
-        names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
         K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
@@ -165,14 +165,14 @@ setupBasic = function(szprod = 100, # small zoo production?
 
   # Demersals:
   param$theta["demersals_1", "smallZoo"] = 1
-  param$theta["demersals_2", "smallBenthos"] = 1
+  param$theta["demersals_2", "benthos"] = 1
   # Large demersal fish have reduced feeding preference on large-size small pelagic fish and medium-size large pelagic fish in shallow water,
   # but do not eat them in deep water (depth>=200m).
   if (param$depth < 200){ 
   param$theta["demersals_3", "smallPel_2"] = 0.75/2
   param$theta["demersals_3", "largePel_2"] = 0.75 
   }
-  param$theta["demersals_3", "smallBenthos"] = 1
+  param$theta["demersals_3", "benthos"] = 1
   param$theta["demersals_3", "demersals_2"] = 1 
 param$setup="setupBasic"
   return(param)
@@ -340,7 +340,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   # Setup resource groups:
   param = paramAddResource(
         param, 
-        names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
         K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
@@ -567,7 +567,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
 
     param = paramAddResource(
         param, 
-        names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
         K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
@@ -1001,7 +1001,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   param = paramAddResource(
     param, 
-    names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+    names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
     K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
     r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
     mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
@@ -1286,7 +1286,7 @@ setupPelagicSpecies = function(depth=500, pprod=100, bprod=5,
   # Setup resource groups:
   param = paramAddResource(
         param, 
-        names= c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos"),
+        names= c("smallZoo", "largeZoo", "benthos", "largeBenthos"),
         K    = c(pprod, pprod, bprod, 0),  # g ww/m2  - maximum resource concentration
         r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
         mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),

@@ -227,6 +227,24 @@ paramInit = function(...) {
                   "largePel" = "Large pelagics",
                   "bathyPel" = "Bathypelagics",
                   "demersals" =  "Demersals")
+  
+  param$my_palette <- c("smallZoo" = "#DDCC77",
+                        "largeZoo" = "#999933",
+                        "benthos" = "#662506",
+                        "smallPel" = "#EE6677",
+                        "mesoPel" = "#AA4499",
+                        "largePel" = "#33BBEE",
+                        "bathyPel" =  "#004488",
+                        "demersals" =  "#228833")
+                        
+  param$my_names <- c("smallZoo" = "Small mesozooplankton",
+                      "largeZoo" = "Large mesozooplankton",
+                      "benthos" = "Benthos",
+                      "smallPel" = "Small pelagics",
+                      "mesoPel" = "Mesopelagics",
+                      "largePel" = "Large pelagics",
+                      "bathyPel" = "Bathypelagics",
+                      "demersals" = "Demersals")
 
   
   return(param)

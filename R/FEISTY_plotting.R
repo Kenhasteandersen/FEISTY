@@ -501,7 +501,7 @@ plotNetwork <- function(sim) {
     Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
     
     p$SpId <- c('smallPel','largePel', 'demersals')
-    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+    SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
@@ -512,7 +512,7 @@ plotNetwork <- function(sim) {
     Av_depth <- c(-1,-1,-4,-4,rep(0, length(p$ix[[1]])),rep(-2, length(p$ix[[2]])),rep(-3, length(p$ix[[3]])))
     
     p$SpId <- c('smallPel','largePel', 'demersals')
-    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+    SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
@@ -546,7 +546,7 @@ plotNetwork <- function(sim) {
     # Set color palette 
     
     p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'demersals')
-    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+    SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])),
@@ -694,7 +694,7 @@ plotDiet <- function(sim) {
   if (length(p$ix)==5){
     
     p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'demersals')
-    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+    SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])),
@@ -707,7 +707,7 @@ plotDiet <- function(sim) {
   } else {
     
     p$SpId <- c('smallPel','largePel', 'demersals')
-    SpId <- c("smallZoo", "largeZoo", "smallBenthos", "largeBenthos", 
+    SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
