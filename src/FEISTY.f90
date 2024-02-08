@@ -329,10 +329,6 @@
       benthicT=rpar(ir)
       ir=ir+1
 
-
-
-
-
    end subroutine allocfeisty
 
 !--------------------------------------

@@ -160,8 +160,6 @@ contains
       allocate (mU(nGrid))
 
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
@@ -184,7 +182,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
       mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
@@ -211,22 +209,16 @@ contains
       theta(12, 3) = 1.d0           ! large demersals eat small benthos
       theta(12, 11) = 1.d0          ! medium demersals
 
-! update temperature
-    if(allocated(pelRidx)) deallocate (pelRidx)
-    pelRidx=[1,2]! hard coded, used in effective Temperature
-    call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
-    bET = .TRUE.
+    ! update temperature
+        if(allocated(pelRidx)) deallocate (pelRidx)
+        pelRidx=[1,2]! hard coded, used in effective Temperature
+        call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
+        bET = .TRUE.
 
-!update vector V Cmax for T effects
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-         end select
-      end do
+    !update vector V Cmax for T effects
 
-call set2vec
-Rtype=1
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupbasic()
@@ -294,8 +286,6 @@ contains
       allocate (mU(nGrid))
 
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
@@ -311,7 +301,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
       mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
@@ -395,25 +385,17 @@ contains
 
       end do
 
-!      theta(:,4) = 0.d0
+    !   theta(:,4) = 0.d0
 
-! update temperature
-    if(allocated(pelRidx)) deallocate (pelRidx)
-    pelRidx=[1,2]! hard coded, used in effective Temperature
-    call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
-    if(bETin .eq. 1) bET = .TRUE.
-    if(bETin .eq. 0) bET = .FALSE.
+    ! update temperature
+        if(allocated(pelRidx)) deallocate (pelRidx)
+        pelRidx=[1,2]! hard coded, used in effective Temperature
+        call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
+        if(bETin .eq. 1) bET = .TRUE.
+        if(bETin .eq. 0) bET = .FALSE.
 
-!update vector V Cmax for T effects
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-         end select
-      end do
-
-call set2vec
-Rtype=1
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupbasic2()
@@ -525,13 +507,12 @@ contains
       vertover = 0.d0
       sizeprefer = 0.d0
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
@@ -557,7 +538,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup,  mc, mL, mU)
          end select
       end do
       !from baseparameters.m
@@ -825,20 +806,18 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
-! update temperature
-call updateTempV(depthDay, depthNight, bottom, region)
-! all fish group
-do iGroup = 1, nGroups
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
-end do
-  !vector
-V=V*fTempV
-Cmax=Cmax*fTempV
+    ! update temperature
+    call updateTempV(depthDay, depthNight, bottom, region)
+    ! all fish group
+    do iGroup = 1, nGroups
+        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+    end do
 
-call set2vec
-Rtype=1
+      !vector
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupvertical()
@@ -950,13 +929,12 @@ contains
       vertover = 0.d0
       sizeprefer = 0.d0
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
 
          !group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
@@ -979,7 +957,6 @@ contains
 ! fishing mortality
       !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
-
       call setFishing(Fishing,etaF)
 
 ! Feeding preference matrix:
@@ -987,7 +964,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
       !from baseparameters.m
@@ -1267,20 +1244,18 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
-! update temperature
-call updateTempV(depthDay, depthNight, bottom, region)
-! all fish group
-do iGroup = 1, nGroups
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
-end do
-  !vector
-V=V*fTempV
-Cmax=Cmax*fTempV
+    ! update temperature
+    call updateTempV(depthDay, depthNight, bottom, region)
+    ! all fish group
+    do iGroup = 1, nGroups
+        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+    end do
 
-call set2vec
-Rtype=1
+      !vector
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupvertical()
@@ -1427,7 +1402,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
 
@@ -1970,17 +1945,18 @@ contains
 
 !-------------------------------------------------------------
 ! return assembled vectors containing values for all fish grid (no resources)
-   subroutine formvector(this, iGroup, V, Cmax, mc, mL, mU)
-      integer, intent(in)::iGroup
-      class(spectrumfish)::this
-      real(dp), intent(out)::V(nGrid), Cmax(nGrid), mc(nGrid), mL(nGrid), mU(nGrid)
+! resources mass must be assigned manually
+   subroutine formmassvector(this, iGroup, mc, mL, mU)
+      integer, intent(in) :: iGroup
+      class(spectrumfish) :: this
+      real(dp), intent(out) :: mc(nGrid), mL(nGrid), mU(nGrid)
 
-      V(ixStart(iGroup):ixEnd(iGroup)) = this%V
-      Cmax(ixStart(iGroup):ixEnd(iGroup)) = this%Cmax
+      !V(ixStart(iGroup):ixEnd(iGroup)) = this%V
+      !Cmax(ixStart(iGroup):ixEnd(iGroup)) = this%Cmax
       mc(ixStart(iGroup):ixEnd(iGroup)) = this%m
       mL(ixStart(iGroup):ixEnd(iGroup)) = this%mLower
       mU(ixStart(iGroup):ixEnd(iGroup)) = this%mUpper
-   end subroutine formvector
+   end subroutine formmassvector
 
    ! FROM NUM
     ! Calculate the interaction coefficient between two size groups.
@@ -2014,34 +1990,36 @@ contains
 subroutine set2vec
  integer :: iGroup
 
-epsAssim_vec=epsAssim
-epsRepro_vec=epsRepro
+    epsAssim_vec=epsAssim
+    epsRepro_vec=epsRepro
 
+    V=0.d0
+    Cmax=0.d0
+    metabolism=0.d0
+    mort0=0.d0
+    mortF=0.d0
+    psiMature=0.d0
+    z=0.d0
 
-metabolism=0.d0
-mort0=0.d0
-mortF=0.d0
-psiMature=0.d0
-z=0.d0
+    metabolismsave=0.d0
+    Vsave=0.d0
+    Cmaxsave=0.d0
 
-metabolismsave=0.d0
-Vsave=0.d0
-Cmaxsave=0.d0
+    do iGroup=1,nGroups
 
-do iGroup=1,nGroups
+    V( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%V
+    Cmax( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%Cmax
+    metabolism( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%metabolism
+    mort0( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mort0
+    mortF( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mortF
+    psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(iGroup)%spec%psiMature
+    z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
 
-metabolism( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%metabolism
-mort0( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mort0
-mortF( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mortF
-psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(iGroup)%spec%psiMature
-z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
+    metabolismsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%metabolismsave
+    Vsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Vsave
+    Cmaxsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Cmaxsave
 
-metabolismsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%metabolismsave
-Vsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Vsave
-Cmaxsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Cmaxsave
-
-end do
-
+    end do
 
 end subroutine set2vec
 
@@ -2111,8 +2089,6 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
      end do
     end if
 
-
-
       !demersal
    if (ndemgroup.gt.0) then
     do ii= 1, size(demgroup)
@@ -2127,7 +2103,6 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
           smdemidx = [smdemidx,smdemidx]
           lgdemidx = [lgdemidx,lgdemidx]
          end if
-
 
      do i = 1, group(iGroup)%spec%n
 
@@ -2213,7 +2188,6 @@ subroutine updateET(u)
     metabolism(i) = metabolismsave(i) * fTempmdem_shallow
 
    end do
-
 
 end subroutine
 
