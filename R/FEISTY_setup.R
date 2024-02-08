@@ -10,11 +10,11 @@
 #' \code{setupBasic} creates a basic three-species setup as described by Petrik et al. (2019).
 #' 
 #' @details The setupBasic makes a basic three-species setup (small pelagic fish, large pelagic fish, and demersal fish) as described in Petrik et al (2019). 
-#' There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
+#' There are three resources: small zooplankton, large zooplankton, benthos, and a spare position in the state variable vector.
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @usage p=setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
+#' @usage setupBasic(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
 #' Actually, this represents small zooplankton carrying capacity [gww/m2] but it will multiply the growth rate \bold{r} which is always 1 [1/yr]. 
@@ -37,6 +37,7 @@
 #' \item Tb, Bottom water temperature, from parameter input.
 #' \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
 #' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#' \item bET, Logical flag, which is always TRUE as described in Petrik et al., 2019.
 #'}
 #' 
 #' Added by the  function \code{\link{setupBasic}}:
@@ -221,7 +222,7 @@ param$setup="setupBasic"
 #' 
 #' @author Ken H Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #'
-#' @usage p=setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+#' @usage setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
 #' nStages=9, etaMature=0.25, F=0, etaF=0.05)
 #' 
 #' @param szprod Small zooplankton productivity. \cr
@@ -244,6 +245,7 @@ param$setup="setupBasic"
 #' If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function.
 #' See source code of \code{\link{setFishing}}.
 #' @param etaF The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.
+#' @param bET logical flag, controlling whether use effective temperature effects on the large demersal fish. See Petrik et al., 2019.
 #' 
 #' @return 
 #' Additional parameters added by the function \code{\link{paramInit}}:
@@ -257,6 +259,7 @@ param$setup="setupBasic"
 #' \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level, from parameter input.
 #' \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
 #' \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+#' \item bET, Logical flag, TRUE or FALSE. Effective temperature effects on the large demersal fish.
 #'}
 #'
 #' Added by the function \code{\link{paramSizepref}}:
