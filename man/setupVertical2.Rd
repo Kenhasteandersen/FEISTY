@@ -4,7 +4,7 @@
 \alias{setupVertical2}
 \title{setupVertical2}
 \usage{
-p=setupVertical2(szprod = 80, lzprod = 80, bent = 150, nStages = 6, region = 4, depth = 1500, photic = 150, 
+setupVertical2(szprod = 80, lzprod = 80, bprodin = NA, dfbot = NA, dfpho = NA, nStages = 6, region = 4, depth = 1500, photic = 150, 
 mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF=0.05)
 }
 \arguments{
@@ -14,8 +14,15 @@ Therefore, it is described as small zooplankton productivity [gww/m2/year]. \cod
 
 \item{lzprod}{Large zooplankton productivity.}
 
-\item{bent}{Detrital flux out of the photic zone [gww/m2/year].
-\code{bent} will be further calculated based on the Martin curve to get detrital flux reaching the bottom for driving benthic communities. See source code of \code{setupVertical}.}
+\item{bprodin}{Benthic organism productivity input [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`.
+The benthic productivity `bprod` equals `bprodin`.}
+
+\item{dfbot}{Detrital flux reaching the bottom [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`.
+It will multiply the trophic transfer efficiency (10\%) to get the benthic productivity `bprod`.}
+
+\item{dfpho}{Detrital flux out of the photic zone [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`. If all are NAs then `dfpho = 150`.
+`dfpho` will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity `bprod` ultimately .\cr
+See source code of \code{setupVertical}.}
 
 \item{region}{Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 It represents the water column temperature profile for three regions. 
@@ -40,13 +47,18 @@ If \code{F} is 0, there is no fishing mortality. \cr
 If \code{F} is assigned a value greater than 0, fishing mortality will be set by multiplying the fishing selectivity \code{psi} which is based on a S-shape function. See source code of \code{\link{setFishing}}.}
 
 \item{etaF}{the coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.}
+
+\item{bent}{Detrital flux out of the photic zone [gww/m2/year].}
 }
 \value{
 Additional parameters added by function \code{\link{paramInit}}:
 \itemize{
 \item szprod, Small zooplankton productivity, from parameter input.
 \item lzprod, Large zooplankton productivity, from parameter input.
-\item bent,  Detrital flux out of the photic zone, from parameter input.
+\item bprodin, Benthic organism productivity input, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item dfbot, Detrital flux reaching the bottom, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item dfpho, Detrital flux out of the photic zone, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item bprod, Benthic organism productivity, from calculation based on `bprodin` or `dfbot`, or `dfpho`.
 \item bottom, Water column depth, from parameter input (depth).
 \item photic, Photic zone depth, from parameter input.
 \item mesop, mesopelagic zone depth. from parameter input.
@@ -93,7 +105,7 @@ See \code{\link{paramAddGroup}}.
 }
 }
 \examples{
-p=setupVertical2(szprod = 200, lzprod = 150, bent = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
+p=setupVertical2(szprod = 200, lzprod = 150, bprodin = NA, dfbot = NA, dfpho = 100, nStages = 6, region = 1, depth = 1000, photic = 120,
 mesopelagic = 250, visual = 1.5, etaMature = 0.25, F = 0, etaF = 0.05)
 sim=simulateFEISTY(p=p)
 plotSimulation(sim)

@@ -4,7 +4,7 @@
 \alias{setupVertical}
 \title{setupVertical (van Denderen et al., 2021)}
 \usage{
-p=setupVertical(szprod = 80, lzprod = 80, bent = 150, region = 4, depth = 1500, photic = 150)
+setupVertical(szprod = 80, lzprod = 80, bprodin = NA, dfbot = NA, dfpho = NA, region = 4, depth = 1500, photic = 150)
 }
 \arguments{
 \item{szprod}{Small zooplankton productivity. \cr
@@ -13,8 +13,15 @@ Therefore, it is described as small zooplankton productivity [gww/m2/year]. \cod
 
 \item{lzprod}{Large zooplankton productivity.}
 
-\item{bent}{Detrital flux out of the photic zone [gww/m2/year].
-\code{bent} will be further calculated based on the Martin curve to get detrital flux reaching the bottom for driving benthic communities. See source code of \code{setupVertical}.}
+\item{bprodin}{Benthic organism productivity input [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`.
+The benthic productivity `bprod` equals `bprodin`.}
+
+\item{dfbot}{Detrital flux reaching the bottom [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`.
+It will multiply the trophic transfer efficiency (10\%) to get the benthic productivity `bprod`.}
+
+\item{dfpho}{Detrital flux out of the photic zone [gww/m2/year]. Default NA. Input either of `bprodin`, `dfbot` or `dfpho`. If all are NAs then `dfpho = 150`.
+`dfpho` will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity `bprod` ultimately .\cr
+See source code of \code{setupVertical}.}
 
 \item{region}{Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
 It represents the water column temperature profile for three regions. 
@@ -30,7 +37,10 @@ Additional parameters added by function \code{\link{paramInit}}:
 \itemize{
 \item szprod, Small zooplankton productivity, from parameter input.
 \item lzprod, Large zooplankton productivity, from parameter input.
-\item bent,  Detrital flux out of the photic zone, from parameter input.
+\item bprodin, Benthic organism productivity input, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item dfbot, Detrital flux reaching the bottom, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item dfpho, Detrital flux out of the photic zone, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item bprod, Benthic organism productivity, from calculation based on `bprodin` or `dfbot`, or `dfpho`.
 \item bottom, Water column depth, from parameter input (depth).
 \item photic, Photic zone depth, from parameter input.
 \item mesop, mesopelagic zone depth.
@@ -65,10 +75,10 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 }
 \details{
 The setupVertical makes a basic five-species setup (small pelagic fish, mesopelagic fish, large pelagic fish, bathypelagic fish, and demersal fish) as described in van Denderen et al. (2021). 
-There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).
+There are three resources: small zooplankton, large zooplankton, benthos, and a spare position in the state variable vector. \cr
 }
 \examples{
-p=setupVertical(szprod = 200, lzprod = 150, bent = 100, region = 1, depth = 1000, photic = 120)
+p=setupVertical(szprod = 200, lzprod = 150, bprodin = NA, dfbot = NA, dfpho = 100, region = 1, depth = 1000, photic = 120)
 sim=simulateFEISTY(p=p)
 plotSimulation(sim)
 

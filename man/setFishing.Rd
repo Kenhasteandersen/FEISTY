@@ -4,7 +4,7 @@
 \alias{setFishing}
 \title{Set Fishing Mortality}
 \usage{
-setFishing(p, F = 0, etaF = 0.05, groups = c(1:p$nGroups))
+setFishing(p, F = 0, etaF = 0.05, groupidx = c(1:p$nGroups))
 }
 \arguments{
 \item{p}{The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.}
@@ -13,7 +13,7 @@ setFishing(p, F = 0, etaF = 0.05, groups = c(1:p$nGroups))
 
 \item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.}
 
-\item{groups}{The indices of functional types that fishing mortality will be assigned to. Default is all functional types.}
+\item{groupidx}{An integer vector containing indices of functional types that fishing mortality will be assigned to. Default is all functional types.}
 }
 \value{
 It returns an updated parameter list:
@@ -33,7 +33,7 @@ The fishing mortality \code{mortF} for specified groups is then updated based on
 }
 \examples{
 p = setupBasic2(F=0) # No fishing mortality
-p = setFishing(p, F = 1, etaF = 0.05, groups=c(3)) # add fishing mortality to demersals only.
+p = setFishing(p, F = 1, etaF = 0.05, groupidx=c(3)) # add fishing mortality to demersals only.
 
 }
 \references{

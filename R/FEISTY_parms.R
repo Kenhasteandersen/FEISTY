@@ -168,7 +168,7 @@ paramSizepref <- function(
 #'
 #' @examples
 #' # Initialize parameters
-#' p <- paramInit(size_1 = 500, size_2 = 1000, depth_1 = 200, depth_2 = 250) # add four extra parameters to the list
+#' p <- paramInit(waterdepth = 600, maturesize = 250, photicdepth = 150, mediumsize = 250) # add four extra parameters to the list
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #' 
@@ -208,26 +208,6 @@ paramInit = function(...) {
   param$ixFish = list() # Indices to all fish groups
   param$ixR = NA # Indices to all resource groups
   
-  param$my_palette <- c("smallZoo" = "#FFEE58",
-                    "largeZoo" = "#F9A825",
-                    "smallBenthos" = "#795548",
-                    "largeBenthos" = "#F57C0D",
-                    "smallPel" = "#BBDEFB",
-                    "mesoPel" = "#9E9E9E",
-                    "largePel" = "#2196F3",
-                    "bathyPel" =  "#0D47A1",
-                    "demersals" =  "#800080")
-
-  param$my_names <- c("smallZoo" = "Small zooplankton",
-                  "largeZoo" = "Large zooplankton",
-                  "smallBenthos" = "Small Benthos",
-                  "largeBenthos" = "Large Benthos",
-                  "smallPel" = "Small pelagics",
-                  "mesoPel" = "Mesopelagics",
-                  "largePel" = "Large pelagics",
-                  "bathyPel" = "Bathypelagics",
-                  "demersals" =  "Demersals")
-  
   param$my_palette <- c("smallZoo" = "#DDCC77",
                         "largeZoo" = "#999933",
                         "benthos" = "#662506",
@@ -245,7 +225,6 @@ paramInit = function(...) {
                       "largePel" = "Large pelagics",
                       "bathyPel" = "Bathypelagics",
                       "demersals" = "Demersals")
-
   
   return(param)
 }
@@ -288,7 +267,7 @@ makeGrid = function(mMin,         # min size, gram
 #'
 #' This function updates the parameter list by adding resource-related parameters.
 #' 
-#' @usage paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA)
+#' @usage paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA, ixpelR, ixbenR)
 #'
 #' @param p Parameter list to be updated.
 #' @param K A vector of carrying capacities of all resources [gww/m2].
@@ -299,6 +278,8 @@ makeGrid = function(mMin,         # min size, gram
 #' @param mUpper A vector containing the upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
 #' @param names A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.
 #' @param u0 A vector of the initial concentration of each resource. If not provided, defaults to the value of \code{K}.
+#' @param ixpelR An integer vector of indices of pelagic resources.
+#' @param ixbenR An integer vector of indices of benthic resources.
 #'
 #' @return The updated parameter list \code{p}:
 #' \itemize{
@@ -314,6 +295,8 @@ makeGrid = function(mMin,         # min size, gram
 #' \item mLower, the lower limit of each resource weight, fish data will be added later.
 #' \item mUpper, the upper limit of each resource weight, fish data will be added later.
 #' \item u0, from parameter input or same as \code{K}, fish data will be added later.
+#' \item ixpelR, indices of pelagic resources.
+#' \item ixbenR, indices of benthic resources.
 #' }
 #' 
 #' @details
@@ -691,8 +674,8 @@ paramAddPhysiology = function (p,
 #' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on another reference temperature.
 #' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
 #' @param Q10m Q10 factor for metabolism rates \code{metabolism} [-]
-#' @param pelgroupidx, pelagic fish group indices. If there is no pelagic fish, please assign NA.
-#' @param demgroupidx, demersal fish group indices. If there is no demersal fish, please assign NA.
+#' @param pelgroupidx pelagic fish group indices. If there is no pelagic fish, please assign NA.
+#' @param demgroupidx demersal fish group indices. If there is no demersal fish, please assign NA.
 #'
 #' @return An updated parameter list:
 #' \itemize{
@@ -831,57 +814,27 @@ paramTeffect = function (p, # only for setupbasic & 2
   return(p)
 }
 
-#' Update effective temperature
-#'
-#' This function updates temperature-dependent physiological rates of \bold{large} demersal fish in \bold{shallow} water (< 200m) based on effective temperatures.
-#' It is called in each time step of ODE solving. Q10 temperature coefficients are applied to modify metabolic rates, clearance rates, and maximum consumption rates.
-#' It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
-#' 
-#' @usage updateET(p,u=NA)
-#' 
-#' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
-#' `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
-#' @param u Temporarily not used. To be developed...
-#'
-#' @return An updated parameter list:
-#' \itemize{
-#' \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
-#' \item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
-#' \item Cmax, a vector containing maximum consumption rate values, resources (0) + all size classes of all functional types.
-#' \item metabolism, a vector containing standard metabolism values, resources (0) + all size classes of all functional types.
-#' \item V, a vector containing clearance rate values, resources (0) + all size classes of all functional types.
-#' }
-#'
-#' @details
-#' The function calculates temperature effects on physiological rates (metabolism, clearance rate, and maximum consumption rate) using 
-#' the Q10 theory, which states that a physiological process rate increases by a factor of Q10 for every 10 Celsius rise in temperature.
-#' The effects are applied differently in terms of living habitats (pelagic and demersal) and water depth (shallow and deep).
-#' This function is embedded into the \code{\link{derivativesFEISTYR}} to update the effective temperature on 
-#' large demersal fish physiological rates (metabolism, clearance rate, and maximum consumption rate) in shallow water.\cr
-#' It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
-#' To use UpdateET please use paramTeffect when doing the parameter setup.
-#' 
-#' Please make sure the indices have been assigned properly, otherwise the 
-#'
-#' The function requires a specific structure in the input parameter list `p`, such as
-#' indices of all fish and vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
-#' Therefore it only can be called after \code{\link{paramAddPhysiology}}.
-#' `Tp` and `Tb` are required in the input parameter list, or this function will not work.
-#' It might not work in customized setups other than \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
-#'
-#' @examples
-#' 
-#' @author Yixin Zhao
-#' 
-#' @references
-#' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
-#' 
-#' @aliases updateET
-#' 
-#' @seealso 
-#' \code{\link{setupBasic}} The setup following Petrik et al. (2019) \cr
-#' \code{\link{setupBasic2}} A revised setup based on `setupBasic`
-#'
+# Update effective temperature
+#
+# This function updates temperature-dependent physiological rates of \bold{large} demersal fish in \bold{shallow} water (< 200m) based on effective temperatures.
+# It is called in each time step of ODE solving. Q10 temperature coefficients are applied to modify metabolic rates, clearance rates, and maximum consumption rates.
+# It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
+
+# This function is embedded into the \code{\link{derivativesFEISTYR}} to update the effective temperature effects on 
+# large demersal fish physiological rates (metabolism, clearance rate, and maximum consumption rate) in shallow water.
+# 
+# Please make sure the indices have been assigned properly, otherwise the simulation will crash or return wrong results.
+#
+# The function requires a specific structure in the input parameter list `p`, such as
+# indices `pelgrididx`, `allgrididx` and `lgdemidx` and
+# vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
+# Therefore it works when the functions paramAddPhysiology and paramTeffect are used.
+# `Tp` and `Tb` are required in the input parameter list, or this function will not work.
+#
+# author Yixin Zhao
+#
+# references
+# Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
 
 updateET = function (p, # 
                      u=NA){ # B container: R+fish

@@ -50,6 +50,7 @@ ODE solving is conducted by package deSolve.
 More theories can be found in de Roos et al. (2008) and Petrik et al. (2019).
 }
 \examples{
+# Parameter list preparation
 p = setpBasic2()
 # FEISTY simulation 200 years, use derivativesFEISTYR
 sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE)
