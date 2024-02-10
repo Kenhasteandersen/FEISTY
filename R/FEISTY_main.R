@@ -484,13 +484,13 @@ simulateFEISTY = function(bCust    = FALSE,
               nR,                                # total number of resources
               unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
               p$Rtype,                           # type of resource dynamics
-              if (is.null(p$pelgrididx)) NULL else length(p$pelgrididx),
-              p$pelgrididx,
-              if (is.null(p$allgrididx)) NULL else length(p$allgrididx),
-              p$allgrididx,
-              if (is.null(p$lgdemidx)) NULL else length(p$lgdemidx),
-              p$lgdemidx,
-              if (is.null(p$bET)) NULL else as.integer(p$bET))
+              if (is.null(p$pelgrididx)) 1 else length(p$pelgrididx), # length of pelgrididx. 1, if not defined.
+              if (is.null(p$pelgrididx)) 1 else p$pelgrididx, # all pelagic fish grid indices. 1, if not defined.
+              if (is.null(p$allgrididx)) 1 else length(p$allgrididx), # length of allgrididx. 1, if not defined.
+              if (is.null(p$allgrididx)) 1 else p$allgrididx, # all grid indices (resources+fish). 1, if not defined.
+              if (is.null(p$lgdemidx))   1 else length(p$lgdemidx), # length of lgdemidx. 1, if not defined.
+              if (is.null(p$lgdemidx))   1 else p$lgdemidx, # large demersal fish indices. 1, if not defined.
+              if (is.null(p$bET))        0 else as.integer(p$bET)) # effective temperature Boolean flag. 0 (FALSE), if not defined.
     ipar <- as.integer(ipar)
     if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype)) != 3 + nGroups)
       stop ("length of 'ipar' not ok -check parameters")
