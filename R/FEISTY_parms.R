@@ -845,7 +845,7 @@ updateET = function (p, #
     pelpreyidx = (p$pelgrididx)[which(p$theta[ilgdem, p$pelgrididx] != 0)]
     allpreyidx = (p$allgrididx)[which(p$theta[ilgdem, ] != 0)]
     
-    lambda = sum(u[pelpreyidx]) / sum(u[allpreyidx]) # Eq. 15
+    lambda = sum(u[pelpreyidx]) / (sum(u[allpreyidx])+1E-200) # Eq. 15.  Seed value 1E-200 in case NaN (0/0).
     
     eT = p$Tp * lambda + p$Tb * (1 - lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
     

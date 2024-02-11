@@ -2177,7 +2177,7 @@ subroutine updateET(u)
     pelpreyidx = pack(pelgrididx, theta(i, pelgrididx) /= 0.d0)
     allpreyidx = pack(allgrididx, theta(i, allgrididx) /= 0.d0)
 
-    lambda = sum(u(pelpreyidx)) / sum(u(allpreyidx)) ! Eq. 15
+    lambda = sum(u(pelpreyidx)) / (sum(u(allpreyidx)) + eps) ! Eq. 15     eps = 1d-200 in case NA values generated 0/0
     eT = pelagicT * lambda + benthicT * (1 - lambda)
     fTempdem_shallow  = calfTemp(Q10ET, eT)
     fTempmdem_shallow = calfTemp(Q10mET, eT)
