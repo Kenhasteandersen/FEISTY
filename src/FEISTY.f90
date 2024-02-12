@@ -383,7 +383,7 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
       grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
 
-      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! total loss          [gWW/m2/yr]
+      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
 
 ! ----------------------------------------------
 ! Mortality for resources and fish grids:
@@ -436,6 +436,10 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
         totRepro(i)    = repro(istart)
         totBiomass(i)  = B(istart)
 
+      ! Add the waste energy in reproduction of each stages.
+      ! Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
+        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1.d0-epsRepro_vec(i)) * Repro(istart:istop)
+
         do j = istart+1, istop
           Fin(j)         = Fout(j-1)
           totRepro(i)    = totRepro(i) + Repro(j)
@@ -455,9 +459,11 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
         do j = istart, istop
           totGrazing(i)  = totGrazing(i) + grazing(j)
-          totLoss(i)     = totLoss(i)    + loss(j)
+          totLoss(i)     = totLoss(i)    + loss(j) ! updated below
           totMort(i)     = totMort(i)    + mort(j)*u(j)
         end do
+      ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
+        totLoss(i)=totLoss(i) + (1.d0 - epsRepro_vec(i)) * Fout(istop-nResources)
 
       end do
       totRecruit   = totRepro*epsRepro_vec

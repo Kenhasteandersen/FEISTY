@@ -166,7 +166,7 @@ derivativesFEISTYR = function(t,              # current time
   # goes out of stage (size group)
   Fout = gamma*B
   
-  # fraction to reproduction
+  # Energy used for reproduction
   Repro = (1-kappa)*vplus*B
   
   # Flux into the size group
@@ -212,15 +212,20 @@ derivativesFEISTYR = function(t,              # current time
     
     # for the budget:
     grazing = p$Cmax * f         # grazing rate, /yr
-    loss    = (1.-p$epsAssim) * grazing + p$metabolism
-    
+    loss    = (1.-p$epsAssim) * grazing + p$metabolism # Energy loss to environments. Updated below.
+    Reprofrac = (1-kappa)*vplus
+
     il <- NULL
-    for (i in 1:length(p$ix))
+    for (i in 1:length(p$ix)){
+      # Add the waste energy in reproduction of each stages. Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
+      loss[p$ix[[i]]] = loss[p$ix[[i]]] + (1-p$epsRepro[i]) * Reprofrac[p$ix[[i]]-p$nResources] 
       il <- c(il, rep(i, times=length(p$ix[[i]])))
+    }
     
     out$totMort    = tapply((mort   *u)[p$ixFish], INDEX=il, FUN=sum)
     out$totGrazing = tapply((grazing*u)[p$ixFish], INDEX=il, FUN=sum)
-    out$totLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum)
+    # Add the waste energy in reproduction from flux out of the last stage of each functional group.
+    out$totLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum) +(1-p$epsRepro)*Fout[sapply(p$ix, tail, n = 1)-p$nResources] 
     out$totRepro   = RR    
     out$totRecruit = out$totRepro* p$epsRepro
     out$totBiomass = tapply(B, INDEX=il, FUN=sum)
