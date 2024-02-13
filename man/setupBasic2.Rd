@@ -4,8 +4,8 @@
 \alias{setupBasic2}
 \title{setupBasic2}
 \usage{
-p=setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
-nStages=9, etaMature=0.25, F=0, etaF=0.05)
+setupBasic2(szprod = 100, lzprod = 100, bprodin = NA, dfbot = NA, depth = 100, Tp = 10, Tb = 8, 
+nStages=9, etaMature=0.25, F=0, etaF=0.05, bET=TRUE)
 }
 \arguments{
 \item{szprod}{Small zooplankton productivity. \cr
@@ -14,7 +14,11 @@ Therefore, it is described as small zooplankton productivity [gww/m2/year]. \cod
 
 \item{lzprod}{Large zooplankton productivity.}
 
-\item{bprod}{Benthic organism productivity.}
+\item{bprodin}{Benthic organism productivity input [gww/m2/year]. Default NA. Input either of `bprodin` or `dfbot`.
+The benthic productivity `bprod` equals `bprodin`.}
+
+\item{dfbot}{Detrital flux reaching the bottom [gww/m2/year]. Default NA. Input either of `bprodin` or `dfbot`.
+It will multiply the trophic transfer efficiency (10\%) to get the benthic productivity `bprod`. If both are NAs then `bprod = 5`.}
 
 \item{depth}{Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
 depth=300 and depth=1000 do not have any different effects on simulations.}
@@ -37,19 +41,24 @@ If \code{F} is assigned a value greater than 0, fishing mortality will be set by
 See source code of \code{\link{setFishing}}.}
 
 \item{etaF}{The coefficient determining the fish size \code{mFishing} with 50\% fishing selectivity. See source code of \code{\link{setFishing}}.}
+
+\item{bET}{Logical flag, controlling whether use effective temperature effects on the large demersal fish. See Petrik et al., 2019.}
 }
 \value{
 Additional parameters added by the function \code{\link{paramInit}}:
 \itemize{
 \item szprod, Small zooplankton productivity, from parameter input.
 \item lzprod, Large zooplankton productivity, from parameter input.
-\item bprod, Benthic organism productivity, from parameter input.
+\item bprodin, Benthic organism productivity input, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item dfbot, Detrital flux reaching the bottom, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item bprod, Benthic organism productivity, from calculation based on `bprodin` or `dfbot`.
 \item depth, Water column depth, from parameter input.
 \item Tp, Pelagic water temperature, from parameter input.
 \item Tb, Bottom water temperature, from parameter input.
 \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level, from parameter input.
 \item mMedium, The boundary weight (mass) between small fish (mc <= mMedium) and medium fish (mMedium < mc < mLarge).
 \item mLarge, The boundary weight (mass) between medium fish (mMedium < mc < mLarge) and large fish (mc >= mLarge).
+\item bET, Logical flag, TRUE or FALSE. Effective temperature effects on the large demersal fish.
 }
 
 Added by the function \code{\link{paramSizepref}}:
@@ -70,7 +79,7 @@ Other parameters returned can be found in \code{\link{paramInit}}, \code{\link{p
 }
 \details{
 The setupBasic2 makes a revised three-species setup (small pelagic fish, large pelagic fish, and demersal fish) based on Petrik et al. (2019). 
-There are four resources: small zooplankton, large zooplankton, small benthos, and large benthos. Large benthos actually do \bold{not exist} (always 0).\cr
+There are three resources: small zooplankton, large zooplankton, benthos, and a spare position in the state variable vector. \cr
 Main revision:
 \itemize{
 \item Allowing more size numbers in each functional type. See \code{\link{paramAddGroup}}.
@@ -110,8 +119,8 @@ Small, medium, and large fish are differentiated according to `mMedium = 0.5gww`
 }
 }
 \examples{
-p=setupBasic2(szprod = 200, lzprod = 150, bprod = 15, depth = 300, Tp = 10, Tb = 9, 
-nStages=6, etaMature=0.25, F=0,etaF=0.05)
+p=setupBasic2(szprod = 200, lzprod = 150, bprodin = 15, dfbot = NA, depth = 300, Tp = 10, Tb = 9, 
+nStages=6, etaMature=0.25, F=0, etaF=0.05, bET=TRUE)
 sim=simulateFEISTY(p=p)
 plotSimulation(sim)
 

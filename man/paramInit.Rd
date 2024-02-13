@@ -36,7 +36,7 @@ The returned parameter list will be used for further updates.
 }
 \examples{
 # Initialize parameters
-p <- paramInit(size_1 = 500, size_2 = 1000, depth_1 = 200, depth_2 = 250) # add four extra parameters to the list
+p <- paramInit(waterdepth = 600, maturesize = 250, photicdepth = 150, mediumsize = 250) # add four extra parameters to the list
 
 }
 \seealso{

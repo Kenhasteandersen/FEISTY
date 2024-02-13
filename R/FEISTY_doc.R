@@ -90,5 +90,14 @@
 #' 
 #' \code{\link{derivativesFEISTYR}} The derivative function of FEISTY
 #' 
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics axis box image legend lines mtext par points polygon
+#' @importFrom stats na.omit simulate
+#' @importFrom pracma erf size linspace isempty
+#' @importFrom latex2exp TeX
+#' @import deSolve
+#' @import shiny
+#' @import shinyjs
+#' @useDynLib FEISTY, .registration = TRUE
 #' 
 NULL # This 'NULL' is important in R package documentation file when using roxygen2.

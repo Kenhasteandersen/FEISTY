@@ -90,6 +90,25 @@ Module setup
          real(dp):: tmp(12)
          logical :: feistyinitialised  = .FALSE.
 
+!===================================
+!for temperature effects (Feb 2024)
+         integer, allocatable :: pelgroupidx(:)
+         integer, allocatable :: demgroupidx(:)
+         real(dp) :: pelagicT
+         real(dp) :: benthicT
+         integer, allocatable :: smdemidx(:)
+         integer, allocatable :: lgdemidx(:)
+         integer, allocatable :: pelRidx(:)
+         integer(dp), allocatable :: pelgrididx(:), allgrididx(:)
+         real(dp), allocatable:: metabolismsave(:)
+         real(dp), allocatable:: Vsave(:)
+         real(dp), allocatable:: Cmaxsave(:)
+         logical :: bET
+         real(dp) :: Q10ET
+         real(dp) :: Q10mET
+         real(dp) :: depthET
+
+
 contains
 ! ======================================
 !  Different Setups
@@ -98,8 +117,9 @@ contains
 ! --------------------------------------
 ! Setup according to Petrik et al. (2019)
 ! --------------------------------------
-   subroutine setupbasic(szprod, lzprod, bprod, depth, Ts, Tb)
-      real(dp), intent(in)::szprod,lzprod, bprod, depth, Ts, Tb
+   subroutine setupbasic(szprod, lzprod, bprodin, dfbot, depth, Ts, Tb)
+      real(dp), intent(in)::szprod,lzprod, bprodin, dfbot, depth, Ts, Tb ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
+      real(dp) :: bprod                                                  ! only one of them works, keep the unused arguments negative e.g., bprodin = 100.d0, dfbot = -1.d0
       integer :: iGroup
 ! predation preference coefficient
       real(dp) :: thetaS
@@ -108,6 +128,20 @@ contains
 !      real(dp),parameter ::   thetaS = 0.25d0 ! Medium fish pref for small zooplankton
 !      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+
+      !benthic productivity
+      if (bprodin < 0.d0 .and. dfbot<0.d0) then
+        bprod = 5.d0
+      else if (bprodin .gt. 0.d0 .and. dfbot.gt.0.d0) then
+        stop
+      else
+       if (bprodin .ge. 0.d0) then
+        bprod=bprodin
+       end if
+       if (dfbot .ge. 0.d0) then
+        bprod=dfbot*0.1d0
+       end if
+      end if
 
       call read_namelist_setupbasic()
       call parametersInit(3, 2 + 3 + 3, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, szprod,lzprod, bprod,none)
@@ -126,12 +160,11 @@ contains
       allocate (mU(nGrid))
 
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
          group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p) ! overwrite metabolism
+         group(iGroup)%spec%metabolismsave =   group(iGroup)%spec%metabolism
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
          group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0 ! only adults reproduce
@@ -146,13 +179,13 @@ contains
 
 ! Feeding preference matrix:
 ! assemble vectors
-!      do iGroup = 1, nGroups
-!         select type (spec => group(iGroup)%spec)
-!         type is (spectrumfish)
-!            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-!         end select
-!      end do
-!      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
+      do iGroup = 1, nGroups
+         select type (spec => group(iGroup)%spec)
+         type is (spectrumfish)
+            call formmassvector(spec, iGroup, mc, mL, mU)
+         end select
+      end do
+      mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
       !mU(1:nResources) = [2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)] ! weight central size
       !mL(1:nResources) = [2e-06,0.001, 0.5e-03, 0.25] ! weight lower limit)
 
@@ -176,46 +209,16 @@ contains
       theta(12, 3) = 1.d0           ! large demersals eat small benthos
       theta(12, 11) = 1.d0          ! medium demersals
 
-! update temperature
-call updateTemp(Ts,Tb)
+    ! update temperature
+        if(allocated(pelRidx)) deallocate (pelRidx)
+        pelRidx=[1,2]! hard coded, used in effective Temperature
+        call updateTemp(Ts,Tb, depth, [1,2],2,[3],1)
+        bET = .TRUE.
 
-  !all fish group
-  !pelagic
-do iGroup = 1, nGroups-1
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-end do
-  !demersal
-  !small
-    group(3)%spec%V(1)=group(3)%spec%V(1)*fTemp
-    group(3)%spec%Cmax(1)=group(3)%spec%Cmax(1)*fTemp
-    group(3)%spec%metabolism(1)=group(3)%spec%metabolism(1)*fTempm
-  !medium
-    group(3)%spec%V(2)=group(3)%spec%V(2)*fTempdem
-    group(3)%spec%Cmax(2)=group(3)%spec%Cmax(2)*fTempdem
-    group(3)%spec%metabolism(2)=group(3)%spec%metabolism(2)*fTempmdem
-  !large
-   if (depth .lt. 200.d0) then
-    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem_shallow
-    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem_shallow
-    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem_shallow
-   else
-    group(3)%spec%V(3)=group(3)%spec%V(3)*fTempdem
-    group(3)%spec%Cmax(3)=group(3)%spec%Cmax(3)*fTempdem
-    group(3)%spec%metabolism(3)=group(3)%spec%metabolism(3)*fTempmdem
-   end if
+    !update vector V Cmax for T effects
 
-!update vector V Cmax for T effects
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-         end select
-      end do
-
-call set2vec
-Rtype=1
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupbasic()
@@ -237,17 +240,34 @@ contains
 ! --------------------------------------
 ! Setup by Ken based on Petrik et al. (2019).
 ! --------------------------------------
-   subroutine setupbasic2(szprod,lzprod, bprod, nStages, depth, Ts, Tb, etaMature,Fishing,etaF) !
-      real(dp), intent(in) :: szprod,lzprod, bprod, Ts, Tb, depth
+   subroutine setupbasic2(szprod,lzprod, bprodin, dfbot, nStages, depth, Ts, Tb, etaMature,Fishing,etaF,bETin) !
+      real(dp), intent(in) :: szprod,lzprod, bprodin, dfbot, Ts, Tb, depth ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
+                                                                           ! only one of them works, keep the unused arguments negative e.g., bprodin = 100.d0, dfbot = -1.d0
+
       real(dp), intent(in) :: etaMature ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
       real(dp), intent(in) :: Fishing, etaF ! fishing mortality, etaF * asymptotic size =fish size with 50% fishing mortality
-      integer, intent(in) :: nStages
+      integer, intent(in) :: nStages,bETin
+      real(dp) :: bprod
       integer :: iGroup, i, j
 ! predation preference coefficient
       real(dp) :: thetaA
       real(dp) :: thetaD
 !      real(dp),parameter ::   thetaA = 0.5d0  ! Large fish pref for medium forage fish
 !      real(dp),parameter ::   thetaD = 0.75d0 ! Pref of large demersal on pelagic prey
+
+      !benthic productivity
+      if (bprodin < 0.d0 .and. dfbot<0.d0) then
+        bprod = 5.d0
+      else if (bprodin .gt. 0.d0 .and. dfbot.gt.0.d0) then
+        stop
+      else
+       if (bprodin .ge. 0.d0) then
+        bprod=bprodin
+       end if
+       if (dfbot .ge. 0.d0) then
+        bprod=dfbot*0.1d0
+       end if
+      end if
 
       call read_namelist_setupbasic2()    !
       call parametersInit(3, nint(0.66d0*nStages) + nStages + nStages, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages, 4 resources,szprod,lzprod, bprod,none)
@@ -266,12 +286,11 @@ contains
       allocate (mU(nGrid))
 
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
          group(iGroup)%spec%metabolism = (kk*group(iGroup)%spec%m**p)!overwrite metabolism
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
       end do
 
 ! fishing mortality
@@ -282,7 +301,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
       mc(1:nResources) = [2.d-06*sqrt(500.d0), 1.d-3*sqrt(500.d0), 0.5d-03*sqrt(250000.d0), 0.25d0*sqrt(500.d0)] ! overwrite by resource mass
@@ -366,56 +385,17 @@ contains
 
       end do
 
-!      theta(:,4) = 0.d0
+    !   theta(:,4) = 0.d0
 
-! update temperature
-call updateTemp(Ts, Tb)
-  !all fish group
-  !pelagic
-do iGroup = 1, nGroups-1
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTemp
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTemp
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempm
-end do
+    ! update temperature
+        if(allocated(pelRidx)) deallocate (pelRidx)
+        pelRidx=[1,2]! hard coded, used in effective Temperature
+        call updateTemp(Ts, Tb, depth, [1,2],2,[3],1)
+        if(bETin .eq. 1) bET = .TRUE.
+        if(bETin .eq. 0) bET = .FALSE.
 
-  !demersal
-do i = 1, group(3)%spec%n
-
-  if (group(3)%spec%m(i) .le. mMedium) then
-  !small
-    group(3)%spec%V(i)=group(3)%spec%V(i)*fTemp
-    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTemp
-    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempm
-
-  elseif (group(3)%spec%m(i) .gt. mMedium .and. group(3)%spec%m(i) .lt. mLarge)then
-  !medium
-    group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-    group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-    group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-  elseif (group(3)%spec%m(i) .ge. mLarge)then
-  !large
-     if (depth .lt. 200.d0) then
-     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem_shallow
-     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem_shallow
-     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem_shallow
-     else
-     group(3)%spec%V(i)=group(3)%spec%V(i)*fTempdem
-     group(3)%spec%Cmax(i)=group(3)%spec%Cmax(i)*fTempdem
-     group(3)%spec%metabolism(i)=group(3)%spec%metabolism(i)*fTempmdem
-     end if
-  end if
-end do
-
-!update vector V Cmax for T effects
-      do iGroup = 1, nGroups
-         select type (spec => group(iGroup)%spec)
-         type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
-         end select
-      end do
-
-call set2vec
-Rtype=1
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupbasic2()
@@ -436,8 +416,10 @@ contains
 ! --------------------------------------
 ! Setup of vertical overlap (van Denderen et al., 2020)
 ! --------------------------------------
-   subroutine setupVertical(szprod,lzprod, bent, region, bottom, photic)
-      real(dp), intent(in) :: szprod,lzprod, bottom, bent,photic !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical(szprod,lzprod, bprodin, dfbot, dfpho, region, bottom, photic)
+     !  default bottom:1500m euphotic depth 150m
+      real(dp), intent(in) :: szprod,lzprod, bottom, bprodin, dfbot, dfpho, photic ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
+                                                                                   ! only one of them works, keep the unused arguments negative e.g., bprodin = -1.d0, dfbot = -1.d0, dfpho = 100.d0
       integer, intent(in) :: region!, nStages                    ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
@@ -480,9 +462,27 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
-      if (bprod .ge. bent*0.1d0) then
-         bprod = bent*0.1d0
+      if (bprodin < 0.d0 .and. dfbot < 0.d0 .and. dfpho < 0.d0) then
+        !dfpho = 150.d0
+        bprod = 0.1d0*(150.d0*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. 150.d0*0.1d0) then
+           bprod = 150.d0*0.1d0
+        end if
+      else if (bprodin .gt. 0.d0 .and. dfbot .gt. 0.d0 .and. dfpho .gt. 0.d0) then
+        stop
+      else
+       if (bprodin >0.d0) then
+        bprod=bprodin
+       end if
+       if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+       end if
+       if (dfpho > 0.d0) then
+        bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. dfpho*0.1d0) then
+           bprod = dfpho*0.1d0
+        end if
+       end if
       end if
 
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
@@ -507,13 +507,12 @@ contains
       vertover = 0.d0
       sizeprefer = 0.d0
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
 
          group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
@@ -539,7 +538,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup,  mc, mL, mU)
          end select
       end do
       !from baseparameters.m
@@ -807,20 +806,18 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
-! update temperature
-call updateTempV(depthDay, depthNight, bottom, region)
-! all fish group
-do iGroup = 1, nGroups
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
-end do
-  !vector
-V=V*fTempV
-Cmax=Cmax*fTempV
+    ! update temperature
+    call updateTempV(depthDay, depthNight, bottom, region)
+    ! all fish group
+    do iGroup = 1, nGroups
+        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+    end do
 
-call set2vec
-Rtype=1
+      !vector
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupvertical()
@@ -842,8 +839,10 @@ contains
 ! --------------------------------------
 ! Revised setup of vertical overlap based on van Denderen et al. (2020)
 ! --------------------------------------
-   subroutine setupVertical2(szprod,lzprod, bent, nStages, region, bottom, photic, etaMature,Fishing,etaF)
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bent, etaMature,Fishing,etaF !  default bottom:1500m euphotic depth 150m
+   subroutine setupVertical2(szprod,lzprod, bprodin, dfbot, dfpho, nStages, region, bottom, photic, etaMature,Fishing,etaF)
+     !  default bottom:1500m euphotic depth 150m
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bprodin, dfbot, dfpho, etaMature,Fishing,etaF ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
+                                                                                                           ! only one of them works, keep the unused arguments negative e.g., bprodin = -1.d0, dfbot = -1.d0, dfpho = 100.d0
       integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
@@ -885,9 +884,27 @@ contains
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
-      bprod = 0.1d0*(bent*(bottom/photic)**(-0.86d0)) ! from matlab
-      if (bprod .ge. bent*0.1d0) then
-         bprod = bent*0.1d0
+      if (bprodin < 0.d0 .and. dfbot < 0.d0 .and. dfpho < 0.d0) then
+        !dfpho = 150.d0
+        bprod = 0.1d0*(150.d0*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. 150.d0*0.1d0) then
+           bprod = 150.d0*0.1d0
+        end if
+      else if (bprodin .gt. 0.d0 .and. dfbot .gt. 0.d0 .and. dfpho .gt. 0.d0) then
+        stop
+      else
+       if (bprodin >0.d0) then
+        bprod=bprodin
+       end if
+       if (dfbot >0.d0) then
+        bprod=dfbot*0.1d0
+       end if
+       if (dfpho > 0.d0) then
+        bprod = 0.1d0*(dfpho*(bottom/photic)**(-0.86d0)) ! from matlab
+        if (bprod .ge. dfpho*0.1d0) then
+           bprod = dfpho*0.1d0
+        end if
+       end if
       end if
 
       call parametersInit(5, nint(0.66d0*nStages) + nint(0.66d0*nStages) + nStages + nStages + nStages, 4, szprod,lzprod, bprod)!
@@ -912,13 +929,12 @@ contains
       vertover = 0.d0
       sizeprefer = 0.d0
       theta = 0.d0 ! overwritten latter
-      V = 0.d0
-      Cmax = 0.d0
 
 ! Overwrite
       do iGroup = 1, nGroups
 
          group(iGroup)%spec%metabolism = (0.2d0*h*group(iGroup)%spec%m**p)
+         group(iGroup)%spec%metabolismsave = group(iGroup)%spec%metabolism
 
          !group(iGroup)%spec%psiMature = 0.d0 ! reset
          !group(iGroup)%spec%psiMature(group(iGroup)%spec%n) = 0.5d0! only adults reproduce
@@ -941,7 +957,6 @@ contains
 ! fishing mortality
       !group(nGroups)%spec%mortF(group(nGroups)%spec%n) = 0.5d0 ! only demersal adults have fishing mortality
 
-
       call setFishing(Fishing,etaF)
 
 ! Feeding preference matrix:
@@ -949,7 +964,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
       !from baseparameters.m
@@ -1229,20 +1244,18 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
-! update temperature
-call updateTempV(depthDay, depthNight, bottom, region)
-! all fish group
-do iGroup = 1, nGroups
-    group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-    group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
-end do
-  !vector
-V=V*fTempV
-Cmax=Cmax*fTempV
+    ! update temperature
+    call updateTempV(depthDay, depthNight, bottom, region)
+    ! all fish group
+    do iGroup = 1, nGroups
+        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+    end do
 
-call set2vec
-Rtype=1
+      !vector
+    call set2vec
+    Rtype=1
 
 contains
    subroutine read_namelist_setupvertical()
@@ -1389,7 +1402,7 @@ contains
       do iGroup = 1, nGroups
          select type (spec => group(iGroup)%spec)
          type is (spectrumfish)
-            call formvector(spec, iGroup, V, Cmax, mc, mL, mU)
+            call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
 
@@ -1803,6 +1816,12 @@ contains
          deallocate(mortRes)
 !-----------------------------------------
 
+!-----------------Feb 2024 add-----------
+         deallocate(metabolismsave)
+         deallocate(Vsave)
+         deallocate(Cmaxsave)
+         bET=.FALSE.
+
       end if
 
       allocate (group(nGroups))
@@ -1847,6 +1866,12 @@ contains
       allocate(totRecruit(nGroups))
       allocate(totBiomass(nGroups))
 !---------------------------------------
+
+!-----------------Feb 2024 add-----------
+      allocate(metabolismsave(nGrid))
+      allocate(Vsave(nGrid))
+      allocate(Cmaxsave(nGrid))
+
 
       ! define resources:
       K = [szprod, lzprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
@@ -1920,17 +1945,18 @@ contains
 
 !-------------------------------------------------------------
 ! return assembled vectors containing values for all fish grid (no resources)
-   subroutine formvector(this, iGroup, V, Cmax, mc, mL, mU)
-      integer, intent(in)::iGroup
-      class(spectrumfish)::this
-      real(dp), intent(out)::V(nGrid), Cmax(nGrid), mc(nGrid), mL(nGrid), mU(nGrid)
+! resources mass must be assigned manually
+   subroutine formmassvector(this, iGroup, mc, mL, mU)
+      integer, intent(in) :: iGroup
+      class(spectrumfish) :: this
+      real(dp), intent(out) :: mc(nGrid), mL(nGrid), mU(nGrid)
 
-      V(ixStart(iGroup):ixEnd(iGroup)) = this%V
-      Cmax(ixStart(iGroup):ixEnd(iGroup)) = this%Cmax
+      !V(ixStart(iGroup):ixEnd(iGroup)) = this%V
+      !Cmax(ixStart(iGroup):ixEnd(iGroup)) = this%Cmax
       mc(ixStart(iGroup):ixEnd(iGroup)) = this%m
       mL(ixStart(iGroup):ixEnd(iGroup)) = this%mLower
       mU(ixStart(iGroup):ixEnd(iGroup)) = this%mUpper
-   end subroutine formvector
+   end subroutine formmassvector
 
    ! FROM NUM
     ! Calculate the interaction coefficient between two size groups.
@@ -1964,26 +1990,258 @@ contains
 subroutine set2vec
  integer :: iGroup
 
-epsAssim_vec=epsAssim
-epsRepro_vec=epsRepro
+    epsAssim_vec=epsAssim
+    epsRepro_vec=epsRepro
 
+    V=0.d0
+    Cmax=0.d0
+    metabolism=0.d0
+    mort0=0.d0
+    mortF=0.d0
+    psiMature=0.d0
+    z=0.d0
 
-metabolism=0.d0
-mort0=0.d0
-mortF=0.d0
-psiMature=0.d0
-z=0.d0
+    metabolismsave=0.d0
+    Vsave=0.d0
+    Cmaxsave=0.d0
 
-do iGroup=1,nGroups
+    do iGroup=1,nGroups
 
-metabolism( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%metabolism
-mort0( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mort0
-mortF( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mortF
-psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(iGroup)%spec%psiMature
-z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
+    V( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%V
+    Cmax( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%Cmax
+    metabolism( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%metabolism
+    mort0( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mort0
+    mortF( ixStart(iGroup) :ixEnd(iGroup) )    =   group(iGroup)%spec%mortF
+    psiMature( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )    =   group(iGroup)%spec%psiMature
+    z( ixStart(iGroup)-nResources : ixEnd(iGroup)-nResources )   = group(iGroup)%spec%z
 
-end do
+    metabolismsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%metabolismsave
+    Vsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Vsave
+    Cmaxsave( ixStart(iGroup) :ixEnd(iGroup) )=group(iGroup)%spec%Cmaxsave
+
+    end do
+
 end subroutine set2vec
+
+
+!--------------------------------------------------------------------
+!     Temperature
+!--------------------------------------------------------------------
+
+
+   ! -----------------------------------------------
+   ! Temperature Q10 function
+   ! -----------------------------------------------
+   function calfTemp(Q10, T) result(f) !calculate temperature factor
+      real(dp), intent(in):: Q10, T
+      real(dp):: f
+
+      f = Q10**((T - Tref)/10.d0)
+   end function calfTemp
+
+! update temperature effects on physiological rates, setupbasic (Petrik et al., 2019) and setupbasic2
+subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
+      real(dp), intent(in) :: Tp, Tb, depth
+      integer, intent(in) :: npelgroup,ndemgroup
+      integer, intent(in) ::  pelgroup(npelgroup), demgroup(ndemgroup)
+      real(dp) :: eT, lambda
+      real(dp), save :: Toldp = -1000.d0
+      real(dp), save :: Toldb = -1000.d0
+      integer:: i,ii,j,iGroup
+
+      if (allocated (smdemidx))  deallocate (smdemidx)
+      if (allocated (lgdemidx))  deallocate (lgdemidx)
+
+      if (allocated (pelgroupidx))    deallocate (pelgroupidx)
+      allocate (pelgroupidx(npelgroup))
+      pelgroupidx=pelgroup
+      if (allocated (demgroupidx))    deallocate (demgroupidx)
+      allocate (demgroupidx(ndemgroup))
+      demgroupidx=demgroup
+      pelagicT=Tp
+      benthicT=Tb
+
+      if (Tp .ne. Toldp .OR. Tb .ne. Toldb) then
+         Toldp = Tp
+         Toldb = Tb
+         fTemp = calfTemp(Q10, Tp)  !Q10=1.88 clearance rate,  maximum consumption rate
+         fTempm = calfTemp(Q10mPetrik, Tp) !Q10m=2.35 for metabolism    Petrik
+         fTempdem = calfTemp(Q10, Tb)  !for demersal
+         fTempmdem = calfTemp(Q10mPetrik, Tb) !for demersal
+
+          !lambda should depend on B but temporarily set as 0.5
+          lambda = 0.5d0
+          eT     = Tp * lambda + Tb * (1-lambda)
+          fTempdem_shallow  = calfTemp(Q10, eT)
+          fTempmdem_shallow = calfTemp(Q10mPetrik, eT)
+      end if
+
+    !all fish group
+      !pelagic
+    if (npelgroup.gt.0) then
+     do i = 1, size(pelgroup)
+
+        iGroup=pelgroup(i)
+
+        group(iGroup)%spec%V=group(iGroup)%spec%Vsave *fTemp
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmaxsave *fTemp
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave *fTempm
+     end do
+    end if
+
+      !demersal
+   if (ndemgroup.gt.0) then
+    do ii= 1, size(demgroup)
+        iGroup=demgroup(ii)
+
+      ! form small & large demersal index array
+        smdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        smdemidx=smdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .le. mMedium))
+        lgdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        lgdemidx=lgdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .ge. mLarge))
+         if (ii.ne.1) then
+          smdemidx = [smdemidx,smdemidx]
+          lgdemidx = [lgdemidx,lgdemidx]
+         end if
+
+     do i = 1, group(iGroup)%spec%n
+
+       if (group(iGroup)%spec%m(i) .le. mMedium) then
+      !small
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTemp
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTemp
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempm
+
+       elseif (group(iGroup)%spec%m(i) .gt. mMedium .and. group(iGroup)%spec%m(i) .lt. mLarge)then
+      !medium
+         group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem
+         group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem
+         group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem
+       elseif (group(iGroup)%spec%m(i) .ge. mLarge)then
+      !large
+          if (depth .lt. 200.d0) then
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem_shallow
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem_shallow
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem_shallow
+          else
+          group(iGroup)%spec%V(i)=group(iGroup)%spec%Vsave(i) *fTempdem
+          group(iGroup)%spec%Cmax(i)=group(iGroup)%spec%Cmaxsave(i) *fTempdem
+          group(iGroup)%spec%metabolism(i)=group(iGroup)%spec%metabolismsave(i) *fTempmdem
+          end if
+       end if
+     end do
+    end do
+   end if
+
+!   fTempold=fTemp
+!   fTempmold=fTempm
+!   fTempdemold=fTempdem
+!   fTempmdemold=fTempmdem
+!   fTempdem_shallowold=fTempdem_shallow
+!   fTempmdem_shallowold=fTempmdem_shallow
+
+   !prepare index for effective temperature
+   if (allocated (pelgrididx)) deallocate (pelgrididx)
+   if (allocated (allgrididx)) deallocate (allgrididx)
+
+! assemble pelgrididx vector
+   pelgrididx = pelRidx ! all pelagic resources (zoop)
+   do ii= 1, size(pelgroupidx) ! add pelagic fish
+       iGroup=pelgroupidx(ii)
+        pelgrididx=[int(pelgrididx,4),(i, i = ixStart(iGroup), ixEnd(iGroup))]
+   end do
+   pelgrididx=[int(pelgrididx,4),smdemidx] ! add small demersal fish (pelagic)
+   ! Note pelgrididx is integer(8)
+
+   allgrididx=[(i, i = 1, nResources), (j, j = ixStart(1), ixEnd(nGroups))]
+
+   Q10ET=Q10
+   Q10mET=Q10mPetrik
+   depthET=depth
+
+end subroutine updateTemp
+
+
+subroutine updateET(u)
+    real(dp), intent(in) :: u(nGrid)
+    real(dp) :: eT, lambda
+    integer :: i,ii,j,iGroup
+    integer, allocatable :: pelpreyidx(:), allpreyidx(:)
+
+   do ii= 1,size(lgdemidx)
+    i=lgdemidx(ii)
+
+    if (allocated (pelpreyidx)) deallocate (pelpreyidx)
+    if (allocated (allpreyidx)) deallocate (allpreyidx)
+
+    pelpreyidx = pack(pelgrididx, theta(i, pelgrididx) /= 0.d0)
+    allpreyidx = pack(allgrididx, theta(i, allgrididx) /= 0.d0)
+
+    lambda = sum(u(pelpreyidx)) / (sum(u(allpreyidx)) + eps) ! Eq. 15     eps = 1d-200 in case NA values generated 0/0
+    eT = pelagicT * lambda + benthicT * (1 - lambda)
+    fTempdem_shallow  = calfTemp(Q10ET, eT)
+    fTempmdem_shallow = calfTemp(Q10mET, eT)
+
+    !update vectors
+    V(i)          = Vsave(i) * fTempdem_shallow
+    Cmax(i)       = Cmaxsave(i) * fTempdem_shallow
+    metabolism(i) = metabolismsave(i) * fTempmdem_shallow
+
+   end do
+
+end subroutine
+
+! update Temperature for vertical version van Denderen et al., 2021
+subroutine updateTempV(depthDay, depthNight, bottom, region)
+ real(dp), intent(in) :: depthDay(:, :), depthNight(:, :), bottom
+ integer :: i,region
+ real(dp), allocatable :: dist(:,:), TQ10(:), TQ10m(:), fTemp_stepV(:,:), fTempm_stepV(:,:)
+ real(dp) :: tempdata(5501,5) ! contain tempdata from van Denderen et al., 2021 + default(10 celcius)
+
+    if (allocated (fTempV)) then
+        deallocate (fTempV)
+        deallocate (fTempmV)
+    end if
+
+allocate (dist(size(depthDay,1), size(depthDay,2)))
+allocate (TQ10(int(bottom+1)))
+allocate (TQ10m(int(bottom+1)))
+allocate (fTemp_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempm_stepV(size(depthDay,1), size(depthDay,2)))
+allocate (fTempV(size(depthDay,2)))
+allocate (fTempmV(size(depthDay,2)))
+
+    dist = 0.d0
+    TQ10 = 0.d0
+    TQ10m = 0.d0
+    fTemp_stepV = 0.d0
+    fTempm_stepV = 0.d0
+    fTempV = 0.d0
+    fTempmV  = 0.d0
+
+open(unit=1,action='read', file=file_path_V,status="old")!C:/Users/Admin/Desktop/FEISTY-main/FEISTY-main
+do i = 1,5501
+    read(1,*) tempdata(i,1),tempdata(i,2),tempdata(i,3),tempdata(i,4) !depth 0-5500(no use), tropical, temperate, boreal, default(10 celcius)
+end do
+close(1)
+tempdata(:,5)=10.d0 !default temp, so no temp-effects
+
+dist = (depthDay + depthNight)/2.d0
+! region+1: 1+1 tropical, 2+1 temperate, 3+1 boreal, 4+1 default(10 celcius)
+TQ10 =  Q10**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+TQ10m =  Q10m**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+
+
+do i=1,size(dist,2)
+fTemp_stepV(:,i) = dist(:,i) * TQ10
+fTempm_stepV(:,i) = dist(:,i) * TQ10m
+end do
+
+fTempV = sum(fTemp_stepV,1)
+fTempmV = sum(fTempm_stepV,1)
+
+end subroutine updateTempV
+
 
 
 end module setup

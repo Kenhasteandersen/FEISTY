@@ -98,6 +98,10 @@ contains
       this%mort0 = 0.1d0                 ! Intrinsic mortality
       this%mortF = 0.d0                  ! Fishing mortality
 
+      this%Cmaxsave = this%Cmax
+      this%Vsave = this%V
+      this%metabolismsave = this%metabolism
+
    end subroutine initFish
 
 end module fish

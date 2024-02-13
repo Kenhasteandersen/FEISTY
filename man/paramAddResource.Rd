@@ -4,7 +4,7 @@
 \alias{paramAddResource}
 \title{Add Resource Parameters}
 \usage{
-paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA)
+paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA, ixpelR, ixbenR)
 }
 \arguments{
 \item{p}{Parameter list to be updated.}
@@ -24,6 +24,10 @@ paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = N
 \item{names}{A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.}
 
 \item{u0}{A vector of the initial concentration of each resource. If not provided, defaults to the value of \code{K}.}
+
+\item{ixpelR}{An integer vector of indices of pelagic resources.}
+
+\item{ixbenR}{An integer vector of indices of benthic resources.}
 }
 \value{
 The updated parameter list \code{p}:
@@ -40,6 +44,8 @@ The updated parameter list \code{p}:
 \item mLower, the lower limit of each resource weight, fish data will be added later.
 \item mUpper, the upper limit of each resource weight, fish data will be added later.
 \item u0, from parameter input or same as \code{K}, fish data will be added later.
+\item ixpelR, indices of pelagic resources.
+\item ixbenR, indices of benthic resources.
 }
 }
 \description{

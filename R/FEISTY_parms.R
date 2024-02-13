@@ -168,7 +168,7 @@ paramSizepref <- function(
 #'
 #' @examples
 #' # Initialize parameters
-#' p <- paramInit(size_1 = 500, size_2 = 1000, depth_1 = 200, depth_2 = 250) # add four extra parameters to the list
+#' p <- paramInit(waterdepth = 600, maturesize = 250, photicdepth = 150, mediumsize = 250) # add four extra parameters to the list
 #' 
 #' @author Ken H. Andersen, Karline Soetaert <karline.soetaert@nioz.nl>, Yixin Zhao
 #' 
@@ -208,25 +208,23 @@ paramInit = function(...) {
   param$ixFish = list() # Indices to all fish groups
   param$ixR = NA # Indices to all resource groups
   
-  param$my_palette <- c("smallZoo" = "#FFEE58",
-                    "largeZoo" = "#F9A825",
-                    "smallBenthos" = "#795548",
-                    "largeBenthos" = "#F57C0D",
-                    "smallPel" = "#BBDEFB",
-                    "mesoPel" = "#9E9E9E",
-                    "largePel" = "#2196F3",
-                    "bathyPel" =  "#0D47A1",
-                    "demersals" =  "#800080")
-  
-  param$my_names <- c("smallZoo" = "Small zooplankton",
-                  "largeZoo" = "Large zooplankton",
-                  "smallBenthos" = "Small Benthos",
-                  "largeBenthos" = "Large Benthos",
-                  "smallPel" = "Small pelagics",
-                  "mesoPel" = "Mesopelagics",
-                  "largePel" = "Large pelagics",
-                  "bathyPel" = "Bathypelagics",
-                  "demersals" =  "Demersals")
+  param$my_palette <- c("smallZoo" = "#DDCC77",
+                        "largeZoo" = "#999933",
+                        "benthos" = "#662506",
+                        "smallPel" = "#EE6677",
+                        "mesoPel" = "#AA4499",
+                        "largePel" = "#33BBEE",
+                        "bathyPel" =  "#004488",
+                        "demersals" =  "#228833")
+                        
+  param$my_names <- c("smallZoo" = "Small mesozooplankton",
+                      "largeZoo" = "Large mesozooplankton",
+                      "benthos" = "Benthos",
+                      "smallPel" = "Small pelagics",
+                      "mesoPel" = "Mesopelagics",
+                      "largePel" = "Large pelagics",
+                      "bathyPel" = "Bathypelagics",
+                      "demersals" = "Demersals")
   
   return(param)
 }
@@ -269,7 +267,7 @@ makeGrid = function(mMin,         # min size, gram
 #'
 #' This function updates the parameter list by adding resource-related parameters.
 #' 
-#' @usage paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA)
+#' @usage paramAddResource (p, K, r=1, dynamics=c("chemostat", "logistic"), mc, mLower = NA, mUpper = NA, names=NA, u0=NA, ixpelR, ixbenR)
 #'
 #' @param p Parameter list to be updated.
 #' @param K A vector of carrying capacities of all resources [gww/m2].
@@ -280,6 +278,8 @@ makeGrid = function(mMin,         # min size, gram
 #' @param mUpper A vector containing the upper limit of each resource weight [gww]. Optional, depending on the size-based preference calculation function.
 #' @param names A character vector of each resource name (acronym). Optional, if not provided, default names are assigned, e.g., Resource_1 and Resource_2.
 #' @param u0 A vector of the initial concentration of each resource. If not provided, defaults to the value of \code{K}.
+#' @param ixpelR An integer vector of indices of pelagic resources.
+#' @param ixbenR An integer vector of indices of benthic resources.
 #'
 #' @return The updated parameter list \code{p}:
 #' \itemize{
@@ -295,6 +295,8 @@ makeGrid = function(mMin,         # min size, gram
 #' \item mLower, the lower limit of each resource weight, fish data will be added later.
 #' \item mUpper, the upper limit of each resource weight, fish data will be added later.
 #' \item u0, from parameter input or same as \code{K}, fish data will be added later.
+#' \item ixpelR, indices of pelagic resources.
+#' \item ixbenR, indices of benthic resources.
 #' }
 #' 
 #' @details
@@ -334,12 +336,14 @@ makeGrid = function(mMin,         # min size, gram
 paramAddResource = function(p,        # parameter to be updated
                          K,           # maximum resource concentration
                          r=1,         # resource nudging rate (/yr)          
-                         dynamics=c("chemostat", "logistic"),
-                         mc,          # mean weight, gWW/
+                         dynamics = "chemostat", # either "chemostat" or "logistic",
+                         mc,          # geometric mean weight, gWW
                          mLower = NA, # weight lower limit
-                         mUpper = NA, #upper limit
-                         names=NA,
-                         u0=NA){
+                         mUpper = NA, # upper limit
+                         names=NA,    # resource name vector, character
+                         u0=NA,
+                         ixpelR=NA,  # pelagic resource indices
+                         ixbenR=NA){ # benthic resource indices
   nR = length(K)
   p$nResources = nR
   if (any(is.na(names))) names <- paste("Resource",1:nR,sep="")
@@ -348,8 +352,8 @@ paramAddResource = function(p,        # parameter to be updated
   p$resources = data.frame(K=K, r=r, mc=mc, 
                           mLower=mLower, mUpper=mUpper, u0=u0)
   row.names(p$resources) = names
-  p$dynamics  <- match.arg(dynamics)
-  p$Rtype <- pmatch(match.arg(dynamics), c("chemostat", "logistic"))
+  p$dynamics  <- match.arg(dynamics, c("chemostat", "logistic"))
+  p$Rtype <- pmatch(p$dynamics, c("chemostat", "logistic"))
   p$K     = K
   p$r     = r
   p$ixR   = 1:nR 
@@ -359,6 +363,15 @@ paramAddResource = function(p,        # parameter to be updated
   p$u0     = p$resources$u0
   if (any(is.na(p$u0))) p$u0    = K
   names(p$u0)= names(p$mLower) = names(p$mUpper) = names
+  
+  if (is.na(ixpelR)) ixpelR <- grep("zoo", names, ignore.case = TRUE)
+  p$ixpelR=ixpelR
+  if (any(is.na(ixpelR)) || isempty(ixpelR)) stop("Cannot automaticlly get pelagic resource indices. Please check or assign the argument 'ixpelR'.")
+  
+  if (is.na(ixbenR)) ixbenR <- grep("ben", names, ignore.case = TRUE)
+  p$ixbenR=ixbenR
+  if (any(is.na(ixbenR)) || isempty(ixbenR)) stop("Cannot automaticlly get benthic resource indices. Please check or assign the argument 'ixbenR'.")
+  
   return(p)
 }
 
@@ -625,7 +638,6 @@ paramAddPhysiology = function (p,
   p$metabolismsave=p$metabolism
   
   # remove the NAs
-  # remove the NAs
   p$mc       [is.na(p$mc)]        <- 0 
   p$u0       [is.na(p$u0)]        <- 0 
   p$z        [is.na(p$z)]         <- 0 
@@ -651,31 +663,37 @@ paramAddPhysiology = function (p,
 
 #' Add temperature effects
 #'
-#' This function adjusts temperature-dependent physiological rates based on environmental temperatures. 
+#' This function adjusts temperature-dependent physiological rates based on environmental temperatures.\cr
+#' It also prepares some indices for effective temperature effects on large demersal fish in demersal water.\cr
 #' It applies Q10 temperature coefficients to modify metabolic rates, clearance rates, and maximum consumption rates.
-#' Currently, only works on \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
 #' 
-#' @usage paramTeffect(p, Tref, Q10, Q10m, u=NA)
+#' @usage paramTeffect(p, Tref, Q10, Q10m, pelgroupidx, demgroupidx)
 #' 
 #' @param p A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
 #' `Tp` and `Tb` must be included. See what are `Tp` and `Tb` in \code{\link{setupBasic}} and \code{\link{setupBasic2}}.
 #' @param Tref Reference temperature. Default 10 Celsius, generally cannot be other values, unless users define physiological rates based on another reference temperature.
 #' @param Q10 Q10 factor for the maximum consumption rate \code{Cmax} and clearance rate \code{V} [-]
 #' @param Q10m Q10 factor for metabolism rates \code{metabolism} [-]
-#' @param u Temporarily not used. To be developed...
+#' @param pelgroupidx pelagic fish group indices. If there is no pelagic fish, please assign NA.
+#' @param demgroupidx demersal fish group indices. If there is no demersal fish, please assign NA.
 #'
 #' @return An updated parameter list:
 #' \itemize{
 #' \item Tref, from parameter input
 #' \item Q10, from parameter input
 #' \item Q10m, from parameter input
+#' \item pelgroupidx, pelagic fish group indices, from parameter input
+#' \item demgroupidx, demersal fish group indices, from parameter input
 #' \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
 #' \item fT_met: factor of T effects on \code{metabolism}.
 #' \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
 #' \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
-#' \item eT: effective temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
 #' \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
 #' \item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+#' \item smdemidx: small demersal fish grid indices.
+#' \item lgdemidx: large demersal fish grid indices.
+#' \item pelgrididx: all pelagic prey grid indices, including zooplankton resources, pelagic fish (based on `pelgroupidx`) and small demersal fish (`smdemidx`).
+#' \item allgrididx: all state variable grids, 1:nGrid.
 #' }
 #'
 #' @details
@@ -692,13 +710,13 @@ paramAddPhysiology = function (p,
 #' @examples
 #' # Just an example, data may not make sense.
 #' # Create a FEISTY setup by setupBasic2.
-#' p1 = setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+#' p1 = setupBasic2(szprod = 100, lzprod = 100, bprodin = 5, depth = 100, Tp = 10, Tb = 8, 
 #' nStages=9, etaMature=0.25, F=0, etaF=0.05)
 #' 
 #' # change environmental temperatures and update T effects on physiological rates
 #' p1$Tp=15
 #' p1$Tb=12
-#' p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, u=NA)
+#' p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, pelgroupidx=c(1,2), demgroupidx=3)
 #' # Compare the original and updated physiological rates 
 #' p1$V
 #' p2$V
@@ -727,61 +745,120 @@ paramTeffect = function (p, # only for setupbasic & 2
                          Tref,
                          Q10,
                          Q10m,
-                         u=NA){ # B container: R+fish
+                         pelgroupidx, # pelagic group idx, NA means no pelagic groups
+                         demgroupidx){# demersal group idx, NA means no demersal groups
   
   p$Q10  = Q10
   p$Q10m = Q10m
   p$Tref = Tref
+  p$pelgroupidx=pelgroupidx
+  p$demgroupidx=demgroupidx
   # 
   p$fT = Q10^((p$Tp - Tref)/10) # factor of T effects on V Cmax
   p$fT_met = Q10m^((p$Tp - Tref)/10) # factor of T effects on metabolism
   p$fT_dem = Q10^((p$Tb - Tref)/10) # demersal
   p$fT_met_dem = Q10m^((p$Tb - Tref)/10)
   
-  if (p$depth<200){
-  
-  lambda = (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]))/
-         (sum(u[p$ix[[1]][p$mc[p$ix[[1]]]>p$mMedium]]) + sum(u[p$ix[[2]][p$mc[p$ix[[2]]]>p$mMedium & p$mc[p$ix[[2]]]<p$mLarge]]) + 
-          sum(u[p$ix[[3]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]]) + sum(u[3:4])) #Eq. 15
-  
-  lambda=0.5 #
-  p$eT = p$Tp * lambda + p$Tb * (1-lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
-  
-  p$fT_dem_shallow=Q10^((p$eT - Tref)/10) # demersal
-  p$fT_met_dem_shallow=Q10m^((p$eT - Tref)/10)
+  #pelagics
+  if (!any(is.na(pelgroupidx))) {
+    ix = unlist(lapply(pelgroupidx, function(i) p$ix[[i]]))
+    
+    p$V[ix] = p$fT * p$Vsave[ix]
+    p$Cmax[ix] = p$fT * p$Cmaxsave[ix]
+    p$metabolism[ix] = p$fT_met * p$metabolismsave[ix]
   }
   
-  ix = c(p$ix[[1]],p$ix[[2]])
-
-  #pelagics
-  p$V[ix]= p$fT * p$Vsave[ix]
-  
-  p$Cmax[ix]= p$fT * p$Cmaxsave[ix]
-  
-  p$metabolism[ix] = p$fT_met * p$metabolismsave[ix]
-  
   #demersal
-  #small
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium] = p$fT_met * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]<=p$mMedium]
-  #medium
-  p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] # small demersal are pelagic
-  p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
-  p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>p$mMedium & p$mc[p$ix[[3]]]<p$mLarge]
-  #Large  
-  if (p$depth < 200){
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem_shallow * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem_shallow * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-  }else{
-    p$V[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Vsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] #
-    p$Cmax[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_dem * p$Cmaxsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
-    p$metabolism[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge] = p$fT_met_dem * p$metabolismsave[p$ix[[3]]][p$mc[p$ix[[3]]]>=p$mLarge]
+  if (!any(is.na(demgroupidx))) {
+    ix = unlist(lapply(demgroupidx, function(i) p$ix[[i]]))
+    
+    ix_small  = ix[which(p$mc[ix] <= p$mMedium)]
+    ix_medium = ix[which(p$mc[ix] > p$mMedium & p$mc[ix] < p$mLarge)]
+    ix_large  = ix[which(p$mc[ix] >= p$mLarge)]
+    
+    p$smdemidx = ix_small
+    p$lgdemidx = ix_large
+  
+    #small
+    p$V[ix_small] = p$fT * p$Vsave[ix_small] # small demersal are pelagic
+    p$Cmax[ix_small] = p$fT * p$Cmaxsave[ix_small]
+    p$metabolism[ix_small] = p$fT_met * p$metabolismsave[ix_small]
+    #medium
+    p$V[ix_medium] = p$fT_dem * p$Vsave[ix_medium] # medium demersal stay at bottom
+    p$Cmax[ix_medium] = p$fT_dem * p$Cmaxsave[ix_medium]
+    p$metabolism[ix_medium] = p$fT_met_dem * p$metabolismsave[ix_medium]
+    #Large  
+    if (p$depth < 200) {
+      # effective temperature for large demersals in shallow water (<200m) Eq. 16
+      # default no effective T eT=(Tp+Tb)*0.5
+      lambda = 0.5 #
+      eT = p$Tp * lambda + p$Tb * (1 - lambda)
+      
+      p$fT_dem_shallow = Q10 ^ ((eT - Tref) / 10) # demersal
+      p$fT_met_dem_shallow = Q10m ^ ((eT - Tref) / 10)
+      
+      p$V[ix_large] = p$fT_dem_shallow * p$Vsave[ix_large] #
+      p$Cmax[ix_large] = p$fT_dem_shallow * p$Cmaxsave[ix_large]
+      p$metabolism[ix_large] = p$fT_met_dem_shallow * p$metabolismsave[ix_large]
+    } else{
+      p$V[ix_large] = p$fT_dem * p$Vsave[ix_large] #
+      p$Cmax[ix_large] = p$fT_dem * p$Cmaxsave[ix_large]
+      p$metabolism[ix_large] = p$fT_met_dem * p$metabolismsave[ix_large]
+    }
     
   }
   
+  p$pelgrididx = c(p$ixpelR, unlist(lapply(p$pelgroupidx, function(i) p$ix[[i]])), p$smdemidx) # zoop + pelagic fish + small dem
+  p$allgrididx = c(p$ixR, p$ixFish) #(1:ncol(p$theta))
   
   return(p)
 }
 
+# Update effective temperature
+#
+# This function updates temperature-dependent physiological rates of \bold{large} demersal fish in \bold{shallow} water (< 200m) based on effective temperatures.
+# It is called in each time step of ODE solving. Q10 temperature coefficients are applied to modify metabolic rates, clearance rates, and maximum consumption rates.
+# It only works on \code{setupBasic}, \code{setupBasic2} or customized setups (non-vertical).
+
+# This function is embedded into the \code{\link{derivativesFEISTYR}} to update the effective temperature effects on 
+# large demersal fish physiological rates (metabolism, clearance rate, and maximum consumption rate) in shallow water.
+# 
+# Please make sure the indices have been assigned properly, otherwise the simulation will crash or return wrong results.
+#
+# The function requires a specific structure in the input parameter list `p`, such as
+# indices `pelgrididx`, `allgrididx` and `lgdemidx` and
+# vectors for saved baseline values of physiological rates (\code{Vsave}, \code{Cmaxsave}, \code{metabolismsave}).
+# Therefore it works when the functions paramAddPhysiology and paramTeffect are used.
+# `Tp` and `Tb` are required in the input parameter list, or this function will not work.
+#
+# author Yixin Zhao
+#
+# references
+# Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.
+
+updateET = function (p, # 
+                     u=NA){ # B container: R+fish
+
+  # depth < 200m
+  
+  for (ilgdem in p$lgdemidx) {
+    pelpreyidx = (p$pelgrididx)[which(p$theta[ilgdem, p$pelgrididx] != 0)]
+    allpreyidx = (p$allgrididx)[which(p$theta[ilgdem, ] != 0)]
+    
+    lambda = sum(u[pelpreyidx]) / (sum(u[allpreyidx])+1E-200) # Eq. 15.  Seed value 1E-200 in case NaN (0/0).
+    
+    eT = p$Tp * lambda + p$Tb * (1 - lambda) # effect temperature for adult demersals in shallow water (<200m) Eq. 16
+    
+    p$fT_dem_shallow = p$Q10 ^ ((eT - p$Tref) / 10) # demersal
+    p$fT_met_dem_shallow = p$Q10m ^ ((eT - p$Tref) / 10)
+    
+    #demersal
+    
+    p$V[ilgdem] = p$fT_dem_shallow * p$Vsave[ilgdem] #
+    p$Cmax[ilgdem] = p$fT_dem_shallow * p$Cmaxsave[ilgdem]
+    p$metabolism[ilgdem] = p$fT_met_dem_shallow * p$metabolismsave[ilgdem]
+  
+}
+
+  return(p)
+}

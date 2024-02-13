@@ -94,6 +94,40 @@
       nGrid  = nFgrid + nResources
 !CALL intpr ("nFgrid ", 7, nFgrid, 1)  ! to check if correctly passed
 
+      if (allocated (pelgrididx))    deallocate (pelgrididx)
+      allocate (pelgrididx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(pelgrididx)
+        pelgrididx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if (allocated (allgrididx))    deallocate (allgrididx)
+      allocate (allgrididx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(allgrididx)
+        allgrididx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if (allocated (lgdemidx))    deallocate (lgdemidx)
+      allocate (lgdemidx(ipar(ii)))
+
+      ii=ii+1
+
+      do i = 1, size(lgdemidx)
+        lgdemidx(i) = ipar(ii)
+        ii = ii+1
+      end do
+
+      if(ipar(ii) .eq. 1) bET= .TRUE.
+      if(ipar(ii) .eq. 0) bET= .FALSE.
+
+
      !--------------------------
      ! resource parameters
      !--------------------------
@@ -264,6 +298,37 @@
       if (allocated (totBiomass)) deallocate (totBiomass)
       allocate (totBiomass(nGroups))
 
+!   Feb 2024 added
+      if (allocated (Vsave))           deallocate (Vsave)
+      allocate (Vsave(nGrid))
+
+      if (allocated (Cmaxsave))        deallocate (Cmaxsave)
+      allocate (Cmaxsave(nGrid))
+
+      if (allocated (metabolismsave))  deallocate (metabolismsave)
+      allocate (metabolismsave(nGrid))
+
+      call getVec(Vsave,           rpar, ir, nGrid)
+      call getVec(Cmaxsave,        rpar, ir, nGrid)
+      call getVec(metabolismsave,  rpar, ir, nGrid)
+
+!      call getVec(depthET,  rpar, ir, 1)
+!      call getVec(Q10ET,  rpar, ir, 1)
+!      call getVec(Q10mET,  rpar, ir, 1)
+!      call getVec(pelagicT,  rpar, ir, 1)
+!      call getVec(benthicT,  rpar, ir, 1)
+
+      depthET=rpar(ir)
+      ir=ir+1
+      Q10ET=rpar(ir)
+      ir=ir+1
+      Q10mET=rpar(ir)
+      ir=ir+1
+      pelagicT=rpar(ir)
+      ir=ir+1
+      benthicT=rpar(ir)
+      ir=ir+1
+
    end subroutine allocfeisty
 
 !--------------------------------------
@@ -305,6 +370,8 @@ do i = 1, nGrid
   u(i) = max(0.d0 , uin(i))
 end do
 
+if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
+
 ! ----------------------------------------------
 ! Feeding $ losses for resources and fish grids:
 ! ----------------------------------------------
@@ -316,7 +383,7 @@ end do
 
       grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
 
-      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! total loss          [gWW/m2/yr]
+      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
 
 ! ----------------------------------------------
 ! Mortality for resources and fish grids:
@@ -369,6 +436,10 @@ end do
         totRepro(i)    = repro(istart)
         totBiomass(i)  = B(istart)
 
+      ! Add the waste energy in reproduction of each stages.
+      ! Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
+        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1.d0-epsRepro_vec(i)) * Repro(istart:istop)
+
         do j = istart+1, istop
           Fin(j)         = Fout(j-1)
           totRepro(i)    = totRepro(i) + Repro(j)
@@ -388,9 +459,11 @@ end do
 
         do j = istart, istop
           totGrazing(i)  = totGrazing(i) + grazing(j)
-          totLoss(i)     = totLoss(i)    + loss(j)
+          totLoss(i)     = totLoss(i)    + loss(j) ! updated below
           totMort(i)     = totMort(i)    + mort(j)*u(j)
         end do
+      ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
+        totLoss(i)=totLoss(i) + (1.d0 - epsRepro_vec(i)) * Fout(istop-nResources)
 
       end do
       totRecruit   = totRepro*epsRepro_vec
@@ -452,12 +525,12 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(6)
+    real(dp) :: parmsbasic(7)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(6,parmsbasic)
-       call setupbasic(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),parmsbasic(6))
+       call steadyparms(7,parmsbasic)
+       call setupbasic(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),parmsbasic(6),parmsbasic(7))
 
        feistyinitialised = .TRUE.
 
@@ -467,13 +540,13 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(10)
+    real(dp) :: parmsbasic(12)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(10,parmsbasic)
-       call setupbasic2(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),parmsbasic(5),&
-                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10))
+       call steadyparms(12,parmsbasic)
+       call setupbasic2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),INT(parmsbasic(5)),&
+                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10),parmsbasic(11),INT(parmsbasic(12)))
 
        feistyinitialised = .TRUE.
 
@@ -483,13 +556,13 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(6)
+    real(dp) :: parmsbasic(8)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(6,parmsbasic)
-       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),&
-                          parmsbasic(5),parmsbasic(6))
+       call steadyparms(8,parmsbasic)
+       call setupVertical(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),&
+                          parmsbasic(5),INT(parmsbasic(6)),parmsbasic(7),parmsbasic(8))
 
        feistyinitialised = .TRUE.
 
@@ -499,13 +572,14 @@ end do
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(10)
+    real(dp) :: parmsbasic(12)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(10,parmsbasic)
-       call setupVertical2(parmsbasic(1),parmsbasic(2),parmsbasic(3),INT(parmsbasic(4)),INT(parmsbasic(5)),&
-                       parmsbasic(6),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10))
+       call steadyparms(12,parmsbasic)
+       call setupVertical2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),&
+                           INT(parmsbasic(6)),INT(parmsbasic(7)),parmsbasic(8),parmsbasic(9),parmsbasic(10),&
+                           parmsbasic(11),parmsbasic(12))
 
        feistyinitialised = .TRUE.
 

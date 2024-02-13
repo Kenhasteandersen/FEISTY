@@ -4,7 +4,7 @@
 \alias{paramTeffect}
 \title{Add temperature effects}
 \usage{
-paramTeffect(p, Tref, Q10, Q10m, u=NA)
+paramTeffect(p, Tref, Q10, Q10m, pelgroupidx, demgroupidx)
 }
 \arguments{
 \item{p}{A parameter list. Must be used after \code{\link{paramAddPhysiology}}. \cr
@@ -16,7 +16,9 @@ paramTeffect(p, Tref, Q10, Q10m, u=NA)
 
 \item{Q10m}{Q10 factor for metabolism rates \code{metabolism} [-]}
 
-\item{u}{Temporarily not used. To be developed...}
+\item{pelgroupidx}{pelagic fish group indices. If there is no pelagic fish, please assign NA.}
+
+\item{demgroupidx}{demersal fish group indices. If there is no demersal fish, please assign NA.}
 }
 \value{
 An updated parameter list:
@@ -24,19 +26,24 @@ An updated parameter list:
 \item Tref, from parameter input
 \item Q10, from parameter input
 \item Q10m, from parameter input
+\item pelgroupidx, pelagic fish group indices, from parameter input
+\item demgroupidx, demersal fish group indices, from parameter input
 \item fT: factor of T effects on \code{V} and \code{Cmax} of pelagic fish.
 \item fT_met: factor of T effects on \code{metabolism}.
 \item fT_dem: factor of T effects on \code{V} and \code{Cmax} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
 \item fT_met_dem: factor of T effects on \code{metabolism} of all demersal fish in deep water (depth >= 200m), and small and medium demersal fish in shallow water (depth < 200m).
-\item eT: effective temperature in shallow water (depth < 200m) for large demersal fish. \code{fT_dem_shallow} and \code{fT_met_dem_shallow} are calculated based on \code{eT}.
 \item fT_dem_shallow: factor of T effects on \code{V} and \code{Cmax} of large demersal fish in shallow water (depth < 200m).
 \item fT_met_dem_shallow: factor of T effects on the \code{metabolism} of large demersal fish in shallow water (depth < 200m).
+\item smdemidx: small demersal fish grid indices.
+\item lgdemidx: large demersal fish grid indices.
+\item pelgrididx: all pelagic prey grid indices, including zooplankton resources, pelagic fish (based on `pelgroupidx`) and small demersal fish (`smdemidx`).
+\item allgrididx: all state variable grids, 1:nGrid.
 }
 }
 \description{
-This function adjusts temperature-dependent physiological rates based on environmental temperatures. 
+This function adjusts temperature-dependent physiological rates based on environmental temperatures.\cr
+It also prepares some indices for effective temperature effects on large demersal fish in demersal water.\cr
 It applies Q10 temperature coefficients to modify metabolic rates, clearance rates, and maximum consumption rates.
-Currently, only works on \code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}.
 }
 \details{
 The function calculates temperature effects on physiological rates (metabolism, clearance rate, and maximum consumption rate) using 
@@ -52,13 +59,13 @@ It might not work in customized setups other than \code{\link{setupBasic}} and \
 \examples{
 # Just an example, data may not make sense.
 # Create a FEISTY setup by setupBasic2.
-p1 = setupBasic2(szprod = 100, lzprod = 100, bprod = 5, depth = 100, Tp = 10, Tb = 8, 
+p1 = setupBasic2(szprod = 100, lzprod = 100, bprodin = 5, depth = 100, Tp = 10, Tb = 8, 
 nStages=9, etaMature=0.25, F=0, etaF=0.05)
 
 # change environmental temperatures and update T effects on physiological rates
 p1$Tp=15
 p1$Tb=12
-p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, u=NA)
+p2=paramTeffect(p1, p1$Tref, p1$Q10, p1$Q10m, pelgroupidx=c(1,2), demgroupidx=3)
 # Compare the original and updated physiological rates 
 p1$V
 p2$V

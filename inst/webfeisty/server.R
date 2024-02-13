@@ -12,10 +12,10 @@ server <- function(input, output) {
     hide("photic")
     hide("nSizeGroups")
     hide("etaMature")
-    hide("bent")
+    hide("dfpho")
     show("szprod")
     show("lzprod")
-    show("bprod")
+    show("bprodin")
     show("Tp")
     show("Tb")
     show("sh_de")
@@ -25,13 +25,13 @@ server <- function(input, output) {
     hide("region")
     hide("bottom")
     hide("photic")
-    hide("bent")
+    hide("dfpho")
     show("sh_de")
     show("etaMature")
     show("nSizeGroups")
     show("szprod")
     show("lzprod")
-    show("bprod")
+    show("bprodin")
     show("Tp")
     show("Tb")
     show("F")
@@ -44,8 +44,8 @@ server <- function(input, output) {
     show("szprod")
     show("lzprod")
     hide("etaMature")
-    show("bent")
-    hide("bprod")
+    show("dfpho")
+    hide("bprodin")
     hide("Tp")
     hide("Tb")
     hide("sh_de")
@@ -59,8 +59,8 @@ server <- function(input, output) {
     show("szprod")
     show("lzprod")
     show("etaMature")
-    show("bent")
-    hide("bprod")
+    show("dfpho")
+    hide("bprodin")
     hide("Tp")
     hide("Tb")
     hide("sh_de")
@@ -71,24 +71,24 @@ server <- function(input, output) {
   
   sim <- eventReactive(
     c(
-    input$szprod,input$lzprod,input$bprod,input$USEdll,input$Setup,input$nSizeGroups,
-    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$bent,
+    input$szprod,input$lzprod,input$bprodin,input$USEdll,input$Setup,input$nSizeGroups,
+    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$dfpho,
     input$sh_de,input$F,input$etaF
   ),
   {
     # setup simulation
     if (input$Setup == "setupBasic") {
-      p = setupBasic(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb)
+      p = setupBasic(szprod = input$szprod, lzprod = input$lzprod, bprodin=input$bprodin,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb)
       #setupini = c(input$szprod,input$lzprod,input$bprod,input$sh_de,input$Tp,input$Tb)
     }else if (input$Setup == "setupBasic2") {
-      p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprod=input$bprod,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
+      p = setupBasic2(szprod = input$szprod, lzprod = input$lzprod, bprodin=input$bprodin,depth=input$sh_de,Tp=input$Tp,Tb=input$Tb,
                       nStages =input$nSizeGroups, # Number of size groups
                       etaMature=input$etaMature,
                       F=input$F,
                       etaF=input$etaF)
       #setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,input$F,input$etaF)
     }else if (input$Setup == "setupVertical") {
-      p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
+      p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, dfpho=input$dfpho,
                       #nStages  = input$nSizeGroups, # Number of size groups
                       region   = as.integer(input$region),
                       depth    = input$bottom,
@@ -96,7 +96,7 @@ server <- function(input, output) {
       #setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region, input$bottom, input$photic)
       
     }else if (input$Setup == "setupVertical2") {
-      p = setupVertical2(szprod = input$szprod, lzprod = input$lzprod, bent=input$bent,
+      p = setupVertical2(szprod = input$szprod, lzprod = input$lzprod, dfpho=input$dfpho,
                         nStages  = input$nSizeGroups, # Number of size groups
                         region   = as.integer(input$region),
                         depth    = input$bottom,
