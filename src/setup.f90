@@ -1,7 +1,7 @@
 !
 ! FEISTY model
 ! References: Petrik et al., 2019; van Denderen et al., 2020.
-! The library follows MATLAB/R codes from Ken Haste Andersen; Pieter Daniël van Denderen; Rémy Denéchère; Daniel Ottmann Riera ...
+! The library follows MATLAB/R codes from Ken Haste Andersen; Pieter Dani?l van Denderen; R?my Den?ch?re; Daniel Ottmann Riera ...
 ! Programmed by Yixin Zhao, August 2022.
 !
 Module setup
@@ -2165,7 +2165,7 @@ end subroutine updateTemp
 subroutine updateET(u)
     real(dp), intent(in) :: u(nGrid)
     real(dp) :: eT, lambda
-    integer :: i,ii,j,iGroup
+    integer :: i,ii
     integer, allocatable :: pelpreyidx(:), allpreyidx(:)
 
    do ii= 1,size(lgdemidx)
@@ -2228,8 +2228,8 @@ tempdata(:,5)=10.d0 !default temp, so no temp-effects
 
 dist = (depthDay + depthNight)/2.d0
 ! region+1: 1+1 tropical, 2+1 temperate, 3+1 boreal, 4+1 default(10 celcius)
-TQ10 =  Q10**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
-TQ10m =  Q10m**((tempdata(1:bottom+1 , (region+1))-10.d0)/10.d0)
+TQ10 =  Q10**((tempdata(1:int(bottom)+1 , (region+1))-10.d0)/10.d0)
+TQ10m =  Q10m**((tempdata(1:int(bottom)+1 , (region+1))-10.d0)/10.d0)
 
 
 do i=1,size(dist,2)
