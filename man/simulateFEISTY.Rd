@@ -12,7 +12,7 @@ simulateFEISTY (bCust = FALSE, p = setupBasic(), tEnd = 100, tStep  = 1, times =
 If \code{bCust} is TURE, FEISTY simulations based on customized setups only can be done in FORTRAN, not R. \code{useDLL} input does not work.}
 
 \item{p}{A complete parameter list. \cr 
-The parameter of FEISTY setups can be one of the following: \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}.
+The parameter of FEISTY setups can be one of the following: \code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setupVertical}}, and \code{\link{setupVertical2}}.
 Or, modelers can customize new setups before calling \code{simulateFEISTY}.}
 
 \item{tEnd}{The end time for the simulation [year], i.e., simulation period of FEISTY, in years. Time (in years) over which the model should be simulated.}
@@ -67,8 +67,8 @@ It also allows simulations for customized FEISTY setups.
 \details{
 The function runs the FEISTY model simulation over the specified time frame. \cr
 The simulation supports published FEISTY setups and their revised versions:
-\code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setVertical}}, and \code{\link{setVertical2}}, and customized setups by modelers. \cr
-The simulation can be conducted by either a FORTRAN-based approach or an R-based approach. Both methods rely on the \link{desolve} package for ODE solving. 
+\code{\link{setupBasic}}, \code{\link{setupBasic2}}, \code{\link{setupVertical}}, and \code{\link{setupVertical2}}, and customized setups by modelers. \cr
+The simulation can be conducted by either a FORTRAN-based approach or an R-based approach. Both methods rely on the \link{deSolve} package for ODE solving. 
 For efficiency, FORTRAN dll should be used. For model development, the R-version is preferred.
 Simulations based on customized setups only can be done by the FORTRAN-based approach.
 }
