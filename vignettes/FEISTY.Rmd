@@ -3,11 +3,11 @@ title: "FishErIes Size and functional TYpe model in R (FEISTY)"
 author: "Ken H Andersen and Karline Soetaert Yixin Zhao"
 date: " 2024"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
   word_document: default
 vignette: >
-  %\VignetteIndexEntry{FishErIes Size and functional TYpe model (FEISTY)}
+  %\VignetteIndexEntry{FishErIes Size and functional TYpe model in R (FEISTY)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

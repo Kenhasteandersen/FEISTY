@@ -15,7 +15,7 @@ p2 <- paramAddPhysiology(p, ac = 40, am = 8, ae=140)
 
 p3 <- paramAddPhysiology(p, ac = 10, am = 2, ae=35)
 
-## ---- fig.width=8, fig.height=8-----------------------------------------------
+## ----fig.width=8, fig.height=8------------------------------------------------
 out1 <- simulateFEISTY(p=p,  times=seq(0, 200, length.out=1000),bCust=T)
 out2 <- simulateFEISTY(p=p2, times=seq(0, 200, length.out=1000),bCust=T)
 out3 <- simulateFEISTY(p=p3, times=seq(0, 200, length.out=1000),bCust=T)
