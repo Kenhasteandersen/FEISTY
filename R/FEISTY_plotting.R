@@ -609,7 +609,7 @@ plotNetwork <- function(sim) {
   if (length(p$ix)==3){
     p <- ggplot(data = df) +
       geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
-      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize)) +
+      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize),stroke=0,shape=16) +
       scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
                          labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
       scale_size_continuous(range = c(1, 15)) +
@@ -628,7 +628,7 @@ plotNetwork <- function(sim) {
   if (length(p$ix)==5){
     p <- ggplot(data = df) +
       geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
-      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize)) +
+      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize),stroke=0,shape=16) +
       scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
                          labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
       scale_size_continuous(range = c(1, 15)) +
