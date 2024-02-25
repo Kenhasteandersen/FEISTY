@@ -698,7 +698,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   ix = param$ix[[3]]
   lpel_n = VertDist(sigmap[ix], xloc=0)
   
-  # large pelagic fish day (non-adult at surface   adult at dvm)
+  # large pelagic fish day (non-adult at surface   adult half at surface half at dvm)
   xlocvec = rep(0,length(ix)) 
   xlocvec[ixadult:length(xlocvec)] = param$dvm 
   lpel_d = VertDist(sigmap[ix], xloc=xlocvec)
@@ -719,7 +719,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   xlocvec[ixjuv:length(xlocvec)] = param$bottom # larvae at surface   juvenile and adult at bottom
   dem_n = VertDist(sigmap[ix], xlocvec)
 
-  # demersal fish day; larvae at surface/ juvenile at bottom/ adult and middle
+  # demersal fish day; larvae at surface/ juvenile at bottom/ adult at middle
   demmig = param$dvm # ? from matlab
   if ((param$bottom - param$dvm) >= 1200) 
     demmig = param$dvm + (param$bottom-param$dvm-1200)
@@ -976,6 +976,9 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          dfpho  = NA, # detrital flux out of photic zone
                          nStages=6, # No. of size groups
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
+                         Tp = NA, # Average T of top 100 m (up to 100 m)
+                         Tm = NA, # Average T of 500 - 1000 m (up to 1000 m)
+                         Tb = NA, # Bottom T (last layer value)
                          depth=1500, # Bottom depth
                          photic=150, # Photic zone depth
                          mesopelagic=250, # mesopelagic depth
@@ -996,6 +999,12 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
     if (!is.na(dfpho)) {bprod=0.1*(dfpho*(depth/photic)^-0.86); if(bprod>=0.1*dfpho) bprod=0.1*dfpho} else {dfpho = -1}
   }
+  
+  # Temperature initialize
+  if (is.na(Tp)) Tp = 10
+  if (is.na(Tm)) Tm = 10
+  if (is.na(Tb)) Tb = 10
+  if (depth <= 500) Tm = Tb # no mid-water
     
   #------------------  
   # Initialize the parameters:
@@ -1004,7 +1013,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
                     mesop=mesopelagic, visual=visual, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod,
-                    etaMature=etaMature,region=region)
+                    etaMature=etaMature, Tp=Tp, Tm=Tm, Tb=Tb)
   
   #------------------  
   # Setup resource groups:
@@ -1117,13 +1126,13 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   # meso pelagic day (all at dvm)
   ix = param$ix[[2]]
-  mpel_d = VertDist(sigmap[ix], xloc=param$dv)
+  mpel_d = VertDist(sigmap[ix], xloc=param$dvm)
   
   ## large pelagic fish night (all at surface)
   ix = param$ix[[3]]
   lpel_n = VertDist(sigmap[ix], xloc=0)
   
-  # large pelagic fish day (non-adult at surface   adult at dvm)
+  # large pelagic fish day (non-adult at surface   adult half at surface half at dvm)
   xlocvec = rep(0,length(ix)) 
   xlocvec[ixadult:length(xlocvec)] = param$dvm 
   lpel_d = VertDist(sigmap[ix], xloc=xlocvec)
@@ -1144,7 +1153,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   xlocvec[ixjuv:length(xlocvec)] = param$bottom # larvae at surface   juvenile and adult at bottom
   dem_n = VertDist(sigmap[ix], xlocvec)
   
-  # demersal fish day; larvae at surface/ juvenile at bottom/ adult and middle
+  # demersal fish day; larvae at surface/ juvenile at bottom/ adult at middle
   demmig = param$dvm # ? from matlab
   if ((param$bottom - param$dvm) >= 1200) 
     demmig = param$dvm + (param$bottom-param$dvm-1200)
@@ -1265,6 +1274,75 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   scTemp = colSums(scTemp_step)
   scTempm = colSums(scTemp_stepm)
+  
+  # initialize effective T vector (all resoources and fish)
+  Teff = rep(0, length(param$u0))
+  
+# zooplankton (no use)
+  Tday = (param$Tp + param$Tm)/2 # half surface half dvm  param$dvm = param$photic + 500
+  if (param$dvm == param$bottom) { # when param$bottom < (param$photic + 500)
+  Tday = (param$Tp + param$Tb)/2
+  }
+  if (param$dvm == 0) Tday = param$Tp # when param$bottom <= param$mesop
+  Tnight = param$Tp # all surface
+  Teff[1:2] = (Tday+Tnight)/2
+# benthos (no use)
+  Teff[3:4] = param$Tb
+# small pelagics
+  ix = param$ix[[1]]
+  Teff[ix] = param$Tp # always surface
+# mesopelagics 
+  ix = param$ix[[2]]
+  Tday = param$Tm # dvm
+  if (param$dvm == param$bottom) Tday = param$Tb
+  if (param$dvm == 0) Tday = param$Tp
+  Tnight = param$Tp # surface
+  Teff[ix] = (Tday+Tnight)/2
+# large pelagics
+  ix = param$ix[[3]]
+  # daytime adult half at surface half at dvm
+  Tdayadu = (param$Tp+param$Tm)/2
+  if (param$dvm == param$bottom) Tdayadu = (param$Tp+param$Tb)/2
+  if (param$dvm == 0) Tdayadu = param$Tp
+  Tdaynonadu = param$Tp # non-adult at surface at daytime
+  Tnight = param$Tp     # all at surface at night
+  Teff[ix[ixadult:length(ix)]]  = (Tdayadu+Tnight)/2      # adult
+  Teff[ix[-(ixadult:length(ix))]] = (Tdaynonadu+Tnight)/2 # non-adult
+# bathypelagics    
+  ix = param$ix[[4]]
+  Tday = param$Tm # all at dvm at daytime
+  if (param$dvm == param$bottom) Tday = param$Tb
+  if (param$dvm == 0)            Tday = param$Tp
+  Tnightadu = param$Tm # adult at dvm
+  if (param$dvm == param$bottom) Tnightadu = param$Tb
+  if (param$dvm == 0)            Tnightadu = param$Tp
+  Tnightnonadu = param$Tp # non-adult at surface at night
+  Teff[ix[ixadult:length(ix)]]  = (Tday+Tnightadu)/2      # adult
+  Teff[ix[-(ixadult:length(ix))]] = (Tday+Tnightnonadu)/2 # non-adult
+# demersals    
+  ix = param$ix[[5]]
+  # nighttime
+  Tnightlar = param$Tp # larvae at surface
+  Tnightnonlar = param$Tb # non-larvae at bottom  
+  # daytime
+  Tdaylar = param$Tp # larvae at surface
+  Tdayjuv = param$Tb # juvenile at bottom
+  Tdayadu = param$Tm # adult at middle
+  # if the water is very deep adult demersals always stay at the bottom
+  if ((param$bottom - param$dvm) >= 1500) Tdayadu = param$Tb
+  # if the water is very shallow adult demersals migrate over the whole water column both day and night
+  if (param$bottom <= param$photic) {
+    Tdayadu = (param$Tp + param$Tb)/2
+    Tnightadu = Tdayadu
+  }
+
+  Teff[ix[-(ixjuv:length(ix))]] = (Tdaylar+Tnightlar)/2        # larvae
+  Teff[ix[ixjuv:(ixadult-1)]] = (Tdayjuv+Tnightnonlar)/2 # juvenile
+  Teff[ix[ixadult:length(ix)]]  = (Tdayadu+Tnightnonlar)/2  # adult
+  if (param$bottom <= param$photic) Teff[ix[ixadult:length(ix)]] = (Tdayadu+Tnightadu)/2
+  
+  scTemp =  Q10^((Teff-10)/10)
+  scTempm =  Q10m^((Teff-10)/10)
   
   param$Cmax = scTemp* param$Cmax # maximum consumption rate 
   param$V= scTemp* param$V # clearance rate 
