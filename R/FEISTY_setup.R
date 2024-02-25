@@ -976,9 +976,9 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          dfpho  = NA, # detrital flux out of photic zone
                          nStages=6, # No. of size groups
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
-                         Tp = NA, # Average T of top 100 m (up to 100 m)
-                         Tm = NA, # Average T of 500 - 1000 m (up to 1000 m)
-                         Tb = NA, # Bottom T (last layer value)
+                         Tp = NA, # Average T of top 100 m (up to 100 m). Default 10 Celsius.
+                         Tm = NA, # Average T of 500 - 1000 m (up to 1000 m). Default 10 Celsius. Keep it as NA, if no Tm data. Tm = Tb.
+                         Tb = NA, # Bottom T (last layer value). Default 10 Celsius.
                          depth=1500, # Bottom depth
                          photic=150, # Photic zone depth
                          mesopelagic=250, # mesopelagic depth
@@ -1002,9 +1002,8 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   # Temperature initialize
   if (is.na(Tp)) Tp = 10
-  if (is.na(Tm)) Tm = 10
   if (is.na(Tb)) Tb = 10
-  if (depth <= 500) Tm = Tb # no mid-water
+  if (is.na(Tm)) Tm = Tb # if Tm is not provided, Tm = Tb
     
   #------------------  
   # Initialize the parameters:
