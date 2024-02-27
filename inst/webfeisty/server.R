@@ -17,6 +17,7 @@ server <- function(input, output) {
     show("lzprod")
     show("bprodin")
     show("Tp")
+    hide("Tm")
     show("Tb")
     show("sh_de")
     hide("F")
@@ -33,6 +34,7 @@ server <- function(input, output) {
     show("lzprod")
     show("bprodin")
     show("Tp")
+    hide("Tm")
     show("Tb")
     show("F")
     show("etaF")
@@ -47,6 +49,7 @@ server <- function(input, output) {
     show("dfpho")
     hide("bprodin")
     hide("Tp")
+    hide("Tm")
     hide("Tb")
     hide("sh_de")
     hide("F")
@@ -61,8 +64,9 @@ server <- function(input, output) {
     show("etaMature")
     show("dfpho")
     hide("bprodin")
-    hide("Tp")
-    hide("Tb")
+    show("Tp")
+    show("Tm")
+    show("Tb")
     hide("sh_de")
     show("F")
     show("etaF")
@@ -72,7 +76,7 @@ server <- function(input, output) {
   sim <- eventReactive(
     c(
     input$szprod,input$lzprod,input$bprodin,input$USEdll,input$Setup,input$nSizeGroups,
-    input$Tp,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$dfpho,
+    input$Tp,input$Tm,input$Tb,input$region, input$bottom,input$photic,input$etaMature,input$dfpho,
     input$sh_de,input$F,input$etaF
   ),
   {
@@ -98,7 +102,9 @@ server <- function(input, output) {
     }else if (input$Setup == "setupVertical2") {
       p = setupVertical2(szprod = input$szprod, lzprod = input$lzprod, dfpho=input$dfpho,
                         nStages  = input$nSizeGroups, # Number of size groups
-                        region   = as.integer(input$region),
+                        Tp = input$Tp,
+                        Tm = input$Tm,
+                        Tb = input$Tb,
                         depth    = input$bottom,
                         photic   = input$photic,
                         mesopelagic=250,

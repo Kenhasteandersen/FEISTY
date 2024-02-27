@@ -454,7 +454,7 @@ contains
       real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
       real(dp),allocatable :: sizes(:)
-      integer :: iGroup, i, j, ixjuv, ixadult, nsize, matstageS, matstageL
+      integer :: iGroup, i, j, ixmedium, ixlarge, nsize, matstageS, matstageL
       real(dp), parameter :: etaMature = 0.002d0
       integer, parameter :: nStages = 6
 
@@ -578,12 +578,12 @@ contains
          dvm = 0.d0                   ! no migration in shallow habitats
       end if
 
-! first stages as juvenile/adult for predators
-      ixjuv = minloc(abs(sizes-0.5d0),dim=1) ! 0.002d0*250.d0
-      ixadult = minloc(abs(sizes-2.5d2),dim=1) ! 0.002d0*125000.d0
+! first stages as medium/large for predators
+      ixmedium = minloc(abs(sizes-0.5d0),dim=1) ! 0.002d0*250.d0
+      ixlarge = minloc(abs(sizes-2.5d2),dim=1) ! 0.002d0*125000.d0
 
-!      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
-!      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+!      ixmedium = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+!      ixlarge = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
 
 
   deallocate (sizes)!see above overwrite psimature
@@ -654,11 +654,11 @@ contains
       end do
       lpel_n = matmul(lpel_n, diag(1.d0/sum(lpel_n, 1)))
 
-! large pelagic fish day (non-adult at surface   adult at dvm)
+! large pelagic fish day (non-large at surface   large at dvm)
       allocate (lpel_d(size(xrange), ixEnd(3) - ixStart(3) + 1))
       allocate (xlocvec(ixEnd(3) - ixStart(3) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       do i = 1, size(ix)
          lpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                         exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
@@ -666,14 +666,14 @@ contains
       lpel_d = matmul(lpel_d, diag(1.d0/sum(lpel_d, 1)))
       lpel_d = (lpel_d + lpel_n)/2.d0
 
-! bathypelagic night (adults in midwater, others at surface)
+! bathypelagic night (large in midwater, others at surface)
       allocate (bpel_n(size(xrange), ixEnd(4) - ixStart(4) + 1))
       deallocate (xlocvec)
       deallocate (ix)
       allocate (xlocvec(ixEnd(4) - ixStart(4) + 1))
       allocate (ix(ixEnd(4) - ixStart(4) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       ix = [(i, i=ixStart(4), ixEnd(4))]
       do i = 1, size(ix)
          bpel_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -697,7 +697,7 @@ contains
       allocate (xlocvec(ixEnd(5) - ixStart(5) + 1))
       allocate (ix(ixEnd(5) - ixStart(5) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixjuv:size(xlocvec)) = bottom  !  larvae at surface   juvenile and adult at bottom
+      xlocvec(ixmedium:size(xlocvec)) = bottom  !  small at surface   medium and large at bottom
       ix = [(i, i=ixStart(5), ixEnd(5))]
       do i = 1, size(ix)
          dem_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -714,14 +714,14 @@ contains
          demmig = bottom
       end if
       allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
-      xlocvec(ixadult:size(xlocvec)) = demmig !=dvm? ! larvae at surface/ juvenile at bottom/ adult and middle
+      xlocvec(ixlarge:size(xlocvec)) = demmig !=dvm? ! small at surface/ medium at bottom/ large and middle
       do i = 1, size(ix)
          dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
       end do
       dem_d = matmul(dem_d, diag(1.d0/sum(dem_d, 1)))
 ! from matlab
-      ! if shallower than euphotic depth, adult demersals feed across-habitats
+      ! if shallower than euphotic depth, large demersals feed across-habitats
       if (bottom .le. photic) then
          dem_d = (dem_d + dem_n)/2.d0
          dem_n = dem_d
@@ -777,7 +777,7 @@ contains
 
 ! pelagic predators have limited vision in twilight zone during day
       pelpred = [(i, i=ixStart(3), ixEnd(3))]   ! large pelagic   9 10 11
-      pelpred = pelpred(ixadult:size(pelpred)) ! adult large pelagic  11  at dvm during day
+      pelpred = pelpred(ixlarge:size(pelpred)) ! large large pelagic  11  at dvm during day
       preytwi = [(i, i=ixStart(2), ixEnd(2)), (i, i=ixStart(4), ixEnd(4))] ! mesopelagic 7 8   bathypelagic 12 13 14
       dayout(pelpred, preytwi) = dayout(pelpred, preytwi)/visual*(2.d0 - visual)    ! /visual to restore and then *0.5
 
@@ -788,20 +788,20 @@ contains
 
 !! specific revision of feeding preference
 !
-      idx_be = [(i, i=idxF, ixStart(5) + (ixjuv - 2))]     ! all pelagic and larval demersals
+      idx_be = [(i, i=idxF, ixStart(5) + (ixmedium - 2))]     ! all pelagic and larval demersals
       theta(idx_be, 3:4) = 0.d0      ! all pelagic and larval demersals do not eat benthos,
-      ! only juvenile & adult demersals eat benthos
+      ! only medium & large demersals eat benthos
 ! small demersals are less preyed on
-      idx_smd = [(i, i=ixStart(5) + (ixjuv - 1), ixStart(5) + (ixadult - 2))] ! juvenile demersal is at bottom
+      idx_smd = [(i, i=ixStart(5) + (ixmedium - 1), ixStart(5) + (ixlarge - 2))] ! medium demersal is at bottom
       theta(idx_be, idx_smd) = theta(idx_be, idx_smd)*0.25d0
-! juvenile & adult demersals do not eat zooplankton
-      theta(ixStart(5) + (ixjuv - 1):ixEnd(5), 1:2) = 0.d0
+! medium & large demersals do not eat zooplankton
+      theta(ixStart(5) + (ixmedium - 1):ixEnd(5), 1:2) = 0.d0
 ! provide benefit to forage and mesopelagic fish (predator avoidance)
-      pred1 = [(i, i=ixStart(3) + (ixadult - 1), ixEnd(3))]
-      pred2 = [(i, i=ixStart(4) + (ixadult - 1), ixEnd(4))]
-      pred3 = [(i, i=ixStart(5) + (ixadult - 1), ixEnd(5))]
-      prey1 = [(i, i=ixStart(1) + (ixjuv - 1), ixEnd(1))]
-      prey2 = [(i, i=ixStart(2) + (ixjuv - 1), ixEnd(2))]
+      pred1 = [(i, i=ixStart(3) + (ixlarge - 1), ixEnd(3))]
+      pred2 = [(i, i=ixStart(4) + (ixlarge - 1), ixEnd(4))]
+      pred3 = [(i, i=ixStart(5) + (ixlarge - 1), ixEnd(5))]
+      prey1 = [(i, i=ixStart(1) + (ixmedium - 1), ixEnd(1))]
+      prey2 = [(i, i=ixStart(2) + (ixmedium - 1), ixEnd(2))]
       idx_predat = [pred1, pred2, pred3]
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
@@ -839,11 +839,11 @@ contains
 ! --------------------------------------
 ! Revised setup of vertical overlap based on van Denderen et al. (2020)
 ! --------------------------------------
-   subroutine setupVertical2(szprod,lzprod, bprodin, dfbot, dfpho, nStages, region, bottom, photic, etaMature,Fishing,etaF)
+   subroutine setupVertical2(szprod,lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, bottom, photic, etaMature,Fishing,etaF)
      !  default bottom:1500m euphotic depth 150m
-      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bprodin, dfbot, dfpho, etaMature,Fishing,etaF ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
+      real(dp), intent(in) :: szprod,lzprod, bottom, photic, bprodin, dfbot, dfpho, Tp, Tm, Tb, etaMature,Fishing,etaF ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor, dfpho: detrital flux out of the photic zone
                                                                                                            ! only one of them works, keep the unused arguments negative e.g., bprodin = -1.d0, dfbot = -1.d0, dfpho = 100.d0
-      integer, intent(in) :: nStages,region                                  ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
+      integer, intent(in) :: nStages                                ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
        real(dp) :: ssigma
@@ -877,7 +877,10 @@ contains
       real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
 !      real(dp),allocatable :: sizes(:)
-      integer :: iGroup, i, j, ixjuv, ixadult!, nsize, matstageS, matstageL
+      integer :: iGroup, i, j, ixmedium, ixlarge!, nsize, matstageS, matstageL
+      real(dp), allocatable :: Teff (:)
+      real(dp) :: Tday, Tnight, Tdaysmall, Tdaymedium, Tdaylarge, Tdaynonlarge, &
+                  Tnightsmall, Tnightnonsmall, Tnightlarge, Tnightnonlarge
 
 
       call read_namelist_setupvertical()
@@ -1013,15 +1016,15 @@ contains
          dvm = 0.d0                   ! no migration in shallow habitats
       end if
 
-! first stages as juvenile/adult for predators
-      !ixjuv = minloc(abs(sizes-0.5d0),dim=1) !from matlab
-      !ixadult = minloc(abs(sizes-2.5d2),dim=1)
+! first stages as medium/large for predators
+      !ixmedium = minloc(abs(sizes-0.5d0),dim=1) !from matlab
+      !ixlarge = minloc(abs(sizes-2.5d2),dim=1)
 
-!      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*250.d0),dim=1) !predatory fish
-!      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
+!      ixmedium = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*250.d0),dim=1) !predatory fish
+!      ixlarge = minloc(abs(mL(ixStart(5):ixEnd(5))-etaMature*1.25d5),dim=1)
 
-      ixjuv = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
-      ixadult = minloc(abs(mL(ixStart(5):ixEnd(5))-250.d0),dim=1)
+      ixmedium = minloc(abs(mL(ixStart(5):ixEnd(5))-0.5d0),dim=1) !predatory fish
+      ixlarge = minloc(abs(mL(ixStart(5):ixEnd(5))-250.d0),dim=1)
 
 
 !  deallocate (sizes)!see above overwrite psimature
@@ -1092,11 +1095,11 @@ contains
       end do
       lpel_n = matmul(lpel_n, diag(1.d0/sum(lpel_n, 1)))
 
-! large pelagic fish day (non-adult at surface   adult at dvm)
+! large pelagic fish day (non-large at surface   large at dvm)
       allocate (lpel_d(size(xrange), ixEnd(3) - ixStart(3) + 1))
       allocate (xlocvec(ixEnd(3) - ixStart(3) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       do i = 1, size(ix)
          lpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                         exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
@@ -1104,14 +1107,14 @@ contains
       lpel_d = matmul(lpel_d, diag(1.d0/sum(lpel_d, 1)))
       lpel_d = (lpel_d + lpel_n)/2.d0
 
-! bathypelagic night (adults in midwater, others at surface)
+! bathypelagic night (larges in midwater, others at surface)
       allocate (bpel_n(size(xrange), ixEnd(4) - ixStart(4) + 1))
       deallocate (xlocvec)
       deallocate (ix)
       allocate (xlocvec(ixEnd(4) - ixStart(4) + 1))
       allocate (ix(ixEnd(4) - ixStart(4) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       ix = [(i, i=ixStart(4), ixEnd(4))]
       do i = 1, size(ix)
          bpel_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -1135,7 +1138,7 @@ contains
       allocate (xlocvec(ixEnd(5) - ixStart(5) + 1))
       allocate (ix(ixEnd(5) - ixStart(5) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixjuv:size(xlocvec)) = bottom  !  larvae at surface   juvenile and adult at bottom
+      xlocvec(ixmedium:size(xlocvec)) = bottom  !  small at surface   medium and large at bottom
       ix = [(i, i=ixStart(5), ixEnd(5))]
       do i = 1, size(ix)
          dem_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -1152,14 +1155,14 @@ contains
          demmig = bottom
       end if
       allocate (dem_d(size(xrange), ixEnd(5) - ixStart(5) + 1))
-      xlocvec(ixadult:size(xlocvec)) = demmig !=dvm? ! larvae at surface/ juvenile at bottom/ adult and middle
+      xlocvec(ixlarge:size(xlocvec)) = demmig !=dvm? ! small at surface/ medium at bottom/ large and middle
       do i = 1, size(ix)
          dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
       end do
       dem_d = matmul(dem_d, diag(1.d0/sum(dem_d, 1)))
 ! from matlab
-      ! if shallower than euphotic depth, adult demersals feed across-habitats
+      ! if shallower than euphotic depth, large demersals feed across-habitats
       if (bottom .le. photic) then
          dem_d = (dem_d + dem_n)/2.d0
          dem_n = dem_d
@@ -1215,7 +1218,7 @@ contains
 
 ! pelagic predators have limited vision in twilight zone during day
       pelpred = [(i, i=ixStart(3), ixEnd(3))]   ! large pelagic   9 10 11
-      pelpred = pelpred(ixadult:size(pelpred)) ! adult large pelagic  11  at dvm during day
+      pelpred = pelpred(ixlarge:size(pelpred)) ! large large pelagic  11  at dvm during day
       preytwi = [(i, i=ixStart(2), ixEnd(2)), (i, i=ixStart(4), ixEnd(4))] ! mesopelagic 7 8   bathypelagic 12 13 14
       dayout(pelpred, preytwi) = dayout(pelpred, preytwi)/visual*(2.d0 - visual)    ! /visual to restore and then *0.5
 
@@ -1226,26 +1229,115 @@ contains
 
 !! specific revision of feeding preference
 !
-      idx_be = [(i, i=idxF, ixStart(5) + (ixjuv - 2))]     ! all pelagic and larval demersals
+      idx_be = [(i, i=idxF, ixStart(5) + (ixmedium - 2))]     ! all pelagic and larval demersals
       theta(idx_be, 3:4) = 0.d0      ! all pelagic and larval demersals do not eat benthos,
-      ! only juvenile & adult demersals eat benthos
+      ! only medium & large demersals eat benthos
 ! small demersals are less preyed on
-      idx_smd = [(i, i=ixStart(5) + (ixjuv - 1), ixStart(5) + (ixadult - 2))] ! juvenile demersal is at bottom
+      idx_smd = [(i, i=ixStart(5) + (ixmedium - 1), ixStart(5) + (ixlarge - 2))] ! medium demersal is at bottom
       theta(idx_be, idx_smd) = theta(idx_be, idx_smd)*0.25d0
-! juvenile & adult demersals do not eat zooplankton
-      theta(ixStart(5) + (ixjuv - 1):ixEnd(5), 1:2) = 0.d0
+! medium & large demersals do not eat zooplankton
+      theta(ixStart(5) + (ixmedium - 1):ixEnd(5), 1:2) = 0.d0
 ! provide benefit to forage and mesopelagic fish (predator avoidance)
-      pred1 = [(i, i=ixStart(3) + (ixadult - 1), ixEnd(3))]
-      pred2 = [(i, i=ixStart(4) + (ixadult - 1), ixEnd(4))]
-      pred3 = [(i, i=ixStart(5) + (ixadult - 1), ixEnd(5))]
-      prey1 = [(i, i=ixStart(1) + (ixjuv - 1), ixEnd(1))]
-      prey2 = [(i, i=ixStart(2) + (ixjuv - 1), ixEnd(2))]
+      pred1 = [(i, i=ixStart(3) + (ixlarge - 1), ixEnd(3))]
+      pred2 = [(i, i=ixStart(4) + (ixlarge - 1), ixEnd(4))]
+      pred3 = [(i, i=ixStart(5) + (ixlarge - 1), ixEnd(5))]
+      prey1 = [(i, i=ixStart(1) + (ixmedium - 1), ixEnd(1))]
+      prey2 = [(i, i=ixStart(2) + (ixmedium - 1), ixEnd(2))]
       idx_predat = [pred1, pred2, pred3]
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
 
-    ! update temperature
-    call updateTempV(depthDay, depthNight, bottom, region)
+! ====================
+! update temperature
+! ====================
+      if (allocated (fTempV)) then
+        deallocate (fTempV)
+        deallocate (fTempmV)
+        !deallocate (Teff)
+      end if
+
+      allocate (fTempV(nGrid))
+      allocate (fTempmV(nGrid))
+      allocate (Teff(nGrid))
+
+      fTempV  = 0.d0
+      fTempmV = 0.d0
+      Teff   = 0.d0
+
+! zooplankton (no use)
+      Tday = (Tp + Tm) / 2  ! half surface half dvm  dvm = photic + 500
+      if (dvm == bottom) Tday = (Tp + Tb) / 2 ! when bottom < (photic + 500)
+      if (dvm == 0) Tday = Tp  ! when bottom <= mesop
+      Tnight = Tp  ! all surface
+      Teff(1:2) = (Tday + Tnight) / 2
+! benthos (no use)
+      Teff(3:4) = Tb
+! small pelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(1) - ixStart(1) + 1))
+      ix = [(i, i=ixStart(1), ixEnd(1))]
+      Teff(ix) = Tp ! always surface
+! mesopelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(2) - ixStart(2) + 1))
+      ix = [(i, i=ixStart(2), ixEnd(2))]
+      Tday = Tm ! dvm
+      if (dvm == bottom) Tday = Tb
+      if (dvm == 0) Tday = Tp
+      Tnight = Tp ! surface
+      Teff(ix) = (Tday + Tnight) / 2
+! large pelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(3) - ixStart(3) + 1))
+      ix = [(i, i=ixStart(3), ixEnd(3))]
+      ! daytime large half at surface half at dvm
+      Tdaylarge = (Tp + Tm) / 2
+      if (dvm == bottom) Tdaylarge = (Tp + Tb) / 2
+      if (dvm == 0) Tdaylarge = Tp
+      Tdaynonlarge = Tp  ! non-large at surface at daytime
+      Tnight = Tp        ! all at surface at night
+      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnight) / 2 ! large
+      Teff(ix(1:(ixlarge-1))) = (Tdaynonlarge + Tnight) / 2 ! non-large
+! bathypelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(4) - ixStart(4) + 1))
+      ix = [(i, i=ixStart(4), ixEnd(4))]
+      Tday = Tm ! all at dvm at daytime
+      if (dvm == bottom) Tday = Tb
+      if (dvm == 0)      Tday = Tp
+      Tnightlarge = Tm ! large at dvm
+      if (dvm == bottom) Tnightlarge = Tb
+      if (dvm == 0)      Tnightlarge = Tp
+      Tnightnonlarge = Tp ! non-large at surface at night
+      Teff(ix(ixlarge:size(ix))) = (Tday + Tnightlarge) / 2 ! large
+      Teff(ix(1:ixlarge-1)) = (Tday + Tnightnonlarge) / 2 ! non-large
+! demersals
+      deallocate (ix)
+      allocate (ix(ixEnd(5) - ixStart(5) + 1))
+      ix = [(i, i=ixStart(5), ixEnd(5))]
+      ! nighttime
+      Tnightsmall = Tp ! small at surface
+      Tnightnonsmall = Tb ! non-small at bottom
+      ! daytime
+      Tdaysmall = Tp ! small at surface
+      Tdaymedium = Tb ! medium at bottom
+      Tdaylarge = Tm ! large at middle
+      ! if the water is very deep large demersals always stay at the bottom
+      if ((bottom - dvm) >= 1500) Tdaylarge = Tb
+      ! if the water is very shallow large demersals migrate over the whole water column both day and night
+      if (bottom <= photic) then
+        Tdaylarge = (Tp + Tb) / 2
+        Tnightlarge = Tdaylarge
+      end if
+
+      Teff(ix(1:ixmedium-1)) = (Tdaysmall + Tnightsmall) / 2 ! small
+      Teff(ix(ixmedium:ixlarge-1)) = (Tdaymedium + Tnightnonsmall) / 2 ! medium
+      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnightnonsmall) / 2 ! large
+      if (bottom <= photic) Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnightlarge) / 2
+
+      fTempV = Q10**((Teff - 10.d0) / 10.d0)
+      fTempmV = Q10m**((Teff - 10.d0) / 10.d0)
+
     ! all fish group
     do iGroup = 1, nGroups
         group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
@@ -1316,7 +1408,7 @@ contains
                               idx_predat(:), idx_prey(:)
       real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
-      integer :: iGroup, i, j, ixjuv, ixadult
+      integer :: iGroup, i, j, ixmedium, ixlarge
 
       call read_namelist_setupsquid()
       allocate(xrange(int(bottom) + 1))
@@ -1440,9 +1532,9 @@ contains
          dvm = 0.d0                   ! no migration in shallow habitats
       end if
 
-! first stages as juvenile/adult for predators
-      ixjuv = minloc(abs(sizes-smat/15.d0),dim=1)
-      ixadult = minloc(abs(sizes-lmat),dim=1)
+! first stages as medium/large for predators
+      ixmedium = minloc(abs(sizes-smat/15.d0),dim=1)
+      ixlarge = minloc(abs(sizes-lmat),dim=1)
 ! zooplankton night
       allocate (zp_n(size(xrange), 2))
       xloc = 0.d0 ! zoo on surface at night
@@ -1509,11 +1601,11 @@ contains
       end do
       lpel_n = matmul(lpel_n, diag(1.d0/sum(lpel_n, 1)))
 
-! large pelagic fish day (non-adult at surface   adult at dvm)
+! large pelagic fish day (non-large at surface   large at dvm)
       allocate (lpel_d(size(xrange), ixEnd(3) - ixStart(3) + 1))
       allocate (xlocvec(ixEnd(3) - ixStart(3) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       do i = 1, size(ix)
          lpel_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                         exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
@@ -1528,7 +1620,7 @@ contains
       allocate (xlocvec(ixEnd(4) - ixStart(4) + 1))
       allocate (ix(ixEnd(4) - ixStart(4) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixjuv:size(xlocvec)) = bottom  !  larvae at surface   juvenile and adult at bottom
+      xlocvec(ixmedium:size(xlocvec)) = bottom  !  small at surface   medium and large at bottom
       ix = [(i, i=ixStart(4), ixEnd(4))]
       do i = 1, size(ix)
          dem_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -1545,14 +1637,14 @@ contains
          demmig = bottom
       end if
       allocate (dem_d(size(xrange), ixEnd(4) - ixStart(4) + 1))
-      xlocvec(ixadult:size(xlocvec)) = dvm ! larvae at surface/ juvenile at bottom/ adult and middle
+      xlocvec(ixlarge:size(xlocvec)) = dvm ! small at surface/ medium at bottom/ large and middle
       do i = 1, size(ix)
          dem_d(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
                        exp(-((xrange - xlocvec(i))**2.d0/(2.d0*sigmap(ix(i))**2.d0)))
       end do
       dem_d = matmul(dem_d, diag(1.d0/sum(dem_d, 1)))
 !  from matlab
-      ! if shallower than euphotic depth, adult demersals feed across-habitats
+      ! if shallower than euphotic depth, large demersals feed across-habitats
       if (bottom .le. photic) then
          dem_d = (dem_d + dem_n)/2.d0
          dem_n = dem_d
@@ -1581,14 +1673,14 @@ contains
       end do
       cph_d = matmul(cph_d, diag(1.d0/sum(cph_d, 1)))
 
-! bathypelagic night (adults in midwater, others at surface)
+! bathypelagic night (large in midwater, others at surface)
       allocate (bpel_n(size(xrange), ixEnd(6) - ixStart(6) + 1))
       deallocate (xlocvec)
       deallocate (ix)
       allocate (xlocvec(ixEnd(6) - ixStart(6) + 1))
       allocate (ix(ixEnd(6) - ixStart(6) + 1))
       xlocvec = 0.d0 ! initialization
-      xlocvec(ixadult:size(xlocvec)) = dvm  !  non-adult at surface   adult at dvm
+      xlocvec(ixlarge:size(xlocvec)) = dvm  !  non-large at surface   large at dvm
       ix = [(i, i=ixStart(6), ixEnd(6))]
       do i = 1, size(ix)
          bpel_n(:, i) = (1.d0/(sqrt(2.d0*pi*sigmap(ix(i))**2.d0)))* &
@@ -1667,7 +1759,7 @@ contains
 
 ! pelagic predators have limited vision in twilight zone during day
       pelpred = [(i, i=ixStart(3), ixEnd(3))]   ! large pelagic
-      pelpred = pelpred(ixadult:size(pelpred)) ! adult large pelagic    at dvm during day
+      pelpred = pelpred(ixlarge:size(pelpred)) ! large large pelagic    at dvm during day
       preytwi = [(i, i=ixStart(2), ixEnd(2)), (i, i=ixStart(6), ixEnd(6))] ! mesopelagic    bathypelagic
       dayout(pelpred, preytwi) = dayout(pelpred, preytwi)/visual*(2.d0 - visual)    ! /visual to restore and then *0.5
 
@@ -1689,21 +1781,21 @@ contains
 
 !! specific revision of feeding preference
 !
-      idx_be = [(i, i=idxF, ixStart(4) + (ixjuv - 2)), (i, i=ixStart(5), ixEnd(6)) ]  ! all pelagic and larval demersals & squid
+      idx_be = [(i, i=idxF, ixStart(4) + (ixmedium - 2)), (i, i=ixStart(5), ixEnd(6)) ]  ! all pelagic and larval demersals & squid
       theta(idx_be, 3:4) = 0.d0      ! all pelagic and larval demersals do not eat benthos,
-      ! only juvenile & adult demersals eat benthos
+      ! only medium & large demersals eat benthos
 ! small demersals are less prayed on
-      idx_smd = [(i, i=ixStart(4) + (ixjuv - 1), ixStart(4) + (ixadult - 2))] !??
+      idx_smd = [(i, i=ixStart(4) + (ixmedium - 1), ixStart(4) + (ixlarge - 2))] !??
       theta(idx_be, idx_smd) = theta(idx_be, idx_smd)*0.25d0
-! juvenile & adult demersals do not eat zooplankton
-      theta(ixStart(4) + (ixjuv - 1):ixEnd(4), 1:2) = 0.d0
+! medium & large demersals do not eat zooplankton
+      theta(ixStart(4) + (ixmedium - 1):ixEnd(4), 1:2) = 0.d0
 
 ! provide benefit to forage and mesopelagic fish (predator avoidance)
-      pred1 = [(i, i=ixStart(3) + (ixadult - 1), ixEnd(3))] ! large pelagic
-      pred2 = [(i, i=ixStart(4) + (ixadult - 1), ixEnd(4))] ! demersal
-      pred3 = [(i, i=ixStart(6) + (ixadult - 1), ixEnd(6))] ! bathypelagics
-      prey1 = [(i, i=ixStart(1) + (ixjuv - 1), ixEnd(1))]   ! small pelagics
-      prey2 = [(i, i=ixStart(2) + (ixjuv - 1), ixEnd(2))]   ! mesopelagic
+      pred1 = [(i, i=ixStart(3) + (ixlarge - 1), ixEnd(3))] ! large pelagic
+      pred2 = [(i, i=ixStart(4) + (ixlarge - 1), ixEnd(4))] ! demersal
+      pred3 = [(i, i=ixStart(6) + (ixlarge - 1), ixEnd(6))] ! bathypelagics
+      prey1 = [(i, i=ixStart(1) + (ixmedium - 1), ixEnd(1))]   ! small pelagics
+      prey2 = [(i, i=ixStart(2) + (ixmedium - 1), ixEnd(2))]   ! mesopelagic
       idx_predat = [pred1, pred2, pred3]
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5d0
@@ -1713,7 +1805,7 @@ contains
   allocate(ix(ixEnd(5)-ixStart(5)+1))
   ix = [(i,i=ixStart(5),ixEnd(5))]   !idx of squid
   theta(ix,ixStart(3):ixEnd(3))= theta(ix,ixStart(3):ixEnd(3)) * S2P  ! S2P=0.5d0
-  theta(ix,ixStart(4):(ixStart(4)+ixjuv - 2))= theta(ix,ixStart(4):(ixStart(4)+ixjuv - 2)) * S2P ! larval demersals?
+  theta(ix,ixStart(4):(ixStart(4)+ixmedium - 2))= theta(ix,ixStart(4):(ixStart(4)+ixmedium - 2)) * S2P ! larval demersals?
   theta(ix,prey1)= theta(ix,prey1) * S2P
 
 contains

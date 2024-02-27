@@ -572,14 +572,14 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(12)
+    real(dp) :: parmsbasic(14)
 
        feistyinitialised = .FALSE.
 
-       call steadyparms(12,parmsbasic)
+       call steadyparms(14,parmsbasic)
        call setupVertical2(parmsbasic(1),parmsbasic(2),parmsbasic(3),parmsbasic(4),parmsbasic(5),&
-                           INT(parmsbasic(6)),INT(parmsbasic(7)),parmsbasic(8),parmsbasic(9),parmsbasic(10),&
-                           parmsbasic(11),parmsbasic(12))
+                           INT(parmsbasic(6)),parmsbasic(7),parmsbasic(8),parmsbasic(9),parmsbasic(10),&
+                           parmsbasic(11),parmsbasic(12),parmsbasic(13),parmsbasic(14))
 
        feistyinitialised = .TRUE.
 

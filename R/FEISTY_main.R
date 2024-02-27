@@ -586,7 +586,7 @@ simulateFEISTY = function(bCust    = FALSE,
         setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,p$region, p$bottom, p$photic)
       }else if(p$setup=="setupVertical2"){
         initfunc <- "initfeistysetupvertical2"
-        setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,length(p$ix[[p$nGroups]]),p$region,p$bottom,p$photic,p$etaMature,p$F,p$etaF)
+        setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,length(p$ix[[p$nGroups]]), p$Tp, p$Tm, p$Tb, p$bottom,p$photic,p$etaMature,p$F,p$etaF)
       }
       
       if (any(is.na(times)))  # one call and return
