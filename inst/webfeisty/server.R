@@ -55,7 +55,7 @@ server <- function(input, output) {
     hide("F")
     hide("etaF")
   }else if (input$Setup=="setupVertical2") {
-    show("region")
+    hide("region")
     show("bottom")
     show("photic")
     show("nSizeGroups")
