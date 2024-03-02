@@ -24,9 +24,11 @@ It will multiply the trophic transfer efficiency (10\%) to get the benthic produ
 `dfpho` will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity `bprod` ultimately .\cr
 See source code of \code{setupVertical}.}
 
-\item{region}{Different regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius.
-It represents the water column temperature profile for three regions. 
-The default is 10 Celcius for the whole water column (\code{region = 4}). The source file is in .../data/tempdata.dat. It is the same dataset used in van Denderen et al. (2021).}
+\item{Tp}{Pelagic water temperature, representing the top 100m average temperature [Celsius]. Default NA. Input NA means Tp = 10.}
+
+\item{Tm}{Mid-water temperature, representing the average temperature of 500m - up to 1500m. Default NA. Input NA means Tp = Tb.}
+
+\item{Tb}{Bottom water (the bottom layer) temperature [Celsius]. Default NA. Input NA means Tb = 10.}
 
 \item{depth}{water column depth [meter]. \cr 
 Different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates. See source code of \code{setupVertical}}
@@ -64,7 +66,9 @@ Additional parameters added by function \code{\link{paramInit}}:
 \item mesop, mesopelagic zone depth. from parameter input.
 \item visual, visual=1.5: visual predator. visual=1: non-visual predator. from parameter input.
 \item etaMature, The coefficient determines the fish size \code{mMature} with a 50\% maturity level, from parameter input.
-\item region, water region index, from parameter input.
+\item Tp, pelagic water temperature, from parameter input.
+\item Tm, mid-water temperature, from parameter input.
+\item Tb, bottom water temperature, from parameter input.
 }
 
 Added by function \code{\link{paramSizepref}}:
@@ -72,7 +76,7 @@ Added by function \code{\link{paramSizepref}}:
 \item sizepref, the size preference matrix for each predator x to each prey y.
 }
 
-Added by function \code{\link{setupVertical}}:
+Added by function \code{\link{setupVertical2}}:
 \itemize{
 \item setup, name (character) of this setup
 \item dvm, diel vertical migration depth [m]
