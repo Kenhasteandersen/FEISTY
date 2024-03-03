@@ -118,13 +118,14 @@ setupBasic = function(szprod = 100, # small zoo production?
 
   # Add fish groups:
   # mMature=NA overrides the generic psiMature-> only adult classes 50% mature
-  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=NA, 
+  u0  = 1E-5
+  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=NA, u0=u0,
                         mortF=c(0,0.3),      nStages=2, name="smallPel")
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, u0=u0,
                         mortF=c(0,0.03,0.3), nStages=3, name="largePel") 
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=NA, u0=u0,
                         mortF=c(0,0.03,0.3), nStages=3, name="demersals")
   
   # physiology of all fish stages
@@ -358,13 +359,14 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 
 # Add fish groups:
   nSmall = round(0.66*nStages)
-  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, 
+  u0  = 1E-5
+  param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0,
                         mortF=0,      nStages=nSmall, name="smallPel")
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="largePel") 
   
-  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, 
+  param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="demersals")
 
   # physiology of all fish stages

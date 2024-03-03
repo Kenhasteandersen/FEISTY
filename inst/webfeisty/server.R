@@ -120,8 +120,8 @@ server <- function(input, output) {
     return( simulateFEISTY(bCust    = FALSE,
                            p, 
                            tEnd   = 100,
-                           tStep  = 0.1,
-                           times  = seq(from=0, to=100, by=0.1), #to=tEnd but must give a number directly
+                           tStep  = 1,
+                           times  = seq(from=0, to=200, by=1), #to=tEnd but must give a number directly
                            yini   = p$u0,  
                            USEdll = input$USEdll,
                            Rmodel = derivativesFEISTYR) )
