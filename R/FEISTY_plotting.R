@@ -498,6 +498,8 @@ plotNetwork <- function(sim) {
   Bi <- colMeans(biomass[round(0.6*nrow(biomass), digits = 0):nrow(biomass),]) # mean value of the last 40% time 
   
   if (p$setup == "setupBasic"){
+    
+    # Set artificial depths to offset bubbles:
     Av_depth <- c(-1,-1,-4,-4,0,0,-2,-2,-2,-3,-3,-3)
     
     p$SpId <- c('smallPel','largePel', 'demersals')
@@ -505,10 +507,17 @@ plotNetwork <- function(sim) {
               rep(p$SpId[1], length(p$ix[[1]])),
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
-
+    
+    # Specify depth axis text:
+    yaxis <- c("", "") # Leave blank because there is no depth in setup vertical
+    
+    # Set artificial depth:
+    p$bottom <- -(min(Av_depth)) + 1
   }  
   
   if (p$setup == "setupBasic2"){
+    
+    # Set artificial depths to offset bubbles:
     Av_depth <- c(-1,-1,-4,-4,rep(0, length(p$ix[[1]])),rep(-2, length(p$ix[[2]])),rep(-3, length(p$ix[[3]])))
     
     p$SpId <- c('smallPel','largePel', 'demersals')
@@ -517,9 +526,12 @@ plotNetwork <- function(sim) {
               rep(p$SpId[2], length(p$ix[[2]])),
               rep(p$SpId[3], length(p$ix[[3]])))
     
+    # Specify depth axis text:
+    yaxis <- c("", "") # Leave blank because there is no depth in setup vertical
+    
+    # Set artificial depth:
+    p$bottom <- -(min(Av_depth)) + 1
   }  
-  
-  
   
   if (p$setup == "setupVertical" | p$setup == "setupVertical2"){
     
@@ -530,20 +542,17 @@ plotNetwork <- function(sim) {
     for (i in 1:p$nStages) {
       Av_depth_day[i] <- which.max(p$depthDay[ ,i])
       Av_depth_night[i] <- which.max(p$depthNight[ ,i]) 
-      
     }
-    Av_depth <- -(Av_depth_day + Av_depth_night) / 2
     
+    Av_depth <- -(Av_depth_day + Av_depth_night) / 2
     
     # Change a bit for visualization:
     Av_depth[p$ix[[1]][1]:p$ix[[1]][length(p$ix[[1]])]] <- Av_depth[p$ix[[1]][1]:p$ix[[1]][length(p$ix[[1]])]] + 0.1 * p$bottom
     Av_depth[p$ix[[3]][1]:p$ix[[3]][length(p$ix[[3]])]] <- Av_depth[p$ix[[3]][1]:p$ix[[3]][length(p$ix[[3]])]] - 0.1 * p$bottom
+    Av_depth[p$ix[[4]][1]:p$ix[[4]][length(p$ix[[4]])]] <- Av_depth[p$ix[[4]][1]:p$ix[[4]][length(p$ix[[4]])]] - 0.1 * p$bottom
+    Av_depth[p$ix[[2]][1]:p$ix[[2]][length(p$ix[[2]])]] <- Av_depth[p$ix[[2]][1]:p$ix[[2]][length(p$ix[[2]])]] - 0.2 * p$bottom
     
-    # Create flux from interaction: 
-    # Coordinates for lines between points
-    # Select major interactions and scale sizes:
-    # Set color palette 
-    
+    # Set color palette: 
     p$SpId <- c('smallPel','mesoPel','largePel', 'bathyPel', 'demersals')
     SpId <- c("smallZoo", "largeZoo", "benthos", "largeBenthos", 
               rep(p$SpId[1], length(p$ix[[1]])),
@@ -552,22 +561,10 @@ plotNetwork <- function(sim) {
               rep(p$SpId[4], length(p$ix[[4]])),
               rep(p$SpId[5], length(p$ix[[5]])))
     
+    # Specify depth axis text:
+    yaxis <- c("Surface   ", "     Bottom")
   }
   
-  # # Marker size depends on biomass:
-  # # Using real biomass yields bubles with too many orders of magnitude difference
-  # # Thus we group them by quantiles
-  # Msize <- Bi / max(Bi)
-  # Msize[Msize == 0] <- NA
-  # idxM <- quantile(Msize, prob = c(0.2, 0.4, 0.6, 0.8), na.rm = T) # get quantiles
-  # 
-  # # Specify buble size for each quantile:
-  # Msize[Msize >= idxM[4] & !is.na(Msize)] <- 20
-  # Msize[Msize >= idxM[3] & Msize < idxM[4] & !is.na(Msize)] <- 15
-  # Msize[Msize >= idxM[2] & Msize < idxM[3] & !is.na(Msize)] <- 8
-  # Msize[Msize >= idxM[1] & Msize < idxM[2] & !is.na(Msize)] <- 3
-  # Msize[Msize < idxM[1] & !is.na(Msize)] <- .8
-
   # Marker size depends on biomass:
   # Using real biomass yields bubles with too many orders of magnitude difference
   # Thus we apply a cubic square:
@@ -576,13 +573,11 @@ plotNetwork <- function(sim) {
   Msize <- Msize^(1/3)
   
   # Create line width: 
-  Mat <- rep(0, ngroup) 
-  Mat[Bi != 0] <- 1
-  Theta <- t(t(p$theta) * Bi) * Mat # flux equal the rate * the prey biomass (* 0 if pred <- 0)
+  Mat <- Bi
+  Theta <- t(t(p$theta) * Bi) * Mat
   Theta <- c(Theta) 
   threshold <- 0.05 # min(tail(sort(Theta), 100)) # Alternatively, use 100 strongest relations regardless of absolute value of the threshold
   indx <- which(Theta >= threshold) # takes the x highest values of theta
-  
   
   # Set values of each coordinate and put them together:
   coord_1 <- data.frame(index = 1:p$nStages^2,
@@ -590,60 +585,47 @@ plotNetwork <- function(sim) {
                         depth = rep(Av_depth[1:p$nStages], p$nStages), 
                         SpId = rep(SpId, p$nStages),
                         Msize = rep(Msize, p$nStages), 
-                        LineWdth = Theta/max(Theta) /30, # shrink
-                        Alpha = Theta/max(Theta))
+                        LineWdth = (Theta/max(Theta))^(1/3) / 15,
+                        Alpha = (Theta/max(Theta))^(1/3))
   
   coord_2 <- data.frame(index = 1:p$nStages^2, # Notice that here repetition ys grouped by "each" to change order
                         mc = rep(p$mc[1:p$nStages], each = p$nStages), 
                         depth = rep(Av_depth[1:p$nStages], each = p$nStages), 
                         SpId = rep(SpId, each = p$nStages),
                         Msize = rep(Msize, each = p$nStages),
-                        LineWdth = Theta/max(Theta) /30, # shrink
-                        Alpha = Theta/max(Theta))
+                        LineWdth = (Theta/max(Theta))^(1/3) / 15,
+                        Alpha = (Theta/max(Theta))^(1/3))
   
+  # Combine in a data frame:
   df <- rbind(coord_1, coord_2)
   
-  df <- df %>% filter(index %in% indx) %>%
+  df <- df %>% 
+    arrange(desc(Msize)) %>%
+    filter(!is.na(Msize))
+  
+  df2 <- df %>% filter(index %in% indx) %>%
     arrange(desc(Msize))
   
-  if (length(p$ix)==3){
-    p <- ggplot(data = df) +
-      geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
-      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize),stroke=0,shape=16) +
-      scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
-                         labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
-      scale_size_continuous(range = c(1, 15)) +
-      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                    labels = trans_format("log10", math_format(10^.x))) +
-      annotation_logticks(sides = "b") +
-      labs(x ="Weight (grams)", y = "", color = "Group") +
-      theme_base() + 
-      guides(size = "none") +
-      theme(legend.position = "bottom",
-            axis.title.y = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank())
-  }
+  # Generate plot:
+  plot <- ggplot() +
+    geom_line(data = df2, aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
+    geom_point(data = df, aes(x = mc, y = depth, color = SpId, size = Msize), stroke = 0, shape = 16) +
+    scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
+                       labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
+    scale_radius(limits = c(0, NA), range = c(0, (8))) +
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x))) +
+    scale_y_continuous(breaks = seq(0, round(-p$bottom - 1), by = -p$bottom), labels = yaxis) +
+    annotation_logticks(sides = "b") +
+    labs(x ="Weight (grams)", y = "", color = "Group") +
+    theme_base() + 
+    guides(size = "none") +
+    theme(legend.position = "bottom",
+          axis.title.y = element_blank(),
+          axis.text.y = element_text(angle = 90, hjust = .5, margin = margin(r = 0)),
+          axis.ticks.y = element_blank())
   
-  if (length(p$ix)==5){
-    p <- ggplot(data = df) +
-      geom_line(aes(x = mc, y = depth, group = index, size = LineWdth, color = SpId, alpha = Alpha), show.legend = F) +
-      geom_point(aes(x = mc, y = depth, color = SpId, size = Msize),stroke=0,shape=16) +
-      scale_color_manual(values = p$my_palette[attr(p$my_palette, "names") %in% df$SpId], 
-                         labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
-      scale_size_continuous(range = c(1, 15)) +
-      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                    labels = trans_format("log10", math_format(10^.x))) +
-      annotation_logticks(sides = "b") +
-      labs(x ="Weight (grams)", y = "Depth (m)", color = "Group") +
-      theme_base() + 
-      guides(size = "none") +
-      theme(legend.position = "bottom")
-    
-  }
-  # ggsave("plot_network.png", p, height = 45 , width = 80, units = "mm", scale = 3)
-  
-  return(p)
+  return(plot)
 }
 
 #' Diet plot
