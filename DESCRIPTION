@@ -12,4 +12,4 @@ Description: A size- and trait-based model of higher trophic level dynamics.
 License: GPL (>=3.0)
 LazyData: yes
 NeedsCompilation: yes
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1

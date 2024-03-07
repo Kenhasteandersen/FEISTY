@@ -461,6 +461,329 @@ plotTheta = function(p) {
   }
 }
 
+
+#' Plot simulation results from FEISTY paper Fig. 2
+#' 
+#' Make a plot combo for the simulation results, including \code{\link{PlotSpectraGgplot}}, \code{\link{TimeSeriesGgplot}}, and \code{\link{plotNetwork}.
+#' 
+#' @details This function gives a quick visualization of the outputs simulated by FEISTY. \cr 
+#' This function uses its own legend based on \code{\link{plotNetwork} \cr
+#' The exact position of the panels has been optimize for paper submission, \cr 
+#' user may have to redefine it if used with different setup or parameters \cr
+#' 
+#' @author who ever think they should be authors
+#'
+#' @usage plotSimulationPaper(sim)
+#' 
+#' @param sim The data frame of FEISTY simulation results.
+#' 
+#' @examples 
+#' sim=simulateFEISTY()
+#' plotSimulation(sim)
+#' 
+#' @aliases plotSimulationPaper
+#' 
+#' @seealso 
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results \cr
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
+#' \code{\link{PlotSpectraGgplot}} Plot Biomass, mortality, and feeding levels  \cr
+#' \code{\link{plotTimeSeries}} Plot Time series \cr
+#' \code{\link{plotNetwork}} Food web plot 
+#' 
+#' @export
+#' 
+plotSimulationPaper = function(sim, 
+                               print_fig = TRUE){
+  
+  # Generate the plots: --------------------------------------------------------
+  ## plot Biomass, mortality, and feeding level spectrums: 
+  Spectrum_plot = PlotSpectraGgplot(sim)
+  
+  ## plot timeseries:
+  TimeSeries_plot = plotTimeSeries(sim)
+
+  ## plot FEISTY structure: 
+  Network_plot = plotNetwork(sim)
+  Network_plot = Network_plot +
+                  guides(color = guide_legend(override.aes = list(size=5), nrow = 2)) + 
+                  labs(title = "d")+
+                  force_panelsizes(col = unit(19.5, 'cm'))+
+                  theme_base(base_size = unit(20, 'pt'))+
+                  theme(legend.position = "bottom", 
+                        axis.text.y = element_text(angle=90, vjust = 1, hjust=unit(0.35, 'cm')),
+                        axis.ticks.y = element_blank())
+  
+  ## get legend from plotNetwork
+  legend = get_legend(Network_plot)
+  
+  ## Turn legend off for later external plotting 
+  Network_plot = Network_plot + theme(legend.position="none",
+                                      plot.background = element_rect(color = NA))
+  
+  ## Combining all the plots: 
+  Fig2 = ggdraw()+
+    draw_plot(Spectrum_plot[[1]], 0-0.0025        ,5/7        ,  .45  , 2/7) +
+    draw_plot(Spectrum_plot[[2]], 0+0.005         ,3/7+0.0175 ,  .45  , 2/7) +
+    draw_plot(Spectrum_plot[[3]], 0,               1/7        ,  .45  , 2/7) +
+    draw_plot(TimeSeries_plot   , 0.45,            1/7 -0.0175,  .55  , 2/7) +
+    draw_plot(Network_plot      , 0.45,            3/7        ,  .55  , 4/7) +
+    draw_plot(legend            , 0,               0          ,    1  , 1/7) 
+  # draw_plot(figure,           x start position, Y start pos , width , hight) +
+  
+  
+  # save in pdf format: --------------------------------------------------------
+  if (print_fig) {
+    if (file.exists("../Fig/") == FALSE) { dir.create(file.path("../Fig/")) }
+    ggsave("../Fig/Fig_2_FEISTY_output.pdf", Fig2, width = unit(16, 'cm'), height = unit(10, 'cm'))
+  }
+  
+  return(Fig2)
+}
+
+
+#' Plot Spectra with Ggplot 
+#' 
+#' Create spectrum plot used in \code{\link{plotSimulationPaper}}.
+#' 
+#' @details This function produces 3 pannels a. biomass, b. mortality and c. feeding level simulated by FEISTY for each group and size
+#' 
+#' @author who ever think they should be authors R.D.
+#'
+#' @usage PlotSpectraGgplot(sim)
+#' 
+#' @param sim The data frame of FEISTY simulation results.
+#' 
+#' @examples 
+#' sim=simulateFEISTY()
+#' PlotSpectraGgplot(sim)
+#' 
+#' @aliases PlotSpectraGgplot
+#' 
+#' @seealso 
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results \cr
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
+#' \code{\link{plotSimulationPaper}} Plot Fig.2 from publication  \cr
+#' \code{\link{plotTimeSeries}} Plot Time series \cr
+#' \code{\link{plotNetwork}} Food web plot 
+#' 
+#' @export
+#' 
+PlotSpectraGgplot = function(sim, 
+                             avg=TRUE, 
+                             y=p$u0, 
+                             print_fig = FALSE) {
+  
+  # Define specific plotting parameters: ---------------------------------------
+  p = sim$p
+  
+  p$colors <- c('#DDCC77', '#999933', '#662506', '#662506',   # Ressources 
+                '#EE6677', '#AA4499',                         # Small Fish
+                '#33BBEE', '#004488', '#228833')              # Large Fish 
+  p$size <- c(0.5, 0.5, 0.5, 0.5, 
+                  1, 1, 
+                  2, 2, 2)*0.75
+  p$functional_grp_level =  c('smallPel',  'mesoPel', 'bathyPel', 'largePel', 'demersals' )
+  
+  
+  p$panel_height = 5.4
+  p$panel_length = 14
+  
+  # Processing outputs (average for the last etaTime % values: -----------------
+  etaTime=0.4
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
+  rates=list()
+  rates$g =        colMeans(sim$g[ixTime,])
+  rates$mortpred = colMeans(sim$mortpred[ixTime,])
+  rates$f =        colMeans(sim$f[ixTime,])
+  Bpositive =      colMeans(sim$B[ixTime,])
+  Bpositive[Bpositive<0] = 0
+  
+  if (!avg) {
+    rates = calcDerivativesR(0, y, p, FullOutput = TRUE)
+  }
+  
+  # Create list of name, color, and size: --------------------------------------
+  # (This can be optimized)
+  List_group = zeros(1, p$nStages)
+  Size = zeros(1, p$nStages)
+  Color = zeros(1, p$nStages)
+  for (i in (1:p$nResources)) {
+    List_group[i] = p$groupnames[i]
+    Color[i] = p$colors[i]
+    Size[i] = p$size[i]
+  }
+  for (i in (1:p$nGroups)) {
+    for (j in (min(p$ix[[i]]):max(p$ix[[i]]))) {
+      List_group[j] = p$groupnames[i+p$nResources]
+      Color[j] = p$colors[i+p$nResources]
+      Size[j] = p$size[i+p$nResources]
+    }
+  }
+  
+  # Build up data frame for plotting: ------------------------------------------
+  data_plot <- data.frame(mc = p$mc[p$ixFish],
+                          mortpred = rates$mortpred[p$ixFish],
+                          f = rates$f,
+                          Bpositive = Bpositive,
+                          Funct_group = List_group[p$ixFish], 
+                          Size = Size[p$ixFish],
+                          Color = Color[p$ixFish])
+  
+  ## Give proper levels to the factor type: 
+  data_plot$Funct_group = factor(data_plot$Funct_group, levels = p$functional_grp_level)
+  
+  ## reorganize data for ggplot: 
+  data_plot2 = gather(data_plot, key = "Key", value = "Value", mortpred, f, Bpositive)
+  
+  
+  # Create plots using ggplot2: ------------------------------------------------
+  ## Biomass: 
+  Biomass_plot <- ggplot(data_plot, aes(x = mc, y = Bpositive)) +
+    geom_line(aes(color = Funct_group), size = data_plot$Size) +
+    scale_color_manual(values = unique(data_plot$Color)) +
+    labs(x = NULL, y = "Biomass (g WW)", title = "a") +
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)))+
+    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)))+
+    force_panelsizes(row = unit(p$panel_height, 'cm'), 
+                     col = unit(p$panel_length, 'cm'))+
+    theme_base(base_size = unit(20, 'pt')) + 
+    theme(legend.position = "none",
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.background = element_rect(color = NA))
+  
+  
+  ## Mortality
+  mort_plot <- ggplot(data_plot, aes(x = mc, y = mortpred)) +
+    geom_line(aes(color = Funct_group), size = data_plot$Size) +
+    scale_color_manual(values = p$colors[(p$nResources+1):(p$nGroups+p$nResources)]) +
+    labs(x = NULL, y = "mort (1/year)", title = "b") +
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)))+
+    force_panelsizes(row = unit(p$panel_height, 'cm'), 
+                     col = unit(p$panel_length, 'cm'))+
+    theme_base(base_size = unit(20, 'pt')) + 
+    theme(legend.position = "none", 
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(), 
+          plot.background = element_rect(color = NA))
+  
+  
+  ## Feeding level
+  feeding_plot <- ggplot(data_plot, aes(x = mc, y = f)) +
+    geom_line(aes(color = Funct_group), size = data_plot$Size) +
+    scale_color_manual(values = p$colors[(p$nResources+1):(p$nGroups+p$nResources)]) +
+    labs(x = "Weight (grams)", y = "Feeding level, f", title = "c") +
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)))+
+    scale_y_continuous(limits = c(0, 1)) +
+    geom_hline(yintercept = 0.2, linetype = "dotted") +
+    force_panelsizes(row = unit(p$panel_height, 'cm'), 
+                     col = unit(p$panel_length, 'cm'))+
+    theme_base(base_size = unit(20, 'pt'))+
+    theme(legend.position = "none", plot.background = element_rect(color = NA))
+  
+  # Print figure: --------------------------------------------------------------
+  if (print_fig){
+    # print output: combine in one figure 
+    plots = ggarrange(Biomass_plot, mort_plot, feeding_plot, ncol = 1)
+    # save in pdf format: 
+    if (file.exists("../Fig/") == FALSE) { dir.create(file.path("../Fig/")) }
+    ggsave("../Fig/Plot_Bio_Mort_f_Spectra.pdf", plots, width = unit(8, 'cm'), height = unit(10, 'cm'))
+    
+  } else { 
+    # Combine plots in list
+    plots <- list(Biomass_plot, mort_plot, feeding_plot)
+  }
+  
+  return(plots)
+}
+
+
+
+#' Plot Time series with ggplot2
+#' 
+#' Create time series plot used in \code{\link{PlotSpectraGgplot}}.
+#' 
+#' @details This function producesa plot of the biomass for each time simulated by FEISTY and for each fish functional group \cr
+#' size of the output should be adjusted by the user
+#' @author who ever think they should be authors R.D.
+#'
+#' @usage plotTimeSeries(sim)
+#' 
+#' @param sim The data frame of FEISTY simulation results.
+#' 
+#' @examples 
+#' sim=simulateFEISTY()
+#' plotTimeSeries(sim)
+#' 
+#' @aliases plotTimeSeries
+#' 
+#' @seealso 
+#' \code{\link{webFEISTY}} A shiny interface for visualizing FEISTY model results \cr
+#' \code{\link{simulateFEISTY}} Run FEISTY model simulations \cr
+#' \code{\link{plotSimulationPaper}} Plot Fig.2 from publication  \cr
+#' \code{\link{plotNetwork}} Food web plot 
+#' 
+#' @export
+#' 
+plotTimeSeries = function(sim,
+                          print_fig = FALSE) {
+  
+  # Define plotting parameters: ------------------------------------------------
+  sim$p$colors <- c('#DDCC77', '#999933', '#662506', '#662506',   # Ressources 
+                    '#EE6677', '#AA4499',                         # Small Fish
+                    '#33BBEE', '#004488', '#228833')              # Large Fish 
+  sim$p$size <- c(0.5, 0.5, 0.5, 0.5, 
+                  1, 1, 
+                  2, 2, 2)*0.75
+  
+  sim$p$functional_grp_level =  c('smallPel',  'mesoPel', 'bathyPel', 'largePel', 'demersals' )
+  
+  p = sim$p
+  TimeSeries = matrix(0, sim$nTime, p$nGroups)
+  Size = c()
+  
+  # Calc mean Biomass per group
+  for (i in 1:p$nGroups){
+    TimeSeries[, i] = rowMeans(sim$B[, p$ix[[i]]-4])
+    Size = c(Size, repmat(p$size[i+4], 101, 1))
+  }
+    
+  TimeSeries = cbind(TimeSeries, sim$t)
+  colnames(TimeSeries) = c(p$functional_grp_level, "time")
+  TimeSeries = as.data.frame(TimeSeries)
+  TimeSeries = gather(TimeSeries, key = "Key", value = "Biomass",
+                      smallPel, mesoPel, bathyPel, largePel, demersals)
+  TimeSeries$key = factor(TimeSeries$Key, levels = p$functional_grp_level)
+  TimeSeries = cbind(TimeSeries, Size)
+  
+  # Plot time series
+  TimeSeriesPlot = ggplot(TimeSeries, aes(x = time, y = Biomass), group = key)+
+    geom_line(aes(color = Key), linewidth = Size)+
+    scale_color_manual(values = p$colors[(p$nResources+1):(p$nGroups+p$nResources)]) +
+    labs(x = "time (year)", y = "Biomass (g WW)", title = "e") +
+    #scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+    #               labels = trans_format("log10", math_format(10^.x)))+
+    force_panelsizes(row = unit(5, 'cm'),
+                     col = unit(19.5, 'cm'))+
+    theme_base(base_size = unit(20, 'pt'))+
+    theme(legend.position = "none", plot.background = element_rect(color = NA))
+  
+  
+  # save in pdf format: 
+  if (print_fig) {
+    if (file.exists("../Fig/") == FALSE) { dir.create(file.path("../Fig/")) }
+    ggsave("../Fig/Plot_TimeSeries.pdf", TimeSeriesPlot, width = unit(10, 'cm'), height = unit(5, 'cm'))
+  }
+  
+  return(TimeSeriesPlot)
+}
+
+
+
 #' Food web plot
 #' 
 #' Revised Based on the work of Daniel Ottmann Riera and Solenne Roux.
@@ -486,7 +809,6 @@ plotTheta = function(p) {
 #' 
 #' @export
 #'
-
 plotNetwork <- function(sim) {
   p=sim$p
   u=sim$u
