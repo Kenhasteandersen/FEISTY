@@ -1,10 +1,10 @@
 ---
-title: "FishErIes Size and functional TYpe model in R (FEISTY)"
+title: "FishErIes Size and functional TYpe model (FEISTY) in R "
 author: "Ken H Andersen and Karline Soetaert Yixin Zhao"
 date: " 2024"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
   word_document: default
 vignette: >
   %\VignetteIndexEntry{FishErIes Size and functional TYpe model in R (FEISTY)}
@@ -19,9 +19,9 @@ library(FEISTY)
 palette("ggplot2")  # ggplot2-style palette
 ```
 
-# Aim. 
-
-This document describes how to run the Feisty model in R. 
+# Introduction 
+The R package **FEISTY** is to document the FEITY model and for further model development and research.
+This document describes how to run the FEISTY model in R.
 
 DESCRIBE IT BETTER
 
