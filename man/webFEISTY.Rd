@@ -37,7 +37,6 @@ webFEISTY()
 \code{\link{setupVertical2}} A revised setup based on `setupVertical`
 
 \code{\link{simulateFEISTY}} The main function to run FEISTY simulations \cr
-\code{\link{derivativesFEISTYR}} The derivative function of FEISTY
 
 \code{\link{plotSimulation}} Plot simulation results \cr
 \code{\link{plotSSBtime}} Spawning stock biomass plot \cr

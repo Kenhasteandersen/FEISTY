@@ -22,7 +22,8 @@ Add SSB data to the result list:
 }
 }
 \description{
-This function calculates the spawning stock biomass (SSB) for each function type based on a FEISTY simulation result.
+This function calculates the spawning stock biomass (SSB) for each functional 
+type based on a FEISTY simulation result in units of gWW/m2.
 }
 \details{
 This function calculates the spawning stock biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr

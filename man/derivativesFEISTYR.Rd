@@ -41,6 +41,7 @@ If \code{FullOutput = FALSE}, only returns \code{deriv}.
 \description{
 This function calculates the derivatives of state variables in FEISTY model in R. 
 It is used for time integration of FEISTY simulations or getting rates by computing derivatives of one time step.
+Note that calculating derivatives in R is much slower than doing it with Fortran.
 }
 \details{
 This function is designed to simulate the dynamics of marine resources and fish populations in FEISTY model in R. 
@@ -51,7 +52,7 @@ More theories can be found in de Roos et al. (2008) and Petrik et al. (2019).
 }
 \examples{
 # Parameter list preparation
-p = setpBasic2()
+p = setupBasic2()
 # FEISTY simulation 200 years, use derivativesFEISTYR
 sim = simulateFEISTY(p=p, tEnd=200, USEdll=FALSE)
 # get rates of last year, based on biomass of last year 

@@ -22,7 +22,7 @@ Add yield data to the result list:
 }
 }
 \description{
-This function calculates the yield for each function type based on a FEISTY simulation result.
+This function calculates the yield for each functional type in units of gWW/m2/year based on a FEISTY simulation result.
 }
 \details{
 This function calculates the yield for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr

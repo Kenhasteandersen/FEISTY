@@ -7,7 +7,7 @@
 setFishing(p, F = 0, etaF = 0.05, groupidx = c(1:p$nGroups))
 }
 \arguments{
-\item{p}{The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.}
+\item{p}{The model parameter list, as created with e.g. \link{setupBasic2}.}
 
 \item{F}{The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.}
 
@@ -24,7 +24,7 @@ It returns an updated parameter list:
 }
 }
 \description{
-This function sets fishing mortality for all fish based on a baseline fishing mortality and the size-based trawl selectivity.
+This function sets fishing mortality for all fish based on a baseline fishing mortality and a size-based trawl selectivity.
 }
 \details{
 The function sets fishing mortality for all fish.

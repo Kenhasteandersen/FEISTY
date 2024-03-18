@@ -2,7 +2,7 @@
 % Please edit documentation in R/FEISTY_parms.R
 \name{paramAddGroup}
 \alias{paramAddGroup}
-\title{Add Parameters of One Functional Type}
+\title{Add parameters of a functional type}
 \usage{
 paramAddGroup(p, nStages, mMin, mMax, mMature=NA, mortF=0, mort0=0.1, u0=1, name=NA)
 }
@@ -52,9 +52,10 @@ NAs in \code{z}, \code{psiMature}, \code{mortF}, and \code{mort0} will be revise
 This function updates the parameter list by adding parameters of one functional type.
 }
 \details{
-This function is designed to add parameters of one functional type to the parameter list.
+This function is designed to add parameters of a functional type to the parameter list.
 Generally, this function needs to be called after the function \code{\link{paramAddResource}}.
-Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times to add more functional types.
+Every call of this function can add \bold{one} functional group, which means 
+this function needs to be called multiple times to add all functional types.
 }
 \examples{
 # Just an example, data may not make sense.

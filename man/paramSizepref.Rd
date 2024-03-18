@@ -22,7 +22,8 @@ Default 1.}
 theta: feeding preference matrix for each predator x to each prey y.
 }
 \description{
-This function calculates a size preference matrix of a predator for a prey based on the size.
+This function calculates a size preference matrix of a predator for a prey 
+based on the size.
 }
 \details{
 This function computes a size preference matrix \code{theta}.
