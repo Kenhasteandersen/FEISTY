@@ -12,6 +12,8 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
+          
+          h3('Setup:'),
           radioButtons("Setup", 
                        ("Setup"),
                        choices = list("SetupBasic" = "setupBasic", 
@@ -34,6 +36,16 @@ ui <- fluidPage(
                       max = 5500,
                       step = 50,
                       value = 1500),
+          sliderInput("photic",
+                      "Euphotic zone depth (m):",
+                      min = 50,
+                      max = 700,
+                      step = 10,
+                      value = 150),
+          
+          hr(),
+          h3('Production:'),
+          
           sliderInput("szprod",
                       "Small zoop. carrying capacity (g/m2):",
                       min = 1,
@@ -58,6 +70,10 @@ ui <- fluidPage(
                       max = 1000,
                       step = 5,
                       value = 150),
+          
+          hr(),
+          h3('Temperature:'),
+          
           sliderInput("Tp",
                       "Surface temperature (top 100m, \u00B0C):",
                       min = 0,
@@ -76,18 +92,9 @@ ui <- fluidPage(
                       max = 28,
                       step = 0.1,
                       value = 10),
-          sliderInput("nSizeGroups",
-                      "Number of fish stages:",
-                      min = 3,
-                      max = 45,
-                      step = 3,
-                      value = 9),
-          sliderInput("etaMature",
-                      "Mature size relative to asymptotic size:",
-                      min = 0.002,
-                      max = 0.3,
-                      step = 0.002,
-                      value = 0.25),
+          
+          hr(),
+          h3('Fishing parameters:'),
           sliderInput("F",
                       "Fishing mortality (1/yr):",
                       min = 0,
@@ -100,17 +107,26 @@ ui <- fluidPage(
                       max = 0.3,
                       step = 0.01,
                       value = 0.05),
-          sliderInput("photic",
-                      "Euphotic zone depth (m):",
-                      min = 50,
-                      max = 700,
-                      step = 10,
-                      value = 150),
           
+          hr(),
+          h3('Numerical solver:'),
+          
+          sliderInput("nSizeGroups",
+                      "Number of fish stages:",
+                      min = 3,
+                      max = 45,
+                      step = 3,
+                      value = 9),
           radioButtons("USEdll", 
                        ("Run by"),
                        choices = list("Fortran dll" = TRUE, "R" = FALSE),
-                       selected = TRUE,inline = TRUE)
+                       selected = TRUE,inline = TRUE),
+          sliderInput("etaMature",
+                      "Mature size relative to asymptotic size:",
+                      min = 0.002,
+                      max = 0.3,
+                      step = 0.002,
+                      value = 0.25),
           
         ),
 
