@@ -604,9 +604,9 @@ PlotSpectraGgplot = function(sim,
   
   # Create list of name, color, and size: --------------------------------------
   # (This can be optimized)
-  List_group = zeros(1, p$nStages)
-  Size = zeros(1, p$nStages)
-  Color = zeros(1, p$nStages)
+  List_group = NA#vector(0, length=p$nStages)
+  Size = NA#vector(0, length=p$nStages)
+  Color = NA#vector(0, length=p$nStages)
   for (i in (1:p$nResources)) {
     List_group[i] = p$groupnames[i]
     Color[i] = p$colors[i]
@@ -646,8 +646,8 @@ PlotSpectraGgplot = function(sim,
                   labels = trans_format("log10", math_format(10^.x)))+
     scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                   labels = trans_format("log10", math_format(10^.x)))+
-    force_panelsizes(row = unit(p$panel_height, 'cm'), 
-                     col = unit(p$panel_length, 'cm'))+
+  #  force_panelsizes(row = unit(p$panel_height, 'cm'), 
+  #                   col = unit(p$panel_length, 'cm'))+
     theme_base(base_size = unit(20, 'pt')) + 
     theme(legend.position = "none",
           axis.text.x = element_blank(),
@@ -662,8 +662,8 @@ PlotSpectraGgplot = function(sim,
     labs(x = NULL, y = "mort (1/year)", title = "b") +
     scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                   labels = trans_format("log10", math_format(10^.x)))+
-    force_panelsizes(row = unit(p$panel_height, 'cm'), 
-                     col = unit(p$panel_length, 'cm'))+
+  #  force_panelsizes(row = unit(p$panel_height, 'cm'), 
+  #                   col = unit(p$panel_length, 'cm'))+
     theme_base(base_size = unit(20, 'pt')) + 
     theme(legend.position = "none", 
           axis.text.x = element_blank(),

@@ -2,7 +2,6 @@
 % Please edit documentation in R/FEISTY_doc.R
 \docType{package}
 \name{FEISTY}
-\alias{FEISTY-package}
 \alias{FEISTY}
 \title{FEISTY: FishErIes Size and functional TYpe model.}
 \description{

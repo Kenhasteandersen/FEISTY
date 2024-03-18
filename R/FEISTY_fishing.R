@@ -1,12 +1,8 @@
-#
-#Nov 2023
-#
-
 #' Set Fishing Mortality
 #'
-#' This function sets fishing mortality for all fish based on a baseline fishing mortality and the size-based trawl selectivity.
+#' This function sets fishing mortality for all fish based on a baseline fishing mortality and a size-based trawl selectivity.
 #'
-#' @param p The model parameter list, as created with e.g. \link{setupBasic2}, needed to be updated.
+#' @param p The model parameter list, as created with e.g. \link{setupBasic2}.
 #' @param F The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.
 #' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.
 #' @param groupidx An integer vector containing indices of functional types that fishing mortality will be assigned to. Default is all functional types.
@@ -37,11 +33,7 @@
 #' \code{\link{calcYield}} Yield calculation
 #' 
 #' @export
-
-#
-# F: fishing mortality 1/yr   if F=0 return the original param set
-# etaF: the coefficient determining the fish size with 50% fishing selectivity
-setFishing = function(p, F=0, etaF=0.05,groupidx=c(1:p$nGroups)) {
+setFishing = function(p, F=0, etaF=0.05, groupidx=c(1:p$nGroups)) {
   p$F=F
   p$etaF=etaF
   for (iGroup in 1:length(groupidx)) {
@@ -55,7 +47,7 @@ setFishing = function(p, F=0, etaF=0.05,groupidx=c(1:p$nGroups)) {
 
 #' Yield Calculation
 #'
-#' This function calculates the yield for each function type based on a FEISTY simulation result.
+#' This function calculates the yield for each functional type in units of gWW/m2/year based on a FEISTY simulation result.
 #'
 #' @usage calcYield(sim, etaTime = 0.4)
 #'
@@ -88,10 +80,6 @@ setFishing = function(p, F=0, etaF=0.05,groupidx=c(1:p$nGroups)) {
 #' @aliases calcYield
 #'
 # @export
-
-#
-# Return the yield of all function groups
-#
 calcYield = function(
     sim,          # The simulation object to analyse
     etaTime=0.4) {# The last fraction of the simulation period (default the last 40%)
@@ -112,14 +100,14 @@ calcYield = function(
     yieldAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$mortF[ix]) 
     yieldAllgrid[,ix-length(p$ixR)][yieldAllgrid[,ix-length(p$ixR)]<0]=0
     yield[,iGroup]= rowSums(yieldAllgrid[,ix-length(p$ixR)])
-
+    
     #deltaM = p$mUpper[ix]-p$mLower[ix]
     yieldAMean[iGroup] = mean(rowSums(yieldAllgrid[ixTime,ix-max(p$ixR)]))
     yieldGMean[iGroup] = exp(mean(log(rowSums(yieldAllgrid[ixTime,ix-max(p$ixR)]))))
     yieldMin[iGroup] = min(rowSums( yieldAllgrid[ixTime,ix-max(p$ixR)] ))
     yieldMax[iGroup] = max(rowSums( yieldAllgrid[ixTime,ix-max(p$ixR)] ))
   }
-
+  
   sim$yieldAMean=yieldAMean
   sim$yieldGMean=yieldGMean  
   sim$yieldMin=yieldMin
@@ -130,7 +118,8 @@ calcYield = function(
 
 #' Spawning Stock Biomass Calculation
 #'
-#' This function calculates the spawning stock biomass (SSB) for each function type based on a FEISTY simulation result.
+#' This function calculates the spawning stock biomass (SSB) for each functional 
+#' type based on a FEISTY simulation result in units of gWW/m2.
 #'
 #' @usage calcSSB(sim, etaTime = 0.4)
 #'
@@ -164,10 +153,6 @@ calcYield = function(
 #' \code{\link{paramAddGroup}} 	Add parameters of one functional type
 #'
 # @export
-
-#
-# Return the SSB of all function groups
-#
 calcSSB = function(
     sim,          # The simulation object to analyse
     etaTime=0.4) {# The last fraction of the simulation period (default the last 40%) 
@@ -182,7 +167,7 @@ calcSSB = function(
   SSBMax = SSBAMean
   
   ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
-      
+  
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]
     SSBAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$psiMature[ix]) 
@@ -201,7 +186,7 @@ calcSSB = function(
   sim$SSBMin=SSBMin
   sim$SSBMax=SSBMax
   sim$SSB=SSB
-
+  
   return(sim)
 }
 

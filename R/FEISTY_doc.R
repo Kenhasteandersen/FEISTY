@@ -21,29 +21,25 @@
 #' The number of fish functional types is defined by each of the predefined setups (see below), but can also be adapted by the user.
 #' The physiological rates of each size class are based on allometry using the mass (gram wet weight) of each size class. 
 #' The fish eat on resources of zooplankton or benthos, or, for larger size classes, on smaller fish. 
-#' Fish size classes are defined using logarithmic size bins appropriate for the life history stage; 
-#' they are represented by holding the ratio of initial and final body sizes of each size class, constant across all stages.
+#' 
 #' Each fish functional type is modeled as a collection of size classes, with smaller classes growing into larger size classes. 
-#' The stage-structured formulation is as in de Roos et al. (2008).
+#' Fish size classes are defined using logarithmic size bins between the offspring (egg) size and the asymptotic size.
+#' The stage-structured formulation is described in de Roos et al. (2008).
 #' 
 #' The package provides two simulation approaches: either using a compiled Fortran code (very fast) or running everything in R (slow, but easier to modify).
 #' Both rely on the \link{deSolve} package. 
 #' 
 #' The package operates with two main structures: the parameters structure and the simulation structure. \cr
 #' The parameters are set with a call to one of four "setup" functions. The parameters structure is passed to the `simulateFEISTY`, which returns the results in a `sim` structure.
-#' This structure contains all the information of the simulation and can be passed to routines for plotting. \cr
-#' 
-#' The simplest simulation example can be found below.
-#' 
-#' 
-#' ... ... ...
+#' This structure contains all the information of the simulation and can be passed to routines for plotting. 
+#' 'sim' is documented in the help page of 'simulateFEISTY'.\cr
 #' 
 #' @examples
 #' # A simulation can be as simple as:
 #'   p = setupBasic()
 #'   sim = simulateFEISTY(p=p)
 #'   plotSimulation(sim)
-#' # To see what 'sim' contains, please check the help page of the function 'simulateFEISTY'.
+#' 
 #' 
 #' @references
 #' Petrik, C. M., Stock, C. A., Andersen, K. H., van Denderen, P. D., & Watson, J. R. (2019). Bottom-up drivers of global patterns of demersal, forage, and pelagic fishes. Progress in oceanography, 176, 102124.

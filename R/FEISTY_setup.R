@@ -74,19 +74,6 @@
 #' 
 #' @export
 #' 
-
-# ------------------------------------------------------------------------------
-# Make a basic three-species setup as described in Petrik et al (2019): Bottom-up 
-# drivers of global patterns of demersal, forage, and pelagic fishes. Progress 
-# in Oceanography 176, 102124. doi 10.1016/j.pocean.2019.102124.
-#
-# Out:
-#  An updated parameter list. The list contains:
-#   ixResources - the indices to the resources
-#   ixGroup - array of nGroups with indices for each group
-#   mMature(nGroups) - mass of maturation of each group
-# ------------------------------------------------------------------------------
-
 setupBasic = function(szprod = 100, # small zoo production?
                       lzprod = 100, # large zoo production?
                       bprodin  = NA,  # benthos production?
@@ -94,7 +81,7 @@ setupBasic = function(szprod = 100, # small zoo production?
                       depth  = 100, # water column depth [m]
                       Tp     = 10,  # pelagic layer averaged temperature [Celsius]
                       Tb     = 8)   # bottom layer depth [Celsius]
-  {
+{
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin =  -1; dfbot = -1
@@ -110,12 +97,12 @@ setupBasic = function(szprod = 100, # small zoo production?
   
   # Add resource:
   param = paramAddResource(
-        param, 
-        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
-        K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
-        r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
-        mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
-
+    param, 
+    names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
+    K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+    r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
+    mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
+  
   # Add fish groups:
   # mMature=NA overrides the generic psiMature-> only adult classes 50% mature
   u0  = 1E-5
@@ -132,19 +119,19 @@ setupBasic = function(szprod = 100, # small zoo production?
   param = paramAddPhysiology(param)
   
   param=paramTeffect(param, # only for setupbasic & 2
-                      Tref=10,
-                      Q10=1.88,
-                      Q10m=2.35,
-                      pelgroupidx=c(1:(param$nGroups-1)),
-                      demgroupidx=param$nGroups)
-
+                     Tref=10,
+                     Q10=1.88,
+                     Q10m=2.35,
+                     pelgroupidx=c(1:(param$nGroups-1)),
+                     demgroupidx=param$nGroups)
+  
   # Add fishing mortality
   # Has been assigned by param = paramAddGroup(..., mortF=c()), hard coded
-
+  
   #
   # Setup size interaction matrix:
   #
-
+  
   # preference matrix: columns=predator, rows=prey
   param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   rownames(param$theta) <- colnames(param$theta) <- param$stagenames
@@ -152,13 +139,13 @@ setupBasic = function(szprod = 100, # small zoo production?
   # Small pelagics:
   
   param$theta["smallPel_1", "smallZoo"] = 1 # Small ones eat only small zooplankton
-
+  
   param$theta["smallPel_2", "smallZoo"] = 0.25
   param$theta["smallPel_2", "largeZoo"] = 1
   param$theta["smallPel_2", "smallPel_1"] = 1
   param$theta["smallPel_2", "largePel_1"] = 1
   param$theta["smallPel_2", "demersals_1"] = 1
-
+  
   # Large pelagics:
   param$theta["largePel_1", "smallZoo"] = 1    
   param$theta["largePel_2", "smallZoo"] = 0.25 
@@ -166,19 +153,19 @@ setupBasic = function(szprod = 100, # small zoo production?
   param$theta["largePel_2", c("smallPel_1", "largePel_1", "demersals_1")] = 1 
   param$theta["largePel_3", "smallPel_2"] = 0.5 
   param$theta["largePel_3", "largePel_2"] = 1 
-
+  
   # Demersals:
   param$theta["demersals_1", "smallZoo"] = 1
   param$theta["demersals_2", "benthos"] = 1
   # Large demersal fish have reduced feeding preference on large-size small pelagic fish and medium-size large pelagic fish in shallow water,
   # but do not eat them in deep water (depth>=200m).
   if (param$depth < 200){ 
-  param$theta["demersals_3", "smallPel_2"] = 0.75/2
-  param$theta["demersals_3", "largePel_2"] = 0.75 
+    param$theta["demersals_3", "smallPel_2"] = 0.75/2
+    param$theta["demersals_3", "largePel_2"] = 0.75 
   }
   param$theta["demersals_3", "benthos"] = 1
   param$theta["demersals_3", "demersals_2"] = 1 
-param$setup="setupBasic"
+  param$setup="setupBasic"
   return(param)
 }
 
@@ -308,20 +295,6 @@ param$setup="setupBasic"
 #' @aliases setupBasic2
 #' @export
 #' 
-
-# ------------------------------------------------------------------------------
-# Make a basic three-species setup based on setupBasic(), but generalised to:
-# - more realistic sizes
-# - Generalized size-based feeding
-# - possiblity of more then 3 size groups in each group
-#
-# Out:
-#  An updated parameter list. The list contains:
-#   ixResources - the indices to the resources
-#   ixGroup - array of nGroups with indices for each group
-#   mMature(nGroups) - mass of maturation of each group
-# ------------------------------------------------------------------------------
-
 setupBasic2 = function(szprod = 100, # small zoo production?
                        lzprod = 100, # large zoo production?
                        bprodin  = NA,   # benthos production?
@@ -337,27 +310,27 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin = -1; dfbot = -1
-   } else {
+  } else {
     if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
     if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
-   }
+  }
   
   # Initialize the parameters:
   param = paramInit(depth=depth, szprod=szprod, lzprod=lzprod, bprodin=bprodin, dfbot=dfbot, bprod=bprod, Tp=Tp,Tb=Tb,etaMature=etaMature,
                     mMedium = 0.5, mLarge = 250, bET=bET)
-
+  
   # Setup resource groups:
   param = paramAddResource(
-        param, 
-        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
-        K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
-        r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
-        mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
-        mUpper = c(0.001, 0.5, 125, 125),
-        mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
-
-# Add fish groups:
+    param, 
+    names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
+    K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+    r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
+    mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
+    mUpper = c(0.001, 0.5, 125, 125),
+    mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)))
+  
+  # Add fish groups:
   nSmall = round(0.66*nStages)
   u0  = 1E-5
   param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0,
@@ -368,7 +341,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="demersals")
-
+  
   # physiology of all fish stages
   param = paramAddPhysiology(param)
   
@@ -381,64 +354,64 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   
   # Add fishing mortality
   param=setFishing(param, F=F, etaF=etaF)
-
+  
   # Setup size interaction matrix:
   thetaA = 0.5  # Large fish pref for medium forage fish
   thetaD = 0.75 # Pref of large demersal on pelagic prey
-
-   # Size-based interactions:  
-   param$theta=paramSizepref(p=param,           # parameter settings 
-                               beta = 400,  # preferred predator/prey mass ratio
-                               sigma = 1.3, # width of size preference for feeding
-                               type = 1)
-   
-   #
-   # Setup interactions between groups and resources:
-   #
-   ixSmall = param$ix[[1]]
-   ixLarge = param$ix[[2]]
-   ixDem   = param$ix[[3]]
   
-   ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=param$mMedium) ]
-   ixMediumSizeDem = ixDem[ (param$mc[ixDem]>param$mMedium) &
-                            (param$mc[ixDem]<param$mLarge) ]
-   ixLargeSizeDem = ixDem[ (param$mc[ixDem]>=param$mLarge) ]
-   
-   # Pelagic/demersal indices:
-   ixR = param$ixR
-
-   # Pelagic fish do not feed on benthic resources
-   param$theta[ixSmall, 3:4] = 0
-   param$theta[ixLarge, 3:4] = 0
-
-   # ... or on medium-sized demersal fish:
-   param$theta[ixSmall, ixMediumSizeDem] = 0
-   param$theta[ixLarge, ixMediumSizeDem] = 0
-   
-   # Large pelagics have reduced feeding efficiency on small pelagics:
-   param$theta[ixLarge,ixSmall] = thetaA * param$theta[ixLarge,ixSmall] 
-   # ... and do not feed on medium-sized demersal:
-   param$theta[ixLarge, ixMediumSizeDem ] = 0
-   
-   # Medium-sized large demersals feed only on benthos:
-   param$theta[ixMediumSizeDem, 1:2] = 0 
-   param$theta[ixMediumSizeDem, param$ixFish] = 0 
-   
-   # Large demersal fish have reduced feeding preference on all small pelagic fish and all large pelagic fish in shallow water
-   if(param$depth<200){
-          param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
-          param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
-        
-          #param$theta[ixLargeSizeDem, 1:2] = 
-          #param$theta[ixLargeSizeDem, ixSmallSizeDem] =
-   }else{ # Large-size demersal fish do not eat pelagic prey in deep water (depth>=200m).
-          param$theta[ixLargeSizeDem, ixSmall] = 0
-          param$theta[ixLargeSizeDem, ixLarge] = 0 
-     
-          param$theta[ixLargeSizeDem, 1:2] = 0
-          param$theta[ixLargeSizeDem, ixSmallSizeDem] = 0
-   }
-
+  # Size-based interactions:  
+  param$theta=paramSizepref(p=param,           # parameter settings 
+                            beta = 400,  # preferred predator/prey mass ratio
+                            sigma = 1.3, # width of size preference for feeding
+                            type = 1)
+  
+  #
+  # Setup interactions between groups and resources:
+  #
+  ixSmall = param$ix[[1]]
+  ixLarge = param$ix[[2]]
+  ixDem   = param$ix[[3]]
+  
+  ixSmallSizeDem = ixDem[ (param$mc[ixDem]<=param$mMedium) ]
+  ixMediumSizeDem = ixDem[ (param$mc[ixDem]>param$mMedium) &
+                             (param$mc[ixDem]<param$mLarge) ]
+  ixLargeSizeDem = ixDem[ (param$mc[ixDem]>=param$mLarge) ]
+  
+  # Pelagic/demersal indices:
+  ixR = param$ixR
+  
+  # Pelagic fish do not feed on benthic resources
+  param$theta[ixSmall, 3:4] = 0
+  param$theta[ixLarge, 3:4] = 0
+  
+  # ... or on medium-sized demersal fish:
+  param$theta[ixSmall, ixMediumSizeDem] = 0
+  param$theta[ixLarge, ixMediumSizeDem] = 0
+  
+  # Large pelagics have reduced feeding efficiency on small pelagics:
+  param$theta[ixLarge,ixSmall] = thetaA * param$theta[ixLarge,ixSmall] 
+  # ... and do not feed on medium-sized demersal:
+  param$theta[ixLarge, ixMediumSizeDem ] = 0
+  
+  # Medium-sized large demersals feed only on benthos:
+  param$theta[ixMediumSizeDem, 1:2] = 0 
+  param$theta[ixMediumSizeDem, param$ixFish] = 0 
+  
+  # Large demersal fish have reduced feeding preference on all small pelagic fish and all large pelagic fish in shallow water
+  if(param$depth<200){
+    param$theta[ixLargeSizeDem, ixSmall] = thetaA * thetaD * param$theta[ixLargeSizeDem,ixSmall] 
+    param$theta[ixLargeSizeDem, ixLarge] = thetaD * param$theta[ixLargeSizeDem, ixLarge] 
+    
+    #param$theta[ixLargeSizeDem, 1:2] = 
+    #param$theta[ixLargeSizeDem, ixSmallSizeDem] =
+  }else{ # Large-size demersal fish do not eat pelagic prey in deep water (depth>=200m).
+    param$theta[ixLargeSizeDem, ixSmall] = 0
+    param$theta[ixLargeSizeDem, ixLarge] = 0 
+    
+    param$theta[ixLargeSizeDem, 1:2] = 0
+    param$theta[ixLargeSizeDem, ixSmallSizeDem] = 0
+  }
+  
   param$setup="setupBasic2"
   
   return(param)
@@ -530,17 +503,6 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' @aliases setupVertical
 #' @export
 #' 
-
-# ------------------------------------------------------------------------------
-# Make a basic four-species setup based up setupBasic(), but generalised to:
-# - distinguish between visual and twilight predators
-# - with vertical zooplankton distribution
-#
-# Out:
-#  An updated parameter list. The feeding preferences are quite complex
-#
-# ------------------------------------------------------------------------------
-
 setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          bprodin  = NA, # benthos production
                          dfbot  = NA, # detrital flux reaching the bottom
@@ -549,7 +511,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
                          region = 4, # Temperature profile regions: 1 Tropical, 2 Temperate, 3 Boreal, 4 Default 10 Celsius 
                          depth=1500, # Bottom depth
                          photic=150 # Photic zone depth
-                         ){
+){
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot) & is.na(dfpho)){ # if all benthic arguments are NA, assign bprod to 5
     bprodin = -1; dfbot = -1; dfpho = 150
@@ -567,7 +529,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # habitat and small benthos
   #------------------  
   etaMature=0.002
-
+  
   param = paramInit(bottom=depth, szprod=szprod, lzprod=lzprod, photic=photic,
                     mesop=250, visual=1.5, bprodin=bprodin, dfbot=dfbot, dfpho=dfpho, bprod=bprod,
                     etaMature=etaMature,region=region)
@@ -575,17 +537,17 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   # Setup resource groups:
   #------------------  
-
-    param = paramAddResource(
-        param, 
-        names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
-        K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
-        r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
-        mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
-        mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
-        mUpper = c(0.001, 0.5, 125, 125),
-        u0     = c(0.5,0.5,0.5,0))
-
+  
+  param = paramAddResource(
+    param, 
+    names= c("smallZoo", "largeZoo", "benthos", "Spare_position"),
+    K    = c(szprod, lzprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+    r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
+    mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
+    mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit
+    mUpper = c(0.001, 0.5, 125, 125),
+    u0     = c(0.5,0.5,0.5,0))
+  
   #------------------  
   # Add fish groups:
   #------------------  
@@ -601,13 +563,13 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   param = paramAddGroup(param, mMin=0.001, mMax=   250, mMature=etaMature*250, u0=u0M,
                         mortF=0,   nStages=nSmall, name="mesoPel")
-
+  
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0, 
                         mortF=0, nStages=nStages, name="largePel") 
   
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0M, 
                         mortF=0, nStages=nStages, name="bathyPel") 
-
+  
   param = paramAddGroup(param, mMin=0.001, mMax=125000, mMature=etaMature*125000, u0=u0,
                         mortF=0, nStages=nStages, name="demersals")
   #param$mortF[length(param$mortF)]=0.5
@@ -628,7 +590,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$psiMature[param$ix[[3]][matstageL:max(param$ix[[3]])]]=0.5
   param$psiMature[param$ix[[4]][matstageL:max(param$ix[[4]])]]=0.5
   param$psiMature[param$ix[[5]][matstageL:max(param$ix[[5]])]]=0.5
-    
+  
   #------------------  
   # theta (preferences):
   #------------------  
@@ -636,10 +598,10 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   # calculate size-preference matrix
   param$sizeprefer=paramSizepref(p=param,           # parameter settings 
-                              beta = 400,  # preferred predator/prey mass ratio
-                              sigma = 1.3, # width of size preference for feeding
-                              type = 2)
-
+                                 beta = 400,  # preferred predator/prey mass ratio
+                                 sigma = 1.3, # width of size preference for feeding
+                                 type = 2)
+  
   #------------------  
   # overlap from depth distribution
   #------------------  
@@ -655,20 +617,20 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   if (param$bottom <= param$mesop) 
     param$dvm = 0              # no migration in shallow habitats
-
+  
   ixmedium = which.min(abs(sizes-0.5))# - etaMature*250)) # -0.5))
   ixlarge = which.min(abs(sizes-250))# - etaMature*125000)) # -250))
-    
+  
   # ixmedium = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   # ixlarge = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
-
+  
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
     xloc = rep(xloc, length.out=length(sigma))
     zp_n = matrix(nrow=length(xrange), ncol=length(sigma), data=0) 
     for (i in 1: length(sigma)){      
-     zp_n[,i] = (1/(sqrt(2*pi*sigma[i]^2)))* 
-       exp(-(((xrange - xloc[i])^2)/(2*sigma[i]^2)))
+      zp_n[,i] = (1/(sqrt(2*pi*sigma[i]^2)))* 
+        exp(-(((xrange - xloc[i])^2)/(2*sigma[i]^2)))
     }
     zp_n = zp_n %*% diag(1/colSums(zp_n))
     zp_n  
@@ -677,25 +639,25 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   ## zooplankton : small zoo & large zoo
   # at night: zooplankton is close to surface
   zp_n = VertDist(sigmap[1:2], xloc=0)
-
+  
   # zooplankton day (half at surface, half at dvm depth
   zp_d = VertDist(sigmap[1:2], xloc=param$dvm)
   zp_d = (zp_n + zp_d)/2
   
   ## benthos small and large (at bottom with width ssigma)
-   bent_dn = VertDist(c(ssigma, ssigma), xloc=param$bottom)
-
+  bent_dn = VertDist(c(ssigma, ssigma), xloc=param$bottom)
+  
   ## small pelagic fish (day + night) always at surface
   ix = param$ix[[1]]
   spel_dn = VertDist(sigmap[ix], xloc=0)
- 
+  
   ## meso pelagic night   at surface  
   mpel_n = spel_dn
   
   # meso pelagic day (all at dvm)
   ix = param$ix[[2]]
   mpel_d = VertDist(sigmap[ix], xloc=param$dv)
-
+  
   ## large pelagic fish night (all at surface)
   ix = param$ix[[3]]
   lpel_n = VertDist(sigmap[ix], xloc=0)
@@ -711,32 +673,32 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   xlocvec = rep(0,length(ix)) # initialization
   xlocvec[ixlarge:length(xlocvec)] = param$dvm # non-large at surface   large at dvm
   bpel_n = VertDist(sigmap[ix], xloc=xlocvec)
-
+  
   # bathypelagic day (all at dvm)
   bpel_d = VertDist(sigmap[ix], xloc=param$dvm)
-
+  
   ## demersal fish night
   ix = param$ix[[5]]
   xlocvec = rep(0,length(ix)) # initialization
   xlocvec[ixmedium:length(xlocvec)] = param$bottom # small at surface   medium and large at bottom
   dem_n = VertDist(sigmap[ix], xlocvec)
-
+  
   # demersal fish day; small at surface/ medium at bottom/ large at middle
   demmig = param$dvm # ? from matlab
   if ((param$bottom - param$dvm) >= 1200) 
     demmig = param$dvm + (param$bottom-param$dvm-1200)
   if ((param$bottom - param$dvm) >= 1500)
-   demmig = param$bottom
-   
+    demmig = param$bottom
+  
   dem_d= matrix(nrow=length(xrange), ncol=length(param$ix[[5]]), data=0)
-
+  
   xlocvec[ixlarge:length(xlocvec)] = demmig #param$dvm ### or demmig???
   dem_d =  VertDist(sigmap[ix], xlocvec)
-
+  
   #if shallower than euphotic depth, large demersals feed across-habitats
   if (param$bottom <= param$photic) {
-  dem_d = (dem_d + dem_n)/2
-  dem_n = dem_d
+    dem_d = (dem_d + dem_n)/2
+    dem_n = dem_d
   }
   
   # calculate overlap during day
@@ -754,9 +716,9 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   
   for (i in 1: param$nStages) {
     for ( j in 1: param$nStages) {
-     test[, j] = pmin(param$depthDay[, i], param$depthDay[, j])
+      test[, j] = pmin(param$depthDay[, i], param$depthDay[, j])
     }
-  param$dayout[, i] = colSums(test)
+    param$dayout[, i] = colSums(test)
   }
   
   # calculate overlap during night
@@ -782,7 +744,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   # visual ability
   #------------------  
-
+  
   # visual predatars: good at light, bad in the dark
   visualpred = c(param$ix[[1]], # small palegic 5 6 always at surface
                  param$ix[[3]]) # large pelagic 9 10 11
@@ -804,7 +766,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #  specific revision of feeding preference
   idx_be = param$ixFish[1]: (param$ix[[5]][1] + (ixmedium - 2)) # all pelagic and small demersals
   param$theta[idx_be, 3:4] = 0 # all pelagic and small demersals do not eat benthos,
-                               # only small & large demersals eat benthos
+  # only small & large demersals eat benthos
   
   # small demersals are less preyed on
   idx_smd = (param$ix[[5]][1] + (ixmedium - 1)): (param$ix[[5]][1] + (ixlarge - 2)) #
@@ -848,7 +810,7 @@ setupVertical = function(szprod= 80,lzprod = 80, # Pelagic productivities
   param$metabolism = scTempm* param$metabolism
   param$setup="setupVertical"
   
-return(param)  
+  return(param)  
 }
 
 #' setupVertical2
@@ -963,34 +925,23 @@ return(param)
 #' @aliases setupVertical2
 #' @export
 #' 
-
-# ------------------------------------------------------------------------------
-# Make a basic four-species setup based up setupBasic(), but generalised to:
-# - distinguish between visual and twilight predators
-# - with vertical zooplankton distribution
-#
-# Out:
-#  An updated parameter list. The feeding preferences are quite complex
-#
-# ------------------------------------------------------------------------------
-
 setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
-                         bprodin  = NA, # benthos production
-                         dfbot  = NA, # detrital flux reaching the bottom
-                         dfpho  = NA, # detrital flux out of photic zone
-                         nStages=6, # No. of size groups
-                         Tp = NA, # Average T of top 100 m (up to 100 m). Default 10 Celsius.
-                         Tm = NA, # Average T of 500 - 1500 m (up to 1500 m). Default 10 Celsius. Keep it as NA, if no Tm data. Tm = Tb.
-                         Tb = NA, # Bottom T (last layer value). Default 10 Celsius.
-                         depth=1500, # Bottom depth
-                         photic=150, # Photic zone depth
-                         mesopelagic=250, # mesopelagic depth
-                         visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
-                         etaMature = 0.25, # Size of matureation relative to
-                         # asymptotic size. Different from
-                         # van Denderen (2021), where it is 0.002
-                         F=0,
-                         etaF=0.05) {
+                          bprodin  = NA, # benthos production
+                          dfbot  = NA, # detrital flux reaching the bottom
+                          dfpho  = NA, # detrital flux out of photic zone
+                          nStages=6, # No. of size groups
+                          Tp = NA, # Average T of top 100 m (up to 100 m). Default 10 Celsius.
+                          Tm = NA, # Average T of 500 - 1500 m (up to 1500 m). Default 10 Celsius. Keep it as NA, if no Tm data. Tm = Tb.
+                          Tb = NA, # Bottom T (last layer value). Default 10 Celsius.
+                          depth=1500, # Bottom depth
+                          photic=150, # Photic zone depth
+                          mesopelagic=250, # mesopelagic depth
+                          visual=1.5,# >1 visual predation primarily during the day, = 1 equal day and night
+                          etaMature = 0.25, # Size of matureation relative to
+                          # asymptotic size. Different from
+                          # van Denderen (2021), where it is 0.002
+                          F=0,
+                          etaF=0.05) {
   # benthic production calc
   if (is.na(bprodin) & is.na(dfbot) & is.na(dfpho)){ # if all benthic arguments are NA, assign bprod to 5
     bprodin = -1; dfbot = -1; dfpho = 150
@@ -1007,7 +958,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   if (is.na(Tp)) Tp = 10
   if (is.na(Tb)) Tb = 10
   if (is.na(Tm)) Tm = Tb # if Tm is not provided, Tm = Tb
-    
+  
   #------------------  
   # Initialize the parameters:
   # habitat and small benthos
@@ -1068,14 +1019,14 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   #------------------  
   # theta (preferences):
   #------------------  
-
+  
   param$vertover   = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
   
   # calculate size-preference matrix
   param$sizeprefer=paramSizepref(p=param,           # parameter settings 
-                                   beta = 400,  # preferred predator/prey mass ratio
-                                   sigma = 1.3, # width of size preference for feeding
-                                   type = 1)
+                                 beta = 400,  # preferred predator/prey mass ratio
+                                 sigma = 1.3, # width of size preference for feeding
+                                 type = 1)
   
   #------------------  
   # overlap from depth distribution
@@ -1264,27 +1215,27 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   # initialize effective T vector (all resoources and fish)
   Teff = rep(0, length(param$u0))
   
-# zooplankton (no use)
+  # zooplankton (no use)
   Tday = (param$Tp + param$Tm)/2 # half surface half dvm  param$dvm = param$photic + 500
   if (param$dvm == param$bottom) { # when param$bottom < (param$photic + 500)
-  Tday = (param$Tp + param$Tb)/2
+    Tday = (param$Tp + param$Tb)/2
   }
   if (param$dvm == 0) Tday = param$Tp # when param$bottom <= param$mesop
   Tnight = param$Tp # all surface
   Teff[1:2] = (Tday+Tnight)/2
-# benthos (no use)
+  # benthos (no use)
   Teff[3:4] = param$Tb
-# small pelagics
+  # small pelagics
   ix = param$ix[[1]]
   Teff[ix] = param$Tp # always surface
-# mesopelagics 
+  # mesopelagics 
   ix = param$ix[[2]]
   Tday = param$Tm # dvm
   if (param$dvm == param$bottom) Tday = param$Tb
   if (param$dvm == 0) Tday = param$Tp
   Tnight = param$Tp # surface
   Teff[ix] = (Tday+Tnight)/2
-# large pelagics
+  # large pelagics
   ix = param$ix[[3]]
   # daytime large half at surface half at dvm
   Tdaylarge = (param$Tp+param$Tm)/2
@@ -1294,7 +1245,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   Tnight = param$Tp     # all at surface at night
   Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnight)/2      # large
   Teff[ix[-(ixlarge:length(ix))]] = (Tdaynonlarge+Tnight)/2 # non-large
-# bathypelagics    
+  # bathypelagics    
   ix = param$ix[[4]]
   Tday = param$Tm # all at dvm at daytime
   if (param$dvm == param$bottom) Tday = param$Tb
@@ -1305,7 +1256,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
   Tnightnonlarge = param$Tp # non-large at surface at night
   Teff[ix[ixlarge:length(ix)]]  = (Tday+Tnightlarge)/2      # large
   Teff[ix[-(ixlarge:length(ix))]] = (Tday+Tnightnonlarge)/2 # non-large
-# demersals    
+  # demersals    
   ix = param$ix[[5]]
   # nighttime
   Tnightsmall = param$Tp # small at surface
@@ -1321,7 +1272,7 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
     Tdaylarge = (param$Tp + param$Tb)/2
     Tnightlarge = Tdaylarge
   }
-
+  
   Teff[ix[-(ixmedium:length(ix))]] = (Tdaysmall+Tnightsmall)/2 # small
   Teff[ix[ixmedium:(ixlarge-1)]] = (Tdaymedium+Tnightnonsmall)/2 # medium
   Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnightnonsmall)/2  # large
@@ -1340,70 +1291,70 @@ setupVertical2 = function(szprod= 80,lzprod = 80, # Pelagic productivities
 }
 
 # ------------------------------------------------------------------------------
-# Make a basic setup with just pelagic fish, 
+# Make a basic setup with just pelagic fish. Currently not functional
 #
 # Out:
 #  An updated parameter list. The feeding preferences are quite complex
 #
 # ------------------------------------------------------------------------------
 
-setupPelagicSpecies = function(depth=500, pprod=100, bprod=5, 
-                               nStages=6, mInf=125000, names=NA, demersal=TRUE, mort0=0.5) {
-
-  # Initialize the parameters:
-  param = paramInit(depth=depth, pprod=pprod, bprod=bprod)
-
-  # Setup resource groups:
-  param = paramAddResource(
-        param, 
-        names= c("smallZoo", "largeZoo", "benthos", "largeBenthos"),
-        K    = c(pprod, pprod, bprod, 0),  # g ww/m2  - maximum resource concentration
-        r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
-        mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
-        mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit)  
-        mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500))
-  )
-
-
-  # Add fish groups:
-  names = rep(names, length.out=length(mInf))
-  for (iGroup in 1:length(mInf))
-    param = paramAddGroup(param, 
-                          mMin=0.001, mMax=mInf[[iGroup]], 
-                          mMature=0.25*mInf[[iGroup]], 
-                          nStages=nStages, 
-                          name=names[iGroup])
-
-  # physiology of all fish stages
-  param = paramAddPhysiology(param)
-
-  # Setup size interaction matrix:
-  param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
-  rownames(param$theta) <- colnames(param$theta) <- param$stagenames
-
-  beta = 400   # preferred predator/prey mass ratio
-  sigma = 1.3  # width of size preference for feeding
-  for (i in param$ixFish) {
-    param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
-    param$theta[i,param$mc>param$mc[i]] = 0
-  }
-  param$theta[is.na(param$theta)] = 0
-  
-  #
-  # Setup interactions between groups and resources:
-  #
-  
-  mMedium = 10
-  mLarge = 5000
-
-  ixR = param$ixR
-
-  if (!demersal)
-    param$theta[,ixR[3:4]] = 0  # No demersal feeding
-
-  param$mort0 = mort0 # NOTE: set pretty high to give a stable population
-  
-  return(param)
-}
-
-
+# setupPelagicSpecies = function(depth=500, pprod=100, bprod=5, 
+#                                nStages=6, mInf=125000, names=NA, demersal=TRUE, mort0=0.5) {
+#   
+#   # Initialize the parameters:
+#   param = paramInit(depth=depth, pprod=pprod, bprod=bprod)
+#   
+#   # Setup resource groups:
+#   param = paramAddResource(
+#     param, 
+#     names= c("smallZoo", "largeZoo", "benthos", "largeBenthos"),
+#     K    = c(pprod, pprod, bprod, 0),  # g ww/m2  - maximum resource concentration
+#     r    = c(1, 1, 1, 1),              # [/yr] nudging coefficient
+#     mc   = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)),
+#     mLower = c(2e-06,0.001, 0.5e-03, 0.25), # weight lower limit)  
+#     mUpper = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500))
+#   )
+#   
+#   
+#   # Add fish groups:
+#   names = rep(names, length.out=length(mInf))
+#   for (iGroup in 1:length(mInf))
+#     param = paramAddGroup(param, 
+#                           mMin=0.001, mMax=mInf[[iGroup]], 
+#                           mMature=0.25*mInf[[iGroup]], 
+#                           nStages=nStages, 
+#                           name=names[iGroup])
+#   
+#   # physiology of all fish stages
+#   param = paramAddPhysiology(param)
+#   
+#   # Setup size interaction matrix:
+#   param$theta = matrix(nrow=param$nStages, ncol=param$nStages, data=0)
+#   rownames(param$theta) <- colnames(param$theta) <- param$stagenames
+#   
+#   beta = 400   # preferred predator/prey mass ratio
+#   sigma = 1.3  # width of size preference for feeding
+#   for (i in param$ixFish) {
+#     param$theta[i,] = exp( -(log(param$mc[i]/(beta*param$mc)))^2 / (2*sigma)^2  )
+#     param$theta[i,param$mc>param$mc[i]] = 0
+#   }
+#   param$theta[is.na(param$theta)] = 0
+#   
+#   #
+#   # Setup interactions between groups and resources:
+#   #
+#   
+#   mMedium = 10
+#   mLarge = 5000
+#   
+#   ixR = param$ixR
+#   
+#   if (!demersal)
+#     param$theta[,ixR[3:4]] = 0  # No demersal feeding
+#   
+#   param$mort0 = mort0 # NOTE: set pretty high to give a stable population
+#   
+#   return(param)
+# }
+# 
+# 

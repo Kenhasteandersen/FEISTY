@@ -7,7 +7,8 @@
 
 #' Size Preference Matrix Calculation
 #'
-#' This function calculates a size preference matrix of a predator for a prey based on the size.
+#' This function calculates a size preference matrix of a predator for a prey 
+#' based on the size.
 #' 
 #' @usage paramSizepref(p, beta = 400, sigma = 1.3, type = 1)
 #' 
@@ -82,18 +83,12 @@
 #'
 #' @export
 #' 
-
-#-------------------------------------------------------------------------------
-# A function to estimate feeding preferences based on 
-# size differences of prey and predator
-#-------------------------------------------------------------------------------
-
 paramSizepref <- function(
     p,           # parameter settings 
     beta = 400,  # preferred predator/prey mass ratio
     sigma = 1.3, # width of size preference for feeding
     type = 1) # 1 = normal, 2=errf
-  {
+{
   
   theta = matrix(nrow=p$nStages, ncol=p$nStages, data=0)
   rownames(theta) <- colnames(theta) <- p$stagenames
@@ -103,18 +98,18 @@ paramSizepref <- function(
       theta[i, p$mc >p$mc[i]] = 0
     }
   } else if (type == 2) {
-  # calculate size-preference matrix based on erf used in van Denderen et al., 2020
+    # calculate size-preference matrix based on erf used in van Denderen et al., 2020
     for (i in p$ixFish){
-       for (j in 1: p$nStages){
-            theta[i, j] = sqrt(pi/2)*sigma*(
-              erf((log(p$mUpper[j]) - log(p$mc[i]/beta))/(sqrt(2)*sigma))
-                  - erf((log(p$mLower[j]) - log(p$mc[i]/beta))/(sqrt(2)*sigma)))
-            theta[i, j] = theta[i, j]/(log(p$mUpper[j]) - log(p$mLower[j]))
-       }
+      for (j in 1: p$nStages){
+        theta[i, j] = sqrt(pi/2)*sigma*(
+          erf((log(p$mUpper[j]) - log(p$mc[i]/beta))/(sqrt(2)*sigma))
+          - erf((log(p$mLower[j]) - log(p$mc[i]/beta))/(sqrt(2)*sigma)))
+        theta[i, j] = theta[i, j]/(log(p$mUpper[j]) - log(p$mLower[j]))
+      }
     }
   } else if (type == 3) {
-  # Calculate size preference function by integrating over both predator
-  # and prey size groups. See Andersen and Visser 2023, appendix A.  
+    # Calculate size preference function by integrating over both predator
+    # and prey size groups. See Andersen and Visser 2023, appendix A.  
     s = 2*sigma*sigma
     
     for (i in p$ixFish[1]:p$nStages) {
@@ -123,10 +118,10 @@ paramSizepref <- function(
         Delta=p$mUpper[i]/p$mLower[i]
         
         theta[i,j] = max (0, (sqrt(Delta)*(((exp(-log((beta*Delta)/z)**2/s) - 2/exp(log(z/beta)**2/s) + 
-                                  exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
-                                (sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
-                                   2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
-                                   erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
+                                               exp(-log((Delta*z)/beta)**2/s))*s)/2. - 
+                                             (sqrt(pi)*sqrt(s)*(erf((-log(beta*Delta) + log(z))/sqrt(s))*log((beta*Delta)/z) + 
+                                                                  2*erf(log(z/beta)/sqrt(s))*log(z/beta) + 
+                                                                  erf((log(beta) - log(Delta*z))/sqrt(s))*log((Delta*z)/beta)))/2.))/ ((-1 + Delta)*log(Delta)) 
         )
         
         theta[i,j] = ifelse(p$mc[j]>p$mc[i],0,theta[i,j])
@@ -178,19 +173,6 @@ paramSizepref <- function(
 #' \code{\link{paramAddResource}} Add Resource Parameters
 #'
 #' @export
-
-#-------------------------------------------------------------------------------
-# Initialize the parameter structure
-#
-# In:
-#  depth : depth (meters)
-#  pprod, bprod : Primary and sediment productivity 
-#
-
-# Out:
-#  A parameter list
-#-------------------------------------------------------------------------------
-
 paramInit = function(...) {
   param = list(...)
   
@@ -216,7 +198,7 @@ paramInit = function(...) {
                         "largePel" = "#33BBEE",
                         "bathyPel" =  "#004488",
                         "demersals" =  "#228833")
-                        
+  
   param$my_names <- c("smallZoo" = "Small mesozooplankton",
                       "largeZoo" = "Large mesozooplankton",
                       "benthos" = "Benthos",
@@ -240,24 +222,23 @@ paramInit = function(...) {
 #  A list with lower and upper sizes, the ratio between the two (z) and
 #  the center mass (mc).
 #-------------------------------------------------------------------------------
-
 makeGrid = function(mMin,         # min size, gram
                     mMax,         # max size, gram
                     nStages=1) {  # number of stages
-#
-# Setup mass grid (log scaled)
-#
-
-# minimal sizes; the last being the upper size of the last cell
+  #
+  # Setup mass grid (log scaled)
+  #
+  
+  # minimal sizes; the last being the upper size of the last cell
   m = exp(seq(from=log(mMin), to=log(mMax), length.out=(nStages+1)))
   
   mLower = m[1:nStages]
   mUpper = m[2:(nStages+1)]
-
-# The ratio between upper and lower sizes
+  
+  # The ratio between upper and lower sizes
   z = mUpper / mLower 
-
-# Geometric mean center mass  
+  
+  # Geometric mean center mass  
   mc = exp( log(mLower) + 0.5*(log(z)) ) 
   
   return(list(mLower=mLower, mUpper=mUpper, z=z, mc=mc))
@@ -324,33 +305,24 @@ makeGrid = function(mMin,         # min size, gram
 #'
 #' @export
 #' 
-# ------------------------------------------------------------------------------
-# Sets up resources
-#
-# Input: parameter list
-#
-# Output: parameter list with resource parameters
-#
-# ------------------------------------------------------------------------------
-
 paramAddResource = function(p,        # parameter to be updated
-                         K,           # maximum resource concentration
-                         r=1,         # resource nudging rate (/yr)          
-                         dynamics = "chemostat", # either "chemostat" or "logistic",
-                         mc,          # geometric mean weight, gWW
-                         mLower = NA, # weight lower limit
-                         mUpper = NA, # upper limit
-                         names=NA,    # resource name vector, character
-                         u0=NA,
-                         ixpelR=NA,  # pelagic resource indices
-                         ixbenR=NA){ # benthic resource indices
+                            K,           # maximum resource concentration
+                            r=1,         # resource nudging rate (/yr)          
+                            dynamics = "chemostat", # either "chemostat" or "logistic",
+                            mc,          # geometric mean weight, gWW
+                            mLower = NA, # weight lower limit
+                            mUpper = NA, # upper limit
+                            names=NA,    # resource name vector, character
+                            u0=NA,
+                            ixpelR=NA,  # pelagic resource indices
+                            ixbenR=NA){ # benthic resource indices
   nR = length(K)
   p$nResources = nR
   if (any(is.na(names))) names <- paste("Resource",1:nR,sep="")
   p$groupnames = names
   p$stagenames = names
   p$resources = data.frame(K=K, r=r, mc=mc, 
-                          mLower=mLower, mUpper=mUpper, u0=u0)
+                           mLower=mLower, mUpper=mUpper, u0=u0)
   row.names(p$resources) = names
   p$dynamics  <- match.arg(dynamics, c("chemostat", "logistic"))
   p$Rtype <- pmatch(p$dynamics, c("chemostat", "logistic"))
@@ -375,7 +347,7 @@ paramAddResource = function(p,        # parameter to be updated
   return(p)
 }
 
-#' Add Parameters of One Functional Type
+#' Add parameters of a functional type
 #'
 #' This function updates the parameter list by adding parameters of one functional type.
 #'
@@ -393,9 +365,10 @@ paramAddResource = function(p,        # parameter to be updated
 #' @param name The name (acronym) of the functional type. If not provided, a default name is assigned.
 #'
 #' @details
-#' This function is designed to add parameters of one functional type to the parameter list.
+#' This function is designed to add parameters of a functional type to the parameter list.
 #' Generally, this function needs to be called after the function \code{\link{paramAddResource}}.
-#' Every call of this function can add \bold{one} functional group, which means this function needs to be called multiple times to add more functional types.
+#' Every call of this function can add \bold{one} functional group, which means 
+#' this function needs to be called multiple times to add all functional types.
 #'
 #' @return The updated parameter list \code{p}:
 #' \itemize{
@@ -445,28 +418,17 @@ paramAddResource = function(p,        # parameter to be updated
 #' 
 #' @export
 #'
-
-# ------------------------------------------------------------------------------
-# Adds a group to the parameter list. 
-#
-# input:
-# The group is defined by its min and
-# max sizes, its size at maturation, and the number of stages.
-# default parameters may be overruled.
-#
-# ------------------------------------------------------------------------------
-
 paramAddGroup = function(p ,           # list of parameters to be updated
                          nStages,      # number of stages
                          mMin,         # minimum mass of first stage, g WW
                          mMax,         # minimum mass of last stage, gWW
                          mMature=NA, # size at which 50% of individuals is mature
-                                       # if NA: only last size class is for 50% mature
+                         # if NA: only last size class is for 50% mature
                          mortF=0,      # mortality imposed due to fishing
                          mort0=0.1,    # natural mortality 
                          u0=1,         # initial conditions
                          name=NA)      # name of the new group
-  {
+{
   p$nGroups = p$nGroups + 1                                                     
   n         = p$nGroups
   
@@ -476,8 +438,8 @@ paramAddGroup = function(p ,           # list of parameters to be updated
   p$groupnames <- c(p$groupnames, name)
   
   p$stagenames <- c(p$stagenames,
-               paste(name, 1:nStages, sep="_")) 
-
+                    paste(name, 1:nStages, sep="_")) 
+  
   # Setup mass grid:
   grid = makeGrid(mMin, mMax, nStages)
   
@@ -496,18 +458,18 @@ paramAddGroup = function(p ,           # list of parameters to be updated
   p$mc[ix]     = grid$mc
   
   # Setup maturation schedule: part of fishes in each stage that is mature
-
+  
   p$mMature[n] = mMature  # half-saturation maturation coefficient
   if (is.na(mMature)){    # Only last class mature for 50% 
     p$psiMature[ix] = 0
     p$psiMature[ix[[nStages]]] = 0.5
   } else p$psiMature[ix] = ( 1 + (p$mc[ix]/mMature)^(-5) )^(-1)
-
-# This is the same, but easier to understand (for me - KS)  
-#  p$psiMature[ix] = p$mc[ix]^5/(p$mc[ix]^5+mMature^5)
+  
+  # This is the same, but easier to understand (for me - KS)  
+  #  p$psiMature[ix] = p$mc[ix]^5/(p$mc[ix]^5+mMature^5)
   
   # fishing mortality:
-
+  
   p$mortF[ix] = mortF
   p$mort0[ix] = mort0
   
@@ -591,29 +553,19 @@ paramAddGroup = function(p ,           # list of parameters to be updated
 #' \code{\link{paramTeffect}} Add temperature effects
 #'
 #' @export
-
-# ------------------------------------------------------------------------------
-# Sets up physiological parameters of each fish stage
-#
-# Input: parameter list
-#
-# Output: parameter list with updated rate parameters
-#
-# ------------------------------------------------------------------------------
-
 paramAddPhysiology = function (p, 
-              ac = 20,          # Max. consumption coefficient  [g^(-n)/yr]
-              bc = -0.25,       # Max. consumption exponent     [-]
-              am = 0.011*365,#4,           # Metabolism coefficient        [g^(-p)/yr]
-              bm = -0.175,      # Metabolism exponent           [-]
-              ae = 70,      # Coef. for clearance rate      [m2*g^(q-1)/yr] encounter slope
-              be = -0.2,        # Clearance rate exponent
-              epsRepro = 0.01, # reproduction * recruitment efficiency )
-              epsAssim = 0.7   # Assimilation efficiency  
-                              )
+                               ac = 20,          # Max. consumption coefficient  [g^(-n)/yr]
+                               bc = -0.25,       # Max. consumption exponent     [-]
+                               am = 0.011*365,#4,           # Metabolism coefficient        [g^(-p)/yr]
+                               bm = -0.175,      # Metabolism exponent           [-]
+                               ae = 70,      # Coef. for clearance rate      [m2*g^(q-1)/yr] encounter slope
+                               be = -0.2,        # Clearance rate exponent
+                               epsRepro = 0.01, # reproduction * recruitment efficiency )
+                               epsAssim = 0.7   # Assimilation efficiency  
+)
 {
   # index pointing to fish stages and the fish weights:
-
+  
   ix = p$ixFish
   m  = p$mc[ix]  # size of fish
   
@@ -647,7 +599,7 @@ paramAddPhysiology = function (p,
   p$Cmax     [is.na(p$Cmax)]      <- 0 
   p$metabolism[is.na(p$metabolism)] <- 0 
   p$V        [is.na(p$V)]         <- 0 
-
+  
   names(p$u0) =  p$stagenames  
   iF = p$ixFish
   p$fishes = data.frame(mc=p$mc[iF], mLower=p$mLower[iF], mUpper=p$mUpper[iF], 
@@ -778,7 +730,7 @@ paramTeffect = function (p, # only for setupbasic & 2
     
     p$smdemidx = ix_small
     p$lgdemidx = ix_large
-  
+    
     #small
     p$V[ix_small] = p$fT * p$Vsave[ix_small] # small demersal are pelagic
     p$Cmax[ix_small] = p$fT * p$Cmaxsave[ix_small]
@@ -838,7 +790,7 @@ paramTeffect = function (p, # only for setupbasic & 2
 
 updateET = function (p, # 
                      u=NA){ # B container: R+fish
-
+  
   # depth < 200m
   
   for (ilgdem in p$lgdemidx) {
@@ -857,8 +809,8 @@ updateET = function (p, #
     p$V[ilgdem] = p$fT_dem_shallow * p$Vsave[ilgdem] #
     p$Cmax[ilgdem] = p$fT_dem_shallow * p$Cmaxsave[ilgdem]
     p$metabolism[ilgdem] = p$fT_met_dem_shallow * p$metabolismsave[ilgdem]
+    
+  }
   
-}
-
   return(p)
 }
