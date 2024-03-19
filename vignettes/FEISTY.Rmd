@@ -1,6 +1,6 @@
 ---
 title: "FishErIes Size and functional TYpe model (FEISTY) in R"
-author: "Ken H Andersen and Karline Soetaert Yixin Zhao"
+author: "Ken H Andersen and Karline Soetaert"
 date: " 2024"
 output:
   pdf_document:
@@ -85,7 +85,7 @@ out3 <- simulateFEISTY(p=p3, times=seq(0, 200, length.out=1000),bCust=T)
 
 \newpage
 
-# Appendix 1. The size-based model
+# The FEISTY model
 
 ## Size spectrum
 The fish size span of a functional type is logarithmically discretized into $n$ continuous size bins. Each size bin shares the same ratio $z$ between the upper boundary size and lower boundary size:
@@ -232,15 +232,32 @@ where $m_{fishing}$ indicates the fish with this size is under 50% harvesting ra
 # Temperature effects
 
 Q10\
+$k_{T}$
+$k_{TM}$
 
+$T_p$ $T_b$
 
+setupBasic &setuoBasic2
 
 
 Effective temperature.
-Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c}>250~gWW$ as default) migrate vertically within a day.
+Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c,i}>250~gWW$ as default) migrate vertically within a day rather than staying at the bottom constantly. They are assumed to spend a fraction of time $\lambda$ in the pelagic zone and the rest of time $1-\lambda$ at the bottom according to the abundance of prey.
+$$\lambda = $$
+
+$$ T_e = T_p \cdot \lambda + T_b \cdot (1 - \lambda)$$
+
+
+setupVertical
+
+T profile 
+
+setuoBasic2
+$T_p$ $T_m$ $T_b$
+
 
 # Vertical overlap
 
+# old
 ## Fish dynamics
 
 For each fish stage, the dynamics of its biomass reads (see de Roos et
