@@ -11,6 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 bibliography: references.bib
+link-citations: yes
 editor_options: 
   markdown: 
     wrap: 72
@@ -88,16 +89,33 @@ out3 <- simulateFEISTY(p=p3, times=seq(0, 200, length.out=1000),bCust=T)
 # The FEISTY model
 
 ## Size spectrum
-The fish size span of a functional type is logarithmically discretized into $n$ continuous size bins. Each size bin shares the same ratio $z$ between the upper boundary size and lower boundary size:
-$$z = \exp \left( \frac{\ln (w_{max}) - \ln (w_{min})}{n} \right)$$
-where $w_{min}$ and $w_{max}$ are smallest and largest fish in a functional type.There are $n+1$ boundaries of $n$ size bins, including all lower boundary sizes ($m_{l,i}$) and upper boundary sizes ($m_{u,i}$).
-$$m_{b,i} =  \exp( \ln(w_{min}) + (i-1) \ln(z)), \hspace{1.5cm}  i\in[1,n+1]$$
-$$m_{l,i} =  m_{b,i}, \hspace{5.5cm}  i\in[1,n]$$
-$$m_{u,i} =  m_{b,i+1}, \hspace{5.1cm}  i\in[1,n]$$
-The geometric mean size of each size class $m_{i}$ is:
-$$m_{i} =  \exp ( \ln(m_{l,i}) + 0.5(\ln(z)) ), \hspace{2.2cm}  i\in[1,n]$$
-which will be comprehensively used for calculations, for instance, physiological rates and size-based feeding preference.\
-The size spectrum generation is done by calling the function `paramAddGroup()`. Also see source code of `makeGrid()`.
+
+The fish size span of a functional type is logarithmically discretized
+into $n$ continuous size bins. Each size bin shares the same ratio $z$
+between the upper boundary size and lower boundary size:
+\begin{equation}
+z = \exp \left( \frac{\ln (w_{max}) - \ln (w_{min})}{n} \right)
+\end{equation} 
+where $w_{min}$ and $w_{max}$ are smallest and largest
+fish in a functional type.There are $n+1$ boundaries of $n$ size bins,
+including all lower boundary sizes ($m_{l,i}$) and upper boundary sizes ($m_{u,i}$). 
+\begin{equation}
+m_{b,i} =  \exp( \ln(w_{min}) + (i-1) \ln(z)), \hspace{1.5cm}  i\in[1,n+1]
+\end{equation} 
+\begin{equation}
+m_{l,i} =  m_{b,i}, \hspace{5.5cm}  i\in[1,n]
+\end{equation}
+\begin{equation}
+m_{u,i} =  m_{b,i+1}, \hspace{5.1cm}  i\in[1,n]
+\end{equation}
+The geometric meansize of each size class $m_{i}$ is:
+\begin{equation}
+m_{i} =  \exp ( \ln(m_{l,i}) + 0.5(\ln(z)) ), \hspace{2.2cm}  i\in[1,n]
+\end{equation}
+which will be comprehensively used for calculations, for instance,
+physiological rates and size-based feeding preference.\
+The size spectrum generation is done by calling the function
+`paramAddGroup()`. Also see source code of `makeGrid()`.
 
 ## Biomass dynamics
 
@@ -106,29 +124,34 @@ The size spectrum generation is done by calling the function `paramAddGroup()`. 
 The biomass of each size class of a functional type of fish ($B_i$,
 $gWW~ m^{-2}$) changes over time ($t$) according to source and sink of
 energy [@deRoos2008; @petrik2019bottom]:
-$$\dfrac{dB_{i}}{dt} =  J_{in,i}  + (\nu_{i} - \rho_i -\mu_i)B_i - J_{out,i},$$
+\begin{equation}
+\dfrac{dB_{i}}{dt} =  J_{in,i}  + (\nu_{i} - \rho_i -\mu_i)B_i - J_{out,i},
+\end{equation}
 where $\nu_{i}$ is the rate of available energy for growth and
 reproduction, $\rho_i$ is the rate of reproduction, and $\mu_i$
 ($year^{-1}$) is the total mortality rate. The size of fish increases as
 a result of growth. The grown fish biomass fluxes out of the current
 size class to the next size class (excluding the largest fish). The
 energy fluxing out of a size class $i$ is 
-$$J_{out,i} = \gamma_i B_i,$$
+\begin{equation}
+J_{out,i} = \gamma_i B_i,
+\end{equation}
 where $\gamma_i$ represents the growth rate ($year^{-1}$). The energy
 fluxing in a size class includes two part for the smallest fish and
 other sizes, respectively: 
-$$
+\begin{equation}
     J_{in,i} =
   \begin{cases}
 \epsilon_r \left(  J_{out,n} + \sum\limits_i \rho_i B_i \right),      & \text{$ i=1 $} \\
      J_{out,i-1}, & \text{$ i > 1$} 
   \end{cases}
-$$ 
-where $\epsilon_r$ is the reproduction efficiency. The energy fluxing into the smallest fish class ($i=1$) is from the reproduction of each
-size class of fish that can reproduce and the energy fluxing out of the 
-largest fish class ($J_{out,n}$) because it cannot grow larger.
-For larger fish ($i > 1$), the energy fluxing into the size class $i$ is from the
-growth of the previous neighboring size class ($i-1$).
+\end{equation} 
+where $\epsilon_r$ is the reproduction efficiency. The energy fluxing
+into the smallest fish class ($i=1$) is from the reproduction of each
+size class of fish that can reproduce and the energy fluxing out of the
+largest fish class ($J_{out,n}$) because it cannot grow larger. For
+larger fish ($i > 1$), the energy fluxing into the size class $i$ is
+from the growth of the previous neighboring size class ($i-1$).
 
 ### Resource dynamics
 
@@ -137,7 +160,9 @@ growth and a consumption by predators, which is the default resource
 dynamic mode in four internal setups [@petrik2019bottom;
 @van2021emergent]:
 
-$$\dfrac{dR_{i}}{dt} =  r(K_i - R_i ) - \mu_{p,i} R_i,$$
+\begin{equation}
+\dfrac{dR_{i}}{dt} =  r(K_i - R_i ) - \mu_{p,i} R_i,
+\end{equation}
 
 where $R$ is the state variable of a resource, $K$ is the carry capacity
 ($gWW ~ m^{-2}$), and $r$ is the growth rate which is constant value
@@ -145,119 +170,223 @@ where $R$ is the state variable of a resource, $K$ is the carry capacity
 resource. Alternatively, we provide the logistic growth strategy for
 resources:
 
-$$\frac{dR_i}{dt}=r_i \cdot R_i \cdot (1-\frac{R_i}{K_i}) - \mu_{p,i} \cdot R_i,$$
+\begin{equation}
+\frac{dR_i}{dt}=r_i \cdot R_i \cdot (1-\frac{R_i}{K_i}) - \mu_{p,i} \cdot R_i,
+\end{equation}
 which can be set in `paramAddResource()` function.
 
 ## Physiological rate
-In FEISTY model, there are three main biological rates based on the allometric scaling relationship of the body size (ref?). The mass-specific maximum consumption rate $C_{max,i}$ ($year^{-1}$), the mass-specific clearance rate ($m^{2}~gWW^{-1}~year^{-1}$), and the mass-specific metabolic rate $M_i$ ($year^{-1}$) for each fish size class are temperature-dependent:
-$$C_{max,i} = k_{T} \cdot a_{c} m_{i}^{b_{c}}$$
-$$V_{i} = k_{T} \cdot a_{e} m_{i}^{b_{e}}$$
-$$M_i = k_{TM} \cdot a_{m} m_{i}^{b_{m}}$$
-where $k_{T}$ and $k_{TM}$ are scaling factors of temperature effects (see Section **Temperature effects**). $a_{c}$, $a_{e}$, and $a_{m}$ are intercepts of each biological rate, respectively; $b_{c}$, $b_{e}$, $b_{m}$ are exponents. These biological rates determine the energy gained from predation and costs due to basal metabolism (see Section **Energy budget**).\
-In code implementation, these basic biological rates of fish (without temperature effects) are assigned by `paramAddPhysiology()` function. The temperature effects on biological rates are added subsequently (see Section **Temperature effects**).
+
+In FEISTY model, there are three main biological rates based on the
+allometric scaling relationship of the body size (ref?). The
+mass-specific maximum consumption rate $C_{max,i}$ ($year^{-1}$), the
+mass-specific clearance rate $V_{i}$ ($m^{2}~gWW^{-1}~year^{-1}$), and the
+mass-specific metabolic rate $M_i$ ($year^{-1}$) for each fish size
+class are temperature-dependent:
+\begin{equation}
+C_{max,i} = k_{T} \cdot a_{c} m_{i}^{b_{c}}  \label{eq:maxconsump}
+\end{equation}
+\begin{equation}
+V_{i} = k_{T} \cdot a_{e} m_{i}^{b_{e}}      \label{eq:clearance}
+\end{equation}
+\begin{equation}
+M_i = k_{TM} \cdot a_{m} m_{i}^{b_{m}}       \label{eq:metabolism}
+\end{equation}
+where $k_{T}$ and $k_{TM}$
+are scaling factors of temperature effects (see Section **Temperature
+effects**). $a_{c}$, $a_{e}$, and $a_{m}$ are intercepts of each
+biological rate, respectively; $b_{c}$, $b_{e}$, $b_{m}$ are exponents.
+These biological rates determine the energy gained from predation and
+costs due to basal metabolism (see Section **Energy budget**).\
+In code implementation, these basic biological rates of fish (without
+temperature effects) are assigned by `paramAddPhysiology()` function.
+The temperature effects on biological rates are added subsequently (see
+Section **Temperature effects**).
 
 ## Energy budget
 
-For a given size of fish $i$, the mass-specific available energy for growth or reproduction (rate) $\nu_{i}$ is the result of the mass-specific energy from assimilated food (rate) minus the mass-specific metabolic rate:
-$$\nu_{i} = \epsilon_\alpha f_i C_{max,i} - M_i$$
-where $\epsilon_\alpha$ is the assimilation efficiency. The mass-specific feeding level $f_i$ (dimensionless) describes how much food a predator can eat relative to the maximum consumption capability, ranging from 0 to 1:
-$$f_{i} = \frac{E_{i}}{E_{i}+C_{max,i}}$$
-Therefore, the mass-specific consumption rate $f_i C_{max,i}$ is based on a type II functional response. A feeding behavior of a predator is a consequence of encountering a prey. The mass-specific encounter rate ($year^{-1}$) $E_{i}$ of a predator $i$ is: $$E_{i} = V_{i}  \sum_{j} \theta_{i,j} B_j,$$
-where $\theta_{i,j}$ denotes the feeding preference of a predator $i$ on a prey $j$ (see Section **?**). $B_j$ represents the biomass of a prey $j$ including zooplankton, benthos or fish. Therefore, the $\sum_{j} \theta_{i,j} B_j$ represents the biomass of all available prey of a predator.
-
+For a given size of fish $i$, the mass-specific available energy for
+growth or reproduction (rate) $\nu_{i}$ is the result of the
+mass-specific energy from assimilated food (rate) minus the
+mass-specific metabolic rate:
+\begin{equation}
+\nu_{i} = \epsilon_\alpha f_i C_{max,i} - M_i
+\end{equation}
+where $\epsilon_\alpha$ is the assimilation efficiency. The mass-specific
+feeding level $f_i$ (dimensionless) describes how much food a predator
+can eat relative to the maximum consumption capability, ranging from 0
+to 1: 
+\begin{equation}
+f_{i} = \frac{E_{i}}{E_{i}+C_{max,i}}
+\end{equation}
+Therefore, the mass-specific consumption rate $f_i C_{max,i}$ is based on a type II
+functional response. A feeding behavior of a predator is a consequence
+of encountering a prey. The mass-specific encounter rate ($year^{-1}$)
+$E_{i}$ of a predator $i$ is:
+\begin{equation}
+E_{i} = V_{i}  \sum_{j} \theta_{i,j} B_j,
+\end{equation}
+where $\theta_{i,j}$
+denotes the feeding preference of a predator $i$ on a prey $j$ (see
+Section **?**). $B_j$ represents the biomass of a prey $j$ including
+zooplankton, benthos or fish. Therefore, the $\sum_{j} \theta_{i,j} B_j$
+represents the biomass of all available prey of a predator.
 
 # Reproduction and growth
-When the assimilated energy is still surplus after meeting the demand of the basal metabolism, fish can conduct growth and reproduction. The reproductive rate ($year^{-1}$) of each size class of fish is: 
-$$
+
+When the assimilated energy is still surplus after meeting the demand of
+the basal metabolism, fish can conduct growth and reproduction. The
+reproductive rate ($year^{-1}$) of each size class of fish is:
+\begin{equation}
 \rho_i =
   \begin{cases}
  \psi_i \nu_i, & \text{$ \nu_i > 0 $}   \\
      0, & \text{$ \nu_i \leq 0 $} 
   \end{cases}
-$$
-$\psi_i$ is the maturity level (dimensionless) of fish $i$, describing the proportion of available energy ($\nu_{i}$) used in the reproduction process. It can be either assigned with constants manually (setupBasic and setupVertical [@petrik2019bottom; @van2021emergent]) or by a sigmoid function (setupBasic2 and setupVertical2):
-$$\psi_i = \left(1+\left(\frac{m_{c,i}}{m_{mature}}\right)^{-5} \right)^{-1}$$
-$m_{mature}$ is the half-maturation size of a functional type, which means fish reach 50% maturity level at $m_{mature}$.
-$$m_{mature} = \eta_{mature} w_{max}$$
-where $\eta_{mature}$ is the coefficient determining the half-maturation size relative to the max size of a functional type.
+\end{equation}
+$\psi_i$ is the maturity level (dimensionless) of fish $i$,
+describing the proportion of available energy ($\nu_{i}$) used in the
+reproduction process. It can be either assigned with constants manually
+(setupBasic and setupVertical [@petrik2019bottom; @van2021emergent]) or
+by a sigmoid function (setupBasic2 and setupVertical2):
+\begin{equation}
+\psi_i = \left(1+\left(\frac{m_{c,i}}{m_{mature}}\right)^{-5} \right)^{-1}
+\end{equation}
+$m_{mature}$ is the half-maturation size of a functional type, which
+means fish reach 50% maturity level at $m_{mature}$.
+\begin{equation}
+m_{mature} = \eta_{mature} w_{max}
+\end{equation}
+where $\eta_{mature}$ is the
+coefficient determining the half-maturation size relative to the max
+size of a functional type.
 
-The rest fraction of the available energy $\nu_{i}$ is invested in growth:
-$$\kappa_i = 1 - \psi_i$$
-The growth rate of a specific size class $i$ is: 
-$$
+The rest fraction of the available energy $\nu_{i}$ is invested in
+growth: 
+\begin{equation}
+\kappa_i = 1 - \psi_i
+\end{equation}
+The growth rate of a specific size
+class $i$ is: 
+\begin{equation}
  \gamma_i =
   \begin{cases}
 \frac{ \kappa_i \nu_i - \mu_i }{1-(1/z)^{1-\mu_i/\kappa_i \nu_i}}, & \text{$ \nu_i > 0 $}   \\
      0, & \text{$ \nu_i \leq 0 $} 
   \end{cases}
-$$
-The detail can be found in [@deRoos2008]. $\mu_i$ is the total mortality including the predation mortality rate ($\mu_{p,i}$), background mortality rate ($\mu_{p,i}$), and fishing mortality rate ($\mu_{f,i}$):
-$$\mu_i = \mu_{p,i}+\mu_{b,i}+\mu_{f,i}$$
-All size classes of fish a same background mortality rate value within a functional group and the default value is 0.1 $year^{-1}$. The detail of predation and fishing are in sections below.
+\end{equation}
+The detail can be found in [@deRoos2008]. $\mu_i$ is the total
+mortality including the predation mortality rate ($\mu_{p,i}$),
+background mortality rate ($\mu_{p,i}$), and fishing mortality rate
+($\mu_{f,i}$): 
+\begin{equation}
+\mu_i = \mu_{p,i}+\mu_{b,i}+\mu_{f,i}
+\end{equation}
+All size classes of fish a same background mortality rate value within a
+functional group and the default value is 0.1 $year^{-1}$. The detail of
+predation and fishing are in sections below.
 
 # Predation
-In non-vertical distribution version (setupBasic and setupBasic2) $\theta_{i,j}$ refers to the feeding preference based on the size preference. The value of $\theta_{i,j}$ can be assigned manually (setupBasic, see Table 2 in [@petrik2019bottom]). It also can be calculated following functions either based on the log-normal distribution:
 
-$$
+In non-vertical distribution version (setupBasic and setupBasic2)
+$\theta_{i,j}$ refers to the feeding preference based on the size
+preference. The value of $\theta_{i,j}$ can be assigned manually
+(setupBasic, see Table 2 in [@petrik2019bottom]). It also can be
+calculated following functions either based on the log-normal
+distribution:
+
+\begin{equation}
  \theta_{i, j} =
   \begin{cases}
 \exp\left( -\frac{\left(\log\left(\frac{m_{c,i}}{\beta \cdot m_{c,j}}\right)\right)^2}{(2 \cdot \sigma)^2} \right), & \text{$ m_{c,j} > m_{c,j} $}   \\
      0, & \text{$ m_{c,j} \leq m_{c,j} $} 
   \end{cases}
-$$
- 
-or based on the error function [@van2021emergent]: ?????????
-$$
-\theta_{i, j} = \frac{\sqrt{\frac{\pi}{2}} \cdot \sigma \cdot \left( \text{erf}\left(\frac{\log(m_{u,j}) - \log\left(\frac{m_{c,i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) - \text{erf}\left(\frac{\log(m_{l,j}) - \log\left(\frac{m_{c,i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) \right)}{\log(m_{u,j}) - \log(m_{l,j})}
-$$
-$\beta$ is preferred predator-prey mass ratio, and $\sigma$ is the size preference width for feeding.
-The size-preference function selection and the values of $\beta$ and $\sigma$ can be defined by the function `paramSizepref()`.
+\end{equation}
 
-In vertical distribution version, $\theta_{i,j}$ is the product of size-based preference and vertical overlap:
-$$\theta_{i,j} = \theta_{s,i,j} \cdot\theta_{v,i,j} $$
+or based on the error function [@van2021emergent]: ????????? 
+\begin{equation}
+\theta_{i, j} = \frac{\sqrt{\frac{\pi}{2}} \cdot \sigma \cdot \left( \text{erf}\left(\frac{\log(m_{u,j}) - \log\left(\frac{m_{c,i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) - \text{erf}\left(\frac{\log(m_{l,j}) - \log\left(\frac{m_{c,i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) \right)}{\log(m_{u,j}) - \log(m_{l,j})}
+\end{equation}
+$\beta$ is preferred predator-prey mass ratio, and $\sigma$ is the
+size preference width for feeding. The size-preference function
+selection and the values of $\beta$ and $\sigma$ can be defined by the
+function `paramSizepref()`.
+
+In vertical distribution version, $\theta_{i,j}$ is the product of
+size-based preference and vertical overlap:
+\begin{equation}
+\theta_{i,j} = \theta_{s,i,j} \cdot\theta_{v,i,j}
+\end{equation}
 
 vertical overlap
 
-
-Once the feeding preference is ready, the predation mortality of a prey $j$ can be calculated:
-$$\mu_{p,j} = \sum_i  \frac{V_i \theta_{i,j}  B_i}{E_i+C_{max,i}} C_{max,i}$$
+Once the feeding preference is ready, the predation mortality of a prey
+$j$ can be calculated:
+\begin{equation}
+\mu_{p,j} = \sum_i  \frac{V_i \theta_{i,j}  B_i}{E_i+C_{max,i}} C_{max,i}
+\end{equation}
 
 # Fishing
-The fishing mortality rate $\mu_{f,i}$ of a particular size class of fish $i$ can be either determined by constant values or by a fishing selectivity function ??????:
-$$\mu_{f,i}=\psi_{f,i}F$$
-where $F$ is the baseline fishing mortality rate ($year^{-1}$) of a functional type of fish. $\psi_{f,i}$ denotes the size-based fishing selectivity following a sigmoid function:
-$$\psi_{f,i} = \left(1+\left(\frac{m_{c,i}}{m_{fishing}}\right)^{-3} \right)^{-1}$$
-where $m_{fishing}$ indicates the fish with this size is under 50% harvesting rate. The fishing mortality rate can be assigned by the function `setFishing()`.
+
+The fishing mortality rate $\mu_{f,i}$ of a particular size class of
+fish $i$ can be either determined by constant values or by a fishing
+selectivity function ??????: 
+\begin{equation}
+\mu_{f,i}=\psi_{f,i}F
+\end{equation}
+where $F$ is the baseline fishing mortality rate ($year^{-1}$) of a functional type of
+fish. $\psi_{f,i}$ denotes the size-based fishing selectivity following
+a sigmoid function:
+\begin{equation}
+\psi_{f,i} = \left(1+\left(\frac{m_{c,i}}{m_{fishing}}\right)^{-3} \right)^{-1}
+\end{equation}
+where $m_{fishing}$ indicates the fish with this size is under 50%
+harvesting rate. The fishing mortality rate can be assigned by the
+function `setFishing()`.
 
 # Temperature effects
+The temperature effects on the mass-specific maximum consumption rate $C_{max,i}$, the mass-specific clearance rate $V_{i}$, and the mass-specific metabolic rate $M_i$ (Eq. \ref{eq:maxconsump}, \ref{eq:clearance}, \ref{eq:metabolism}) are based on the use of $Q_{10}$ coefficient, which describes the exponential variation of rates every 10\textdegree{}C.
 
-Q10\
-$k_{T}$
-$k_{TM}$
+The general equation for the temperature scaling factor $k_T$ is:
+\begin{equation}
+k = Q_{10}^{\frac{T-T_{ref}}{10}} \label{eq:Tscfac}
+\end{equation}
+where $T_{ref}$ is the reference temperature.
+According to different functional types of fish and their size, fish habitats change. For fish staying the pelagic zone, $T=T_p$ (e.g., all forage fish); for fish always at benthic zone $T=T_b$ (e.g., medium-size demersal fish). Detail can be found in 
 
-$T_p$ $T_b$
+The temperature effects on biological rates is done by the function `paramTeffect()`.
 
-setupBasic &setuoBasic2
+$k_{T}$ $k_{TM}$
+
+(\ref{eq:Tscfac})
+
+setupBasic &setupBasic2
+
+## Effective temperature
+Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c,i}>250~gWW$ as default)
+migrate vertically within a day rather than staying at the bottom
+constantly. They are assumed to spend a fraction of time $\lambda$ in
+the pelagic zone and the rest of time $1-\lambda$ at the bottom
+according to the abundance of prey. 
+\begin{equation}
+\lambda = 
+\end{equation}
 
 
-Effective temperature.
-Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c,i}>250~gWW$ as default) migrate vertically within a day rather than staying at the bottom constantly. They are assumed to spend a fraction of time $\lambda$ in the pelagic zone and the rest of time $1-\lambda$ at the bottom according to the abundance of prey.
-$$\lambda = $$
-
-$$ T_e = T_p \cdot \lambda + T_b \cdot (1 - \lambda)$$
-
+\begin{equation} 
+T_e = T_p \cdot \lambda + T_b \cdot (1 - \lambda)
+\end{equation}
 
 setupVertical
 
-T profile 
+T profile
 
-setuoBasic2
-$T_p$ $T_m$ $T_b$
-
+setuoBasic2 $T_p$ $T_m$ $T_b$
 
 # Vertical overlap
 
 # old
+
 ## Fish dynamics
 
 For each fish stage, the dynamics of its biomass reads (see de Roos et
