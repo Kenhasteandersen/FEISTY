@@ -27,10 +27,9 @@ palette("ggplot2")  # ggplot2-style palette
 # Introduction
 
 The R package **FEISTY** is to document the FEITY model and for further
-model development and research. This document describes how to run the
-FEISTY model in R. [@petrik2019bottom; @van2021emergent]
+model development and research. This document mainly describes the
+FEISTY model scheme and indicates the corresponding functions in R implementation [@petrik2019bottom; @van2021emergent].
 
-DESCRIBE IT BETTER
 
 # The structure of main parameters
 
@@ -96,9 +95,7 @@ between the upper boundary size and lower boundary size:
 \begin{equation}
 z = \exp \left( \frac{\ln (w_{max}) - \ln (w_{min})}{n} \right)
 \end{equation} 
-where $w_{min}$ and $w_{max}$ are smallest and largest
-fish in a functional type.There are $n+1$ boundaries of $n$ size bins,
-including all lower boundary sizes ($m_{l,i}$) and upper boundary sizes ($m_{u,i}$). 
+where $w_{min}$ and $w_{max}$ are smallest and largest fish in a functional type. There are $n+1$ boundaries of $n$ size bins, including all lower boundary sizes ($m_{l,i}$) and upper boundary sizes ($m_{u,i}$). 
 \begin{equation}
 m_{b,i} =  \exp( \ln(w_{min}) + (i-1) \ln(z)), \hspace{1.5cm}  i\in[1,n+1]
 \end{equation} 
@@ -184,13 +181,13 @@ mass-specific clearance rate $V_{i}$ ($m^{2}~gWW^{-1}~year^{-1}$), and the
 mass-specific metabolic rate $M_i$ ($year^{-1}$) for each fish size
 class are temperature-dependent:
 \begin{equation}
-C_{max,i} = k_{T} \cdot a_{c} m_{i}^{b_{c}}  \label{eq:maxconsump}
+C_{max,i} = k_{T} \cdot a_{c} \cdot m_{i}^{b_{c}}  \label{eq:maxconsump}
 \end{equation}
 \begin{equation}
-V_{i} = k_{T} \cdot a_{e} m_{i}^{b_{e}}      \label{eq:clearance}
+V_{i} = k_{T} \cdot a_{e} \cdot m_{i}^{b_{e}}      \label{eq:clearance}
 \end{equation}
 \begin{equation}
-M_i = k_{TM} \cdot a_{m} m_{i}^{b_{m}}       \label{eq:metabolism}
+M_i = k_{TM} \cdot a_{m} \cdot m_{i}^{b_{m}}       \label{eq:metabolism}
 \end{equation}
 where $k_{T}$ and $k_{TM}$
 are scaling factors of temperature effects (see Section **Temperature
@@ -298,8 +295,8 @@ distribution:
 \begin{equation}
  \theta_{i, j} =
   \begin{cases}
-\exp\left( -\frac{\left(\log\left(\frac{m_{c,i}}{\beta \cdot m_{c,j}}\right)\right)^2}{(2 \cdot \sigma)^2} \right), & \text{$ m_{c,j} > m_{c,j} $}   \\
-     0, & \text{$ m_{c,j} \leq m_{c,j} $} 
+\exp\left( -\frac{\left(\log\left(\frac{m_{c,i}}{\beta \cdot m_{c,j}}\right)\right)^2}{(2 \cdot \sigma)^2} \right), & \text{$ m_{i} > m_{j} $}   \\
+     0, & \text{$ m_{i} \leq m_{j} $} 
   \end{cases}
 \end{equation}
 
@@ -352,7 +349,7 @@ The general equation for the temperature scaling factor $k_T$ is:
 k = Q_{10}^{\frac{T-T_{ref}}{10}} \label{eq:Tscfac}
 \end{equation}
 where $T_{ref}$ is the reference temperature.
-According to different functional types of fish and their size, fish habitats change. For fish staying the pelagic zone, $T=T_p$ (e.g., all forage fish); for fish always at benthic zone $T=T_b$ (e.g., medium-size demersal fish). Detail can be found in 
+According to different functional types of fish and their sizes, fish habitats change. For fish staying in the pelagic zone, $T=T_p$ (e.g., all forage fish); for fish always in benthic zone $T=T_b$ (e.g., medium-size demersal fish). Detail can be found in 
 
 The temperature effects on biological rates is done by the function `paramTeffect()`.
 
@@ -362,85 +359,76 @@ $k_{T}$ $k_{TM}$
 
 setupBasic &setupBasic2
 
-## Effective temperature
-Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c,i}>250~gWW$ as default)
-migrate vertically within a day rather than staying at the bottom
-constantly. They are assumed to spend a fraction of time $\lambda$ in
-the pelagic zone and the rest of time $1-\lambda$ at the bottom
-according to the abundance of prey. 
-\begin{equation}
-\lambda = 
-\end{equation}
-
-
-\begin{equation} 
-T_e = T_p \cdot \lambda + T_b \cdot (1 - \lambda)
-\end{equation}
-
 setupVertical
 
 T profile
 
-setuoBasic2 $T_p$ $T_m$ $T_b$
 
-# Vertical overlap
+To simplify the temperature input, three temperature input ($T_p$, $T_m$, $T_b$) are required rather than the water column temperature profile in setupVertical2.
 
-# old
 
-## Fish dynamics
 
-For each fish stage, the dynamics of its biomass reads (see de Roos et
-al., 2008):
+## Effective temperature
+Following [@petrik2019bottom], in shallow water ($<~200 m$) the large demersal fish ($m_{c,i}>250~gWW$ as default)
+migrate vertically within a day rather than staying at the bottom constantly. They are assumed to spend a fraction of time $\lambda$ in the pelagic zone and the rest of time $1-\lambda$ at the bottom according to the abundance of prey in these two zones.
+\begin{equation}
+\lambda = \frac{B_{pelprey}}{B_{allprey}}
+\end{equation}
+where $B_{pelprey}$ denotes the total biomass of pelagic prey for large demersal fish, $B_{allprey}$ is the total biomass of all prey for large demersal fish. A simple case can be found in Eq. 15 in [@petrik2019bottom].\
+Therefore, the temperature for large demersal is defined based on the their time spent in pelagic zone and benthic zone, which is called effective temperature:
+\begin{equation} 
+T_e = T_p \cdot \lambda + T_b \cdot (1 - \lambda)
+\end{equation}
+$T_e$ is updated each time step during the time integration, along with the temperature-dependent biological rates, which are handled by the function `updateET()`. In code implementation, `updateET()` is called every time step in `derivativesFEISTYR()`. The effective temperature scheme is forced turned on in `setupBasic()` [@petrik2019bottom]; it is an option in `setupBasic2()`.
 
-$$\frac{dC_i}{dt}= G_i - F_i + (e_{a_i} - m_i) \cdot C_i - r_{p_i} \cdot C_i$$
-where C_i is expressed e.g. in $gWW/m2$.
+## Vertical overlap
 
-The losses due to growth are:
-$$F_i = \frac{g_i-m_i}{1-\frac{1}{z_i}^{1-m_i/g_i}}\cdot C_i$$ and the
-growth in each stage is:
-$$G_1=\sum_{i=1}^{N}\{ \psi_{repro} \cdot r_{p_i} \cdot C_i \}$$
-$$G_i=F_{i-1} \quad for~i>1$$
+# Default parameters
 
-Here $g=(1-\psi_{mat})\cdot e^+$ is the energy available for growth,
-$e_a^+ = max(0, e_a)$, and $z_i = \frac{s_{i+1}}{s_{i}}$ is the size
-ratio of the stages.
+| Symbol       | Explaination | Value| | | | Unit |
+|--------------|----------------------------------------------------|--|--|--|--|------|
+|              |                                                    |w|e|r|f|          |
+|   $a_c$   |Intercept for mass-specific maximum consumption rate| 10    |aaa|aaa|
+|   $b_c$   |Exponent for mass-specific maximum consumption rate | 20    |aaa|aaa|
+|   $a_e$   |Intercept for mass-specific clearance rate||
+|   $b_e$   |Exponent for mass-specific clearance rate||
+|   $a_m$   |Intercept for mass-specific metabolism rate||
+|   $b_m$   |Exponent for mass-specific metabolism rate| 30    |aaa|aaa|
 
-Available energy for growth or reproduction comes from assimilated food
-(left term) minus basal respiration (right term):
-$$e_a  = \psi_{Ass} \cdot \frac{E}{c_{max} + E} \cdot c_{max} - \mu$$
-$c_{max}$ is the maximum consumption rate, and the encounter rates, $E$,
-are calculated as: $$E=\nu \cdot (\theta \times C)$$ with $\nu$ the
-clearance rate, and $\theta_{i,j}$ the feeding preference matrix for
-consumer $i$ feeding on prey $j$.
+\begin{table}[htbp]
 
-Reproduction ($r_p$) only occurs when there is an energy surplus:
-$$r_p = \psi_{mat}\cdot e^+$$ Total mortality is the sum of predation
-mortality, basal mortality and fishing-induced mortality:
-$$m = \theta^t \times \{ \frac{c_{max}*\nu}{c_{max}+E}\cdot C \} +m_0 +m_F$$
+\centering
+\caption{Main parameters of FEISTY}
 
-The maximal consumption rate ($c_{max_i}$), clearance rate (or encounter
-rate, $\nu_i$) and metabolism rate ($\mu_i$) is, for each fish stage
-estimated as a function of its mean size ($m_i$):
+\begin{tabular}{lp{8cm}lp{1cm}lp{1cm}lp{1cm}lp{1cm}l}
+\hline
+Symbol & Description & \multicolumn{4}{c}{Value} & Unit \\
+                         \cline{3-6}
+       &             & B1 & B2 & V1 & V2         &  \\
+\hline
+Parameter 1 & xxx & \multicolumn{4}{c}{value123} & aaa \\
+$a_c$ & Intercept for mass-specific maximum consumption rate & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$b_c$ & Exponent for mass-specific maximum consumption rate & \\
+$a_e$ & Intercept for mass-specific clearance rate &  &  & & & $m^2 g^{-b_{e}}yr^{-1}$ \\
+$b_e$ & Exponent for mass-specific clearance rate & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$a_m$ & Intercept for mass-specific metabolism rate & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$b_m$ & Exponent for mass-specific metabolism rate & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+$aaa$ & xxx & 0.1 & 0.2 & 0.3 & 0.4 & gWW \\
+\hline
+\multicolumn{7}{l}{\footnotesize $^a$ B1: setupBasic1, B2: setupBasic2, V1: setupVertcal1, V2: setupVertcal2.} \\
+\multicolumn{7}{l}{value123}
+\end{tabular}
+\end{table}
 
-$$c_{max_i} = a_c \cdot m_i^{b_c} ; \quad \nu_i = a_e \cdot m_i^{b_e};\quad \mu_i=a_{\mu} \cdot m_i^{b_{\mu}}$$
 
 # References
 
 \bibliography{references.bib}
-
-R Core Team (2021). R: A language and environment for statistical
-computing. R Foundation for Statistical Computing, Vienna, Austria. URL
-<https://www.R-project.org/>.
-
-Van Denderen et al. 2020. Emergent global biogeography of marine fish
-food webs. Global Ecology and Biogeography, DOI: 10.1111/geb.13348
-
-Petrik, CM, Stock, CA, Andersen, KH, van Denderen, PD, Watson, JR 2019.
-Bottom-up drivers of global patterns of demersal, forage, and pelagic
-fishes. Progress in Oceanography, 176, 102124. DOI:
-10.1016/j.pocean.2019.102124
-
-De Roos, A.M., Schellekens, T., Van Kooten, T., Van De Wolfshaar, K.,
-Claessen, D., Persson, L., 2008. Simplifying a physiologically
-structured population model to a stage-structured biomass model. Theor.
-Popul Biol. 73, 47--62.
