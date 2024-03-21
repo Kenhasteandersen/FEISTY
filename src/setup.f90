@@ -2258,7 +2258,7 @@ subroutine updateET(u)
     real(dp), intent(in) :: u(nGrid)
     real(dp) :: eT, lambda
     integer :: i,ii
-    integer, allocatable :: pelpreyidx(:), allpreyidx(:)
+    integer(8), allocatable :: pelpreyidx(:), allpreyidx(:)
 
    do ii= 1,size(lgdemidx)
     i=lgdemidx(ii)
@@ -2288,7 +2288,7 @@ subroutine updateTempV(depthDay, depthNight, bottom, region)
  real(dp), intent(in) :: depthDay(:, :), depthNight(:, :), bottom
  integer :: i,region
  real(dp), allocatable :: dist(:,:), TQ10(:), TQ10m(:), fTemp_stepV(:,:), fTempm_stepV(:,:)
- real(dp) :: tempdata(5501,5) ! contain tempdata from van Denderen et al., 2021 + default(10 celcius)
+ real(dp), save :: tempdata(5501,5) ! contain tempdata from van Denderen et al., 2021 + default(10 celcius)
 
     if (allocated (fTempV)) then
         deallocate (fTempV)
