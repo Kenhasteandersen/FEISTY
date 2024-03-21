@@ -91,7 +91,7 @@
 #' @importFrom stats na.omit simulate
 #' @importFrom pracma erf size linspace isempty
 #' @importFrom latex2exp TeX
-#' @import deSolve
+#' @importFrom deSolve ode DLLfunc
 #' @import shiny
 #' @import shinyjs
 #' @useDynLib FEISTY, .registration = TRUE
