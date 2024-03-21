@@ -2258,7 +2258,7 @@ subroutine updateET(u)
     real(dp), intent(in) :: u(nGrid)
     real(dp) :: eT, lambda
     integer :: i,ii
-    integer, allocatable :: pelpreyidx(:), allpreyidx(:)
+    integer(8), allocatable :: pelpreyidx(:), allpreyidx(:)
 
    do ii= 1,size(lgdemidx)
     i=lgdemidx(ii)
