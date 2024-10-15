@@ -261,7 +261,7 @@ derivativesFEISTYR = function(t,              # current time
 #' Default is TRUE, which means the core FEISTY parameters generated in R are transmitted to Fortran, and the ode solving is also done by compiled language. 
 #' \code{bCust=FALSE} is useful in debugging and model development, e,g., comparing R and FORTRAN results.
 #' \code{bCust} flag has a lower priority than \code{USEdll} flag. \code{bCust} flag input is ineffective when \code{USEdll} flag is FALSE.
-#' @param etaTime The fraction of the total time used to calculate average SSB
+#' @param etaTime The fraction of the total time used to calculate average SSB and yield. Defaults to last 40\%. 
 #' 
 #' @details
 #' The function runs the FEISTY model simulation over the specified time frame. \cr
