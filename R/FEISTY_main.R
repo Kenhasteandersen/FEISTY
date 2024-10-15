@@ -261,6 +261,7 @@ derivativesFEISTYR = function(t,              # current time
 #' Default is TRUE, which means the core FEISTY parameters generated in R are transmitted to Fortran, and the ode solving is also done by compiled language. 
 #' \code{bCust=FALSE} is useful in debugging and model development, e,g., comparing R and FORTRAN results.
 #' \code{bCust} flag has a lower priority than \code{USEdll} flag. \code{bCust} flag input is ineffective when \code{USEdll} flag is FALSE.
+#' @param etaTime The fraction of the total time used to calculate average SSB
 #' 
 #' @details
 #' The function runs the FEISTY model simulation over the specified time frame. \cr
@@ -409,7 +410,8 @@ simulateFEISTY = function(p      = setupBasic(),
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFEISTYR,
-                          bCust    = TRUE)
+                          bCust    = TRUE, 
+                          etaTime = 0.4)
 {
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
@@ -628,8 +630,8 @@ simulateFEISTY = function(p      = setupBasic(),
   #
   # Calculate Spawning Stock Biomass and yield
   #
-  sim=calcSSB(sim=sim,etaTime=0.4)
-  sim=calcYield(sim=sim,etaTime=0.4)
+  sim=calcSSB(sim=sim,etaTime=etaTime)
+  sim=calcYield(sim=sim,etaTime=etaTime)
   
   return(structure(sim, class = 'FEISTY'))
 }
