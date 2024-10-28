@@ -151,7 +151,7 @@ calcYield = function(
 #' @seealso 
 #' \code{\link{paramAddGroup}} 	Add parameters of one functional type
 #'
-# @export
+#' @export
 calcSSB = function(
     sim,          # The simulation object to analyse
     etaTime=0.4) {# The last fraction of the simulation period (default the last 40%) 
@@ -188,4 +188,152 @@ calcSSB = function(
   
   return(sim)
 }
+
+#' Total Biomass Calculation
+#'
+#' This function calculates the total (B) for each functional 
+#' type based on a FEISTY simulation result in units of g/m2. 
+#' The function averages over a certain period, determined by etaTime
+#'
+#' @usage calcBiomass(sim, etaTime = 0.4)
+#'
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}.
+#' @param etaTime The last fraction of the simulation period (default the last 40\%).
+#'
+#' @details
+#' This function calculates the biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
+#'
+#' @return 
+#' Add SSB data to the result list:
+#' \itemize{
+#' \item BiomassMean: a vector containing the arithmetic mean SSB data [g/m2/year] of each functional type of the time range specified.
+#' \item BiomassGMean: a vector containing the natural log-based geometric mean SSB data [g/m2/year] of each functional type of the time range specified.
+#' \item BiomassMin: a vector containing the minimum SSB data [g/m2/year] of each functional type within the time range specified.
+#' \item BiomassMax: a vector containing the maximum SSB data [g/m2/year] of each functional type within the time range specified.
+#' \item Biomass: a matrix containing the SSB data [g/m2/year] of each functional type (column) in each time point (row)
+#' }
+#'
+# @examples
+#' 
+#'
+#' @author DDDD
+#' 
+#' @aliases calcBiomass
+#' 
+#' @seealso 
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type
+#'
+#' @export
+calcBiomass = function(
+    sim,          # The simulation object to analyse
+    etaTime=0.4) {# The last fraction of the simulation period (default the last 40%) 
+  
+  p=sim$p
+  
+  BiomassAllgrid = matrix(nrow=sim$nTime, ncol=length(p$ixFish))
+  Biomass = matrix(nrow=sim$nTime, ncol=p$nGroups)
+  BiomassAMean = rep(data=0, p$nGroups)
+  BiomassGMean = BiomassAMean
+  BiomassMin = BiomassAMean
+  BiomassMax = BiomassAMean
+  
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
+  
+  for (iGroup in 1:p$nGroups) {
+    ix = p$ix[[iGroup]]
+    BiomassAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) ) 
+    BiomassAllgrid[,ix-length(p$ixR)][BiomassAllgrid[,ix-length(p$ixR)]<0]=0
+    Biomass[,iGroup]= rowSums(BiomassAllgrid[,ix-length(p$ixR)])
+    #deltaM = p$mUpper[ix]-p$mLower[ix]
+    
+    BiomassAMean[iGroup] = mean(rowSums(BiomassAllgrid[ixTime,ix-max(p$ixR),drop=FALSE]))
+    BiomassGMean[iGroup] = exp(mean(log(rowSums(BiomassAllgrid[ixTime,ix-max(p$ixR),drop=FALSE]))))
+    BiomassMin[iGroup] = min(rowSums( BiomassAllgrid[ixTime,ix-max(p$ixR),drop=FALSE] ))
+    BiomassMax[iGroup] = max(rowSums( BiomassAllgrid[ixTime,ix-max(p$ixR),drop=FALSE] ))
+  }
+  
+  sim$BiomassAMean=BiomassAMean
+  sim$BiomassGMean=BiomassGMean
+  sim$BiomassMin=BiomassMin
+  sim$BiomassMax=BiomassMax
+  sim$Biomass=Biomass
+  
+  return(sim)
+}
+
+#' Total R Calculation
+#'
+#' This function calculates the total (R) for each functional 
+#' type based on a FEISTY simulation result in units of g/m2. 
+#' The function averages over a certain period, determined by etaTime
+#'
+#' @usage calcR(sim, etaTime = 0.4)
+#'
+#' @param sim The FEISTY simulation result list from \code{\link{simulateFEISTY}}.
+#' @param etaTime The last fraction of the simulation period (default the last 40\%).
+#'
+#' @details
+#' This function calculates the biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
+#'
+#' @return 
+#' Add SSB data to the result list:
+#' \itemize{
+#' \item RMean: a vector containing the arithmetic mean SSB data [g/m2/year] of each functional type of the time range specified.
+#' \item RGMean: a vector containing the natural log-based geometric mean SSB data [g/m2/year] of each functional type of the time range specified.
+#' \item RMin: a vector containing the minimum R data [g/m2/year] of each functional type within the time range specified.
+#' \item RMax: a vector containing the maximum R data [g/m2/year] of each functional type within the time range specified.
+#' \item R: a matrix containing the SSB data [g/m2/year] of each functional type (column) in each time point (row)
+#' }
+#'
+# @examples
+#' 
+#'
+#' @author DDDD
+#' 
+#' @aliases calcR
+#' 
+#' @seealso 
+#' \code{\link{paramAddGroup}} 	Add parameters of one functional type
+#'
+#' @export
+calcR = function(
+    sim,          # The simulation object to analyse
+    etaTime=0.4) {# The last fraction of the simulation period (default the last 40%) 
+  
+  p=sim$p
+  
+  RAllgrid = matrix(nrow=sim$nTime, ncol=length(p$ixFish))
+  R = matrix(nrow=sim$nTime, ncol=p$nGroups)
+  RAMean = rep(data=0, p$nGroups)
+  RGMean = RAMean
+  RMin = RAMean
+  RMax = RAMean
+  
+  ixTime = which(sim$t>=((1-etaTime)*sim$t[sim$nTime]))
+  
+  for (iGroup in 1:p$nGroups) {
+    ix = p$ix[[iGroup]]
+    RAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) ) 
+    RAllgrid[,ix-length(p$ixR)][RAllgrid[,ix-length(p$ixR)]<0]=0
+    R[,iGroup]= rowSums(RAllgrid[,ix-length(p$ixR)])
+    #deltaM = p$mUpper[ix]-p$mLower[ix]
+    
+    RAMean[iGroup] = mean(rowSums(RAllgrid[ixTime,ix-max(p$ixR),drop=FALSE]))
+    RGMean[iGroup] = exp(mean(log(rowSums(RAllgrid[ixTime,ix-max(p$ixR),drop=FALSE]))))
+    RMin[iGroup] = min(rowSums( RAllgrid[ixTime,ix-max(p$ixR),drop=FALSE] ))
+    RMax[iGroup] = max(rowSums( RAllgrid[ixTime,ix-max(p$ixR),drop=FALSE] ))
+  }
+  
+  sim$RAMean=RAMean
+  sim$RGMean=RGMean
+  sim$RMin=RMin
+  sim$RMax=RMax
+  sim$R=R
+  
+  return(sim)
+}
+
+
+
+
 

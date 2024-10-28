@@ -35,6 +35,8 @@ The \link{deSolve} package is required for both methods. Default is TRUE, \code{
 Default is TRUE, which means the core FEISTY parameters generated in R are transmitted to Fortran, and the ode solving is also done by compiled language. 
 \code{bCust=FALSE} is useful in debugging and model development, e,g., comparing R and FORTRAN results.
 \code{bCust} flag has a lower priority than \code{USEdll} flag. \code{bCust} flag input is ineffective when \code{USEdll} flag is FALSE.}
+
+\item{etaTime}{The fraction of the total time used to calculate average SSB and yield. Defaults to last 40\%.}
 }
 \value{
 A list containing the simulation results:
