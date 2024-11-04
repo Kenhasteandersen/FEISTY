@@ -528,7 +528,7 @@ simulateFEISTY = function(p      = setupBasic(),
         }
         
         # Reload dll to avoid crash?
-        if (is.loaded("setupbasic")) { # "setupbasic" is a function name of fortran dll
+        if (is.loaded("runfeisty")) { # "runfeisty" is a function name in R_init_feisty.c
           dyn.unload(sLibname)
           dyn.load(sLibname)}
         
