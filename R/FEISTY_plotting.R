@@ -200,8 +200,8 @@ plotBiomasstime = function(sim) {
 #' 
 #' @examples 
 #' sim=simulateFEISTY()
-#' plotSpectra(sim, norm=T)
-#' plotSpectra(sim, norm=F)
+#' plotSpectra(sim, norm=TRUE)
+#' plotSpectra(sim, norm=FALSE)
 #' 
 #' @aliases plotSpectra
 #' 
@@ -294,7 +294,7 @@ plotSpectra = function(sim, norm=T) {
 #' 
 #' @author Daniel Ottmann Riera, P. Daniël van Denderen, Yixin Zhao
 #'
-#' @usage plotNetwork(sim, manual_scale_b = T, ref_b = 50)
+#' @usage plotNetwork(sim, manual_scale_b = TRUE, ref_b = 50)
 #' 
 #' @param sim The data frame of FEISTY simulation results.
 #' @param manual_scale_b Logical flag, controlling whether the circle sizes are based on maximum biomass or reference biomass ('ref_b'). 
@@ -306,8 +306,8 @@ plotSpectra = function(sim, norm=T) {
 #' @examples 
 #' sim = simulateFEISTY()
 #' plotNetwork(sim)
-#' plotNetwork(sim, manual_scale_b = T, ref_b = 60)
-#' plotNetwork(sim, manual_scale_b = F)
+#' plotNetwork(sim, manual_scale_b = TRUE, ref_b = 60)
+#' plotNetwork(sim, manual_scale_b = FALSE)
 #' 
 #' @aliases plotNetwork
 #' 
@@ -317,7 +317,7 @@ plotSpectra = function(sim, norm=T) {
 #' @export
 #'
 
-plotNetwork <- function(sim, manual_scale_b=T, ref_b = 50) {
+plotNetwork <- function(sim, manual_scale_b=TRUE, ref_b = 50) {
   p <- sim$p
   u <- sim$u
   
@@ -379,7 +379,7 @@ plotNetwork <- function(sim, manual_scale_b=T, ref_b = 50) {
   }
   
   # Marker size depends on biomass following a cubic square transformation
-  Max_bio <- ifelse(manual_scale_b, ref_b, max(Bi, na.rm = T))
+  Max_bio <- ifelse(manual_scale_b, ref_b, max(Bi, na.rm = TRUE))
   Msize <- Bi / Max_bio
   Msize[Msize == 0] <- NA
   if(manual_scale_b==T) Msize <- 1.2*Msize^(1/2)

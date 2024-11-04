@@ -10,7 +10,7 @@
 \item{sim}{The data frame of FEISTY simulation results.}
 }
 \description{
-This function is a shortcut of \code{\link{plotSimulation}}.
+This function is a shortcut for \code{\link{plotSimulation}}.
 }
 \details{
 See \code{\link{plotSimulation}}.

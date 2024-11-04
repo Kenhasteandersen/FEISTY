@@ -4,7 +4,7 @@
 \alias{plotNetwork}
 \title{Food web plot}
 \usage{
-plotNetwork(sim, manual_scale_b = T, ref_b = 50)
+plotNetwork(sim, manual_scale_b = TRUE, ref_b = 50)
 }
 \arguments{
 \item{sim}{The data frame of FEISTY simulation results.}
@@ -33,8 +33,8 @@ In setupVertical and setupVertical2, the Y-axis represents the locations of the 
 \examples{
 sim = simulateFEISTY()
 plotNetwork(sim)
-plotNetwork(sim, manual_scale_b = T, ref_b = 60)
-plotNetwork(sim, manual_scale_b = F)
+plotNetwork(sim, manual_scale_b = TRUE, ref_b = 60)
+plotNetwork(sim, manual_scale_b = FALSE)
 
 }
 \seealso{

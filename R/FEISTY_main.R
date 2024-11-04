@@ -529,8 +529,13 @@ simulateFEISTY = function(p      = setupBasic(),
         
         # Reload dll to avoid crash?
         if (is.loaded("runfeisty")) { # "runfeisty" is a function name in R_init_feisty.c
-          dyn.unload(sLibname)
-          dyn.load(sLibname)}
+          if (sLibname == "") {
+            print("sLibname is an empty string")
+          } else{
+            dyn.unload(sLibname)
+            dyn.load(sLibname)
+          }
+        }
         
         file_path=system.file("extdata", "input.nml", package = "FEISTY")
         dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))

@@ -23,8 +23,8 @@ See Box V in Andersen and Visser (2023).
 }
 \examples{
 sim=simulateFEISTY()
-plotSpectra(sim, norm=T)
-plotSpectra(sim, norm=F)
+plotSpectra(sim, norm=TRUE)
+plotSpectra(sim, norm=FALSE)
 
 }
 \references{
