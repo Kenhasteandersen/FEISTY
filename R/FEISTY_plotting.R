@@ -1062,7 +1062,7 @@ get_legend_new <- function(plot, legend = NULL) {
 
 #' Plot FEISTY simulation results (S3)
 #' 
-#' This function is a shortcut of \code{\link{plotSimulation}}.
+#' This function is a shortcut for \code{\link{plotSimulation}}.
 #' 
 #' @details See \code{\link{plotSimulation}}.
 #' 
