@@ -4,3 +4,86 @@ The FEISTY model (FishErIes Size and functional TYpe model) is documented as an 
 
 ![orange_day_night_combined](https://github.com/Kenhasteandersen/FEISTY/assets/13268353/1e481c48-3851-48a4-bc61-ec82657783d7)
 (Graphic design by Jan D. Heuschele)
+
+
+---
+
+# FEISTY Installation Guide
+
+The following provides a comprehensive guide to installing and setting up FEISTY, a Fortran-based marine ecosystem model, on Linux, Windows, and macOS systems.
+
+Before installing FEISTY, ensure that the following tools are installed on your system:
+
+- **gfortran**: The GNU Fortran compiler.
+- **make**: A build automation tool.
+- **git**: A version control system.
+
+If these tools are not already installed, follow the instructions below for your operating system to install them.
+
+---
+
+## Installation by Operating System
+
+### 1. Linux
+
+1. **Install Dependencies**  
+   Open a terminal and run the following commands to install the necessary tools:
+   ```bash
+   sudo apt update
+   sudo apt install gfortran make git
+   ```
+
+---
+
+### 2. Windows
+
+1. **Install Dependencies**  
+   - Download and install [MinGW-w64](https://sourceforge.net/projects/mingw/), which includes `gfortran` and `make`.
+   - Download and install [Git for Windows](https://git-scm.com/).
+
+   During the MinGW-w64 installation, ensure `gfortran` and `make` are selected.
+
+2. **Add to path**  
+Add the MinGW-w64 and make installation directory to your system's PATH environment variable. 
+To do so go to: Environenment variables > user variables > path > edit; then paste `C:\MinGW\bin`
+
+
+---
+
+### 3. macOS
+
+1. **Install Dependencies**  
+   Use Homebrew to install the required tools. If you do not have Homebrew installed, visit [brew.sh](https://brew.sh/) to set it up. Then, run:
+   ```bash
+   brew install gcc make git
+   ```
+
+2. **Error compilation failed**  
+   If you get an error like:
+   ``make: /opt/gfortran/bin/gfortran: no such file or directory [...] compilation failed for package 'FEISTY' `` 
+   this is due to make trying to search for the fortran compiler in the wrong path. To solve the problem you need to 
+   add a Makevars file with the right directoy for the fortran compiler and the libraries, this directory depends on where 
+   Homebrew installed gfortran.
+    ```bash
+   cd ~/.R/
+   nano Makevars 
+   ```
+   Then copy:
+    ```
+   FC=/opt/homebrew/bin/gfortran
+   F77=/opt/homebrew/bin/gfortran
+   FLIBS=-L/opt/homebrew/lib
+   ```
+---
+
+## Dowload and build FEISTY
+
+1. **Clone the Repository**  
+   Open terminal or git bash for windows users to download the FEISTY repository:
+   ```bash
+   git clone https://github.com/KenHasteAndersen/FEISTY.git
+   ```
+
+2. **Build the FEISTY model**
+    [add dscription of how to build the model]
+---
