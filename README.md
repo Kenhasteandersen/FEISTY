@@ -76,7 +76,7 @@ To do so go to: Environenment variables > user variables > path > edit; then pas
    ```
 ---
 
-## Dowload and build FEISTY
+## Download and build FEISTY
 
 1. **Clone the Repository**  
    Open terminal or git bash for windows users to download the FEISTY repository:
