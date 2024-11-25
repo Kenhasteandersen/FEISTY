@@ -98,7 +98,7 @@ setupBasic = function(szprod = 100, # small zoo production
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin =  -1; dfbot = -1
   } else {
-    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprodin" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
     if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
   }
@@ -342,7 +342,7 @@ setupBasic2 = function(szprod = 100, # small zoo production?
   if (is.na(bprodin) & is.na(dfbot)){ # if all benthic arguments are NA, assign bprod to 5
     bprod = 5; bprodin = -1; dfbot = -1
   } else {
-    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (sum(!is.na(c(bprodin, dfbot)))>1) stop('Please check "bprodin" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
     if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
   }
@@ -567,7 +567,7 @@ setupVertical = function(szprod = 80, # small zoo production
     bprod=0.1*(dfpho*(depth/photic)^-0.86)
     if(bprod>=0.1*dfpho) bprod=0.1*dfpho
   } else {
-    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprodin", "dfbot" and "dfpho" input. Only one of them should be assigned values, others should be kept as "NA".')
     if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
     if (!is.na(dfpho)) {bprod=0.1*(dfpho*(depth/photic)^-0.86); if(bprod>=0.1*dfpho) bprod=0.1*dfpho} else {dfpho = -1}
@@ -1028,7 +1028,7 @@ setupVertical2 = function(szprod = 80, # small zoo production
     bprod=0.1*(dfpho*(depth/photic)^-0.86)
     if(bprod>=0.1*dfpho) bprod=0.1*dfpho
   } else {
-    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprod" and "dfbot" input. Only one of them should be assigned values, others should be kept as "NA".')
+    if (sum(!is.na(c(bprodin, dfbot, dfpho)))>1) stop('Please check "bprodin", "dfbot" and "dfpho" input. Only one of them should be assigned values, others should be kept as "NA".')
     if (!is.na(bprodin)) {bprod = bprodin} else {bprodin = -1}
     if (!is.na(dfbot)) {bprod = dfbot*0.1} else {dfbot = -1}
     if (!is.na(dfpho)) {bprod=0.1*(dfpho*(depth/photic)^-0.86); if(bprod>=0.1*dfpho) bprod=0.1*dfpho} else {dfpho = -1}
