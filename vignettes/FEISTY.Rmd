@@ -76,7 +76,7 @@ growth and consumption by fish predators. The modelling of resources as a semi-c
 dynamic mode in the four internal setups:
 
 \begin{equation}
-\dfrac{\mathrm{d}R_{i}}{\mathrm{d}t} =  r(K_i - R_i ) - \mu_{\mathrm{p},i} R_i,
+\dfrac{\mathrm{d}R_{i}}{\mathrm{d}t} =  r(K_i - R_i ) - \mu_{\mathrm{p},i} R_i, \label{eq:dRdt}
 \end{equation}
 
 where $R$ is the state variable of a resource, $K$ is the carrying capacity
@@ -129,14 +129,14 @@ feeding level $f_i$ (dimensionless) describes how much food a predator
 can eat relative to the maximum consumption capability, ranging from 0
 to 1: 
 \begin{equation}
-f_{i} = \frac{E_{i}}{E_{i}+C_{\mathrm{max},i}}
+f_{i} = \frac{E_{i}}{E_{i}+C_{\mathrm{max},i}}  \label{eq:feedinglvl}
 \end{equation}
 Therefore, the mass-specific consumption rate $f_i C_{\mathrm{max},i}$ is based on type II
 functional response. The feeding behavior of a predator is a consequence
 of encountering prey. The mass-specific encounter rate (year$^{-1}$)
 $E_{i}$ of a predator $i$ is:
 \begin{equation}
-E_{i} = V_{i}  \sum_{j} \theta_{i,j} B_j,
+E_{i} = V_{i}  \sum_{j} \theta_{i,j} B_j, \label{eq:encounter}
 \end{equation}
 where $\theta_{i,j}$
 denotes the feeding preference of a predator $i$ on a prey $j$ (see
@@ -198,9 +198,10 @@ FEISTY specifies of how each size class (and zooplankton and benthic prey resour
 
 Once the preference matrix is established, the predation mortality of a prey $j$ can be calculated:
 \begin{equation}
-\mu_{\mathrm{p},j} = \sum_i  \frac{V_i \theta_{i,j}  B_i}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i}
+\mu_{\mathrm{p},j} = \sum_i  \frac{V_i \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i .    \label{eq:predationmortality}
 \end{equation}
 
+This describes the rate at which a prey $j$ (either a resource or a fish size class) is eaten by all its predators (in nunit of per time). When $j$ denotes a resource, $\mu_{\mathrm{p},j} R_j$ is the predation loss of the resource (the second term in Eq. \ref{eq:dRdt}).
 
 ### Size preference
 In the non-vertical setups (setupBasic and setupBasic2)
@@ -743,3 +744,35 @@ plotSimulation(sim2)
 # References
 
 \bibliography{references.bib}
+
+# Time-series input
+The FEISTY model can be coupled with datasets or other model products that provide time-series inputs, of temperature, zooplankton biomass, zooplankton production, and benthic production. To avoid creation of new mass in the model, the consumption by the fish predators must not exceed the corresponding zooplankton production ($P_{\mathrm{R},j}$, in mass/area/time). If the consumption, as calculated by the encounter with zooplankton ($\mu_{\mathrm{p},j} R_j$) exceeds the resource production, the consumption of the resource has to be down-regulated.
+
+When consumption of one food item (here the resource) is decreased the predator can compensate by eating more of other resource. For simplicity, however, we assume that only the resource consumption is decreased, and the consumption of other prey is not increased to compensate. To follow this assumption, we introduce a down-regulation factor $f_{\mathrm{dr},j}$ and henceforth several variables change. The total consumption of all predators of the resource prey $j$ is equal to the predation mortality loss of that prey (Eq. \ref{eq:predationmortality}). That predation mortality is updated to:
+
+\begin{equation}
+f_{\mathrm{dr},j} \mu_{\mathrm{p},j} = \sum_i  \frac{V_i f_{\mathrm{dr},j} \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i.
+\end{equation}
+where $E_i$ is the total encountered food. $j$ denotes indices of prey including all resource and fish. The down-regulation factor $f_{\mathrm{dr},j}$ is the ratio of the resource production and resource predation loss:
+
+\begin{equation}
+    f_{\mathrm{dr},j} =
+  \begin{cases}
+\max\{1, \, \frac{P_{\mathrm{R},j}}{\mu_{\mathrm{p},j} R_j} \},      & \text{$ j \in \mathrm{resource\ requiring\ down}-\mathrm{regulation} $} \\
+     1, & \text{$ j \in \mathrm{other\ prey} $} 
+  \end{cases}
+\end{equation}
+
+
+For the other prey whose predation loss do not need down-regulation, the factor is 1 to keep everything unchanged.
+
+The predation loss of a resource prey reflects the consumption of its predators, which requires corresponding updates to maintain mass conservation within the system. We begin by revising the feeding levels of predators. The mass-specific feeding level of a predator $f_i$ (Eq. \ref{eq:feedinglvl}, also see Eq. \ref{eq:encounter}) is consequently modified to
+\begin{equation}
+f_{i} = \frac{V_{i}  \sum_{j} f_{\mathrm{dr},j} \theta_{i,j} B_j}{E_{i}+C_{\mathrm{max},i}}  .
+\end{equation}
+
+This procedure ensures that mass is not created in the system. However, it does not ensure perfect mass balance. If the fish predators do not eat all the zooplankton production, there is an “excess” zooplankton production which is not accounted for. Further, as mentioned above, the fish are not allowed to compensate for the reduction in zooplankton consumption by an increase in consumption of other prey. We believe that this latter assumption has a quite small impact.
+
+
+Note the $E_i$ in the denominator is still identical to Eq. \ref{eq:encounter}, which is not the most ideal solution to down-regulate the predation mortality.
+
