@@ -514,6 +514,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
+#' \item ixmedium, an index indicating where medium size fish start.
+#' \item ixlarge, an index indicating where large size fish start. E.g., ixmedium = 4, ixlarge = 7: number 1 to 3 represent small fish, number 4 to 6 represent medium fish, number 7 to the last size class represent large fish
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
 #' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
 #' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
@@ -669,9 +671,10 @@ setupVertical = function(szprod = 80, # small zoo production
   
   ixmedium = which.min(abs(sizes-0.5))# - etaMature*250)) # -0.5))
   ixlarge = which.min(abs(sizes-250))# - etaMature*125000)) # -250))
-  
   # ixmedium = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   # ixlarge = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
+  param$ixmedium=ixmedium
+  param$ixlarge=ixlarge
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
@@ -959,6 +962,8 @@ setupVertical = function(szprod = 80, # small zoo production
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
+#' \item ixmedium, an index indicating where medium size fish start.
+#' \item ixlarge, an index indicating where large size fish start. E.g., ixmedium = 4, ixlarge = 7: number 1 to 3 represent small fish, number 4 to 6 represent medium fish, number 7 to the last size class represent large fish
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
 #' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
 #' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
@@ -1126,6 +1131,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
   
   ixmedium = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   ixlarge = which.min(abs(param$mLower[param$ix[[5]]] - 250))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
+  param$ixmedium=ixmedium
+  param$ixlarge=ixlarge
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
