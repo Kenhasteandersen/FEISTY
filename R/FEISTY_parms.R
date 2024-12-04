@@ -839,3 +839,91 @@ updateET = function (p, #
   
   return(p)
 }
+
+# only for vertical2
+paramTeffect_vet = function (p){ 
+  
+  ixmedium=p$ixmedium
+  ixlarge=p$ixlarge
+  # update temperature
+  Q10=1.88
+  Q10m=1.88
+  
+  # initialize effective T vector (all resoources and fish)
+  Teff = rep(0, length(p$u0))
+  
+  # zooplankton (no use)
+  Tday = (p$Tp + p$Tm)/2 # half surface half dvm  p$dvm = p$photic + 500
+  if (p$dvm == p$bottom) { # when p$bottom < (p$photic + 500)
+    Tday = (p$Tp + p$Tb)/2
+  }
+  if (p$dvm == 0) Tday = p$Tp # when p$bottom <= p$shelfdepth
+  Tnight = p$Tp # all surface
+  Teff[1:2] = (Tday+Tnight)/2
+  # benthos (no use)
+  Teff[3:4] = p$Tb
+  # small pelagics
+  ix = p$ix[[1]]
+  Teff[ix] = p$Tp # always surface
+  # mesopelagics 
+  ix = p$ix[[2]]
+  Tday = p$Tm # dvm
+  if (p$dvm == p$bottom) Tday = p$Tb
+  if (p$dvm == 0) Tday = p$Tp
+  Tnight = p$Tp # surface
+  Teff[ix] = (Tday+Tnight)/2
+  # large pelagics
+  ix = p$ix[[3]]
+  # daytime large half at surface half at dvm
+  Tdaylarge = (p$Tp+p$Tm)/2
+  if (p$dvm == p$bottom) Tdaylarge = (p$Tp+p$Tb)/2
+  if (p$dvm == 0) Tdaylarge = p$Tp
+  Tdaynonlarge = p$Tp # non-large at surface at daytime
+  Tnight = p$Tp     # all at surface at night
+  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnight)/2      # large
+  Teff[ix[-(ixlarge:length(ix))]] = (Tdaynonlarge+Tnight)/2 # non-large
+  # bathypelagics    
+  ix = p$ix[[4]]
+  Tday = p$Tm # all at dvm at daytime
+  if (p$dvm == p$bottom) Tday = p$Tb
+  if (p$dvm == 0)            Tday = p$Tp
+  Tnightlarge = p$Tm # large at dvm
+  if (p$dvm == p$bottom) Tnightlarge = p$Tb
+  if (p$dvm == 0)            Tnightlarge = p$Tp
+  Tnightnonlarge = p$Tp # non-large at surface at night
+  Teff[ix[ixlarge:length(ix)]]  = (Tday+Tnightlarge)/2      # large
+  Teff[ix[-(ixlarge:length(ix))]] = (Tday+Tnightnonlarge)/2 # non-large
+  # demersals    
+  ix = p$ix[[5]]
+  Tsmall  = p$Tp # small at surface
+  Tmedium = p$Tb # medium at bottom
+  # large
+  # daytime
+  Tdaylarge = p$Tm # large at middle
+  # if the water is very deep large demersals always stay at the bottom
+  if ((p$bottom - p$dvm) >= 1500) Tdaylarge = p$Tb
+  # if the water is very shallow large demersals migrate over the whole water column both day and night
+  if (p$bottom <= p$photic) {
+    Tdaylarge = (p$Tp + p$Tb)/2
+  }
+  # nighttime
+  Tnightlarge  = p$Tb # large at bottom if water is deep enough
+  # if the water is very shallow large demersals migrate over the whole water column both day and night
+  if (p$bottom <= p$photic) {
+    Tnightlarge = (p$Tp + p$Tb)/2
+  }
+  
+  Teff[ix[-(ixmedium:length(ix))]] = Tsmall # small
+  Teff[ix[ixmedium:(ixlarge-1)]]   = Tmedium # medium
+  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnightlarge)/2 # large
+  
+  scTemp =  Q10^((Teff-10)/10)
+  scTempm =  Q10m^((Teff-10)/10)
+  
+  p$Cmax = scTemp* p$Cmaxsave # maximum consumption rate 
+  p$V= scTemp* p$Vsave # clearance rate 
+  p$metabolism = scTempm* p$metabolismsave
+  
+  return(p)
+}
+
