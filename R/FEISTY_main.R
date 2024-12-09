@@ -857,7 +857,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
     timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
     pspin = p
     pspin$getts=getts <- function(time, y) {
-      approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0)(time)
+      approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
     }
     pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
     pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
@@ -886,7 +886,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   }
   
   p$getts=getts <- function(time, y) {
-    approxfun(x = times, y = y, method = "constant", rule = 2, f = 0)(time)
+    approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
   }
   
   # prepare output variable names
@@ -989,9 +989,14 @@ simulateFEISTY_ts = function(p      = setupBasic(),
         }
         
         # Reload dll to avoid crash?
-        if (is.loaded("setupbasic")) { # "setupbasic" is a function name of fortran dll
-          dyn.unload(sLibname)
-          dyn.load(sLibname)}
+        if (is.loaded("runfeisty")) { # "runfeisty" is a function name in R_init_feisty.c
+          if (sLibname == "") {
+            print("sLibname is an empty string")
+          } else{
+            dyn.unload(sLibname)
+            dyn.load(sLibname)
+          }
+        }
         
         file_path=system.file("extdata", "input.nml", package = "FEISTY")
         dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
