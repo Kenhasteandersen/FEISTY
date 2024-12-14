@@ -851,14 +851,23 @@ simulateFEISTY_ts = function(p      = setupBasic(),
     atol = 1E-10}
   if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
   
+  # prepare output variable names
+  Sname <- p$stagenames
+  Fname <- p$stagenames[-(1:nR)]
+  Gname <- p$groupnames[-(1:nR)]
+  outnames <- c(
+    paste("f", Fname, sep="."), paste("mortpred", Sname, sep="."),
+    paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
+    paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
+    paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
+    paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
+    paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
   
   if (spinup == T) {
     loopnum=4
     timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
     pspin = p
-    pspin$getts=getts <- function(time, y) {
-      approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
-    }
+    
     pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
     pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
     pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
@@ -875,31 +884,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
     pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
     pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
     pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
-    for (i in 1:loopnum) {
-      u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
-              method = "ode45", rtol = rtol, atol = atol) #Run by R
-      yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-      print(sprintf("i/loopnum = %.2f%%", 100*i/loopnum))
-    }
-    p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-    yini = p$u0
   }
-  
-  p$getts=getts <- function(time, y) {
-    approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
-  }
-  
-  # prepare output variable names
-  Sname <- p$stagenames
-  Fname <- p$stagenames[-(1:nR)]
-  Gname <- p$groupnames[-(1:nR)]
-  outnames <- c(
-    paste("f", Fname, sep="."), paste("mortpred", Sname, sep="."),
-    paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
-    paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
-    paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
-    paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
-    paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
   
   #
   # calculate in Fortran
@@ -963,10 +948,49 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
       
-      u = ode(y=yini, times=times, parms=NULL, dllname = "FEISTY",
-              func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-              ipar=ipar, rpar=as.double(rpar),
-              method = "ode45", rtol = rtol, atol = atol) # Run by dll
+      # u = ode(y=yini, times=times, parms=NULL, dllname = "FEISTY",
+      #         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
+      #         ipar=ipar, rpar=as.double(rpar),
+      #         method = "ode45", rtol = rtol, atol = atol) # Run by dll
+      #p$forcings$bprod_ts[,2]=p$forcings$bprod_ts
+      
+      
+      if(spinup == T){
+        pspin=buildforcings(timesspin,p=pspin)
+        u <- ode(y		= yini,
+                 times		= times,
+                 parms		= NULL,
+                 ipar = ipar, rpar = as.double(rpar),
+                 dllname		= "FEISTY",
+                 initfunc	= initfunc,
+                 func		= runfunc,
+                 initforc	= "initfeistyforc",
+                 forcings	= pspin$forcings,
+                 fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
+                 method = "ode45", rtol = rtol, atol = atol,
+                 outnames = outnames, nout = length(outnames))
+        p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+        yini = p$u0
+      }
+      
+      p=buildforcings(times,p)
+      
+      runfunc="runfeisty_ts"
+      dummy=.Fortran("passnforc", 
+                     nforcsin = as.integer(nFGrid*3+5) )
+      u <- ode(y		= yini,
+               times		= times,
+               parms		= NULL,
+               ipar = ipar, rpar = as.double(rpar),
+               dllname		= "FEISTY",
+               initfunc	= initfunc,
+               func		= runfunc,
+               initforc	= "initfeistyforc",
+               forcings	= p$forcings,
+               fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
+               method = "ode45", rtol = rtol, atol = atol,
+               outnames = outnames, nout = length(outnames))
+      
     }
     else
     {     # for fixed setups
@@ -1039,6 +1063,25 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   } else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
+    
+    if (spinup == T) {
+      pspin$getts=getts <- function(time, y) {
+        approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
+      }
+      for (i in 1:loopnum) {
+        u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
+                method = "ode45", rtol = rtol, atol = atol) #Run by R
+        yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+        print(sprintf("i/loopnum = %.2f%%", 100*i/loopnum))
+      }
+      p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+      yini = p$u0
+    }
+    p$getts=getts <- function(time, y) {
+      approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
+    }
+    
+    
     u = ode(y=yini, times=times, parms=p, func = Rmodel,
             method = "ode45", rtol = rtol, atol = atol) #Run by R
     # assign colnames
@@ -1104,4 +1147,3 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   
   return(structure(sim, class = 'FEISTY'))
 }
-

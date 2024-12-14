@@ -1313,7 +1313,9 @@ setupTimeseries = function (p = setupVertical2(),
                             dfpho_ts  = NA, # detrital flux out of photic zone
                             Tp_ts = Tp,
                             Tm_ts = Tm,
-                            Tb_ts = Tb){ 
+                            Tb_ts = Tb,
+                            benthosK = 80){ 
+  
   
   p$szbio_ts = szbio_ts #seq(from=100, to=800, length.out=12)
   p$szbio_ts[length(szbio_ts)+1] = szbio_ts[length(szbio_ts)] #p$zbio_ts[13] = 800
@@ -1338,7 +1340,7 @@ setupTimeseries = function (p = setupVertical2(),
   #?????????????????????????????????????  
   p$bprod_ts=bprod_ts
   p$bprod_ts[length(bprod_ts)+1] = bprod_ts[length(bprod_ts)]
-  p$K[3]=80
+  p$K[3]=benthosK #update benthos carrying capacity, benthos biomass cannot beyond this value.
   p$r[3]=bprod_ts[1]
   
   return(p)

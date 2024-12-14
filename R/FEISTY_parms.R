@@ -927,3 +927,62 @@ paramTeffect_vet = function (p){
   return(p)
 }
 
+#hard-coded
+buildforcings = function (times,p) {
+
+  # ts_names = c("szbio_ts", "lzbio_ts",
+  #               "szprod_ts", "lzprod_ts", "bprod_ts",
+  #               "Tp_ts", "Tm_ts", "Tb_ts"
+  #               )
+  
+  forc = lapply(p$stagenames[-p$ixR], function(x){
+    matrix(c(times, rep(0,length.out=length(times))), ncol = 2)
+  })
+  forc=setNames(forc,paste("Cmax_", p$stagenames[-p$ixR], sep = ""))
+  forcings=forc
+  forc=setNames(forc,paste("V_", p$stagenames[-p$ixR], sep = ""))
+  forcings=c(forcings,forc)
+  forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
+  forcings=c(forcings,forc)
+  
+  indices_Cmax <- grep("Cmax_", names(forcings))
+  indices_V <- grep("V_", names(forcings))
+  indices_metabolism <- grep("metabolism_", names(forcings))
+  
+  for (t in 1:length(times)) {
+  p$Tp=p$Tp_ts[t]  
+  p$Tm=p$Tm_ts[t]
+  p$Tb=p$Tb_ts[t] 
+  if (p$setup == "setupVertical2") {
+    p = paramTeffect_vet(p)
+  }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
+    p = paramTeffect(p)
+  }
+
+  forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){
+    mat = forcings[[indices_Cmax[i]]]
+    mat[t, 2] = p$Cmax[-p$ixR][i]
+    return(mat)
+  })
+  forcings[indices_V]=lapply(1:length(indices_V), function(i){
+    mat = forcings[[indices_V[i]]]
+    mat[t, 2] = p$V[-p$ixR][i]
+    return(mat)
+  })
+  forcings[indices_metabolism]=lapply(1:length(indices_metabolism), function(i){
+    mat = forcings[[indices_metabolism[i]]]
+    mat[t, 2] = p$metabolism[-p$ixR][i]
+    return(mat)
+  })
+  }
+  
+  ts_names = c("szbio_ts", "lzbio_ts",
+               "szprod_ts", "lzprod_ts", "bprod_ts")
+  forc = lapply(ts_names, function(name) {
+    matrix(c(times, p[[name]]), ncol = 2)
+  })
+  
+  names(forc) = ts_names
+  p$forcings = c(forcings,forc)
+  return(p)
+}

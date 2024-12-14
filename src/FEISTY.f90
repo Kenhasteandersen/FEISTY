@@ -331,6 +331,54 @@
 
    end subroutine allocfeisty
 
+   subroutine allocfeisty_ts(u)
+    use  setup
+      implicit none
+      !real(dp), intent(in):: tsinput(*)
+      real(dp), intent(inout):: u(nGrid) !state variable vector
+
+      integer:: i, ir
+
+!      if (allocated (V))           deallocate (V)
+!      allocate (V(nGrid))
+!
+!      if (allocated (Cmax))        deallocate (Cmax)
+!      allocate (Cmax(nGrid))
+!
+!      if (allocated (metabolism))  deallocate (metabolism)
+!      allocate (metabolism(nGrid))
+
+      ir=1
+
+      do i = 1, nFGrid
+        Cmax(nResources+i) = forcs(ir)
+        ir=ir+1
+      end do
+!      Cmax(1:nResources)=0.d0
+      do i = 1, nFGrid
+        V(nResources+i) = forcs(ir)
+        ir=ir+1
+      end do
+!      V(1:nResources)=0.d0
+      do i = 1, nFGrid
+        metabolism(nResources+i) = forcs(ir)
+        ir=ir+1
+      end do
+!      metabolism(1:nResources)=0.d0
+
+      u(1)  =  forcs(ir) !small zooplankton biomass
+      ir = ir+1
+      u(2)  =  forcs(ir) !large zooplankton biomass
+      ir = ir+1
+      szprod  =  forcs(ir) !small zooplankton production
+      ir = ir+1
+      lzprod  =  forcs(ir) !large zooplankton production
+      ir = ir+1
+      rr(3)  =  forcs(ir) !benthos production
+
+
+   end subroutine allocfeisty_ts
+
 !--------------------------------------
 
    subroutine checknan(vec, n)
@@ -517,9 +565,9 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 ! ----------------------------------------------------------------------
 dudt=0.d0
 !temporary
-allocate(dr_fac_theta(nGrid,nGrid))
+if (.not. allocated (dr_fac_theta)) allocate(dr_fac_theta(nGrid,nGrid))
 
-dr_fac_theta = 0.d0
+dr_fac_theta = 1.d0
 do i = 1, nGrid
   u(i) = max(0.d0 , uin(i))
 end do
@@ -660,7 +708,7 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 !        dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
 !      end if
       dRdt = 0.d0
-      dRdt = rr(3)*R(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
+      dRdt(3) = rr(3)*R(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
 
       do i = 1, nResources
         dudt(i) = dRdt(i)
@@ -760,6 +808,54 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
    end subroutine initfeistysetupVertical2
 
+   subroutine passnforc(nforcsin)
+    use setup
+    integer, intent(in):: nforcsin
+
+    nforcs = nforcsin
+
+   end subroutine passnforc
+
+   subroutine initfeistyforc(odeforcs)
+    use setup
+    implicit none
+    external odeforcs  ! Declare external procedure
+    integer :: N
+
+    N = nforcs !3*nFGrid+5
+
+      if (allocated (forcs))       deallocate (forcs)
+      allocate (forcs(N))
+
+    call odeforcs(N, forcs)
+
+    return
+   end subroutine initfeistyforc
+
+   subroutine runfeisty_ts (neq, t, Conc, dConc, yout, ip)
+    use setup
+    implicit none
+
+    integer,  intent(in):: neq, ip(*)
+    real(dp), intent(in):: t, conc(neq)
+    real(dp), intent(inout):: yout(*)
+    real(dp), intent(out):: dconc(neq)
+    real(dp)             :: conc2(neq)
+!    integer              :: i
+!..........................................................................
+
+      if (.NOT. feistyinitialised) then
+         call allocfeisty(ip, yout)
+         feistyinitialised = .TRUE.
+      end if
+
+      conc2=conc
+      call allocfeisty_ts(conc2)
+
+      call calcderivatives_ts(conc2, dconc)
+      CALL outfeisty(yout)
+
+   end subroutine runfeisty_ts
 !==========================================================================
 !==========================================================================
 ! subroutine calculating the rate of change of
