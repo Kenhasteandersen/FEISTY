@@ -670,7 +670,7 @@ derivativesFEISTYR_ts = function(t,              # current time
   u[3]=u[3]
   
   #print(p$Cmax[5])
-  print(t)
+  #print(t)
   # split state variable vector into resource and fish
   u[u<0]=0
   R     = u[p$ixR]       # resource, prey
@@ -893,7 +893,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   if (USEdll==TRUE){
     
     # names of functions in fortran code to be used
-    runfunc  <- "runfeisty"    # the derivative function
+    runfunc  <- "runfeisty_ts"    # the derivative function
     
     if (bCust==TRUE) {    
       # the integers to be passed to the fortran code
@@ -954,21 +954,27 @@ simulateFEISTY_ts = function(p      = setupBasic(),
       #         method = "ode45", rtol = rtol, atol = atol) # Run by dll
       #p$forcings$bprod_ts[,2]=p$forcings$bprod_ts
       
+      dummy=.Fortran("passnforc", 
+                     nforcsin = as.integer(nFGrid*3+5) )
       
       if(spinup == T){
         pspin=buildforcings(timesspin,p=pspin)
-        u <- ode(y		= yini,
-                 times		= times,
-                 parms		= NULL,
-                 ipar = ipar, rpar = as.double(rpar),
-                 dllname		= "FEISTY",
-                 initfunc	= initfunc,
-                 func		= runfunc,
-                 initforc	= "initfeistyforc",
-                 forcings	= pspin$forcings,
-                 fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                 method = "ode45", rtol = rtol, atol = atol,
-                 outnames = outnames, nout = length(outnames))
+        for (i in 1:loopnum) {
+          u <- ode(y		= yini,
+                   times		= timesspin,
+                   parms		= NULL,
+                   ipar = ipar, rpar = as.double(rpar),
+                   dllname		= "FEISTY",
+                   initfunc	= initfunc,
+                   func		= runfunc,
+                   initforc	= "initfeistyforc",
+                   forcings	= pspin$forcings,
+                   fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
+                   method = "ode45", rtol = rtol, atol = atol,
+                   outnames = outnames, nout = length(outnames))
+          yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+          cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
+        }
         p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
         yini = p$u0
       }
@@ -976,8 +982,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
       p=buildforcings(times,p)
       
       runfunc="runfeisty_ts"
-      dummy=.Fortran("passnforc", 
-                     nforcsin = as.integer(nFGrid*3+5) )
+
       u <- ode(y		= yini,
                times		= times,
                parms		= NULL,
@@ -1072,7 +1077,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
         u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
                 method = "ode45", rtol = rtol, atol = atol) #Run by R
         yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-        print(sprintf("i/loopnum = %.2f%%", 100*i/loopnum))
+        cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
       }
       p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
       yini = p$u0
