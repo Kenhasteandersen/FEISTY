@@ -1304,18 +1304,31 @@ setupVertical2 = function(szprod = 80, # small zoo production
 
 
 setupTimeseries = function (p = setupVertical2(),
-                            szbio_ts = Zbio/2, #c(1e3,1e3)
-                            lzbio_ts = Zbio/2,
-                            szprod_ts = Zhploss/2,
-                            lzprod_ts = Zhploss/2,
+                            szbio_ts = NA,#Zbio/2, #c(1e3,1e3)
+                            lzbio_ts = NA,#Zbio/2,
+                            szprod_ts = NA,#Zhploss/2,
+                            lzprod_ts = NA,#Zhploss/2,
                             bprodin_ts = NA, # benthos production
-                            dfbot_ts  = dfbot,#NA, # detrital flux reaching the bottom
+                            dfbot_ts  = NA,#dfbot,#NA, # detrital flux reaching the bottom
                             dfpho_ts  = NA, # detrital flux out of photic zone
-                            Tp_ts = Tp,
-                            Tm_ts = Tm,
-                            Tb_ts = Tb,
+                            Tp_ts = NA,#Tp,
+                            Tm_ts = NA,#Tm,
+                            Tb_ts = NA, #Tb,
                             benthosK = 80){ 
+
+  args <- list(
+    szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
+    lzprod_ts = lzprod_ts, bprodin_ts = bprodin_ts, dfbot_ts = dfbot_ts,
+    dfpho_ts = dfpho_ts, Tp_ts = Tp_ts, Tm_ts = Tm_ts, Tb_ts = Tb_ts)
   
+  # Check which arguments are NOT NA
+  not_na_args <- names(args)[!unlist(lapply(args, function(x) identical(x, NA)))]
+  
+  if (length(not_na_args) > 0) {
+    cat(sprintf("Time-series input: %s.", paste(not_na_args, collapse = ", ")))
+  } else {
+    message("All arguments are NA.")
+  }
   
   p$szbio_ts = szbio_ts #seq(from=100, to=800, length.out=12)
   p$szbio_ts[length(szbio_ts)+1] = szbio_ts[length(szbio_ts)] #p$zbio_ts[13] = 800
@@ -1331,17 +1344,16 @@ setupTimeseries = function (p = setupVertical2(),
   p$Tm_ts[length(Tm_ts)+1] = Tm_ts[length(Tm_ts)] 
   p$Tb_ts=Tb_ts
   p$Tb_ts[length(Tb_ts)+1] = Tb_ts[length(Tb_ts)] 
-  #?????????????????????????????????
+  #
   # benthic production calc
   if (sum(all(!is.na(bprodin_ts)), all(!is.na(dfbot_ts)), all(!is.na(dfpho_ts)))>1) stop('Please check "bprodin_ts", "dfbot_ts" and "dfpho_ts" input. Only one of them should be assigned values, others should be kept as "NA".')
   if (all(!is.na(bprodin_ts))) {bprod_ts = bprodin_ts} else {bprodin_ts = -1}
   if (all(!is.na(dfbot_ts))) {bprod_ts = dfbot_ts*0.1} else {dfbot_ts = -1}
   if (all(!is.na(dfpho_ts))) {bprod_ts = 0.1*(dfpho_ts*(depth/photic)^-0.86); if(bprod_ts>=0.1*dfpho_ts) bprod_ts=0.1*dfpho_ts} else {dfpho_ts = -1}
-  #?????????????????????????????????????  
+  #  
   p$bprod_ts=bprod_ts
   p$bprod_ts[length(bprod_ts)+1] = bprod_ts[length(bprod_ts)]
   p$K[3]=benthosK #update benthos carrying capacity, benthos biomass cannot beyond this value.
-  p$r[3]=bprod_ts[1]
   
   return(p)
 }

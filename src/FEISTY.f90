@@ -214,7 +214,6 @@
       call getVec(mort0,       rpar, ir, nGrid)
       call getVec(mortF,       rpar, ir, nGrid)
 
-
      ! resource vectors to be calculated in R-code
 
       if (allocated (R))  deallocate (R)
@@ -312,12 +311,6 @@
       call getVec(Cmaxsave,        rpar, ir, nGrid)
       call getVec(metabolismsave,  rpar, ir, nGrid)
 
-!      call getVec(depthET,  rpar, ir, 1)
-!      call getVec(Q10ET,  rpar, ir, 1)
-!      call getVec(Q10mET,  rpar, ir, 1)
-!      call getVec(pelagicT,  rpar, ir, 1)
-!      call getVec(benthicT,  rpar, ir, 1)
-
       depthET=rpar(ir)
       ir=ir+1
       Q10ET=rpar(ir)
@@ -339,32 +332,11 @@
 
       integer:: i, ir
 
-!      if (allocated (V))           deallocate (V)
-!      allocate (V(nGrid))
-!
-!      if (allocated (Cmax))        deallocate (Cmax)
-!      allocate (Cmax(nGrid))
-!
-!      if (allocated (metabolism))  deallocate (metabolism)
-!      allocate (metabolism(nGrid))
-
       ir=1
 
-      do i = 1, nFGrid
-        Cmax(nResources+i) = forcs(ir)
-        ir=ir+1
-      end do
-!      Cmax(1:nResources)=0.d0
-      do i = 1, nFGrid
-        V(nResources+i) = forcs(ir)
-        ir=ir+1
-      end do
-!      V(1:nResources)=0.d0
-      do i = 1, nFGrid
-        metabolism(nResources+i) = forcs(ir)
-        ir=ir+1
-      end do
-!      metabolism(1:nResources)=0.d0
+      call getVec(Cmax(idxF:nGrid),        forcs, ir, nFgrid)
+      call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
+      call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
 
       u(1)  =  forcs(ir) !small zooplankton biomass
       ir = ir+1
@@ -375,7 +347,6 @@
       lzprod  =  forcs(ir) !large zooplankton production
       ir = ir+1
       rr(3)  =  forcs(ir) !benthos production
-
 
    end subroutine allocfeisty_ts
 

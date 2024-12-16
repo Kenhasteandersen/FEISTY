@@ -667,9 +667,7 @@ derivativesFEISTYR_ts = function(t,              # current time
   
   u[1]=p$getts(time=t,y=p$szbio_ts)
   u[2]=p$getts(time=t,y=p$lzbio_ts)
-  u[3]=u[3]
   
-  #print(p$Cmax[5])
   #print(t)
   # split state variable vector into resource and fish
   u[u<0]=0
@@ -947,12 +945,6 @@ simulateFEISTY_ts = function(p      = setupBasic(),
         return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FEISTY",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
-      
-      # u = ode(y=yini, times=times, parms=NULL, dllname = "FEISTY",
-      #         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-      #         ipar=ipar, rpar=as.double(rpar),
-      #         method = "ode45", rtol = rtol, atol = atol) # Run by dll
-      #p$forcings$bprod_ts[,2]=p$forcings$bprod_ts
       
       dummy=.Fortran("passnforc", 
                      nforcsin = as.integer(nFGrid*3+5) )
