@@ -944,19 +944,24 @@ buildforcings = function (times,p) {
   forcings=c(forcings,forc)
   forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
   forcings=c(forcings,forc)
-  
+
   indices_Cmax <- grep("Cmax_", names(forcings))
   indices_V <- grep("V_", names(forcings))
   indices_metabolism <- grep("metabolism_", names(forcings))
-  
+
   for (t in 1:length(times)) {
-  p$Tp=p$Tp_ts[t]  
+  p$Tp=p$Tp_ts[t]
   p$Tm=p$Tm_ts[t]
-  p$Tb=p$Tb_ts[t] 
+  p$Tb=p$Tb_ts[t]
   if (p$setup == "setupVertical2") {
     p = paramTeffect_vet(p)
   }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
-    p = paramTeffect(p)
+    p = paramTeffect(p=p, # only for setupbasic & 2
+                     Tref=p$Tref,
+                     Q10=p$Q10,
+                     Q10m=p$Q10m,
+                     pelgroupidx=c(1:(p$nGroups-1)),
+                     demgroupidx=p$nGroups)
   }
 
   forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){

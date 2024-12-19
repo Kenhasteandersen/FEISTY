@@ -338,6 +338,21 @@
       call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
       call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
 
+!      do i = idxF, nGrid
+!        Cmax(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+!
+!      do i = idxF, nGrid
+!        V(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+!
+!      do i = idxF, nGrid
+!        metabolism(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+
       u(1)  =  forcs(ir) !small zooplankton biomass
       ir = ir+1
       u(2)  =  forcs(ir) !large zooplankton biomass
@@ -785,7 +800,25 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
     nforcs = nforcsin
 
+      if (allocated (forcs))       deallocate (forcs)
+      allocate (forcs(nforcs))
+
    end subroutine passnforc
+
+!subroutine passnforc(nforcsin) bind(C, name="passnforc")
+!  use iso_c_binding, only: c_int
+!  use setup
+!  implicit none
+!  integer(c_int), intent(in) :: nforcsin
+!
+!  integer :: i
+!
+!  nforcs = nforcsin
+!
+!  if (allocated(forcs)) deallocate(forcs)
+!  allocate(forcs(nforcs))
+!
+!end subroutine passnforc
 
    subroutine initfeistyforc(odeforcs)
     use setup
@@ -795,12 +828,9 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
     N = nforcs !3*nFGrid+5
 
-      if (allocated (forcs))       deallocate (forcs)
-      allocate (forcs(N))
-
     call odeforcs(N, forcs)
 
-    return
+!    return
    end subroutine initfeistyforc
 
    subroutine runfeisty_ts (neq, t, Conc, dConc, yout, ip)
@@ -818,6 +848,10 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
       if (.NOT. feistyinitialised) then
          call allocfeisty(ip, yout)
          feistyinitialised = .TRUE.
+
+       if ( allocated (dr_fac_theta))deallocate(dr_fac_theta)
+       allocate(dr_fac_theta(nGrid,nGrid))
+
       end if
 
       conc2=conc

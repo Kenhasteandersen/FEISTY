@@ -946,8 +946,9 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
       
-      dummy=.Fortran("passnforc", 
-                     nforcsin = as.integer(nFGrid*3+5) )
+      dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*3+5) )
+      
+       #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*3+5))
       
       if(spinup == T){
         pspin=buildforcings(timesspin,p=pspin)
