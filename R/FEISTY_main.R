@@ -823,7 +823,7 @@ derivativesFEISTYR_ts = function(t,              # current time
 
 
 # only for setupBasic setupBasic2 setupVertical2
-# bCust is always TRUE, all parameters are transmitted from R to Fortran
+# when USEdll = T, bCust is always TRUE, all parameters are transmitted from R to Fortran
 #
 # p=setupTimeseries(p=setupVertical2(photic = photic,depth=depth,nStages = 15),Tp_ts = Tp,Tm_ts=Tm,Tb_ts = Tb,szbio=Zbio/2,lzbio=Zbio/2,szprod_ts = Zhploss/2,lzprod_ts = Zhploss/2,dfbot_ts = dfbot)
 # sim=simulateFEISTY_ts(p=p,tEnd = 1,spinup = T)
