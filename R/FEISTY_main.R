@@ -822,7 +822,11 @@ derivativesFEISTYR_ts = function(t,              # current time
 }
 
 
-# only setupBasic setupBasic2 setupVertical2
+# only for setupBasic setupBasic2 setupVertical2
+# bCust is always TRUE, all parameters are transmitted from R to Fortran
+#
+# p=setupTimeseries(p=setupVertical2(photic = photic,depth=depth,nStages = 15),Tp_ts = Tp,Tm_ts=Tm,Tb_ts = Tb,szbio=Zbio/2,lzbio=Zbio/2,szprod_ts = Zhploss/2,lzprod_ts = Zhploss/2,dfbot_ts = dfbot)
+# sim=simulateFEISTY_ts(p=p,tEnd = 1,spinup = T)
 simulateFEISTY_ts = function(p      = setupBasic(), 
                              tEnd   = 1,
                              tStep  = 1/12,
@@ -830,9 +834,9 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                              yini   = p$u0,  
                              USEdll = TRUE,
                              Rmodel = derivativesFEISTYR_ts,
-                             bCust  = TRUE,
                              spinup = T){
   
+  bCust = TRUE
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
   nGroups <- p$nGroups[1] # no of fish groups
   nGrid   <- p$nStages[1] # no of grid points
