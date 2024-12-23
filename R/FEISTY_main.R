@@ -461,7 +461,8 @@ simulateFEISTY = function(p      = setupBasic(),
               if (is.null(p$allgrididx)) 1 else p$allgrididx, # all grid indices (resources+fish). 1, if not defined.
               if (is.null(p$lgdemidx))   1 else length(p$lgdemidx), # length of lgdemidx. 1, if not defined.
               if (is.null(p$lgdemidx))   1 else p$lgdemidx, # large demersal fish indices. 1, if not defined.
-              if (is.null(p$bET))        0 else as.integer(p$bET)) # effective temperature Boolean flag. 0 (FALSE), if not defined.
+              if (is.null(p$bET))        0 else as.integer(p$bET), # effective temperature Boolean flag. 0 (FALSE), if not defined.
+              if (is.null(p$bTS))        0 else as.integer(p$bTS)) # time-series input Boolean flag. 0 (FALSE), if not defined.
     ipar <- as.integer(ipar)
     if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype)) != 3 + nGroups)
       stop ("length of 'ipar' not ok; check parameters")
@@ -909,7 +910,8 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                 if (is.null(p$allgrididx)) 1 else p$allgrididx, # all grid indices (resources+fish). 1, if not defined.
                 if (is.null(p$lgdemidx))   1 else length(p$lgdemidx), # length of lgdemidx. 1, if not defined.
                 if (is.null(p$lgdemidx))   1 else p$lgdemidx, # large demersal fish indices. 1, if not defined.
-                if (is.null(p$bET))        0 else as.integer(p$bET)) # effective temperature Boolean flag. 0 (FALSE), if not defined.
+                if (is.null(p$bET))        0 else as.integer(p$bET), # effective temperature Boolean flag. 0 (FALSE), if not defined.
+                if (is.null(p$bTS))        0 else as.integer(p$bTS)) # time-series input Boolean flag. 0 (FALSE), if not defined.
       ipar <- as.integer(ipar)
       if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype)) != 3 + nGroups)
         stop ("length of 'ipar' not ok; check parameters")

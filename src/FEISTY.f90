@@ -127,6 +127,11 @@
       if(ipar(ii) .eq. 1) bET= .TRUE.
       if(ipar(ii) .eq. 0) bET= .FALSE.
 
+     !     Dec 2024 added for time-series input
+      ii=ii+1
+      if(ipar(ii) .eq. 1) bTS= .TRUE.
+      if(ipar(ii) .eq. 0) bTS= .FALSE.
+
 
      !--------------------------
      ! resource parameters

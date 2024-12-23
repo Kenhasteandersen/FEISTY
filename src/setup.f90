@@ -114,6 +114,7 @@ Module setup
          real(dp) :: dr_fac_sz, dr_fac_lz
          real(dp), allocatable :: forcs(:)
          integer :: nforcs
+         logical :: bTS
 
 
 

@@ -1315,7 +1315,7 @@ setupTimeseries = function (p = setupVertical2(),
                             Tm_ts = NA,#Tm,
                             Tb_ts = NA, #Tb,
                             benthosK = 80){ 
-
+  p$bTS = TRUE
   args <- list(
     szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
     lzprod_ts = lzprod_ts, bprodin_ts = bprodin_ts, dfbot_ts = dfbot_ts,
