@@ -24,7 +24,6 @@ void F77_NAME(initfeistysetupvertical)(void (* steadyparms)(int *, double *));  
 void F77_NAME(initfeistysetupvertical2)(void (* steadyparms)(int *, double *));    /* setupvertical2                  */
 void F77_NAME(initfeistyforc)(void (* odeforcs)(int *, double *));
 void F77_NAME(runfeisty) (int *, double *, double *, double *, double *, int *);
-void F77_NAME(runfeisty_ts) (int *, double *, double *, double *, double *, int *);
 
 R_FortranMethodDef FEntries[] = {
     {"initfeisty",    (DL_FUNC) &F77_SUB(initfeisty),   1},
@@ -34,7 +33,6 @@ R_FortranMethodDef FEntries[] = {
     {"initfeistysetupvertical2",    (DL_FUNC) &F77_SUB(initfeistysetupvertical2),   1},
     {"initfeistyforc",    (DL_FUNC) &F77_SUB(initfeistyforc),   1},
     {"runfeisty",     (DL_FUNC) &F77_SUB(runfeisty),    6},
-    {"runfeisty_ts",     (DL_FUNC) &F77_SUB(runfeisty_ts),    6},
     {NULL, NULL, 0}
 };
 

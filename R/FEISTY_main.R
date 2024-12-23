@@ -703,12 +703,12 @@ derivativesFEISTYR_ts = function(t,              # current time
   dr_fac_theta = matrix(1, nrow = nrow(p$theta), ncol = ncol(p$theta)) 
   if(mortpred[1]*u[1] > szprod | mortpred[2]*u[2] > lzprod){
     
-    if (mortpred[1]*u[1] >= szprod) {
+    if (mortpred[1]*u[1] > szprod) {
       dr_fac_sz = szprod/(mortpred[1]*u[1])
       dr_fac_theta[p$ixFish,1] = dr_fac_sz
       mortpred[1]=dr_fac_sz*mortpred[1]
     }
-    if (mortpred[2]*u[2] >= lzprod) {
+    if (mortpred[2]*u[2] > lzprod) {
       dr_fac_lz = lzprod/(mortpred[2]*u[2])
       dr_fac_theta[p$ixFish,2] = dr_fac_lz
       mortpred[2]=dr_fac_lz*mortpred[2]
@@ -895,7 +895,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   if (USEdll==TRUE){
     
     # names of functions in fortran code to be used
-    runfunc  <- "runfeisty_ts"    # the derivative function
+    runfunc  <- "runfeisty"    # the derivative function
     
     if (bCust==TRUE) {    
       # the integers to be passed to the fortran code
@@ -978,7 +978,7 @@ simulateFEISTY_ts = function(p      = setupBasic(),
       
       p=buildforcings(times,p)
       
-      runfunc="runfeisty_ts"
+      runfunc="runfeisty"
 
       u <- ode(y		= yini,
                times		= times,
