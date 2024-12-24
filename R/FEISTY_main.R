@@ -650,11 +650,17 @@ derivativesFEISTYR_ts = function(t,              # current time
                                  u,              # all state variables
                                  p,              # parameters
                                  FullOutput=TRUE) {
+  
+  # get time-series value for the specific time point
+  u[1]=p$getts(time=t,y=p$szbio_ts)
+  u[2]=p$getts(time=t,y=p$lzbio_ts)
+  szprod = p$getts(time=t,y=p$szprod_ts)
+  lzprod = p$getts(time=t,y=p$lzprod_ts)
+  p$r[3] = p$getts(time=t,y=p$bprod_ts)
   p$Tp = p$getts(time=t,y=p$Tp_ts)
   p$Tm = p$getts(time=t,y=p$Tm_ts)
   p$Tb = p$getts(time=t,y=p$Tb_ts)
-  p$r[3] = p$getts(time=t,y=p$bprod_ts)
-  #p = paramAddPhysiology(p)
+
   if(p$setup == "setupVertical2"){
     p = paramTeffect_vet(p)
   }else if(p$setup == "setupBasic" | p$setup == "setupBasic2"){
@@ -665,9 +671,6 @@ derivativesFEISTYR_ts = function(t,              # current time
                      pelgroupidx=c(1:(p$nGroups-1)),
                      demgroupidx=p$nGroups)  
   }
-  
-  u[1]=p$getts(time=t,y=p$szbio_ts)
-  u[2]=p$getts(time=t,y=p$lzbio_ts)
   
   #print(t)
   # split state variable vector into resource and fish
@@ -698,23 +701,19 @@ derivativesFEISTYR_ts = function(t,              # current time
   mm[ is.na(mm) ] = 0
   mortpred = t(p$theta) %*% mm
   
-  szprod = p$getts(time=t,y=p$szprod_ts)
-  lzprod = p$getts(time=t,y=p$lzprod_ts)
-  
   dr_fac_theta = matrix(1, nrow = nrow(p$theta), ncol = ncol(p$theta)) 
-  if(mortpred[1]*u[1] > szprod | mortpred[2]*u[2] > lzprod){
-    
+# small zooplankton consumption cannot beyond the production
     if (mortpred[1]*u[1] > szprod) {
       dr_fac_sz = szprod/(mortpred[1]*u[1])
       dr_fac_theta[p$ixFish,1] = dr_fac_sz
       mortpred[1]=dr_fac_sz*mortpred[1]
     }
+# large zooplankton consumption cannot beyond the production  
     if (mortpred[2]*u[2] > lzprod) {
       dr_fac_lz = lzprod/(mortpred[2]*u[2])
       dr_fac_theta[p$ixFish,2] = dr_fac_lz
       mortpred[2]=dr_fac_lz*mortpred[2]
     }
-  }
   
   # f: feeding level
   # Cmax: maximum consumption rate, /yr

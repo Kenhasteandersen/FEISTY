@@ -438,7 +438,7 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 ! down-regulation in time-series input
 if(bTS .eqv. .TRUE.)then
     dr_fac_theta = 1.d0
-      if (mortpred(1)*u(1) > szprod .or. mortpred(2)*u(2) > lzprod) then
+! small zooplankton consumption cannot beyond the production
         if (mortpred(1)*u(1) > szprod) then
           dr_fac_sz = szprod / (mortpred(1)*u(1))
           do i = idxF, nGrid
@@ -446,7 +446,8 @@ if(bTS .eqv. .TRUE.)then
           end do
           mortpred(1) = dr_fac_sz * mortpred(1)
         end if
-!print*,(mortpred(1)*u(1))
+       !print*,(mortpred(1)*u(1))
+! small zooplankton consumption cannot beyond the production
         if (mortpred(2)*u(2) > lzprod) then
          dr_fac_lz = lzprod / (mortpred(2)*u(2))
           do i = idxF, nGrid
@@ -454,9 +455,9 @@ if(bTS .eqv. .TRUE.)then
           end do
          mortpred(2) = dr_fac_lz * mortpred(2)
         end if
-      end if
 
-    flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc) ! new Enc / (Cmax + original Enc) ! food limitation     [-]
+! new Enc / (Cmax + original Enc)
+    flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc) ! food limitation     [-]
 else
 ! non-time-series input
     flvl = Enc/(Cmax + Enc)                                 ! food limitation     [-]
