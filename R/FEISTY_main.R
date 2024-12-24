@@ -828,7 +828,7 @@ derivativesFEISTYR_ts = function(t,              # current time
 #
 # p=setupTimeseries(p=setupVertical2(photic = photic,depth=depth,nStages = 15),Tp_ts = Tp,Tm_ts=Tm,Tb_ts = Tb,szbio=Zbio/2,lzbio=Zbio/2,szprod_ts = Zhploss/2,lzprod_ts = Zhploss/2,dfbot_ts = dfbot)
 # sim=simulateFEISTY_ts(p=p,tEnd = 1,spinup = T)
-simulateFEISTY_ts = function(p      = setupBasic(), 
+simulateFEISTY_ts = function(p      = setupTimeseries(), 
                              tEnd   = 1,
                              tStep  = 1/12,
                              times  = seq(from=0, to=tEnd, by=tStep),  
@@ -837,7 +837,6 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                              Rmodel = derivativesFEISTYR_ts,
                              spinup = T){
   
-  bCust = TRUE
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
   nGroups <- p$nGroups[1] # no of fish groups
   nGrid   <- p$nStages[1] # no of grid points
@@ -894,11 +893,10 @@ simulateFEISTY_ts = function(p      = setupBasic(),
   #
   
   if (USEdll==TRUE){
-    
-    # names of functions in fortran code to be used
-    runfunc  <- "runfeisty"    # the derivative function
-    
-    if (bCust==TRUE) {    
+      
+      # names of functions in fortran code to be used
+      runfunc  <- "runfeisty"    # the derivative function
+      
       # the integers to be passed to the fortran code
       ipar <- c(nGroups,                           # total number of groups
                 nR,                                # total number of resources
@@ -951,9 +949,8 @@ simulateFEISTY_ts = function(p      = setupBasic(),
         return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FEISTY",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
-      
+      # initialize forcing dimension
       dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*3+5) )
-      
        #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*3+5))
       
       if(spinup == T){
@@ -979,8 +976,6 @@ simulateFEISTY_ts = function(p      = setupBasic(),
       }
       
       p=buildforcings(times,p)
-      
-      runfunc="runfeisty"
 
       u <- ode(y		= yini,
                times		= times,
@@ -996,75 +991,10 @@ simulateFEISTY_ts = function(p      = setupBasic(),
                outnames = outnames, nout = length(outnames))
       
     }
-    else
-    {     # for fixed setups
-      # Transmit input file path to Fortran library
-      passpath <- function() {
-        sys=Sys.info()['sysname']
-        
-        if (sys=='Darwin') {
-          sLibname = system.file("libs", "FEISTY.so", package = "FEISTY")
-        }
-        if (sys=='Linux') {
-          sLibname = system.file("libs", "FEISTY.so", package = "FEISTY")
-        }
-        if (sys=='Windows'){
-          if (Sys.info()['machine']=='x86-64'){
-            sLibname = system.file("libs/x64", "FEISTY.dll", package = "FEISTY")
-          }else{
-            sLibname = system.file("libs/i386", "FEISTY.dll", package = "FEISTY")
-          }
-        }
-        
-        # Reload dll to avoid crash?
-        if (is.loaded("runfeisty")) { # "runfeisty" is a function name in R_init_feisty.c
-          if (sLibname == "") {
-            print("sLibname is an empty string")
-          } else{
-            dyn.unload(sLibname)
-            dyn.load(sLibname)
-          }
-        }
-        
-        file_path=system.file("extdata", "input.nml", package = "FEISTY")
-        dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
-        file_path_V=system.file("extdata", "tempdata.dat", package = "FEISTY")
-        dummy=.C("passpathv", length=nchar(file_path_V), file_path_in=charToRaw(file_path_V))
-      }
-      
-      # Call the Fortran subroutine to pass input file path
-      passresult <- passpath()
-      
-      # Choose the setup:
-      if (p$setup=="setupBasic"){
-        initfunc <- "initfeistysetupbasic"
-        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$depth,p$Tp,p$Tb)
-      }else if(p$setup=="setupBasic2"){
-        initfunc <- "initfeistysetupbasic2"
-        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$Fmax,p$etaF,as.integer(p$bET))
-      }else if(p$setup=="setupVertical"){
-        initfunc <- "initfeistysetupvertical"
-        setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,p$region, p$bottom, p$photic)
-      }else if(p$setup=="setupVertical2"){
-        initfunc <- "initfeistysetupvertical2"
-        setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,length(p$ix[[p$nGroups]]), p$Tp, p$Tm, p$Tb, p$bottom,p$photic,p$etaMature,
-                       p$shelfdepth,p$visual,p$Fmax,p$etaF)
-      }
-      
-      if (any(is.na(times)))  # one call and return
-        return( DLLfunc(y=yini, times=0, parms=as.double(setupinput), dllname = "FEISTY",
-                        func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-                        ipar=NULL, rpar=NULL))
-      # Full simulation:
-      u = ode(y=yini, times=times, parms=as.double(setupinput), dllname = "FEISTY",
-              func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-              ipar=NULL, rpar=NULL,
-              method = "ode45", rtol = rtol, atol = atol) # Run by dll
-    }   
     #
     # Calculate in R:
     #
-  } else if (any(is.na(times))) {  # one call and return
+    else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
     

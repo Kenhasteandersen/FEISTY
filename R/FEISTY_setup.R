@@ -1314,7 +1314,7 @@ setupTimeseries = function (p = setupVertical2(),
                             Tp_ts = NA,#Tp,
                             Tm_ts = NA,#Tm,
                             Tb_ts = NA, #Tb,
-                            benthosK = 80){ 
+                            benthosK = 80){
   p$bTS = TRUE
   args <- list(
     szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
@@ -1323,6 +1323,8 @@ setupTimeseries = function (p = setupVertical2(),
   
   # Check which arguments are NOT NA
   not_na_args <- names(args)[!unlist(lapply(args, function(x) identical(x, NA)))]
+  # Check if all inputs have same length
+  if (length(unique(sapply(args[not_na_args], length))) != 1) stop("All time-series inputs must have same length.")
   
   if (length(not_na_args) > 0) {
     cat(sprintf("Time-series input: %s.", paste(not_na_args, collapse = ", ")))
