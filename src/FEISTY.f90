@@ -447,7 +447,7 @@ if(bTS .eqv. .TRUE.)then
           mortpred(1) = dr_fac_sz * mortpred(1)
         end if
        !print*,(mortpred(1)*u(1))
-! small zooplankton consumption cannot beyond the production
+! large zooplankton consumption cannot beyond the production
         if (mortpred(2)*u(2) > lzprod) then
          dr_fac_lz = lzprod / (mortpred(2)*u(2))
           do i = idxF, nGrid
