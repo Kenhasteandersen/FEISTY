@@ -108,6 +108,15 @@ Module setup
          real(dp) :: Q10mET
          real(dp) :: depthET
 
+!for time-series input (Dec 2024)
+         real(dp), allocatable :: dr_fac_theta(:, :)             ! down-regulation factor matrix
+         real(dp) :: szprod, lzprod
+         real(dp) :: dr_fac_sz, dr_fac_lz
+         real(dp), allocatable :: forcs(:)
+         integer :: nforcs
+         logical :: bTS
+
+
 
 contains
 ! ======================================

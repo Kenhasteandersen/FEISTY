@@ -514,6 +514,8 @@ setupBasic2 = function(szprod = 100, # small zoo production?
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
+#' \item ixmedium, an index indicating where medium size fish start.
+#' \item ixlarge, an index indicating where large size fish start. E.g., ixmedium = 4, ixlarge = 7: number 1 to 3 represent small fish, number 4 to 6 represent medium fish, number 7 to the last size class represent large fish
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
 #' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
 #' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
@@ -669,9 +671,10 @@ setupVertical = function(szprod = 80, # small zoo production
   
   ixmedium = which.min(abs(sizes-0.5))# - etaMature*250)) # -0.5))
   ixlarge = which.min(abs(sizes-250))# - etaMature*125000)) # -250))
-  
   # ixmedium = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   # ixlarge = which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
+  param$ixmedium=ixmedium
+  param$ixlarge=ixlarge
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
@@ -959,6 +962,8 @@ setupVertical = function(szprod = 80, # small zoo production
 #' \itemize{
 #' \item setup, name (character) of this setup
 #' \item dvm, diel vertical migration depth [m]
+#' \item ixmedium, an index indicating where medium size fish start.
+#' \item ixlarge, an index indicating where large size fish start. E.g., ixmedium = 4, ixlarge = 7: number 1 to 3 represent small fish, number 4 to 6 represent medium fish, number 7 to the last size class represent large fish
 #' \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
 #' \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
 #' \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)
@@ -1126,6 +1131,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
   
   ixmedium = which.min(abs(param$mLower[param$ix[[5]]] - 0.5))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*250))
   ixlarge = which.min(abs(param$mLower[param$ix[[5]]] - 250))# which.min(abs(param$mLower[param$ix[[5]]] - etaMature*125000))
+  param$ixmedium=ixmedium
+  param$ixlarge=ixlarge
   
   # a function to generate vertical distributions (a normal distribution)
   VertDist <- function(sigma, xloc){
@@ -1288,89 +1295,71 @@ setupVertical2 = function(szprod = 80, # small zoo production
   idx_prey   = c(prey1, prey2)
   param$theta[idx_predat,idx_prey] = param$theta[idx_predat,idx_prey]*0.5
   
-  # update temperature
-  Q10=1.88
-  Q10m=1.88
-  
-  # initialize effective T vector (all resoources and fish)
-  Teff = rep(0, length(param$u0))
-  
-  # zooplankton (no use)
-  Tday = (param$Tp + param$Tm)/2 # half surface half dvm  param$dvm = param$photic + 500
-  if (param$dvm == param$bottom) { # when param$bottom < (param$photic + 500)
-    Tday = (param$Tp + param$Tb)/2
-  }
-  if (param$dvm == 0) Tday = param$Tp # when param$bottom <= param$shelfdepth
-  Tnight = param$Tp # all surface
-  Teff[1:2] = (Tday+Tnight)/2
-  # benthos (no use)
-  Teff[3:4] = param$Tb
-  # small pelagics
-  ix = param$ix[[1]]
-  Teff[ix] = param$Tp # always surface
-  # mesopelagics 
-  ix = param$ix[[2]]
-  Tday = param$Tm # dvm
-  if (param$dvm == param$bottom) Tday = param$Tb
-  if (param$dvm == 0) Tday = param$Tp
-  Tnight = param$Tp # surface
-  Teff[ix] = (Tday+Tnight)/2
-  # large pelagics
-  ix = param$ix[[3]]
-  # daytime large half at surface half at dvm
-  Tdaylarge = (param$Tp+param$Tm)/2
-  if (param$dvm == param$bottom) Tdaylarge = (param$Tp+param$Tb)/2
-  if (param$dvm == 0) Tdaylarge = param$Tp
-  Tdaynonlarge = param$Tp # non-large at surface at daytime
-  Tnight = param$Tp     # all at surface at night
-  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnight)/2      # large
-  Teff[ix[-(ixlarge:length(ix))]] = (Tdaynonlarge+Tnight)/2 # non-large
-  # bathypelagics    
-  ix = param$ix[[4]]
-  Tday = param$Tm # all at dvm at daytime
-  if (param$dvm == param$bottom) Tday = param$Tb
-  if (param$dvm == 0)            Tday = param$Tp
-  Tnightlarge = param$Tm # large at dvm
-  if (param$dvm == param$bottom) Tnightlarge = param$Tb
-  if (param$dvm == 0)            Tnightlarge = param$Tp
-  Tnightnonlarge = param$Tp # non-large at surface at night
-  Teff[ix[ixlarge:length(ix)]]  = (Tday+Tnightlarge)/2      # large
-  Teff[ix[-(ixlarge:length(ix))]] = (Tday+Tnightnonlarge)/2 # non-large
-  # demersals    
-  ix = param$ix[[5]]
-  Tsmall  = param$Tp # small at surface
-  Tmedium = param$Tb # medium at bottom
-  # large
-  # daytime
-  Tdaylarge = param$Tm # large at middle
-  # if the water is very deep large demersals always stay at the bottom
-  if ((param$bottom - param$dvm) >= 1500) Tdaylarge = param$Tb
-  # if the water is very shallow large demersals migrate over the whole water column both day and night
-  if (param$bottom <= param$photic) {
-    Tdaylarge = (param$Tp + param$Tb)/2
-  }
-  # nighttime
-  Tnightlarge  = param$Tb # large at bottom if water is deep enough
-  # if the water is very shallow large demersals migrate over the whole water column both day and night
-  if (param$bottom <= param$photic) {
-    Tnightlarge = (param$Tp + param$Tb)/2
-  }
-  
-  Teff[ix[-(ixmedium:length(ix))]] = Tsmall # small
-  Teff[ix[ixmedium:(ixlarge-1)]]   = Tmedium # medium
-  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnightlarge)/2 # large
-  
-  scTemp =  Q10^((Teff-10)/10)
-  scTempm =  Q10m^((Teff-10)/10)
-  
-  param$Cmax = scTemp* param$Cmax # maximum consumption rate 
-  param$V= scTemp* param$V # clearance rate 
-  param$metabolism = scTempm* param$metabolism
+  param=paramTeffect_vet(param)
   
   param$setup="setupVertical2"
   
   return(param)  
 }
+
+
+setupTimeseries = function (p = setupVertical2(),
+                            szbio_ts = NA,#Zbio/2, #c(1e3,1e3)
+                            lzbio_ts = NA,#Zbio/2,
+                            szprod_ts = NA,#Zhploss/2,
+                            lzprod_ts = NA,#Zhploss/2,
+                            bprodin_ts = NA, # benthos production
+                            dfbot_ts  = NA,#dfbot,#NA, # detrital flux reaching the bottom
+                            dfpho_ts  = NA, # detrital flux out of photic zone
+                            Tp_ts = NA,#Tp,
+                            Tm_ts = NA,#Tm,
+                            Tb_ts = NA, #Tb,
+                            benthosK = 80){
+  p$bTS = TRUE
+  args <- list(
+    szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
+    lzprod_ts = lzprod_ts, bprodin_ts = bprodin_ts, dfbot_ts = dfbot_ts,
+    dfpho_ts = dfpho_ts, Tp_ts = Tp_ts, Tm_ts = Tm_ts, Tb_ts = Tb_ts)
+  
+  # Check which arguments are NOT NA
+  not_na_args <- names(args)[!unlist(lapply(args, function(x) identical(x, NA)))]
+  # Check if all inputs have same length
+  if (length(unique(sapply(args[not_na_args], length))) != 1) stop("All time-series inputs must have same length.")
+  
+  if (length(not_na_args) > 0) {
+    cat(sprintf("Time-series input: %s.", paste(not_na_args, collapse = ", ")))
+  } else {
+    message("All arguments are NA.")
+  }
+  
+  p$szbio_ts = szbio_ts #seq(from=100, to=800, length.out=12)
+  p$szbio_ts[length(szbio_ts)+1] = szbio_ts[length(szbio_ts)] #p$zbio_ts[13] = 800
+  p$lzbio_ts = lzbio_ts
+  p$lzbio_ts[length(lzbio_ts)+1] = lzbio_ts[length(lzbio_ts)] 
+  p$szprod_ts = szprod_ts
+  p$szprod_ts[length(szprod_ts)+1] = szprod_ts[length(szprod_ts)]
+  p$lzprod_ts = lzprod_ts
+  p$lzprod_ts[length(lzprod_ts)+1] = lzprod_ts[length(lzprod_ts)] 
+  p$Tp_ts=Tp_ts
+  p$Tp_ts[length(Tp_ts)+1] = Tp_ts[length(Tp_ts)] 
+  p$Tm_ts=Tm_ts
+  p$Tm_ts[length(Tm_ts)+1] = Tm_ts[length(Tm_ts)] 
+  p$Tb_ts=Tb_ts
+  p$Tb_ts[length(Tb_ts)+1] = Tb_ts[length(Tb_ts)] 
+  #
+  # benthic production calc
+  if (sum(all(!is.na(bprodin_ts)), all(!is.na(dfbot_ts)), all(!is.na(dfpho_ts)))>1) stop('Please check "bprodin_ts", "dfbot_ts" and "dfpho_ts" input. Only one of them should be assigned values, others should be kept as "NA".')
+  if (all(!is.na(bprodin_ts))) {bprod_ts = bprodin_ts} else {bprodin_ts = -1}
+  if (all(!is.na(dfbot_ts))) {bprod_ts = dfbot_ts*0.1} else {dfbot_ts = -1}
+  if (all(!is.na(dfpho_ts))) {bprod_ts = 0.1*(dfpho_ts*(depth/photic)^-0.86); if(bprod_ts>=0.1*dfpho_ts) bprod_ts=0.1*dfpho_ts} else {dfpho_ts = -1}
+  #  
+  p$bprod_ts=bprod_ts
+  p$bprod_ts[length(bprod_ts)+1] = bprod_ts[length(bprod_ts)]
+  p$K[3]=benthosK #update benthos carrying capacity, benthos biomass cannot beyond this value.
+  
+  return(p)
+}
+
 
 # ------------------------------------------------------------------------------
 # Make a basic setup with just pelagic fish. Currently not functional

@@ -839,3 +839,155 @@ updateET = function (p, #
   
   return(p)
 }
+
+# only for vertical2
+paramTeffect_vet = function (p){ 
+  
+  ixmedium=p$ixmedium
+  ixlarge=p$ixlarge
+  # update temperature
+  Q10=1.88
+  Q10m=1.88
+  
+  # initialize effective T vector (all resoources and fish)
+  Teff = rep(0, length(p$u0))
+  
+  # zooplankton (no use)
+  Tday = (p$Tp + p$Tm)/2 # half surface half dvm  p$dvm = p$photic + 500
+  if (p$dvm == p$bottom) { # when p$bottom < (p$photic + 500)
+    Tday = (p$Tp + p$Tb)/2
+  }
+  if (p$dvm == 0) Tday = p$Tp # when p$bottom <= p$shelfdepth
+  Tnight = p$Tp # all surface
+  Teff[1:2] = (Tday+Tnight)/2
+  # benthos (no use)
+  Teff[3:4] = p$Tb
+  # small pelagics
+  ix = p$ix[[1]]
+  Teff[ix] = p$Tp # always surface
+  # mesopelagics 
+  ix = p$ix[[2]]
+  Tday = p$Tm # dvm
+  if (p$dvm == p$bottom) Tday = p$Tb
+  if (p$dvm == 0) Tday = p$Tp
+  Tnight = p$Tp # surface
+  Teff[ix] = (Tday+Tnight)/2
+  # large pelagics
+  ix = p$ix[[3]]
+  # daytime large half at surface half at dvm
+  Tdaylarge = (p$Tp+p$Tm)/2
+  if (p$dvm == p$bottom) Tdaylarge = (p$Tp+p$Tb)/2
+  if (p$dvm == 0) Tdaylarge = p$Tp
+  Tdaynonlarge = p$Tp # non-large at surface at daytime
+  Tnight = p$Tp     # all at surface at night
+  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnight)/2      # large
+  Teff[ix[-(ixlarge:length(ix))]] = (Tdaynonlarge+Tnight)/2 # non-large
+  # bathypelagics    
+  ix = p$ix[[4]]
+  Tday = p$Tm # all at dvm at daytime
+  if (p$dvm == p$bottom) Tday = p$Tb
+  if (p$dvm == 0)            Tday = p$Tp
+  Tnightlarge = p$Tm # large at dvm
+  if (p$dvm == p$bottom) Tnightlarge = p$Tb
+  if (p$dvm == 0)            Tnightlarge = p$Tp
+  Tnightnonlarge = p$Tp # non-large at surface at night
+  Teff[ix[ixlarge:length(ix)]]  = (Tday+Tnightlarge)/2      # large
+  Teff[ix[-(ixlarge:length(ix))]] = (Tday+Tnightnonlarge)/2 # non-large
+  # demersals    
+  ix = p$ix[[5]]
+  Tsmall  = p$Tp # small at surface
+  Tmedium = p$Tb # medium at bottom
+  # large
+  # daytime
+  Tdaylarge = p$Tm # large at middle
+  # if the water is very deep large demersals always stay at the bottom
+  if ((p$bottom - p$dvm) >= 1500) Tdaylarge = p$Tb
+  # if the water is very shallow large demersals migrate over the whole water column both day and night
+  if (p$bottom <= p$photic) {
+    Tdaylarge = (p$Tp + p$Tb)/2
+  }
+  # nighttime
+  Tnightlarge  = p$Tb # large at bottom if water is deep enough
+  # if the water is very shallow large demersals migrate over the whole water column both day and night
+  if (p$bottom <= p$photic) {
+    Tnightlarge = (p$Tp + p$Tb)/2
+  }
+  
+  Teff[ix[-(ixmedium:length(ix))]] = Tsmall # small
+  Teff[ix[ixmedium:(ixlarge-1)]]   = Tmedium # medium
+  Teff[ix[ixlarge:length(ix)]]  = (Tdaylarge+Tnightlarge)/2 # large
+  
+  scTemp =  Q10^((Teff-10)/10)
+  scTempm =  Q10m^((Teff-10)/10)
+  
+  p$Cmax = scTemp* p$Cmaxsave # maximum consumption rate 
+  p$V= scTemp* p$Vsave # clearance rate 
+  p$metabolism = scTempm* p$metabolismsave
+  
+  return(p)
+}
+
+#hard-coded
+buildforcings = function (times,p) {
+
+  # ts_names = c("szbio_ts", "lzbio_ts",
+  #               "szprod_ts", "lzprod_ts", "bprod_ts",
+  #               "Tp_ts", "Tm_ts", "Tb_ts"
+  #               )
+  
+  forc = lapply(p$stagenames[-p$ixR], function(x){
+    matrix(c(times, rep(0,length.out=length(times))), ncol = 2)
+  })
+  forc=setNames(forc,paste("Cmax_", p$stagenames[-p$ixR], sep = ""))
+  forcings=forc
+  forc=setNames(forc,paste("V_", p$stagenames[-p$ixR], sep = ""))
+  forcings=c(forcings,forc)
+  forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
+  forcings=c(forcings,forc)
+
+  indices_Cmax <- grep("Cmax_", names(forcings))
+  indices_V <- grep("V_", names(forcings))
+  indices_metabolism <- grep("metabolism_", names(forcings))
+
+  for (t in 1:length(times)) {
+  p$Tp=p$Tp_ts[t]
+  p$Tm=p$Tm_ts[t]
+  p$Tb=p$Tb_ts[t]
+  if (p$setup == "setupVertical2") {
+    p = paramTeffect_vet(p)
+  }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
+    p = paramTeffect(p=p, # only for setupbasic & 2
+                     Tref=p$Tref,
+                     Q10=p$Q10,
+                     Q10m=p$Q10m,
+                     pelgroupidx=c(1:(p$nGroups-1)),
+                     demgroupidx=p$nGroups)
+  }
+
+  forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){
+    mat = forcings[[indices_Cmax[i]]]
+    mat[t, 2] = p$Cmax[-p$ixR][i]
+    return(mat)
+  })
+  forcings[indices_V]=lapply(1:length(indices_V), function(i){
+    mat = forcings[[indices_V[i]]]
+    mat[t, 2] = p$V[-p$ixR][i]
+    return(mat)
+  })
+  forcings[indices_metabolism]=lapply(1:length(indices_metabolism), function(i){
+    mat = forcings[[indices_metabolism[i]]]
+    mat[t, 2] = p$metabolism[-p$ixR][i]
+    return(mat)
+  })
+  }
+  
+  ts_names = c("szbio_ts", "lzbio_ts",
+               "szprod_ts", "lzprod_ts", "bprod_ts")
+  forc = lapply(ts_names, function(name) {
+    matrix(c(times, p[[name]]), ncol = 2)
+  })
+  
+  names(forc) = ts_names
+  p$forcings = c(forcings,forc)
+  return(p)
+}

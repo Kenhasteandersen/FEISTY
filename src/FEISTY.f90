@@ -127,6 +127,11 @@
       if(ipar(ii) .eq. 1) bET= .TRUE.
       if(ipar(ii) .eq. 0) bET= .FALSE.
 
+     !     Dec 2024 added for time-series input
+      ii=ii+1
+      if(ipar(ii) .eq. 1) bTS= .TRUE.
+      if(ipar(ii) .eq. 0) bTS= .FALSE.
+
 
      !--------------------------
      ! resource parameters
@@ -213,7 +218,6 @@
       call getVec(metabolism,  rpar, ir, nGrid)
       call getVec(mort0,       rpar, ir, nGrid)
       call getVec(mortF,       rpar, ir, nGrid)
-
 
      ! resource vectors to be calculated in R-code
 
@@ -312,12 +316,6 @@
       call getVec(Cmaxsave,        rpar, ir, nGrid)
       call getVec(metabolismsave,  rpar, ir, nGrid)
 
-!      call getVec(depthET,  rpar, ir, 1)
-!      call getVec(Q10ET,  rpar, ir, 1)
-!      call getVec(Q10mET,  rpar, ir, 1)
-!      call getVec(pelagicT,  rpar, ir, 1)
-!      call getVec(benthicT,  rpar, ir, 1)
-
       depthET=rpar(ir)
       ir=ir+1
       Q10ET=rpar(ir)
@@ -329,7 +327,52 @@
       benthicT=rpar(ir)
       ir=ir+1
 
+!     Dec 2024 added for time-series input
+      if ( allocated (dr_fac_theta))deallocate(dr_fac_theta)
+      allocate(dr_fac_theta(nGrid,nGrid))
+
    end subroutine allocfeisty
+
+   subroutine allocfeisty_ts(u)
+    use  setup
+      implicit none
+      !real(dp), intent(in):: tsinput(*)
+      real(dp), intent(inout):: u(nGrid) !state variable vector
+
+      integer:: i, ir
+
+      ir=1
+
+      call getVec(Cmax(idxF:nGrid),        forcs, ir, nFgrid)
+      call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
+      call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
+
+!      do i = idxF, nGrid
+!        Cmax(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+!
+!      do i = idxF, nGrid
+!        V(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+!
+!      do i = idxF, nGrid
+!        metabolism(i) = forcs(ir)
+!        ir=ir+1
+!      end do
+
+      u(1)  =  forcs(ir) !small zooplankton biomass
+      ir = ir+1
+      u(2)  =  forcs(ir) !large zooplankton biomass
+      ir = ir+1
+      szprod  =  forcs(ir) !small zooplankton production
+      ir = ir+1
+      lzprod  =  forcs(ir) !large zooplankton production
+      ir = ir+1
+      rr(3)  =  forcs(ir) !benthos production
+
+   end subroutine allocfeisty_ts
 
 !--------------------------------------
 
@@ -366,24 +409,22 @@
 
 ! ----------------------------------------------------------------------
 dudt=0.d0
+
+! ----------------------------------------------
+! Get proper state variable
+! ----------------------------------------------
+u=uin
+
+if(bTS .eqv. .TRUE.) call allocfeisty_ts(u)
+
 do i = 1, nGrid
-  u(i) = max(0.d0 , uin(i))
+  u(i) = max(0.d0 , u(i))
 end do
 
 if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
-! ----------------------------------------------
-! Feeding $ losses for resources and fish grids:
-! ----------------------------------------------
+! Encounter rates
       Enc  = V*matmul(theta, u)                         ! Encounter rates     [/yr]
-      flvl = Enc/(Cmax + Enc)                           ! food limitation     [-]
-      call checknan(flvl, nGrid)                        ! remove Nans
-
-      Eavail  = epsAssim_vec*flvl*Cmax - metabolism         ! available energy    [/yr]
-
-      grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
-
-      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
 
 ! ----------------------------------------------
 ! Mortality for resources and fish grids:
@@ -394,7 +435,47 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
       mortpred = matmul(transpose(theta), mortpred)      ! Predation mortality [/yr]
 
-!             add basal and fishing mortality)
+! down-regulation in time-series input
+if(bTS .eqv. .TRUE.)then
+    dr_fac_theta = 1.d0
+! small zooplankton consumption cannot beyond the production
+        if (mortpred(1)*u(1) > szprod) then
+          dr_fac_sz = szprod / (mortpred(1)*u(1))
+          do i = idxF, nGrid
+            dr_fac_theta(i, 1) = dr_fac_sz
+          end do
+          mortpred(1) = dr_fac_sz * mortpred(1)
+        end if
+       !print*,(mortpred(1)*u(1))
+! large zooplankton consumption cannot beyond the production
+        if (mortpred(2)*u(2) > lzprod) then
+         dr_fac_lz = lzprod / (mortpred(2)*u(2))
+          do i = idxF, nGrid
+            dr_fac_theta(i, 2) = dr_fac_lz
+          end do
+         mortpred(2) = dr_fac_lz * mortpred(2)
+        end if
+
+! new Enc / (Cmax + original Enc)
+    flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc) ! food limitation     [-]
+else
+! non-time-series input
+    flvl = Enc/(Cmax + Enc)                                 ! food limitation     [-]
+end if
+
+! ----------------------------------------------
+! Feeding $ losses for resources and fish grids:
+! ----------------------------------------------
+      !flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc)                           ! food limitation     [-]
+      call checknan(flvl, nGrid)                        ! remove Nans
+
+      Eavail  = epsAssim_vec*flvl*Cmax - metabolism         ! available energy    [/yr]
+
+      grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
+
+      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
+
+! add basal and fishing mortality)
       mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
 
 ! ----------------------------------------------
@@ -481,10 +562,16 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
         mortRes(i) = mort(i)              ! mortality rate [/year]
         R(i)       = u(i)                 ! resource [gWW/m2]
       enddo
-      if (Rtype == 1) then
-        dRdt = rr*(K-R) - mortRes*R       ! chemostat formulation
+
+      if(bTS .eqv. .TRUE.)then
+        dRdt = 0.d0
+        dRdt(3) = rr(3)*R(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
       else
-        dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
+        if (Rtype == 1) then
+          dRdt = rr*(K-R) - mortRes*R       ! chemostat formulation
+        else
+          dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
+        end if
       end if
 
       do i = 1, nResources
@@ -496,6 +583,7 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
       enddo
 
   end subroutine calcderivatives
+
 !============================================================
 
 
@@ -584,6 +672,45 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
        feistyinitialised = .TRUE.
 
    end subroutine initfeistysetupVertical2
+
+   subroutine passnforc(nforcsin)
+    use setup
+    integer, intent(in):: nforcsin
+
+    nforcs = nforcsin
+
+      if (allocated (forcs))       deallocate (forcs)
+      allocate (forcs(nforcs))
+
+   end subroutine passnforc
+
+!subroutine passnforc(nforcsin) bind(C, name="passnforc")
+!  use iso_c_binding, only: c_int
+!  use setup
+!  implicit none
+!  integer(c_int), intent(in) :: nforcsin
+!
+!  integer :: i
+!
+!  nforcs = nforcsin
+!
+!  if (allocated(forcs)) deallocate(forcs)
+!  allocate(forcs(nforcs))
+!
+!end subroutine passnforc
+
+   subroutine initfeistyforc(odeforcs)
+    use setup
+    implicit none
+    external odeforcs  ! Declare external procedure
+    integer :: N
+
+    N = nforcs !3*nFGrid+5
+
+    call odeforcs(N, forcs)
+
+!    return
+   end subroutine initfeistyforc
 
 !==========================================================================
 !==========================================================================
@@ -674,3 +801,157 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
     end do
 
    end subroutine outfeisty
+
+!! original derivative function archive
+!! =====================================
+!! derivative calculation
+!! =====================================
+!
+!! ----------------------------------------------------------------------
+!!  Calculate the derivatives for all groups:
+!!  In:
+!!  u: vector of state variables (all resources and fish grids, input)
+!!  dudt: vector to hold the derivative (input and output)
+!! ----------------------------------------------------------------------
+!
+!  subroutine calcderivatives(uin, dudt)
+!    use  setup
+!      real(dp), intent(in)    :: uin(nGrid)
+!      real(dp), intent(inout) :: dudt(nGrid)
+!      real(dp):: u(nGrid)
+!
+!      integer :: i, j, ii, istart, istop!, iGroup
+!
+!! ----------------------------------------------------------------------
+!dudt=0.d0
+!do i = 1, nGrid
+!  u(i) = max(0.d0 , uin(i))
+!end do
+!
+!if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
+!
+!! ----------------------------------------------
+!! Feeding $ losses for resources and fish grids:
+!! ----------------------------------------------
+!      Enc  = V*matmul(theta, u)                         ! Encounter rates     [/yr]
+!      flvl = Enc/(Cmax + Enc)                           ! food limitation     [-]
+!      call checknan(flvl, nGrid)                        ! remove Nans
+!
+!      Eavail  = epsAssim_vec*flvl*Cmax - metabolism         ! available energy    [/yr]
+!
+!      grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
+!
+!      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
+!
+!! ----------------------------------------------
+!! Mortality for resources and fish grids:
+!! ----------------------------------------------
+!
+!      mortpred = Cmax*V/(Enc + Cmax)*u
+!      call checknan(mortpred, nGrid)
+!
+!      mortpred = matmul(transpose(theta), mortpred)      ! Predation mortality [/yr]
+!
+!!             add basal and fishing mortality)
+!      mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
+!
+!! ----------------------------------------------
+!!  Flux out of the fish size group:
+!! ----------------------------------------------
+!
+!      ! fish only data (fish grids)
+!
+!      ii = 1
+!      do i = nResources+1, nGrid
+!        B(ii)        = u(i)                              ! fish stages          [g/m2]
+!        eFish(ii)    = Eavail(i)                         ! availabel energy     [/yr]
+!        eplus(ii)    = max(0d0, Eavail(i))               ! net growth rate      [/yr]
+!        mortFish(ii) = mort(i)                           ! total mortality      [/yr]
+!        ii = ii+1
+!      end do
+!
+!      grow = (1.d0 - psiMature)*eplus                    ! energy  for growth   [/yr]
+!
+!      gamma_vec = (grow - mortFish) /   &                    ! growth to next stage [/yr]
+!            (1d0 - (1/z)**(1d0-mortFish/grow) )
+!
+!      call checknan(gamma_vec, nFGrid)    ! No growth of fully mature classes (grow=0)
+!
+!      Fout = gamma_vec*B                                     ! flux out of stage    [g/m2/yr]
+!
+!      Repro = psiMature*eplus*B                          ! reproduction         [g/m2/yr]
+!
+!! ----------------------------------------------
+!! Flux into the size group
+!! ----------------------------------------------
+!
+!      do i = 1, nGroups
+!
+!      ! stages of this group in fish grid
+!        istart = ixStart(i) -nResources
+!        istop  = ixEnd(i) -nResources            ! last stage
+!
+!        totRepro(i)    = repro(istart)
+!        totBiomass(i)  = B(istart)
+!
+!      ! Add the waste energy in reproduction of each stages.
+!      ! Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
+!        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1.d0-epsRepro_vec(i)) * Repro(istart:istop)
+!
+!        do j = istart+1, istop
+!          Fin(j)         = Fout(j-1)
+!          totRepro(i)    = totRepro(i) + Repro(j)
+!          totBiomass(i)  = totBiomass(i) + B(j)
+!        end do
+!
+!        totRepro(i) = totRepro(i) + Fout(istop) ! growth out ouf final stage is reproduction
+!        Fin(istart) = epsRepro_vec(i)*totRepro(i)   ! reproduction
+!
+!      ! stages of this group in total grid
+!        istart = ixStart(i) ! + nResources
+!        istop  = ixEnd(i)  ! + nResources
+!
+!        totGrazing(i)  = 0d0
+!        totLoss(i)     = 0d0
+!        totMort(i)     = 0d0
+!
+!        do j = istart, istop
+!          totGrazing(i)  = totGrazing(i) + grazing(j)
+!          totLoss(i)     = totLoss(i)    + loss(j) ! updated below
+!          totMort(i)     = totMort(i)    + mort(j)*u(j)
+!        end do
+!      ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
+!        totLoss(i)=totLoss(i) + (1.d0 - epsRepro_vec(i)) * Fout(istop-nResources)
+!
+!      end do
+!      totRecruit   = totRepro*epsRepro_vec
+!
+!! ----------------------------------------------
+!! Derivatives of fish:
+!! ----------------------------------------------
+!      dBdt = Fin - Fout + (eFish - mortFish)*B - Repro
+!
+!! ----------------------------------------------
+!! Derivative of resources
+!! ----------------------------------------------
+!      ! resource only data
+!      do i = 1, nResources
+!        mortRes(i) = mort(i)              ! mortality rate [/year]
+!        R(i)       = u(i)                 ! resource [gWW/m2]
+!      enddo
+!      if (Rtype == 1) then
+!        dRdt = rr*(K-R) - mortRes*R       ! chemostat formulation
+!      else
+!        dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
+!      end if
+!
+!      do i = 1, nResources
+!        dudt(i) = dRdt(i)
+!      enddo
+!
+!      do i = 1, nFGrid
+!        dudt(i+nResources) = dBdt(i)
+!      enddo
+!
+!  end subroutine calcderivatives
+!!============================================================
