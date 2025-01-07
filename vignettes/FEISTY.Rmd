@@ -397,9 +397,9 @@ a sigmoid function:
 \end{equation}
 where $m_{\mathrm{fishing}}$ indicates the fish with this size is under 50% harvesting rate.
 \begin{equation}
-m_{\mathrm{fishing}}=\eta_{\mathrm{F}} M
+m_{\mathrm{fishing}}=\eta_{\mathrm{fishing}} M
 \end{equation}
-where $\eta_{\mathrm{F}}$ controls the weight of fish with a 50% harvesting rate relative to the max weight of the functional type.
+where $\eta_{\mathrm{fishing}}$ controls the weight of fish with a 50% harvesting rate relative to the max weight of the functional type.
 The fishing mortality rate can be assigned by the function `setFishing()`.
 
 ## Temperature effects
