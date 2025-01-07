@@ -129,6 +129,6 @@ server <- function(input, output) {
   
   # Make plots
   output$plotSimulationShiny <- renderPlot( plotSimulationShiny(sim()) )
-  output$plotNetwork <- renderPlot( plotNetwork(sim()) )
+  output$plotNetwork <- renderPlot( plotNetwork(sim(), ref_b=5) )
   output$plotDiet <- renderPlot( plotDiet(sim()) )
 }
