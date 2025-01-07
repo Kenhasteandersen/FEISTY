@@ -1349,9 +1349,10 @@ setupTimeseries = function (p = setupVertical2(),
   #
   # benthic production calc
   if (sum(all(!is.na(bprodin_ts)), all(!is.na(dfbot_ts)), all(!is.na(dfpho_ts)))>1) stop('Please check "bprodin_ts", "dfbot_ts" and "dfpho_ts" input. Only one of them should be assigned values, others should be kept as "NA".')
-  if (all(!is.na(bprodin_ts))) {bprod_ts = bprodin_ts} else {bprodin_ts = -1}
-  if (all(!is.na(dfbot_ts))) {bprod_ts = dfbot_ts*0.1} else {dfbot_ts = -1}
-  if (all(!is.na(dfpho_ts))) {bprod_ts = 0.1*(dfpho_ts*(depth/photic)^-0.86); if(bprod_ts>=0.1*dfpho_ts) bprod_ts=0.1*dfpho_ts} else {dfpho_ts = -1}
+  if (all(!is.na(bprodin_ts))) {bprod_ts = bprodin_ts} #else {bprodin_ts = -1}
+  if (all(!is.na(dfbot_ts))) {bprod_ts = dfbot_ts*0.1} #else {dfbot_ts = -1}
+  if (all(!is.na(dfpho_ts))) {bprod_ts = 0.1*(dfpho_ts*(depth/photic)^-0.86)
+                              bprod_ts[bprod_ts >= 0.1*dfpho_ts ] = 0.1*dfpho_ts[bprod_ts >= 0.1 * dfpho_ts]} #else {dfpho_ts = -1}
   #  
   p$bprod_ts=bprod_ts
   p$bprod_ts[length(bprod_ts)+1] = bprod_ts[length(bprod_ts)]
