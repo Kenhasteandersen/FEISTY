@@ -8,6 +8,16 @@ ui <- fluidPage(
   shinyjs::useShinyjs(),
   # Application title
   titlePanel("FEISTY"),
+  p('Demonstration of the FEISTY fish community simulator
+    FEISTY simulates several fish functional groups and their predator-prey
+    interactions based on the size of fish (big fish eat smaller fish) and
+    their position in the water column.'),
+  p('The emergent fish community is determined by the depth of the water,
+    by the productivity of the zooplankton, and by the detrital flux
+    toward the sea bed.'),
+  p('Documentation in:',
+    a("Zhao et al (2025)",href="http://doi.org/10.1111/2041-210X.14465"),'. 
+    Revised version 1.0, January 2025.'),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
