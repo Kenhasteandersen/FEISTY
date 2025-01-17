@@ -1311,52 +1311,96 @@ setupTimeseries = function (p = setupVertical2(),
                             bprodin_ts = NA, # benthos production
                             dfbot_ts  = NA,#dfbot,#NA, # detrital flux reaching the bottom
                             dfpho_ts  = NA, # detrital flux out of photic zone
-                            Tp_ts = NA,#Tp,
-                            Tm_ts = NA,#Tm,
+                            Tp_ts = NA, #Tp,
+                            Tm_ts = NA, #Tm,
                             Tb_ts = NA, #Tb,
+                            Fsmp_ts = NA, # smallPel
+                            Fmesop_ts = NA, # mesoPel
+                            Flgp_ts = NA, # largePel
+                            Fmidwp_ts = NA, # midwPred
+                            Fdem_ts = NA, # demersals
                             benthosK = 80){
   p$bTS = TRUE
   args <- list(
     szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
     lzprod_ts = lzprod_ts, bprodin_ts = bprodin_ts, dfbot_ts = dfbot_ts,
-    dfpho_ts = dfpho_ts, Tp_ts = Tp_ts, Tm_ts = Tm_ts, Tb_ts = Tb_ts)
+    dfpho_ts = dfpho_ts, Tp_ts = Tp_ts, Tm_ts = Tm_ts, Tb_ts = Tb_ts,
+    Fsmp_ts = Fsmp_ts, Fmesop_ts = Fmesop_ts, Flgp_ts = Flgp_ts, Fmidwp_ts = Fmidwp_ts, Fdem_ts = Fdem_ts)
   
-  # Check which arguments are NOT NA
+  # Check which inputs are NOT NA
   not_na_args <- names(args)[!unlist(lapply(args, function(x) identical(x, NA)))]
-  # Check if all inputs have same length
+  # Check if all time-series inputs have same length
   if (length(unique(sapply(args[not_na_args], length))) != 1) stop("All time-series inputs must have same length.")
   
   if (length(not_na_args) > 0) {
-    cat(sprintf("Time-series input: %s.", paste(not_na_args, collapse = ", ")))
+    # Check if the given time-series inputs contain NA values
+    if ( any(sapply(args[not_na_args], function(x) any(is.na(x)))) ) {
+      input_with_na=not_na_args[sapply(args[not_na_args], function(x) any(is.na(x)))]
+      stop(paste("Please check time-series inputs. The following inputs contain NA values:", 
+                 paste(input_with_na, collapse = ", ")))
+    }
+    # Check if szbio_ts, lzbio_ts, szprod_ts, and lzprod_ts are provided
+    args2 <- list(szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,lzprod_ts = lzprod_ts)
+    if ( any(sapply(args2, function(x) identical(x, NA))) ) {
+      na_args <- names(args2)[unlist(lapply(args2, function(x) identical(x, NA)))]
+      stop(paste("The following time-series data must be provided:", paste(na_args, collapse = ", ")))
+      }
+    # print all valid time-series inputs names
+    cat(sprintf("Time-series input: %s.", paste(not_na_args, collapse = ", "))) 
   } else {
-    message("All arguments are NA.")
+    stop("No time-series inputs are provided.")
   }
   
+  tslength=length(unlist(args[not_na_args[1]])) # length of time-series input
   p$szbio_ts = szbio_ts #seq(from=100, to=800, length.out=12)
-  p$szbio_ts[length(szbio_ts)+1] = szbio_ts[length(szbio_ts)] #p$zbio_ts[13] = 800
+  p$szbio_ts[tslength+1] = szbio_ts[tslength] #p$zbio_ts[13] = 800
   p$lzbio_ts = lzbio_ts
-  p$lzbio_ts[length(lzbio_ts)+1] = lzbio_ts[length(lzbio_ts)] 
+  p$lzbio_ts[tslength+1] = lzbio_ts[tslength] 
   p$szprod_ts = szprod_ts
-  p$szprod_ts[length(szprod_ts)+1] = szprod_ts[length(szprod_ts)]
+  p$szprod_ts[tslength+1] = szprod_ts[tslength]
   p$lzprod_ts = lzprod_ts
-  p$lzprod_ts[length(lzprod_ts)+1] = lzprod_ts[length(lzprod_ts)] 
+  p$lzprod_ts[tslength+1] = lzprod_ts[tslength] 
   p$Tp_ts=Tp_ts
-  p$Tp_ts[length(Tp_ts)+1] = Tp_ts[length(Tp_ts)] 
+  if (all(!is.na(Tp_ts))) p$Tp_ts[tslength+1] = Tp_ts[tslength] 
   p$Tm_ts=Tm_ts
-  p$Tm_ts[length(Tm_ts)+1] = Tm_ts[length(Tm_ts)] 
+  if (all(!is.na(Tm_ts))) p$Tm_ts[tslength+1] = Tm_ts[tslength] 
   p$Tb_ts=Tb_ts
-  p$Tb_ts[length(Tb_ts)+1] = Tb_ts[length(Tb_ts)] 
-  #
+  if (all(!is.na(Tb_ts))) p$Tb_ts[tslength+1] = Tb_ts[tslength] 
+  
   # benthic production calc
-  if (sum(all(!is.na(bprodin_ts)), all(!is.na(dfbot_ts)), all(!is.na(dfpho_ts)))>1) stop('Please check "bprodin_ts", "dfbot_ts" and "dfpho_ts" input. Only one of them should be assigned values, others should be kept as "NA".')
+  if (all(is.na(bprodin_ts)) & all(is.na(dfbot_ts)) & all(is.na(dfpho_ts))){
+  p$bprod_ts = NA
+  } else {
+  if (sum(all(!is.na(bprodin_ts)), all(!is.na(dfbot_ts)), all(!is.na(dfpho_ts)))>1) stop('Please check "bprodin_ts", "dfbot_ts" and "dfpho_ts" input. 
+                                                                                         Only one of them should be assigned values, others should be kept as "NA".')
   if (all(!is.na(bprodin_ts))) {bprod_ts = bprodin_ts} #else {bprodin_ts = -1}
   if (all(!is.na(dfbot_ts))) {bprod_ts = dfbot_ts*0.1} #else {dfbot_ts = -1}
   if (all(!is.na(dfpho_ts))) {bprod_ts = 0.1*(dfpho_ts*(depth/photic)^-0.86)
                               bprod_ts[bprod_ts >= 0.1*dfpho_ts ] = 0.1*dfpho_ts[bprod_ts >= 0.1 * dfpho_ts]} #else {dfpho_ts = -1}
   #  
   p$bprod_ts=bprod_ts
-  p$bprod_ts[length(bprod_ts)+1] = bprod_ts[length(bprod_ts)]
-  p$K[3]=benthosK #update benthos carrying capacity, benthos biomass cannot beyond this value.
+  p$bprod_ts[tslength+1] = bprod_ts[tslength]
+  }
+  
+  # fishing ts
+  if (p$setup %in% c("setupBasic", "setupBasic2")) {
+    if (any(!is.na(c(Fmesop_ts, Fmidwp_ts)))) {
+      stop("In setupBasic and setupBasic2, mesopelagic fish (Fmesop_ts) and midwater predators (Fmidwp_ts) should not exist.")
+    }
+  }
+  p$Fsmp_ts = Fsmp_ts
+  if (all(!is.na(Fsmp_ts))) p$Fsmp_ts[tslength+1] = Fsmp_ts[tslength]
+  p$Fmesop_ts = Fmesop_ts
+  if (all(!is.na(Fmesop_ts))) p$Fmesop_ts[tslength+1] = Fmesop_ts[tslength]
+  p$Flgp_ts = Flgp_ts
+  if (all(!is.na(Flgp_ts))) p$Flgp_ts[tslength+1] = Flgp_ts[tslength]
+  p$Fmidwp_ts = Fmidwp_ts
+  if (all(!is.na(Fmidwp_ts))) p$Fmidwp_ts[tslength+1] = Fmidwp_ts[tslength]
+  p$Fdem_ts = Fdem_ts
+  if (all(!is.na(Fdem_ts))) p$Fdem_ts[tslength+1] = Fdem_ts[tslength]
+  
+  #update benthos carrying capacity, benthos biomass cannot beyond this value.
+  p$K[3] = if (is.na(benthosK)) 80 else benthosK 
   
   return(p)
 }

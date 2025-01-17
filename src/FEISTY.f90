@@ -346,6 +346,7 @@
       call getVec(Cmax(idxF:nGrid),        forcs, ir, nFgrid)
       call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
       call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
+      call getVec(mortF(idxF:nGrid),       forcs, ir, nFgrid)
 
 !      do i = idxF, nGrid
 !        Cmax(i) = forcs(ir)
@@ -705,7 +706,7 @@ end if
     external odeforcs  ! Declare external procedure
     integer :: N
 
-    N = nforcs !3*nFGrid+5
+    N = nforcs !4*nFGrid+5
 
     call odeforcs(N, forcs)
 

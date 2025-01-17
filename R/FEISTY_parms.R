@@ -929,11 +929,6 @@ paramTeffect_vet = function (p){
 
 #hard-coded
 buildforcings = function (times,p) {
-
-  # ts_names = c("szbio_ts", "lzbio_ts",
-  #               "szprod_ts", "lzprod_ts", "bprod_ts",
-  #               "Tp_ts", "Tm_ts", "Tb_ts"
-  #               )
   
   forc = lapply(p$stagenames[-p$ixR], function(x){
     matrix(c(times, rep(0,length.out=length(times))), ncol = 2)
@@ -944,17 +939,25 @@ buildforcings = function (times,p) {
   forcings=c(forcings,forc)
   forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
   forcings=c(forcings,forc)
+  forc=setNames(forc,paste("mortF_", p$stagenames[-p$ixR], sep = ""))
+  forcings=c(forcings,forc)
 
   indices_Cmax <- grep("Cmax_", names(forcings))
   indices_V <- grep("V_", names(forcings))
   indices_metabolism <- grep("metabolism_", names(forcings))
+  indices_mortF <- grep("mortF_", names(forcings))
 
   for (t in 1:length(times)) {
-  p$Tp=p$Tp_ts[t]
-  p$Tm=p$Tm_ts[t]
-  p$Tb=p$Tb_ts[t]
+  if (all(!is.na(p$Tp_ts))) p$Tp=p$Tp_ts[t]
+  if (all(!is.na(p$Tm_ts))) p$Tm=p$Tm_ts[t]
+  if (all(!is.na(p$Tb_ts))) p$Tb=p$Tb_ts[t]
   if (p$setup == "setupVertical2") {
     p = paramTeffect_vet(p)
+    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
+    if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$Fmesop_ts[t], etaF=p$etaF, groupidx=2)
+    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=3)
+    if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$Fmidwp_ts[t], etaF=p$etaF, groupidx=4)
+    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=5)
   }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
     p = paramTeffect(p=p, # only for setupbasic & 2
                      Tref=p$Tref,
@@ -962,6 +965,9 @@ buildforcings = function (times,p) {
                      Q10m=p$Q10m,
                      pelgroupidx=c(1:(p$nGroups-1)),
                      demgroupidx=p$nGroups)
+    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
+    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=2)
+    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=3)
   }
 
   forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){
@@ -979,15 +985,30 @@ buildforcings = function (times,p) {
     mat[t, 2] = p$metabolism[-p$ixR][i]
     return(mat)
   })
+  forcings[indices_mortF]=lapply(1:length(indices_mortF), function(i){
+    mat = forcings[[indices_mortF[i]]]
+    mat[t, 2] = p$mortF[-p$ixR][i]
+    return(mat)
+  })
   }
   
-  ts_names = c("szbio_ts", "lzbio_ts",
-               "szprod_ts", "lzprod_ts", "bprod_ts")
+  # ts_names = c("szbio_ts", "lzbio_ts",
+  #               "szprod_ts", "lzprod_ts", "bprod_ts")
+  
+  ts_names = c("szbio_ts", "lzbio_ts", "szprod_ts", "lzprod_ts")
   forc = lapply(ts_names, function(name) {
     matrix(c(times, p[[name]]), ncol = 2)
   })
-  
   names(forc) = ts_names
+  forcings = c(forcings,forc)
+  
+  if (all(!is.na(p$bprod_ts))) {
+    forc = list(matrix(c(times, p[["bprod_ts"]]), ncol = 2))
+  }else{
+    forc = list(matrix(c(times, rep(p$bprod,length.out=length(times)), ncol = 2)))
+    }
+  names(forc) = "bprod_ts"
   p$forcings = c(forcings,forc)
+  
   return(p)
 }

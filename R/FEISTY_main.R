@@ -652,17 +652,22 @@ derivativesFEISTYR_ts = function(t,              # current time
                                  FullOutput=TRUE) {
   
   # get time-series value for the specific time point
-  u[1]=p$getts(time=t,y=p$szbio_ts)
-  u[2]=p$getts(time=t,y=p$lzbio_ts)
-  szprod = p$getts(time=t,y=p$szprod_ts)
-  lzprod = p$getts(time=t,y=p$lzprod_ts)
-  p$r[3] = p$getts(time=t,y=p$bprod_ts)
-  p$Tp = p$getts(time=t,y=p$Tp_ts)
-  p$Tm = p$getts(time=t,y=p$Tm_ts)
-  p$Tb = p$getts(time=t,y=p$Tb_ts)
+  u[1]=p$getts(time=t,y=p$szbio_ts) # szbio_ts must be provided
+  u[2]=p$getts(time=t,y=p$lzbio_ts) # lzbio_ts must be provided
+  szprod = p$getts(time=t,y=p$szprod_ts) # szprod_ts must be provided
+  lzprod = p$getts(time=t,y=p$lzprod_ts) # szprod_ts must be provided
+  if (all(!is.na(p$bprod_ts))) p$r[3] = p$getts(time=t,y=p$bprod_ts)
+  if (all(!is.na(p$Tp))) p$Tp = p$getts(time=t,y=p$Tp_ts)
+  if (all(!is.na(p$Tm))) p$Tm = p$getts(time=t,y=p$Tm_ts)
+  if (all(!is.na(p$Tb))) p$Tb = p$getts(time=t,y=p$Tb_ts)
 
   if(p$setup == "setupVertical2"){
     p = paramTeffect_vet(p)
+    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
+    if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmesop_ts), etaF=p$etaF, groupidx=2)
+    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=3)
+    if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmidwp_ts), etaF=p$etaF, groupidx=4)
+    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=5)
   }else if(p$setup == "setupBasic" | p$setup == "setupBasic2"){
     p = paramTeffect(p=p, # only for setupbasic & 2
                      Tref=p$Tref,
@@ -670,6 +675,9 @@ derivativesFEISTYR_ts = function(t,              # current time
                      Q10m=p$Q10m,
                      pelgroupidx=c(1:(p$nGroups-1)),
                      demgroupidx=p$nGroups)  
+    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
+    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=2)
+    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=3)
   }
   
   #print(t)
@@ -869,22 +877,51 @@ simulateFEISTY_ts = function(p      = setupTimeseries(),
     timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
     pspin = p
     
-    pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
-    pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
-    pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
-    pspin$lzbio_ts[length(pspin$lzbio_ts) + 1] = pspin$lzbio_ts[length(pspin$lzbio_ts)]
-    pspin$bprod_ts = p$bprod_ts[1:(0.1*length(p$bprod_ts))]
-    pspin$bprod_ts[length(pspin$bprod_ts) + 1] = pspin$bprod_ts[length(pspin$bprod_ts)]
-    pspin$szprod_ts = p$szprod_ts[1:(0.1*length(p$szprod_ts))]
-    pspin$szprod_ts[length(pspin$szprod_ts) + 1] = pspin$szprod_ts[length(pspin$szprod_ts)]
-    pspin$lzprod_ts = p$lzprod_ts[1:(0.1*length(p$lzprod_ts))]
-    pspin$lzprod_ts[length(pspin$lzprod_ts) + 1] = pspin$lzprod_ts[length(pspin$lzprod_ts)]
-    pspin$Tp_ts = p$Tp_ts[1:(0.1*length(p$Tp_ts))]
-    pspin$Tp_ts[length(pspin$Tp_ts) + 1] = pspin$Tp_ts[length(pspin$Tp_ts)]
-    pspin$Tm_ts = p$Tm_ts[1:(0.1*length(p$Tm_ts))]
-    pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
-    pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
-    pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
+      pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
+      pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
+      pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
+      pspin$lzbio_ts[length(pspin$lzbio_ts) + 1] = pspin$lzbio_ts[length(pspin$lzbio_ts)]
+      pspin$szprod_ts = p$szprod_ts[1:(0.1*length(p$szprod_ts))]
+      pspin$szprod_ts[length(pspin$szprod_ts) + 1] = pspin$szprod_ts[length(pspin$szprod_ts)]
+      pspin$lzprod_ts = p$lzprod_ts[1:(0.1*length(p$lzprod_ts))]
+      pspin$lzprod_ts[length(pspin$lzprod_ts) + 1] = pspin$lzprod_ts[length(pspin$lzprod_ts)]
+    if (all(!is.na(p$bprod_ts))) {
+      pspin$bprod_ts = p$bprod_ts[1:(0.1*length(p$bprod_ts))]
+      pspin$bprod_ts[length(pspin$bprod_ts) + 1] = pspin$bprod_ts[length(pspin$bprod_ts)]
+    }
+    if (all(!is.na(p$Tp_ts))){
+      pspin$Tp_ts = p$Tp_ts[1:(0.1*length(p$Tp_ts))]
+      pspin$Tp_ts[length(pspin$Tp_ts) + 1] = pspin$Tp_ts[length(pspin$Tp_ts)]
+    }
+    if (all(!is.na(p$Tm_ts))){
+      pspin$Tm_ts = p$Tm_ts[1:(0.1*length(p$Tm_ts))]
+      pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
+    }
+    if (all(!is.na(p$Tb_ts))){
+      pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
+      pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
+    }
+    
+    if (all(!is.na(p$Fsmp_ts))){
+      pspin$Fsmp_ts = p$Fsmp_ts[1:(0.1*length(p$Fsmp_ts))]
+      pspin$Fsmp_ts[length(pspin$Fsmp_ts) + 1] = pspin$Fsmp_ts[length(pspin$Fsmp_ts)]
+    }
+    if (all(!is.na(p$Fmesop_ts))) {
+      pspin$Fmesop_ts = p$Fmesop_ts[1:(0.1*length(p$Fmesop_ts))]
+      pspin$Fmesop_ts[length(pspin$Fmesop_ts)+1] = pspin$Fmesop_ts[length(pspin$Fmesop_ts)]
+    }
+    if (all(!is.na(p$Flgp_ts))) {
+      pspin$Flgp_ts = p$Flgp_ts[1:(0.1*length(p$Flgp_ts))]
+      pspin$Flgp_ts[length(pspin$Flgp_ts) + 1] = pspin$Flgp_ts[length(pspin$Flgp_ts)]
+    }
+    if (all(!is.na(p$Fmidwp_ts))) {
+      pspin$Fmidwp_ts = p$Fmidwp_ts[1:(0.1*length(p$Fmidwp_ts))]
+      pspin$Fmidwp_ts[length(pspin$Fmidwp_ts) + 1] = pspin$Fmidwp_ts[length(pspin$Fmidwp_ts)]
+    }
+    if (all(!is.na(p$Fdem_ts))) {
+      pspin$Fdem_ts = p$Fdem_ts[1:(0.1*length(p$Fdem_ts))]
+      pspin$Fdem_ts[length(pspin$Fdem_ts) + 1] = pspin$Fdem_ts[length(pspin$Fdem_ts)]
+    }
   }
   
   #
@@ -949,8 +986,8 @@ simulateFEISTY_ts = function(p      = setupTimeseries(),
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
       # initialize forcing dimension
-      dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*3+5) )
-       #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*3+5))
+      dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
+       #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
       
       if(spinup == T){
         pspin=buildforcings(timesspin,p=pspin)
@@ -1013,7 +1050,6 @@ simulateFEISTY_ts = function(p      = setupTimeseries(),
     p$getts=getts <- function(time, y) {
       approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
     }
-    
     
     u = ode(y=yini, times=times, parms=p, func = Rmodel,
             method = "ode45", rtol = rtol, atol = atol) #Run by R
