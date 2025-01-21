@@ -103,6 +103,37 @@ derivativesFEISTYR = function(t,              # current time
                               p,              # parameters
                               FullOutput=TRUE) {
   
+# get time-series value for the specific time point  
+  if (!is.null(p$bTS) & isTRUE(p$bTS)){
+    u[1]=p$getts(time=t,y=p$szbio_ts) # szbio_ts must be provided
+    u[2]=p$getts(time=t,y=p$lzbio_ts) # lzbio_ts must be provided
+    szprod = p$getts(time=t,y=p$szprod_ts) # szprod_ts must be provided
+    lzprod = p$getts(time=t,y=p$lzprod_ts) # szprod_ts must be provided
+    if (all(!is.na(p$bprod_ts))) p$r[3] = p$getts(time=t,y=p$bprod_ts)
+    if (all(!is.na(p$Tp))) p$Tp = p$getts(time=t,y=p$Tp_ts)
+    if (all(!is.na(p$Tm))) p$Tm = p$getts(time=t,y=p$Tm_ts)
+    if (all(!is.na(p$Tb))) p$Tb = p$getts(time=t,y=p$Tb_ts)
+    
+    if(p$setup == "setupVertical2"){
+      p = paramTeffect_vet(p)
+      if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
+      if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmesop_ts), etaF=p$etaF, groupidx=2)
+      if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=3)
+      if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmidwp_ts), etaF=p$etaF, groupidx=4)
+      if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=5)
+    }else if(p$setup == "setupBasic" | p$setup == "setupBasic2"){
+      p = paramTeffect(p=p, # only for setupbasic & 2
+                       Tref=p$Tref,
+                       Q10=p$Q10,
+                       Q10m=p$Q10m,
+                       pelgroupidx=c(1:(p$nGroups-1)),
+                       demgroupidx=p$nGroups)  
+      if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
+      if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=2)
+      if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=3)
+    }
+  }
+  
   # split state variable vector into resource and fish
   u[u<0]=0
   R     = u[p$ixR]       # resource, prey
@@ -119,15 +150,8 @@ derivativesFEISTYR = function(t,              # current time
   
   # V: clearance rate, (m2/g/yr) 
   # theta x u: prey available for consumption
-  # Cmax: maximum consumption rate, /yr 
-  
-  Enc = p$V * (p$theta %*% u)  # /yr
-  
-  f   = Enc / (p$Cmax + Enc)   # Functional response
-  f[is.na(f)] = 0
-  
-  # net growth rate, /yr
-  Eavail  = p$epsAssim * p$Cmax * f - p$metabolism
+  # Encounter # /yr
+  Enc = p$V * (p$theta %*% u)
   
   # ----------------------------------------------
   # Predation mortality, /yr:
@@ -136,8 +160,33 @@ derivativesFEISTYR = function(t,              # current time
   #
   mm = p$Cmax*p$V/(Enc+p$Cmax)*u # temporarily store
   mm[ is.na(mm) ] = 0
-  mortpred = t(p$theta) %*% mm
+  mortpred = t(p$theta) %*% mm  
   
+  dr_fac_theta = matrix(1, nrow = nrow(p$theta), ncol = ncol(p$theta)) 
+  if (!is.null(p$bTS) & isTRUE(p$bTS)) {
+    # small zooplankton consumption cannot beyond the production
+    if (mortpred[1]*u[1] > szprod) {
+      dr_fac_sz = szprod/(mortpred[1]*u[1])
+      dr_fac_theta[p$ixFish,1] = dr_fac_sz
+      mortpred[1]=dr_fac_sz*mortpred[1]
+    }
+    # large zooplankton consumption cannot beyond the production  
+    if (mortpred[2]*u[2] > lzprod) {
+      dr_fac_lz = lzprod/(mortpred[2]*u[2])
+      dr_fac_theta[p$ixFish,2] = dr_fac_lz
+      mortpred[2]=dr_fac_lz*mortpred[2]
+    }
+  }
+  
+  # f: feeding level
+  # Cmax: maximum consumption rate, /yr
+  # f = Enc / (p$Cmax + Enc)
+  f   = (p$V * ((p$theta*dr_fac_theta) %*% u)) / (p$Cmax + Enc)   # Functional response
+  f[is.na(f)] = 0
+  
+  # net growth rate, /yr
+  Eavail  = p$epsAssim * p$Cmax * f - p$metabolism
+
   # ----------------------------------------------
   # Total mortality (includes basal and fishing mortality)
   # ----------------------------------------------
@@ -189,10 +238,16 @@ derivativesFEISTYR = function(t,              # current time
   # ----------------------------------------------
   # Derivative of resources
   # ----------------------------------------------
-  if (p$Rtype == 1)  # chemostat
-    dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
-  else               # logistic
-    dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
+  if (is.null(p$bTS) | isFALSE(p$bTS)){
+    if (p$Rtype == 1)  # chemostat
+      dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
+    else               # logistic
+      dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
+  }else if (!is.null(p$bTS) & isTRUE(p$bTS)){
+    dRdt = c(0,0,0,0)
+    dRdt[3] = p$r[3]*R[3]*(1-R[3]/p$K[3]) - mortpred[3]*R[3]
+  }
+  
   
   # ----------------------------------------------
   # Assemble output:
@@ -645,191 +700,6 @@ simulateFEISTY = function(p      = setupBasic(),
   return(structure(sim, class = 'FEISTY'))
 }
 
-
-derivativesFEISTYR_ts = function(t,              # current time
-                                 u,              # all state variables
-                                 p,              # parameters
-                                 FullOutput=TRUE) {
-  
-  # get time-series value for the specific time point
-  u[1]=p$getts(time=t,y=p$szbio_ts) # szbio_ts must be provided
-  u[2]=p$getts(time=t,y=p$lzbio_ts) # lzbio_ts must be provided
-  szprod = p$getts(time=t,y=p$szprod_ts) # szprod_ts must be provided
-  lzprod = p$getts(time=t,y=p$lzprod_ts) # szprod_ts must be provided
-  if (all(!is.na(p$bprod_ts))) p$r[3] = p$getts(time=t,y=p$bprod_ts)
-  if (all(!is.na(p$Tp))) p$Tp = p$getts(time=t,y=p$Tp_ts)
-  if (all(!is.na(p$Tm))) p$Tm = p$getts(time=t,y=p$Tm_ts)
-  if (all(!is.na(p$Tb))) p$Tb = p$getts(time=t,y=p$Tb_ts)
-
-  if(p$setup == "setupVertical2"){
-    p = paramTeffect_vet(p)
-    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
-    if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmesop_ts), etaF=p$etaF, groupidx=2)
-    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=3)
-    if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fmidwp_ts), etaF=p$etaF, groupidx=4)
-    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=5)
-  }else if(p$setup == "setupBasic" | p$setup == "setupBasic2"){
-    p = paramTeffect(p=p, # only for setupbasic & 2
-                     Tref=p$Tref,
-                     Q10=p$Q10,
-                     Q10m=p$Q10m,
-                     pelgroupidx=c(1:(p$nGroups-1)),
-                     demgroupidx=p$nGroups)  
-    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fsmp_ts), etaF=p$etaF, groupidx=1)
-    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Flgp_ts), etaF=p$etaF, groupidx=2)
-    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$getts(time=t,y=p$Fdem_ts), etaF=p$etaF, groupidx=3)
-  }
-  
-  #print(t)
-  # split state variable vector into resource and fish
-  u[u<0]=0
-  R     = u[p$ixR]       # resource, prey
-  iFish = p$ixFish
-  B     = u[iFish]       # fish
-  
-  # update effective temperature for large demersal fish in shallow water
-  if(!is.null(p$depth) & !is.null(p$bET))
-    if (p$depth<200 & p$bET==TRUE) p=updateET(p=p,u=u)
-  
-  # ----------------------------------------------
-  # Consumption of all fish groups
-  # ----------------------------------------------
-  
-  # V: clearance rate, (m2/g/yr) 
-  # theta x u: prey available for consumption
-  # Encounter # /yr
-  Enc = p$V * (p$theta %*% u) 
-  
-  # ----------------------------------------------
-  # Predation mortality, /yr:
-  # = t(p$theta) %*% (f*p$Cmax/p$epsAssim*u/p$mc)
-  # ----------------------------------------------
-  #
-  mm = p$Cmax*p$V/(Enc+p$Cmax)*u # temporarily store
-  mm[ is.na(mm) ] = 0
-  mortpred = t(p$theta) %*% mm
-  
-  dr_fac_theta = matrix(1, nrow = nrow(p$theta), ncol = ncol(p$theta)) 
-# small zooplankton consumption cannot beyond the production
-    if (mortpred[1]*u[1] > szprod) {
-      dr_fac_sz = szprod/(mortpred[1]*u[1])
-      dr_fac_theta[p$ixFish,1] = dr_fac_sz
-      mortpred[1]=dr_fac_sz*mortpred[1]
-    }
-# large zooplankton consumption cannot beyond the production  
-    if (mortpred[2]*u[2] > lzprod) {
-      dr_fac_lz = lzprod/(mortpred[2]*u[2])
-      dr_fac_theta[p$ixFish,2] = dr_fac_lz
-      mortpred[2]=dr_fac_lz*mortpred[2]
-    }
-  
-  # f: feeding level
-  # Cmax: maximum consumption rate, /yr
-  # f = Enc / (p$Cmax + Enc)
-  f   = (p$V * ((p$theta*dr_fac_theta) %*% u)) / (p$Cmax + Enc)   # Functional response
-  f[is.na(f)] = 0
-  
-  # net growth rate, /yr
-  Eavail  = p$epsAssim * p$Cmax * f - p$metabolism
-  
-  # ----------------------------------------------
-  # Total mortality (includes basal and fishing mortality)
-  # ----------------------------------------------
-  mort = mortpred + p$mort0 + p$mortF   # /year
-  
-  # ----------------------------------------------
-  # Derivative of fish groups
-  # ----------------------------------------------
-  
-  # Flux out of the size group
-  #------------------------------
-  v     = Eavail[iFish,]   # net growth rate
-  vplus = pmax(v,0)
-  
-  # fraction available for growth
-  kappa = 1 - p$psiMature[iFish]   
-  g     = kappa*vplus
-  
-  # growth to the next stage
-  gamma = (kappa*vplus - mort[iFish]) /
-    (1 - (1/p$z[iFish])^(1-mort[iFish]/(kappa*vplus)) )
-  
-  gamma[kappa==0] = 0 # No growth of fully mature classes
-  
-  # goes out of stage (size group)
-  Fout = gamma*B
-  
-  # Energy used for reproduction
-  Repro = p$psiMature[iFish]*vplus*B
-  
-  # Flux into the size group
-  #------------------------------
-  Fin = Fout*0
-  for (i in 1:p$nGroups) {
-    ix = p$ix[[i]] - p$ix[[1]][1] +1                  # growth to
-    ixPrev  = c(ix[length(ix)], ix[1:(length(ix)-1)]) # growth from
-    Fin[ix] = Fout[ixPrev]
-    
-    # for reproduction: consider the reproduction success
-    Fin[ix[1]] = p$epsRepro[i]*(Fin[ix[1]] + sum( Repro[ix] ))
-  }
-  
-  # ----------------------------------------------
-  # Assemble derivatives of fish:
-  # ----------------------------------------------
-  
-  dBdt = Fin - Fout + (v - mort[p$ixFish])*B - Repro
-  
-  # ----------------------------------------------
-  # Derivative of resources
-  # ----------------------------------------------
-  
-  # if (p$Rtype == 1)  # chemostat
-  #   dRdt = p$r*(p$K-R) - mortpred[p$ixR]*R
-  # else               # logistic
-  #   dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
-  dRdt = c(0,0,0,0)
-  dRdt[3] = p$r[3]*R[3]*(1-R[3]/p$K[3]) - mortpred[3]*R[3]
-  
-  # ----------------------------------------------
-  # Assemble output:
-  # ----------------------------------------------
-  if (FullOutput) { # Output everything
-    out = list()
-    out$deriv = c(dRdt, dBdt)
-    out$f     = f[-p$ixR,] # Feeding level only all fish stages, no resources
-    out$mortpred = mortpred[,]
-    out$g     = g # net growth rate fish stages
-    out$Repro = Repro
-    out$Fin   = Fin
-    out$Fout  = Fout
-    
-    # for the budget:
-    grazing = p$Cmax * f         # grazing rate, /yr
-    loss    = (1.-p$epsAssim) * grazing + p$metabolism # Energy loss to environments. Updated below.
-    Reprofrac = (1-kappa)*vplus
-    
-    il <- NULL
-    for (i in 1:length(p$ix)){
-      # Add the waste energy in reproduction of each stages. Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
-      loss[p$ix[[i]]] = loss[p$ix[[i]]] + (1-p$epsRepro[i]) * Reprofrac[p$ix[[i]]-p$nResources] 
-      il <- c(il, rep(i, times=length(p$ix[[i]])))
-    }
-    
-    out$totMort    = tapply((mort   *u)[p$ixFish], INDEX=il, FUN=sum)
-    out$totGrazing = tapply((grazing*u)[p$ixFish], INDEX=il, FUN=sum)
-    # Add the waste energy in reproduction from flux out of the last stage of each functional type.
-    out$totLoss    = tapply((loss   *u)[p$ixFish], INDEX=il, FUN=sum) +(1-p$epsRepro)*Fout[sapply(p$ix, tail, n = 1)-p$nResources] 
-    out$totRepro   = tapply(Repro, INDEX=il, FUN=sum) + Fout[sapply(p$ix, tail, n = 1)-p$nResources] 
-    out$totRecruit = out$totRepro* p$epsRepro
-    out$totBiomass = tapply(B, INDEX=il, FUN=sum)
-    return(out)
-  }
-  else # Output just the derivatives
-    return( list(c(dRdt, dBdt)) )
-}
-
-
 # only for setupBasic setupBasic2 setupVertical2
 # when USEdll = T, bCust is always TRUE, all parameters are transmitted from R to Fortran
 #
@@ -841,7 +711,7 @@ simulateFEISTY_ts = function(p      = setupTimeseries(),
                              times  = seq(from=0, to=tEnd, by=tStep),  
                              yini   = p$u0,  
                              USEdll = TRUE,
-                             Rmodel = derivativesFEISTYR_ts,
+                             Rmodel = derivativesFEISTYR,
                              spinup = T){
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
