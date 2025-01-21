@@ -583,16 +583,6 @@ simulateFEISTY = function(p      = setupBasic(),
           }
         }
         
-        # Reload dll to avoid crash?
-        if (is.loaded("runfeisty")) { # "runfeisty" is a function name in R_init_feisty.c
-          if (sLibname == "") {
-            print("sLibname is an empty string")
-          } else{
-            dyn.unload(sLibname)
-            dyn.load(sLibname)
-          }
-        }
-        
         file_path=system.file("extdata", "input.nml", package = "FEISTY")
         dummy=.C("passpath", length=nchar(file_path), file_path_in = charToRaw(file_path))
         file_path_V=system.file("extdata", "tempdata.dat", package = "FEISTY")
@@ -705,6 +695,7 @@ simulateFEISTY = function(p      = setupBasic(),
 #
 # p=setupTimeseries(p=setupVertical2(photic = photic,depth=depth,nStages = 15),Tp_ts = Tp,Tm_ts=Tm,Tb_ts = Tb,szbio=Zbio/2,lzbio=Zbio/2,szprod_ts = Zhploss/2,lzprod_ts = Zhploss/2,dfbot_ts = dfbot)
 # sim=simulateFEISTY_ts(p=p,tEnd = 1,spinup = T)
+#' @export
 simulateFEISTY_ts = function(p      = setupTimeseries(), 
                              tEnd   = 1,
                              tStep  = 1/12,

@@ -1302,7 +1302,7 @@ setupVertical2 = function(szprod = 80, # small zoo production
   return(param)  
 }
 
-
+#' @export
 setupTimeseries = function (p = setupVertical2(),
                             szbio_ts = NA,#Zbio/2, #c(1e3,1e3)
                             lzbio_ts = NA,#Zbio/2,

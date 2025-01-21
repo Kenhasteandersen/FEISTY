@@ -27,7 +27,6 @@ Module setup
    real(dp), allocatable:: sizeprefer(:, :)        ! Size preference matrix
    real(dp), allocatable:: vertover(:, :)          ! Vertical overlap matrix
    real(dp), allocatable:: theta(:, :)             ! Feeding preference matrix
-   real(dp), dimension(:), allocatable :: upositive ! State variable must be positive
    real(dp), dimension(:), allocatable :: F         ! Available food
 
 ! assembled vectors including resources and fish
@@ -1879,121 +1878,156 @@ contains
 !
 ! Allocate/deallocate variables:
 !
-      if (allocated(upositive)) then
-         deallocate (group)
-         deallocate (ixStart)
-         deallocate (ixEnd)
-         deallocate (upositive)
-         deallocate (F)
-         deallocate (theta)
-         deallocate (sizeprefer)
-         deallocate (vertover)
-         deallocate (V)
-         deallocate (Enc)
-         deallocate (flvl)
-         deallocate (Cmax)
-         deallocate (mortpred)
-         deallocate (mc)
-         deallocate (mL)
-         deallocate (mU)
-         deallocate (K)
-         deallocate (rr)
-         !maybe more variables
-         !
+        if (allocated(group)) deallocate(group)
+        allocate(group(nGroups))
 
-!-----------------Oct 2023 add-----------
-         deallocate(epsAssim_vec)
-         deallocate(metabolism)
-         deallocate(mort0)
-         deallocate(mortF)
-         deallocate(z)
-         deallocate(psiMature)
-         deallocate(epsRepro_vec)
-         deallocate(grazing)
-         deallocate(loss)
-         deallocate(mort)
-         deallocate(EAvail)
-         deallocate(B)
-         deallocate(dBdt)
-         deallocate(eplus)
-         deallocate(eFish)
-         deallocate(grow)
-         deallocate(gamma_vec)
-         deallocate(Repro)
-         deallocate(mortFish)
-         deallocate(Fout)
-         deallocate(Fin)
-         deallocate(totMort)
-         deallocate(totGrazing)
-         deallocate(totLoss)
-         deallocate(totRepro)
-         deallocate(totRecruit)
-         deallocate(totBiomass)
-         deallocate(R)
-         deallocate(dRdt)
-         deallocate(mortRes)
-!-----------------------------------------
+        if (allocated(ixStart)) deallocate(ixStart)
+        allocate(ixStart(nGroups))
 
-!-----------------Feb 2024 add-----------
-         deallocate(metabolismsave)
-         deallocate(Vsave)
-         deallocate(Cmaxsave)
-         bET=.FALSE.
+        if (allocated(ixEnd)) deallocate(ixEnd)
+        allocate(ixEnd(nGroups))
 
-      end if
+        if (allocated(F)) deallocate(F)
+        allocate(F(nGrid))
 
-      allocate (group(nGroups))
-      allocate (ixStart(nGroups))
-      allocate (ixEnd(nGroups))
-      allocate (upositive(nGrid))
-      allocate (F(nGrid))
-      allocate (theta(nGrid, nGrid))
-      allocate (sizeprefer(nGrid, nGrid))
-      allocate (vertover(nGrid, nGrid))
-      !
+        if (allocated(theta)) deallocate(theta)
+        allocate(theta(nGrid, nGrid))
 
-!-----------------Oct 2023 add-----------
-      allocate(epsRepro_vec(nGroups))
-      allocate(psiMature(nFGrid))
-      allocate(z(nFGrid))
-      allocate(epsAssim_vec(nGrid))
-      allocate(metabolism(nGrid))
-      allocate(mort(nGrid))
-      allocate(mort0(nGrid))
-      allocate(mortF(nGrid))
-      allocate(R(nResources))
-      allocate(dRdt(nResources))
-      allocate(mortRes(nResources))
-      allocate(grow(nFGrid))
-      allocate(eplus(nFGrid))
-      allocate(mortFish(nFGrid))
-      allocate(eFish(nFGrid))
-      allocate(B(nFGrid))
-      allocate(dBdt(nFGrid))
-      allocate(gamma_vec(nFGrid))
-      allocate(Fout(nFGrid))
-      allocate(Fin(nFGrid))
-      allocate(Repro(nFGrid))
-      allocate(Eavail(nGrid))
-      allocate(grazing(nGrid))
-      allocate(loss(nGrid))
-      allocate(totMort(nGroups))
-      allocate(totGrazing(nGroups))
-      allocate(totLoss(nGroups))
-      allocate(totRepro(nGroups))
-      allocate(totRecruit(nGroups))
-      allocate(totBiomass(nGroups))
-!---------------------------------------
+        if (allocated(sizeprefer)) deallocate(sizeprefer)
+        allocate(sizeprefer(nGrid, nGrid))
 
-!-----------------Feb 2024 add-----------
-      allocate(metabolismsave(nGrid))
-      allocate(Vsave(nGrid))
-      allocate(Cmaxsave(nGrid))
+        if (allocated(vertover)) deallocate(vertover)
+        allocate(vertover(nGrid, nGrid))
 
+        if (allocated(V)) deallocate(V)
+        if (allocated(Enc)) deallocate(Enc)
+        if (allocated(flvl)) deallocate(flvl)
+        if (allocated(Cmax)) deallocate(Cmax)
+        if (allocated(mortpred)) deallocate(mortpred)
+        if (allocated(mc)) deallocate(mc)
+        if (allocated(mL)) deallocate(mL)
+        if (allocated(mU)) deallocate(mU)
+
+        if (allocated(K)) deallocate(K)
+        allocate (K(nResources))
+
+        if (allocated(rr)) deallocate(rr)
+        allocate (rr(nResources))
 
       ! define resources:
       K = [szprod, lzprod, bprod, lbenk]    ! Carrying capacity of resources [g m-2]]
       rr = [szoog, lzoog, sbeng, lbeng]   ! growth rate of resources       [yr-1]
+
+         !maybe more variables
+
+!-----------------Oct 2023 add-----------
+        if (allocated(epsAssim_vec)) deallocate(epsAssim_vec)
+        allocate(epsAssim_vec(nGrid))
+
+        if (allocated(metabolism)) deallocate(metabolism)
+        allocate(metabolism(nGrid))
+
+        if (allocated(mort0)) deallocate(mort0)
+        allocate(mort0(nGrid))
+
+        if (allocated(mortF)) deallocate(mortF)
+        allocate(mortF(nGrid))
+
+        if (allocated(z)) deallocate(z)
+        allocate(z(nFGrid))
+
+        if (allocated(psiMature)) deallocate(psiMature)
+        allocate(psiMature(nFGrid))
+
+        if (allocated(epsRepro_vec)) deallocate(epsRepro_vec)
+        allocate(epsRepro_vec(nGroups))
+
+        if (allocated(grazing)) deallocate(grazing)
+        allocate(grazing(nGrid))
+
+        if (allocated(loss)) deallocate(loss)
+        allocate(loss(nGrid))
+
+        if (allocated(mort)) deallocate(mort)
+        allocate(mort(nGrid))
+
+        if (allocated(Eavail)) deallocate(Eavail)
+        allocate(Eavail(nGrid))
+
+        if (allocated(B)) deallocate(B)
+        allocate(B(nFGrid))
+
+        if (allocated(dBdt)) deallocate(dBdt)
+        allocate(dBdt(nFGrid))
+
+        if (allocated(R)) deallocate(R)
+        allocate(R(nResources))
+
+        if (allocated(dRdt)) deallocate(dRdt)
+        allocate(dRdt(nResources))
+
+        if (allocated(mortRes)) deallocate(mortRes)
+        allocate(mortRes(nResources))
+
+        if (allocated(grow)) deallocate(grow)
+        allocate(grow(nFGrid))
+
+        if (allocated(eplus)) deallocate(eplus)
+        allocate(eplus(nFGrid))
+
+        if (allocated(mortFish)) deallocate(mortFish)
+        allocate(mortFish(nFGrid))
+
+        if (allocated(eFish)) deallocate(eFish)
+        allocate(eFish(nFGrid))
+
+        if (allocated(gamma_vec)) deallocate(gamma_vec)
+        allocate(gamma_vec(nFGrid))
+
+        if (allocated(Fout)) deallocate(Fout)
+        allocate(Fout(nFGrid))
+
+        if (allocated(Fin)) deallocate(Fin)
+        allocate(Fin(nFGrid))
+
+        if (allocated(Repro)) deallocate(Repro)
+        allocate(Repro(nFGrid))
+
+        if (allocated(totMort)) deallocate(totMort)
+        allocate(totMort(nGroups))
+
+        if (allocated(totGrazing)) deallocate(totGrazing)
+        allocate(totGrazing(nGroups))
+
+        if (allocated(totLoss)) deallocate(totLoss)
+        allocate(totLoss(nGroups))
+
+        if (allocated(totRepro)) deallocate(totRepro)
+        allocate(totRepro(nGroups))
+
+        if (allocated(totRecruit)) deallocate(totRecruit)
+        allocate(totRecruit(nGroups))
+
+        if (allocated(totBiomass)) deallocate(totBiomass)
+        allocate(totBiomass(nGroups))
+
+!-----------------Feb 2024 add-----------
+        if (allocated(metabolismsave)) deallocate(metabolismsave)
+        allocate(metabolismsave(nGrid))
+
+        if (allocated(Vsave)) deallocate(Vsave)
+        allocate(Vsave(nGrid))
+
+        if (allocated(Cmaxsave)) deallocate(Cmaxsave)
+        allocate(Cmaxsave(nGrid))
+
+        bET=.FALSE.
+
+!-----------------Jan 2025 add-----------
+        bTS=.FALSE.
+
+!---------------------------------------
+
    end subroutine parametersInit
 
 ! --------------------------
@@ -2151,8 +2185,11 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
       real(dp) :: eT, lambda
       real(dp), save :: Toldp = -1000.d0
       real(dp), save :: Toldb = -1000.d0
+      integer, allocatable:: smdemidx_storage(:), lgdemidx_storage(:)  !temporary storage
       integer:: i,ii,j,iGroup
 
+      if (allocated (smdemidx_storage))  deallocate (smdemidx_storage)
+      if (allocated (lgdemidx_storage))  deallocate (lgdemidx_storage)
       if (allocated (smdemidx))  deallocate (smdemidx)
       if (allocated (lgdemidx))  deallocate (lgdemidx)
 
@@ -2199,13 +2236,17 @@ subroutine updateTemp(Tp, Tb, depth, pelgroup, npelgroup, demgroup, ndemgroup)
         iGroup=demgroup(ii)
 
       ! form small & large demersal index array
-        smdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
-        smdemidx=smdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .le. mMedium))
-        lgdemidx=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
-        lgdemidx=lgdemidx(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], mc(ixStart(iGroup):ixEnd(iGroup)) .ge. mLarge))
+        smdemidx_storage=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        smdemidx_storage=smdemidx_storage(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], &
+                                           & mc(ixStart(iGroup):ixEnd(iGroup)) .le. mMedium))
+        smdemidx        =smdemidx_storage
+        lgdemidx_storage=[(i, i = ixStart(iGroup), ixEnd(iGroup))]!temporary
+        lgdemidx_storage=lgdemidx_storage(PACK([(i, i=1, SIZE(mc(ixStart(iGroup):ixEnd(iGroup))))], &
+                                           & mc(ixStart(iGroup):ixEnd(iGroup)) .ge. mLarge))
+        lgdemidx        =lgdemidx_storage
          if (ii.ne.1) then
-          smdemidx = [smdemidx,smdemidx]
-          lgdemidx = [lgdemidx,lgdemidx]
+          smdemidx = [smdemidx,smdemidx_storage]
+          lgdemidx = [lgdemidx,lgdemidx_storage]
          end if
 
      do i = 1, group(iGroup)%spec%n
