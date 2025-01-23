@@ -89,9 +89,9 @@ server <- function(input, output) {
                         nStages =input$nSizeGroups, # Number of size groups
                         etaMature=input$etaMature,
                         etaF=input$etaF)
-        p = setFishing(p, Fmax = input$F_smallPel, groupidx = c(1))   # set fishing among small pelagic fish
-        p = setFishing(p, Fmax = input$F_largePel, groupidx = c(2))   # set fishing among large pelagic fish
-        p = setFishing(p, Fmax = input$F_demersals, groupidx = c(3))  # set fishing among demersal fish
+        p = setFishing(p, Fmax = input$F_smallPel, etaF = input$etaF, groupidx = c(1))   # set fishing among small pelagic fish
+        p = setFishing(p, Fmax = input$F_largePel, etaF = input$etaF, groupidx = c(2))   # set fishing among large pelagic fish
+        p = setFishing(p, Fmax = input$F_demersals, etaF = input$etaF, groupidx = c(3))  # set fishing among demersal fish
         #setupini = c(input$szprod,input$lzprod,input$bprod,input$nSizeGroups,depth=input$sh_de,input$Tp,input$Tb,input$etaMature,input$F,input$etaF)
       }else if (input$Setup == "setupVertical") {
         p = setupVertical(szprod = input$szprod, lzprod = input$lzprod, dfpho=input$dfpho,
@@ -113,11 +113,11 @@ server <- function(input, output) {
                            visual=1.5,
                            etaMature=input$etaMature,
                            etaF=input$etaF)
-        p = setFishing(p, Fmax = input$F_smallPel, groupidx = c(1))   # set fishing among small pelagic fish
-        p = setFishing(p, Fmax = input$F_mesoPel, groupidx = c(2))    # set fishing among mesopelagic fish
-        p = setFishing(p, Fmax = input$F_largePel, groupidx = c(3))   # set fishing among large pelagic fish
-        p = setFishing(p, Fmax = input$F_midwPred, groupidx = c(4))   # set fishing among midwater predators
-        p = setFishing(p, Fmax = input$F_demersals, groupidx = c(5))  # set fishing for demersal fish
+        p = setFishing(p, Fmax = input$F_smallPel, etaF = input$etaF, groupidx = c(1))   # set fishing among small pelagic fish
+        p = setFishing(p, Fmax = input$F_mesoPel, etaF = input$etaF, groupidx = c(2))    # set fishing among mesopelagic fish
+        p = setFishing(p, Fmax = input$F_largePel, etaF = input$etaF, groupidx = c(3))   # set fishing among large pelagic fish
+        p = setFishing(p, Fmax = input$F_midwPred, etaF = input$etaF, groupidx = c(4))   # set fishing among midwater predators
+        p = setFishing(p, Fmax = input$F_demersals, etaF = input$etaF, groupidx = c(5))  # set fishing for demersal fish
         #setupini = c(input$szprod,input$lzprod,input$bent,input$nSizeGroups,input$region,input$bottom,input$photic,input$etaMature,input$F,input$etaF)
         
       }
