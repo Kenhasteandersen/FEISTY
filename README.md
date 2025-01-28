@@ -89,17 +89,28 @@ To do so go to: Environenment variables > user variables > path > edit; then pas
 
 ## Download and build FEISTY
 
-1. **Clone the Repository**  
-   Open terminal or git bash for windows users to download the FEISTY repository:
-   cd into to the path where you want downloaded FESTY (below is the default home directory)
-   ```
+Open terminal or git bash for windows users to download the FEISTY repository:
+cd into to the path where you want downloaded FESTY (below is the default home directory)
+```
    cd ~/
-   ```
-   Then clone FEISTY from github
-   ```bash
-   git clone https://github.com/KenHasteAndersen/FEISTY.git
-   ```
-
-3. **Build the FEISTY model**
+```
+Then clone FEISTY from the Rstudio console an run load the FEISTY library
+```bash
+   remotes::install_url("https://github.com/Kenhasteandersen/FEISTY/archive/refs/tags/v1.0.0.tar.gz")
    library(FEISTY)
+```
+You should get something like: 
+```
+   ==> Rcmd.exe INSTALL --preclean --no-multiarch --with-keep.source FEISTY
+   
+   * installing to library 'C:/Users/rdenechere/AppData/Local/R/win-library/4.3'
+   * installing *source* package 'FEISTY' ...
+   ...
+   * DONE (FEISTY)
+```
+Now you can try to run the FEISTY web app by typing in the console:
+```
+webFEISTY()
+```
+
 ---
