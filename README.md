@@ -65,14 +65,25 @@ To do so go to: Environenment variables > user variables > path > edit; then pas
    add a Makevars file with the right directoy for the fortran compiler and the libraries, this directory depends on where 
    Homebrew installed gfortran.
     ```bash
-   cd ~/.R/
-   nano Makevars 
+   cd ~/
+   mkdir .R
+   cd .R/
+
    ```
-   Then copy:
-    ```
-   FC=/opt/homebrew/bin/gfortran
-   F77=/opt/homebrew/bin/gfortran
-   FLIBS=-L/opt/homebrew/lib
+   Find gfortran location:
+   ```
+   which gfortran
+   <gfortran_location>/gfortran
+   ```
+   Then add the path to the Makevars file
+   ```
+   nano Makevars
+   ```
+   copy in Makevars the following by changing <gfortran_location> by the path you obtained from `which gfortran`
+   ```
+   FC=<gfortran_location>/gfortran
+   F77=<gfortran_location>/gfortran
+   FLIBS=-L<gfortran_location>/lib
    ```
 ---
 
@@ -80,10 +91,15 @@ To do so go to: Environenment variables > user variables > path > edit; then pas
 
 1. **Clone the Repository**  
    Open terminal or git bash for windows users to download the FEISTY repository:
+   cd into to the path where you want downloaded FESTY (below is the default home directory)
+   ```
+   cd ~/
+   ```
+   Then clone FEISTY from github
    ```bash
    git clone https://github.com/KenHasteAndersen/FEISTY.git
    ```
 
-2. **Build the FEISTY model**
-    [add dscription of how to build the model]
+3. **Build the FEISTY model**
+   library(FEISTY)
 ---
