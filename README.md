@@ -89,12 +89,7 @@ To do so go to: Environenment variables > user variables > path > edit; then pas
 
 ## Download and build FEISTY
 
-Open terminal or git bash for windows users to download the FEISTY repository:
-cd into to the path where you want downloaded FESTY (below is the default home directory)
-```
-   cd ~/
-```
-Then clone FEISTY from the Rstudio console an run load the FEISTY library
+Clone FEISTY from the Rstudio console an run load the FEISTY library
 ```bash
    remotes::install_url("https://github.com/Kenhasteandersen/FEISTY/archive/refs/tags/v1.0.0.tar.gz")
    library(FEISTY)
