@@ -464,7 +464,8 @@ simulateFEISTY = function(p      = setupBasic(),
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFEISTYR,
-                          bCust  = TRUE)
+                          bCust  = TRUE,
+                          spinup = FALSE)
 {
   
   nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
@@ -495,6 +496,61 @@ simulateFEISTY = function(p      = setupBasic(),
     paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
     paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
   
+  # if bTS is not defined, the simulation is non-ts simulation
+  if (is.null(p$bTS)) p$bTS = FALSE
+  # Configuring a parameter subset for spin-up in a ts simulation
+  if (p$bTS == T & spinup == T) {
+    loopnum=4
+    timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
+    pspin = p
+    
+    pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
+    pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
+    pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
+    pspin$lzbio_ts[length(pspin$lzbio_ts) + 1] = pspin$lzbio_ts[length(pspin$lzbio_ts)]
+    pspin$szprod_ts = p$szprod_ts[1:(0.1*length(p$szprod_ts))]
+    pspin$szprod_ts[length(pspin$szprod_ts) + 1] = pspin$szprod_ts[length(pspin$szprod_ts)]
+    pspin$lzprod_ts = p$lzprod_ts[1:(0.1*length(p$lzprod_ts))]
+    pspin$lzprod_ts[length(pspin$lzprod_ts) + 1] = pspin$lzprod_ts[length(pspin$lzprod_ts)]
+    if (all(!is.na(p$bprod_ts))) {
+      pspin$bprod_ts = p$bprod_ts[1:(0.1*length(p$bprod_ts))]
+      pspin$bprod_ts[length(pspin$bprod_ts) + 1] = pspin$bprod_ts[length(pspin$bprod_ts)]
+    }
+    if (all(!is.na(p$Tp_ts))){
+      pspin$Tp_ts = p$Tp_ts[1:(0.1*length(p$Tp_ts))]
+      pspin$Tp_ts[length(pspin$Tp_ts) + 1] = pspin$Tp_ts[length(pspin$Tp_ts)]
+    }
+    if (all(!is.na(p$Tm_ts))){
+      pspin$Tm_ts = p$Tm_ts[1:(0.1*length(p$Tm_ts))]
+      pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
+    }
+    if (all(!is.na(p$Tb_ts))){
+      pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
+      pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
+    }
+    
+    if (all(!is.na(p$Fsmp_ts))){
+      pspin$Fsmp_ts = p$Fsmp_ts[1:(0.1*length(p$Fsmp_ts))]
+      pspin$Fsmp_ts[length(pspin$Fsmp_ts) + 1] = pspin$Fsmp_ts[length(pspin$Fsmp_ts)]
+    }
+    if (all(!is.na(p$Fmesop_ts))) {
+      pspin$Fmesop_ts = p$Fmesop_ts[1:(0.1*length(p$Fmesop_ts))]
+      pspin$Fmesop_ts[length(pspin$Fmesop_ts)+1] = pspin$Fmesop_ts[length(pspin$Fmesop_ts)]
+    }
+    if (all(!is.na(p$Flgp_ts))) {
+      pspin$Flgp_ts = p$Flgp_ts[1:(0.1*length(p$Flgp_ts))]
+      pspin$Flgp_ts[length(pspin$Flgp_ts) + 1] = pspin$Flgp_ts[length(pspin$Flgp_ts)]
+    }
+    if (all(!is.na(p$Fmidwp_ts))) {
+      pspin$Fmidwp_ts = p$Fmidwp_ts[1:(0.1*length(p$Fmidwp_ts))]
+      pspin$Fmidwp_ts[length(pspin$Fmidwp_ts) + 1] = pspin$Fmidwp_ts[length(pspin$Fmidwp_ts)]
+    }
+    if (all(!is.na(p$Fdem_ts))) {
+      pspin$Fdem_ts = p$Fdem_ts[1:(0.1*length(p$Fdem_ts))]
+      pspin$Fdem_ts[length(pspin$Fdem_ts) + 1] = pspin$Fdem_ts[length(pspin$Fdem_ts)]
+    }
+  }
+  
   #
   # calculate in Fortran
   #
@@ -504,7 +560,7 @@ simulateFEISTY = function(p      = setupBasic(),
     # names of functions in fortran code to be used
     runfunc  <- "runfeisty"    # the derivative function
     
-  if (bCust==TRUE) {    
+  if ( p$bTS == T | bCust==TRUE) {    
     # the integers to be passed to the fortran code
     ipar <- c(nGroups,                           # total number of groups
               nR,                                # total number of resources
@@ -557,11 +613,59 @@ simulateFEISTY = function(p      = setupBasic(),
         return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FEISTY",
                         func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
                         ipar=ipar, rpar=as.double(rpar)))
-      
+
+      # non-ts simulation
+      if (p$bTS == FALSE){
       u = ode(y=yini, times=times, parms=NULL, dllname = "FEISTY",
               func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
               ipar=ipar, rpar=as.double(rpar),
               method = "ode45", rtol = rtol, atol = atol) # Run by dll
+      }
+
+      # time-series simulation
+      if (p$bTS == TRUE){
+        # initialize forcing dimension
+        dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
+        #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
+        
+        if(spinup == T){
+          pspin=buildforcings(timesspin,p=pspin)
+          for (i in 1:loopnum) {
+            u <- ode(y		= yini,
+                     times		= timesspin,
+                     parms		= NULL,
+                     ipar = ipar, rpar = as.double(rpar),
+                     dllname		= "FEISTY",
+                     initfunc	= initfunc,
+                     func		= runfunc,
+                     initforc	= "initfeistyforc",
+                     forcings	= pspin$forcings,
+                     fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
+                     method = "ode45", rtol = rtol, atol = atol,
+                     outnames = outnames, nout = length(outnames))
+            yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+            cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
+          }
+          p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+          yini = p$u0
+        }
+        
+        p=buildforcings(times,p)
+        
+        u <- ode(y		= yini,
+                 times		= times,
+                 parms		= NULL,
+                 ipar = ipar, rpar = as.double(rpar),
+                 dllname		= "FEISTY",
+                 initfunc	= initfunc,
+                 func		= runfunc,
+                 initforc	= "initfeistyforc",
+                 forcings	= p$forcings,
+                 fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
+                 method = "ode45", rtol = rtol, atol = atol,
+                 outnames = outnames, nout = length(outnames))
+      }
+      
     }
     else
     {     # for fixed setups
@@ -624,16 +728,38 @@ simulateFEISTY = function(p      = setupBasic(),
   } else if (any(is.na(times))) {  # one call and return
     return (Rmodel(0, yini, p))
   } else {               # R-code
+    
+    if(p$bTS == TRUE){
+      if (spinup == T) {
+        pspin$getts=getts <- function(time, y) {
+          approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
+        }
+        for (i in 1:loopnum) {
+          u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
+                  method = "ode45", rtol = rtol, atol = atol) #Run by R
+          yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+          cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
+        }
+        p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
+        yini = p$u0
+      }
+      p$getts=getts <- function(time, y) {
+        approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
+      }
+    }
+    
     u = ode(y=yini, times=times, parms=p, func = Rmodel,
             method = "ode45", rtol = rtol, atol = atol) #Run by R
     # assign colnames
     colnames(u)[(1+p$nStages+1):ncol(u)]=outnames
   }
   
+
+  # overwrite zooplankton biomass by zooplankton ts input
+  if(p$bTS==T) u[,(1:2)+1]= cbind(p$szbio_ts,p$lzbio_ts)
   #
   # Assemble output:
   #
-  
   sim   = list()
   sim$u = u[,c(p$ixR,p$ixFish)+1]
   sim$R = u[, p$ixR+1]
@@ -695,285 +821,3 @@ simulateFEISTY = function(p      = setupBasic(),
 #
 # p=setupTimeseries(p=setupVertical2(photic = photic,depth=depth,nStages = 15),Tp_ts = Tp,Tm_ts=Tm,Tb_ts = Tb,szbio=Zbio/2,lzbio=Zbio/2,szprod_ts = Zhploss/2,lzprod_ts = Zhploss/2,dfbot_ts = dfbot)
 # sim=simulateFEISTY_ts(p=p,tEnd = 1,spinup = T)
-#' @export
-simulateFEISTY_ts = function(p      = setupTimeseries(), 
-                             tEnd   = 1,
-                             tStep  = 1/12,
-                             times  = seq(from=0, to=tEnd, by=tStep),  
-                             yini   = p$u0,  
-                             USEdll = TRUE,
-                             Rmodel = derivativesFEISTYR,
-                             spinup = T){
-  
-  nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
-  nGroups <- p$nGroups[1] # no of fish groups
-  nGrid   <- p$nStages[1] # no of grid points
-  nFGrid  <- nGrid-nR # grid points of fish
-  
-  if (length(yini) != nGrid) 
-    stop ("length of 'yini' not ok - should be ", nGrid)  
-  
-  # Set tolerances for ode solving
-  rtol = 1E-8
-  atol = 1E-8
-  if (max(sapply(p$ix, length))>=21){    
-    rtol = 1E-10
-    atol = 1E-10}
-  if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
-  
-  # prepare output variable names
-  Sname <- p$stagenames
-  Fname <- p$stagenames[-(1:nR)]
-  Gname <- p$groupnames[-(1:nR)]
-  outnames <- c(
-    paste("f", Fname, sep="."), paste("mortpred", Sname, sep="."),
-    paste("g", Fname, sep="."), paste("Repro", Fname, sep="."),
-    paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
-    paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
-    paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
-    paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
-  
-  if (spinup == T) {
-    loopnum=4
-    timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
-    pspin = p
-    
-      pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
-      pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
-      pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
-      pspin$lzbio_ts[length(pspin$lzbio_ts) + 1] = pspin$lzbio_ts[length(pspin$lzbio_ts)]
-      pspin$szprod_ts = p$szprod_ts[1:(0.1*length(p$szprod_ts))]
-      pspin$szprod_ts[length(pspin$szprod_ts) + 1] = pspin$szprod_ts[length(pspin$szprod_ts)]
-      pspin$lzprod_ts = p$lzprod_ts[1:(0.1*length(p$lzprod_ts))]
-      pspin$lzprod_ts[length(pspin$lzprod_ts) + 1] = pspin$lzprod_ts[length(pspin$lzprod_ts)]
-    if (all(!is.na(p$bprod_ts))) {
-      pspin$bprod_ts = p$bprod_ts[1:(0.1*length(p$bprod_ts))]
-      pspin$bprod_ts[length(pspin$bprod_ts) + 1] = pspin$bprod_ts[length(pspin$bprod_ts)]
-    }
-    if (all(!is.na(p$Tp_ts))){
-      pspin$Tp_ts = p$Tp_ts[1:(0.1*length(p$Tp_ts))]
-      pspin$Tp_ts[length(pspin$Tp_ts) + 1] = pspin$Tp_ts[length(pspin$Tp_ts)]
-    }
-    if (all(!is.na(p$Tm_ts))){
-      pspin$Tm_ts = p$Tm_ts[1:(0.1*length(p$Tm_ts))]
-      pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
-    }
-    if (all(!is.na(p$Tb_ts))){
-      pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
-      pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
-    }
-    
-    if (all(!is.na(p$Fsmp_ts))){
-      pspin$Fsmp_ts = p$Fsmp_ts[1:(0.1*length(p$Fsmp_ts))]
-      pspin$Fsmp_ts[length(pspin$Fsmp_ts) + 1] = pspin$Fsmp_ts[length(pspin$Fsmp_ts)]
-    }
-    if (all(!is.na(p$Fmesop_ts))) {
-      pspin$Fmesop_ts = p$Fmesop_ts[1:(0.1*length(p$Fmesop_ts))]
-      pspin$Fmesop_ts[length(pspin$Fmesop_ts)+1] = pspin$Fmesop_ts[length(pspin$Fmesop_ts)]
-    }
-    if (all(!is.na(p$Flgp_ts))) {
-      pspin$Flgp_ts = p$Flgp_ts[1:(0.1*length(p$Flgp_ts))]
-      pspin$Flgp_ts[length(pspin$Flgp_ts) + 1] = pspin$Flgp_ts[length(pspin$Flgp_ts)]
-    }
-    if (all(!is.na(p$Fmidwp_ts))) {
-      pspin$Fmidwp_ts = p$Fmidwp_ts[1:(0.1*length(p$Fmidwp_ts))]
-      pspin$Fmidwp_ts[length(pspin$Fmidwp_ts) + 1] = pspin$Fmidwp_ts[length(pspin$Fmidwp_ts)]
-    }
-    if (all(!is.na(p$Fdem_ts))) {
-      pspin$Fdem_ts = p$Fdem_ts[1:(0.1*length(p$Fdem_ts))]
-      pspin$Fdem_ts[length(pspin$Fdem_ts) + 1] = pspin$Fdem_ts[length(pspin$Fdem_ts)]
-    }
-  }
-  
-  #
-  # calculate in Fortran
-  #
-  
-  if (USEdll==TRUE){
-      
-      # names of functions in fortran code to be used
-      runfunc  <- "runfeisty"    # the derivative function
-      
-      # the integers to be passed to the fortran code
-      ipar <- c(nGroups,                           # total number of groups
-                nR,                                # total number of resources
-                unlist(lapply(p$ix, FUN=length)),  # number of stages per fish group
-                p$Rtype,                           # type of resource dynamics
-                if (is.null(p$pelgrididx)) 1 else length(p$pelgrididx), # length of pelgrididx. 1, if not defined.
-                if (is.null(p$pelgrididx)) 1 else p$pelgrididx, # all pelagic fish grid indices. 1, if not defined.
-                if (is.null(p$allgrididx)) 1 else length(p$allgrididx), # length of allgrididx. 1, if not defined.
-                if (is.null(p$allgrididx)) 1 else p$allgrididx, # all grid indices (resources+fish). 1, if not defined.
-                if (is.null(p$lgdemidx))   1 else length(p$lgdemidx), # length of lgdemidx. 1, if not defined.
-                if (is.null(p$lgdemidx))   1 else p$lgdemidx, # large demersal fish indices. 1, if not defined.
-                if (is.null(p$bET))        0 else as.integer(p$bET), # effective temperature Boolean flag. 0 (FALSE), if not defined.
-                if (is.null(p$bTS))        0 else as.integer(p$bTS)) # time-series input Boolean flag. 0 (FALSE), if not defined.
-      ipar <- as.integer(ipar)
-      if (length(c(nGroups,nR,unlist(lapply(p$ix, FUN=length)),p$Rtype)) != 3 + nGroups)
-        stop ("length of 'ipar' not ok; check parameters")
-      
-      if (any(dim(p$theta)-c(nGrid, nGrid) != 0))
-        stop ("dimension of 'theta' not ok: should be (", nGrid, ",", nGrid, ")")  
-      
-      # the double precision numbers to be passed to the fortran code
-      rpar   <- c(rep(p$K,  length.out=nR),            # resource parameters
-                  rep(p$r,  length.out=nR),  
-                  rep(p$epsRepro, length.out=nGroups), # group-specific parameter
-                  p$psiMature[-(1:nR)],                # fish-stage parameter
-                  p$z[-(1:nR)], 
-                  t(p$theta),                          # check if not transpose
-                  rep(p$epsAssim,   length.out=nGrid), # all  
-                  rep(p$V,          length.out=nGrid), 
-                  rep(p$Cmax,       length.out=nGrid),
-                  rep(p$metabolism, length.out=nGrid),
-                  rep(p$mort0,      length.out=nGrid),
-                  rep(p$mortF,      length.out=nGrid),
-                  rep(p$Vsave,          length.out=nGrid), 
-                  rep(p$Cmaxsave,       length.out=nGrid),
-                  rep(p$metabolismsave, length.out=nGrid),
-                  p$depth,
-                  p$Q10,
-                  p$Q10m,
-                  p$Tp,
-                  p$Tb)
-      
-      # 
-      # Run the simulation:
-      #
-      
-      initfunc <- "initfeisty"
-      
-      if (any(is.na(times)))  # one call and return
-        return( DLLfunc(y=yini, times=0, parms=NULL, dllname = "FEISTY",
-                        func=runfunc, initfunc=initfunc, outnames=outnames, nout=length(outnames),
-                        ipar=ipar, rpar=as.double(rpar)))
-      # initialize forcing dimension
-      dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
-       #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
-      
-      if(spinup == T){
-        pspin=buildforcings(timesspin,p=pspin)
-        for (i in 1:loopnum) {
-          u <- ode(y		= yini,
-                   times		= timesspin,
-                   parms		= NULL,
-                   ipar = ipar, rpar = as.double(rpar),
-                   dllname		= "FEISTY",
-                   initfunc	= initfunc,
-                   func		= runfunc,
-                   initforc	= "initfeistyforc",
-                   forcings	= pspin$forcings,
-                   fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                   method = "ode45", rtol = rtol, atol = atol,
-                   outnames = outnames, nout = length(outnames))
-          yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-          cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
-        }
-        p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-        yini = p$u0
-      }
-      
-      p=buildforcings(times,p)
-
-      u <- ode(y		= yini,
-               times		= times,
-               parms		= NULL,
-               ipar = ipar, rpar = as.double(rpar),
-               dllname		= "FEISTY",
-               initfunc	= initfunc,
-               func		= runfunc,
-               initforc	= "initfeistyforc",
-               forcings	= p$forcings,
-               fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-               method = "ode45", rtol = rtol, atol = atol,
-               outnames = outnames, nout = length(outnames))
-      
-    }
-    #
-    # Calculate in R:
-    #
-    else if (any(is.na(times))) {  # one call and return
-    return (Rmodel(0, yini, p))
-  } else {               # R-code
-    
-    if (spinup == T) {
-      pspin$getts=getts <- function(time, y) {
-        approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
-      }
-      for (i in 1:loopnum) {
-        u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
-                method = "ode45", rtol = rtol, atol = atol) #Run by R
-        yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-        cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
-      }
-      p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-      yini = p$u0
-    }
-    p$getts=getts <- function(time, y) {
-      approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
-    }
-    
-    u = ode(y=yini, times=times, parms=p, func = Rmodel,
-            method = "ode45", rtol = rtol, atol = atol) #Run by R
-    # assign colnames
-    colnames(u)[(1+p$nStages+1):ncol(u)]=outnames
-  }
-  
-  #
-  # Assemble output:
-  #
-  u[,(1:2)+1]= cbind(p$szbio_ts,p$lzbio_ts)
-  sim   = list()
-  sim$u = u[,c(p$ixR,p$ixFish)+1]
-  sim$R = u[, p$ixR+1]
-  sim$B = u[, p$ixFish+1]
-  sim$t = times
-  sim$nTime = length(times)
-  sim$USEdll=USEdll
-  sim$p = p
-  
-  # feeding level
-  # "^xx" extracting data starts with "xx"
-  col_f=grep("^f.", colnames(u), value = TRUE)
-  sim$f=u[,col_f]  
-  # predation mortality rate
-  col_mortpred=grep("^mortpred", colnames(u), value = TRUE)
-  sim$mortpred=u[,col_mortpred]
-  # net growth rate
-  col_g=grep("^g.", colnames(u), value = TRUE)
-  sim$g=u[,col_g]
-  # Energy used for reproduction [g/m2/year]
-  col_Repro=grep("^Repro", colnames(u), value = TRUE)
-  sim$Repro=u[,col_Repro]
-  # Biomass flux into each size class
-  col_Fin=grep("^Fin", colnames(u), value = TRUE)
-  sim$Fin=u[,col_Fin]
-  # Biomass flux out of each size class
-  col_Fout=grep("^Fout", colnames(u), value = TRUE)
-  sim$Fout=u[,col_Fout]
-  # total mortality of each functional group [g/m2/year],which includes predation mortality, background mortality, and fishing mortality.
-  col_totMort=grep("^totMort", colnames(u), value = TRUE)
-  sim$totMort=u[,col_totMort]
-  # total grazing of each functional group [g/m2/year], Cmax * f (maximum consumption rate * feeding level), the food intake before assimilation.
-  col_totGrazing=grep("^totGrazing", colnames(u), value = TRUE)
-  sim$totGrazing=u[,col_totGrazing]
-  # total biomass loss of each functional group [g/m2/year], including unassimilated food and metabolism. They are released to environments.
-  col_totLoss=grep("^totLoss", colnames(u), value = TRUE)
-  sim$totLoss=u[,col_totLoss]
-  # total energy used for reproduction of each functional group [g/m2]
-  col_totRepro=grep("^totRepro", colnames(u), value = TRUE)
-  sim$totRepro=u[,col_totRepro]
-  # total recruitment of each functional group [g/m2], TotRecruit = TotRepro * epsRepro (reproduction efficiency)
-  col_totRecruit=grep("^totRecruit", colnames(u), value = TRUE)
-  sim$totRecruit=u[,col_totRecruit] 
-  # total biomass of each functional group [g/m2]
-  col_totBiomass=grep("^totBiomass", colnames(u), value = TRUE)
-  sim$totBiomass=u[,col_totBiomass]  
-  
-  #
-  # Calculate Spawning Stock Biomass and yield
-  #
-  sim=calcSSB(sim=sim,etaTime=0.4)
-  sim=calcYield(sim=sim,etaTime=0.4)
-  
-  return(structure(sim, class = 'FEISTY'))
-}
