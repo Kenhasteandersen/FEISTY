@@ -439,6 +439,9 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 ! down-regulation in time-series input
 if(bTS .eqv. .TRUE.)then
     dr_fac_theta = 1.d0
+! original zooplankton consumption by fish
+    smzcsp = mortpred(1)*u(1)
+    lgzcsp = mortpred(2)*u(2)
 ! small zooplankton consumption cannot beyond the production
         if (mortpred(1)*u(1) > szprod) then
           dr_fac_sz = szprod / (mortpred(1)*u(1))
@@ -456,6 +459,9 @@ if(bTS .eqv. .TRUE.)then
           end do
          mortpred(2) = dr_fac_lz * mortpred(2)
         end if
+! down-regulated zooplankton consumption by fish
+    smzcsp_dr = mortpred(1)*u(1)
+    lgzcsp_dr = mortpred(2)*u(2)
 
 ! new Enc / (Cmax + original Enc)
     flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc) ! food limitation     [-]
@@ -800,6 +806,14 @@ end if
      yout(ir) = totBiomass(i)
      ir = ir + 1
     end do
+
+    yout(ir) = smzcsp
+    ir = ir + 1
+    yout(ir) = smzcsp_dr
+    ir = ir + 1
+    yout(ir) = lgzcsp
+    ir = ir + 1
+    yout(ir) = lgzcsp_dr
 
    end subroutine outfeisty
 

@@ -114,6 +114,7 @@ Module setup
          real(dp), allocatable :: forcs(:)
          integer :: nforcs
          logical :: bTS
+         real(dp) :: smzcsp, lgzcsp, smzcsp_dr, lgzcsp_dr
 
 
 

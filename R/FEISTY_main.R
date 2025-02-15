@@ -109,7 +109,11 @@ derivativesFEISTYR = function(t,              # current time
     u[2]=p$getts(time=t,y=p$lzbio_ts) # lzbio_ts must be provided
     szprod = p$getts(time=t,y=p$szprod_ts) # szprod_ts must be provided
     lzprod = p$getts(time=t,y=p$lzprod_ts) # szprod_ts must be provided
-    if (all(!is.na(p$bprod_ts))) p$r[3] = p$getts(time=t,y=p$bprod_ts)
+    if (all(!is.na(p$bprod_ts))) {
+      p$r[3] = p$getts(time = t, y = p$bprod_ts)
+    } else {
+      p$r[3] = p$bprod
+    }
     if (all(!is.na(p$Tp))) p$Tp = p$getts(time=t,y=p$Tp_ts)
     if (all(!is.na(p$Tm))) p$Tm = p$getts(time=t,y=p$Tm_ts)
     if (all(!is.na(p$Tb))) p$Tb = p$getts(time=t,y=p$Tb_ts)
@@ -164,18 +168,24 @@ derivativesFEISTYR = function(t,              # current time
   
   dr_fac_theta = matrix(1, nrow = nrow(p$theta), ncol = ncol(p$theta)) 
   if (!is.null(p$bTS) & isTRUE(p$bTS)) {
+    # original zooplankton consumption by fish
+    smzcsp = mortpred[1]*u[1]
+    lgzcsp = mortpred[2]*u[2]
     # small zooplankton consumption cannot beyond the production
-    if (mortpred[1]*u[1] > szprod) {
-      dr_fac_sz = szprod/(mortpred[1]*u[1])
+    if (smzcsp > szprod) {
+      dr_fac_sz = szprod/(smzcsp)
       dr_fac_theta[p$ixFish,1] = dr_fac_sz
       mortpred[1]=dr_fac_sz*mortpred[1]
     }
     # large zooplankton consumption cannot beyond the production  
-    if (mortpred[2]*u[2] > lzprod) {
-      dr_fac_lz = lzprod/(mortpred[2]*u[2])
+    if (lgzcsp > lzprod) {
+      dr_fac_lz = lzprod/(lgzcsp)
       dr_fac_theta[p$ixFish,2] = dr_fac_lz
       mortpred[2]=dr_fac_lz*mortpred[2]
     }
+    # down-regulated zooplankton consumption by fish
+    smzcsp_dr = mortpred[1]*u[1]
+    lgzcsp_dr = mortpred[2]*u[2]
   }
   
   # f: feeding level
@@ -281,6 +291,11 @@ derivativesFEISTYR = function(t,              # current time
     out$totRepro   = tapply(Repro, INDEX=il, FUN=sum) + Fout[sapply(p$ix, tail, n = 1)-p$nResources] 
     out$totRecruit = out$totRepro* p$epsRepro
     out$totBiomass = tapply(B, INDEX=il, FUN=sum)
+    # Zooplankton consumption by fish before and after down-regulation
+    out$smzcsp = smzcsp
+    out$smzcsp_dr = smzcsp_dr
+    out$lgzcsp = lgzcsp
+    out$lgzcsp_dr = lgzcsp_dr
     return(out)
   }
   else # Output just the derivatives
@@ -468,11 +483,14 @@ simulateFEISTY = function(p      = setupBasic(),
                           spinup = FALSE)
 {
   
-  nR      <- p$nResources[1]  # no of resources. [1] to make sure that this is only one number
+  nR      <- p$nResources[1] # no of resources. [1] to make sure that this is only one number
   nGroups <- p$nGroups[1] # no of fish groups
   nGrid   <- p$nStages[1] # no of grid points
   nFGrid  <- nGrid-nR # grid points of fish
-  
+
+  # if bTS is not defined, the simulation is non-ts simulation
+  if (is.null(p$bTS)) p$bTS = FALSE  
+    
   if (length(yini) != nGrid) 
     stop ("length of 'yini' not ok - should be ", nGrid)  
   
@@ -494,12 +512,13 @@ simulateFEISTY = function(p      = setupBasic(),
     paste("Fin", Fname, sep="."), paste("Fout", Fname, sep="."),
     paste("totMort", Gname, sep="."), paste("totGrazing", Gname, sep="."),
     paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
-    paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))    
+    paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
   
-  # if bTS is not defined, the simulation is non-ts simulation
-  if (is.null(p$bTS)) p$bTS = FALSE
+  if (p$bTS == TRUE) outnames = c(outnames,"smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr")
+  
   # Configuring a parameter subset for spin-up in a ts simulation
   if (p$bTS == T & spinup == T) {
+    if (tEnd<10) stop("To conduct spin-up before time-series simulation, the simulation period must be longer than 10 years.")
     loopnum=4
     timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
     pspin = p
@@ -806,6 +825,17 @@ simulateFEISTY = function(p      = setupBasic(),
   # total biomass of each functional group [g/m2]
   col_totBiomass=grep("^totBiomass", colnames(u), value = TRUE)
   sim$totBiomass=u[,col_totBiomass]  
+  # Zooplankton consumption by fish before and after down-regulation
+  if (p$bTS == TRUE){
+  col_smzcsp=grep("smzcsp$", colnames(u), value = TRUE)
+  sim$smzcsp=u[,col_smzcsp]
+  col_smzcsp_dr=grep("smzcsp_dr$", colnames(u), value = TRUE)
+  sim$smzcsp_dr=u[,col_smzcsp_dr]
+  col_lgzcsp=grep("lgzcsp$", colnames(u), value = TRUE)
+  sim$lgzcsp=u[,col_lgzcsp]
+  col_lgzcsp_dr=grep("lgzcsp_dr$", colnames(u), value = TRUE)
+  sim$lgzcsp_dr=u[,col_lgzcsp_dr]
+  }
   
   #
   # Calculate Spawning Stock Biomass and yield
