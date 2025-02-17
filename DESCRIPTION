@@ -22,7 +22,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    MASS
 VignetteBuilder: knitr
 Description: A size- and trait-based model of higher trophic level dynamics.
 License: MIT + file LICENSE

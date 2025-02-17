@@ -514,7 +514,13 @@ simulateFEISTY = function(p      = setupBasic(),
     paste("totLoss", Gname, sep="."), paste("totRepro", Gname, sep="."),
     paste("totRecruit", Gname, sep="."), paste("totBiomass", Gname, sep="."))
   
-  if (p$bTS == TRUE) outnames = c(outnames,"smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr")
+  # if ts simulation, add output names for diagnosis, rewrite time parameters based on setupTimeseries().
+  if (p$bTS == TRUE) {
+     outnames = c(outnames,"smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr")
+     tStep    = p$tStep_ts
+     tEnd     = p$tEnd_ts
+     times    = seq(from=0, to=tEnd, by=tStep)
+  }
   
   # Configuring a parameter subset for spin-up in a ts simulation
   if (p$bTS == T & spinup == T) {
