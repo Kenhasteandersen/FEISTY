@@ -1469,8 +1469,39 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' @aliases setupTimeseries
 #' @export
 #' 
+# p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
+# tStep_ts = 1/12,
+# tSpin = 1.6, #[year]
+# nSpinloop = 4, #[]
+# Tp_ts = Tp[1:200],
+# Tm_ts = Tm[1:200],
+# Tb_ts = Tb[1:200],
+# szbio = Zbio[1:200]/2,
+# lzbio = Zbio[1:200]/2,
+# szprod_ts = Zhploss[1:200]/2,
+# lzprod_ts = Zhploss[1:200]/2,
+# dfbot_ts  = dfbot[1:200])
+#
+# sim = simulateFEISTY(p = p, USEdll = F)
+# sim2 = simulateFEISTY(p = p, USEdll = T)
+# p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
+#                     tStep_ts = 1/12,
+#                     tSpin = 1.6, #[year]
+#                     nSpinloop = 4, #[]
+#                     Tp_ts = Tp,
+#                     Tm_ts = Tm,
+#                     Tb_ts = Tb,
+#                     szbio = Zbio/2,
+#                     lzbio = Zbio/2,
+#                     szprod_ts = Zhploss/2,
+#                     lzprod_ts = Zhploss/2,
+#                     dfbot_ts  = dfbot)
+# sim = simulateFEISTY(p = p, USEdll = F)
+# sim2 = simulateFEISTY(p = p, USEdll = T)
 setupTimeseries = function (p = setupVertical2(),
-                            tStep_ts = 1/12,
+                            tStep_ts = 1/12, # [year]
+                            tSpin = 10, #[year]
+                            nSpinloop = 4, #[]
                             szbio_ts = NA,#Zbio/2, #c(1e3,1e3)
                             lzbio_ts = NA,#Zbio/2,
                             szprod_ts = NA,#Zhploss/2,
@@ -1488,6 +1519,8 @@ setupTimeseries = function (p = setupVertical2(),
                             Fdem_ts = NA, # demersals
                             benthosK = 80){
   p$bTS = TRUE
+  p$tSpin = tSpin
+  p$nSpinloop = nSpinloop
   args <- list(
     szbio_ts = szbio_ts, lzbio_ts = lzbio_ts, szprod_ts = szprod_ts,
     lzprod_ts = lzprod_ts, bprodin_ts = bprodin_ts, dfbot_ts = dfbot_ts,

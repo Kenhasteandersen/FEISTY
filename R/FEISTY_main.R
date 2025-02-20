@@ -114,9 +114,9 @@ derivativesFEISTYR = function(t,              # current time
     } else {
       p$r[3] = p$bprod
     }
-    if (all(!is.na(p$Tp))) p$Tp = p$getts(time=t,y=p$Tp_ts)
-    if (all(!is.na(p$Tm))) p$Tm = p$getts(time=t,y=p$Tm_ts)
-    if (all(!is.na(p$Tb))) p$Tb = p$getts(time=t,y=p$Tb_ts)
+    if (all(!is.na(p$Tp_ts))) p$Tp = p$getts(time=t,y=p$Tp_ts)
+    if (all(!is.na(p$Tm_ts))) p$Tm = p$getts(time=t,y=p$Tm_ts)
+    if (all(!is.na(p$Tb_ts))) p$Tb = p$getts(time=t,y=p$Tb_ts)
     
     if(p$setup == "setupVertical2"){
       p = paramTeffect_vet(p)
@@ -292,10 +292,12 @@ derivativesFEISTYR = function(t,              # current time
     out$totRecruit = out$totRepro* p$epsRepro
     out$totBiomass = tapply(B, INDEX=il, FUN=sum)
     # Zooplankton consumption by fish before and after down-regulation
+    if (!is.null(p$bTS) & isTRUE(p$bTS)){
     out$smzcsp = smzcsp
     out$smzcsp_dr = smzcsp_dr
     out$lgzcsp = lgzcsp
     out$lgzcsp_dr = lgzcsp_dr
+    }
     return(out)
   }
   else # Output just the derivatives
@@ -479,8 +481,7 @@ simulateFEISTY = function(p      = setupBasic(),
                           yini   = p$u0,  
                           USEdll = TRUE,
                           Rmodel = derivativesFEISTYR,
-                          bCust  = TRUE,
-                          spinup = FALSE)
+                          bCust  = TRUE)
 {
   
   nR      <- p$nResources[1] # no of resources. [1] to make sure that this is only one number
@@ -490,6 +491,7 @@ simulateFEISTY = function(p      = setupBasic(),
 
   # if bTS is not defined, the simulation is non-ts simulation
   if (is.null(p$bTS)) p$bTS = FALSE  
+  if (is.null(p$tSpin)) p$tSpin = NA  
     
   if (length(yini) != nGrid) 
     stop ("length of 'yini' not ok - should be ", nGrid)  
@@ -523,55 +525,54 @@ simulateFEISTY = function(p      = setupBasic(),
   }
   
   # Configuring a parameter subset for spin-up in a ts simulation
-  if (p$bTS == T & spinup == T) {
+  if (p$bTS == T & is.na(p$tSpin) == F) {
     if (tEnd<10) stop("To conduct spin-up before time-series simulation, the simulation period must be longer than 10 years.")
-    loopnum=4
-    timesspin=seq(from=0, to=0.1*tEnd, by=tStep)
+    timesspin = times[times <= p$tSpin]#seq(from=0, to=0.1*tEnd, by=tStep)
     pspin = p
     
-    pspin$szbio_ts = p$szbio_ts[1:(0.1*length(p$szbio_ts))]
+    pspin$szbio_ts = p$szbio_ts[1:(length(timesspin)-1)]
     pspin$szbio_ts[length(pspin$szbio_ts) + 1] = pspin$szbio_ts[length(pspin$szbio_ts)]
-    pspin$lzbio_ts = p$lzbio_ts[1:(0.1*length(p$lzbio_ts))]
+    pspin$lzbio_ts = p$lzbio_ts[1:(length(timesspin)-1)]
     pspin$lzbio_ts[length(pspin$lzbio_ts) + 1] = pspin$lzbio_ts[length(pspin$lzbio_ts)]
-    pspin$szprod_ts = p$szprod_ts[1:(0.1*length(p$szprod_ts))]
+    pspin$szprod_ts = p$szprod_ts[1:(length(timesspin)-1)]
     pspin$szprod_ts[length(pspin$szprod_ts) + 1] = pspin$szprod_ts[length(pspin$szprod_ts)]
-    pspin$lzprod_ts = p$lzprod_ts[1:(0.1*length(p$lzprod_ts))]
+    pspin$lzprod_ts = p$lzprod_ts[1:(length(timesspin)-1)]
     pspin$lzprod_ts[length(pspin$lzprod_ts) + 1] = pspin$lzprod_ts[length(pspin$lzprod_ts)]
     if (all(!is.na(p$bprod_ts))) {
-      pspin$bprod_ts = p$bprod_ts[1:(0.1*length(p$bprod_ts))]
+      pspin$bprod_ts = p$bprod_ts[1:(length(timesspin)-1)]
       pspin$bprod_ts[length(pspin$bprod_ts) + 1] = pspin$bprod_ts[length(pspin$bprod_ts)]
     }
     if (all(!is.na(p$Tp_ts))){
-      pspin$Tp_ts = p$Tp_ts[1:(0.1*length(p$Tp_ts))]
+      pspin$Tp_ts = p$Tp_ts[1:(length(timesspin)-1)]
       pspin$Tp_ts[length(pspin$Tp_ts) + 1] = pspin$Tp_ts[length(pspin$Tp_ts)]
     }
     if (all(!is.na(p$Tm_ts))){
-      pspin$Tm_ts = p$Tm_ts[1:(0.1*length(p$Tm_ts))]
+      pspin$Tm_ts = p$Tm_ts[1:(length(timesspin)-1)]
       pspin$Tm_ts[length(pspin$Tm_ts) + 1] = pspin$Tm_ts[length(pspin$Tm_ts)]
     }
     if (all(!is.na(p$Tb_ts))){
-      pspin$Tb_ts = p$Tb_ts[1:(0.1*length(p$Tb_ts))]
+      pspin$Tb_ts = p$Tb_ts[1:(length(timesspin)-1)]
       pspin$Tb_ts[length(pspin$Tb_ts) + 1] = pspin$Tb_ts[length(pspin$Tb_ts)]
     }
     
     if (all(!is.na(p$Fsmp_ts))){
-      pspin$Fsmp_ts = p$Fsmp_ts[1:(0.1*length(p$Fsmp_ts))]
+      pspin$Fsmp_ts = p$Fsmp_ts[1:(length(timesspin)-1)]
       pspin$Fsmp_ts[length(pspin$Fsmp_ts) + 1] = pspin$Fsmp_ts[length(pspin$Fsmp_ts)]
     }
     if (all(!is.na(p$Fmesop_ts))) {
-      pspin$Fmesop_ts = p$Fmesop_ts[1:(0.1*length(p$Fmesop_ts))]
+      pspin$Fmesop_ts = p$Fmesop_ts[1:(length(timesspin)-1)]
       pspin$Fmesop_ts[length(pspin$Fmesop_ts)+1] = pspin$Fmesop_ts[length(pspin$Fmesop_ts)]
     }
     if (all(!is.na(p$Flgp_ts))) {
-      pspin$Flgp_ts = p$Flgp_ts[1:(0.1*length(p$Flgp_ts))]
+      pspin$Flgp_ts = p$Flgp_ts[1:(length(timesspin)-1)]
       pspin$Flgp_ts[length(pspin$Flgp_ts) + 1] = pspin$Flgp_ts[length(pspin$Flgp_ts)]
     }
     if (all(!is.na(p$Fmidwp_ts))) {
-      pspin$Fmidwp_ts = p$Fmidwp_ts[1:(0.1*length(p$Fmidwp_ts))]
+      pspin$Fmidwp_ts = p$Fmidwp_ts[1:(length(timesspin)-1)]
       pspin$Fmidwp_ts[length(pspin$Fmidwp_ts) + 1] = pspin$Fmidwp_ts[length(pspin$Fmidwp_ts)]
     }
     if (all(!is.na(p$Fdem_ts))) {
-      pspin$Fdem_ts = p$Fdem_ts[1:(0.1*length(p$Fdem_ts))]
+      pspin$Fdem_ts = p$Fdem_ts[1:(length(timesspin)-1)]
       pspin$Fdem_ts[length(pspin$Fdem_ts) + 1] = pspin$Fdem_ts[length(pspin$Fdem_ts)]
     }
   }
@@ -653,9 +654,9 @@ simulateFEISTY = function(p      = setupBasic(),
         dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
         #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
         
-        if(spinup == T){
+        if(is.na(p$tSpin) == F){
           pspin=buildforcings(timesspin,p=pspin)
-          for (i in 1:loopnum) {
+          for (i in 1:p$nSpinloop) {
             u <- ode(y		= yini,
                      times		= timesspin,
                      parms		= NULL,
@@ -669,7 +670,7 @@ simulateFEISTY = function(p      = setupBasic(),
                      method = "ode45", rtol = rtol, atol = atol,
                      outnames = outnames, nout = length(outnames))
             yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-            cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
+            cat(sprintf("spin-up progress: %.2f%%\n", 100*i/p$nSpinloop))
           }
           p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
           yini = p$u0
@@ -755,15 +756,15 @@ simulateFEISTY = function(p      = setupBasic(),
   } else {               # R-code
     
     if(p$bTS == TRUE){
-      if (spinup == T) {
+      if (is.na(p$tSpin) == F) {
         pspin$getts=getts <- function(time, y) {
           approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
         }
-        for (i in 1:loopnum) {
+        for (i in 1:p$nSpinloop) {
           u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
                   method = "ode45", rtol = rtol, atol = atol) #Run by R
           yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
-          cat(sprintf("spin-up progress: %.2f%%\n", 100*i/loopnum))
+          cat(sprintf("spin-up progress: %.2f%%\n", 100*i/p$nSpinloop))
         }
         p$u0 = u[length(timesspin),c(p$ixR,p$ixFish)+1]
         yini = p$u0
