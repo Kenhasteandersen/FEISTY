@@ -807,13 +807,16 @@ end if
      ir = ir + 1
     end do
 
-    yout(ir) = smzcsp
-    ir = ir + 1
-    yout(ir) = smzcsp_dr
-    ir = ir + 1
-    yout(ir) = lgzcsp
-    ir = ir + 1
-    yout(ir) = lgzcsp_dr
+    if(bTS .eqv. .TRUE.) then
+        yout(ir) = smzcsp
+        ir = ir + 1
+        yout(ir) = smzcsp_dr
+        ir = ir + 1
+        yout(ir) = lgzcsp
+        ir = ir + 1
+        yout(ir) = lgzcsp_dr
+        ir = ir + 1
+    end if
 
    end subroutine outfeisty
 
