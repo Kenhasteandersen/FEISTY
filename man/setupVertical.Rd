@@ -68,6 +68,8 @@ Added by function \code{\link{setupVertical}}:
 \itemize{
 \item setup, name (character) of this setup
 \item dvm, diel vertical migration depth [m]
+\item ixmedium, an index indicating where medium size fish start.
+\item ixlarge, an index indicating where large size fish start. E.g., ixmedium = 4, ixlarge = 7: number 1 to 3 represent small fish, number 4 to 6 represent medium fish, number 7 to the last size class represent large fish
 \item depthDay, a matrix containing vertical distribution data during daytime for each resource and size class (column) in water (row)
 \item dayout, a matrix containing overlap data during daytime for each predator x to each prey y
 \item depthNight, a matrix containing vertical distribution data during the night for each resource and size class (column) in water (row)

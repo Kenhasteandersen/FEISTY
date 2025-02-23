@@ -927,7 +927,8 @@ paramTeffect_vet = function (p){
   return(p)
 }
 
-#hard-coded
+# Build forcings for time series simulations. 
+# A large matrix for the built-in deSolve function used coupeld with Fortran.
 buildforcings = function (times,p) {
   
   forc = lapply(p$stagenames[-p$ixR], function(x){
@@ -1005,7 +1006,7 @@ buildforcings = function (times,p) {
   if (all(!is.na(p$bprod_ts))) {
     forc = list(matrix(c(times, p[["bprod_ts"]]), ncol = 2))
   }else{
-    forc = list(matrix(c(times, rep(p$bprod,length.out=length(times)), ncol = 2)))
+    forc = list(matrix(c(times, rep(p$bprod,length.out=length(times))), ncol = 2))
     }
   names(forc) = "bprod_ts"
   p$forcings = c(forcings,forc)

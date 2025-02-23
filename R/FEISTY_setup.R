@@ -1407,39 +1407,36 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' # Photic zone depth and water column depth are not time-varying so they are in `setupVertical2()`.
 #' # In the example data, zooplankton biomass (`Zbio`) and production (`Zhploss`) are halved to represent small and large zooplankton.
 #' 
-#' # One year data example of one grid.
-#' data(tsinput_example_1850)
-#' p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
-#'                   Tp_ts = Tp,
-#'                   Tm_ts = Tm,
-#'                   Tb_ts = Tb,
-#'                   szbio = Zbio/2,
-#'                   lzbio = Zbio/2,
-#'                   szprod_ts = Zhploss/2,
-#'                   lzprod_ts = Zhploss/2,
-#'                   dfbot_ts  = dfbot)
+#' # Example of 10 years (1850-1859, including 1859) of one grid.
+#' data(tsinput_example_1850_2014)
+#' p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 12),
+#'                   tStep_ts = 1/12,
+#'                   tSpin = NA, # no spin-up
+#'                   nSpinloop = 4, # disabled
+#'                   Tp_ts = Tp[1:120],
+#'                   Tm_ts = Tm[1:120],
+#'                   Tb_ts = Tb[1:120],
+#'                   szbio = Zbio[1:120]/2,
+#'                   lzbio = Zbio[1:120]/2,
+#'                   szprod_ts = Zhploss[1:120]/2,
+#'                   lzprod_ts = Zhploss[1:120]/2,
+#'                   dfbot_ts  = dfbot[1:120])
 #' # Run by R
 #' # `tEnd = 1` represents simulation time is one year. 
 #' # `tStep  = 1/12` represents 1/12 year (month), so the data for simulation will update every 1/12 year from the time-series.
 #' # If the user has yearly data for 20 years, the arguments should be `tEnd = 20` and `tStep = 1`.
-#' simR = simulateFEISTY(p = p,
-#'                      tEnd = 1,
-#'                      tStep  = 1/12,
-#'                      USEdll = F,
-#'                      spinup = T)
+#' simR = simulateFEISTY(p = p, USEdll = F)
 #' # Run by Fortran
-#' simF = simulateFEISTY(p = p,
-#'                      tEnd = 1,
-#'                      tStep  = 1/12,
-#'                      USEdll = T,
-#'                      spinup = T)
-#' plotBiomasstime(simR)
-#' plotBiomasstime(simF)
+#' simF = simulateFEISTY(p = p, USEdll = T)
+#' plotBiomasstime(simR) # Run by R
+#' plotBiomasstime(simF) # Run by Fortran
 #'
 #' # Example of 165 years (1850-2014).
 #' data(tsinput_example_1850_2014)
-#' p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
+#' p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 12),
 #'                   tStep_ts = 1/12,
+#'                   tSpin = 16.5, 
+#'                   nSpinloop = 4,
 #'                   Tp_ts = Tp,
 #'                   Tm_ts = Tm,
 #'                   Tb_ts = Tb,
@@ -1453,12 +1450,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #'                   Flgp_ts   = Flpel,
 #'                   Fmidwp_ts = FmidP,
 #'                   Fdem_ts   = Fdem)
-#' # When simulation time is long, running by Fortran is much faster than by R.
-#' sim = simulateFEISTY(p = p,
-#'                      tEnd = 165,
-#'                      tStep  = 1/12,
-#'                      USEdll = T,
-#'                      spinup = T)
+#' # When the simulation period is long, running by Fortran is much faster than by R.
+#' sim = simulateFEISTY(p = p, USEdll = T) # Run by Fortran
 #' plotBiomasstime(sim)
 #' 
 #' @seealso
@@ -1468,36 +1461,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' 
 #' @aliases setupTimeseries
 #' @export
-#' 
-# p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
-# tStep_ts = 1/12,
-# tSpin = 1.6, #[year]
-# nSpinloop = 4, #[]
-# Tp_ts = Tp[1:200],
-# Tm_ts = Tm[1:200],
-# Tb_ts = Tb[1:200],
-# szbio = Zbio[1:200]/2,
-# lzbio = Zbio[1:200]/2,
-# szprod_ts = Zhploss[1:200]/2,
-# lzprod_ts = Zhploss[1:200]/2,
-# dfbot_ts  = dfbot[1:200])
-#
-# sim = simulateFEISTY(p = p, USEdll = F)
-# sim2 = simulateFEISTY(p = p, USEdll = T)
-# p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
-#                     tStep_ts = 1/12,
-#                     tSpin = 1.6, #[year]
-#                     nSpinloop = 4, #[]
-#                     Tp_ts = Tp,
-#                     Tm_ts = Tm,
-#                     Tb_ts = Tb,
-#                     szbio = Zbio/2,
-#                     lzbio = Zbio/2,
-#                     szprod_ts = Zhploss/2,
-#                     lzprod_ts = Zhploss/2,
-#                     dfbot_ts  = dfbot)
-# sim = simulateFEISTY(p = p, USEdll = F)
-# sim2 = simulateFEISTY(p = p, USEdll = T)
+#'
+
 setupTimeseries = function (p = setupVertical2(),
                             tStep_ts = 1/12, # [year]
                             tSpin = 10, #[year]

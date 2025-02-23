@@ -1083,14 +1083,72 @@ plot.FEISTY = function(sim) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
+# # test time-series simulation result
+# diagtimeseries = function(sim) {
+#   p <- sim$p
+#   fish <- c((p$nResources+1):(p$nResources+p$nGroups))
+#   all  <- c(p$ixR,fish)
+#   
+#   # extract existing resources and fish types according to initial values
+#   inival=c( p$u0[p$ixR], p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))] )
+#   names(inival)=p$groupnames
+#   allexistname=names(inival[inival!=0])
+#   
+#   diagts <- data.frame(group  = rep(c("small zooplankton","large zooplankton","smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr"),each = length(sim$t)),
+#                        val    = c(as.numeric(p$szprod_ts),as.numeric(p$lzprod_ts),as.numeric(sim$smzcsp),as.numeric(sim$smzcsp_dr),as.numeric(sim$lgzcsp),as.numeric(sim$lgzcsp_dr)),
+#                        t      = rep(sim$t,6))
+#   diagts <- data.frame(group  = rep(c("small zooplankton","smzcsp","smzcsp_dr"),each = length(sim$t)),
+#                        val    = c(as.numeric(p$szprod_ts),as.numeric(sim$smzcsp),as.numeric(sim$smzcsp_dr)),
+#                        t      = rep(sim$t,3))
+#   diagts <- data.frame(group  = rep(c("large zooplankton","lgzcsp","lgzcsp_dr"),each = length(sim$t[1:100])),
+#                        val    = c(as.numeric(p$lzprod_ts)[1:100],as.numeric(sim$lgzcsp)[1:100],as.numeric(sim$lgzcsp_dr)[1:100]),
+#                        t      = rep(sim$t[1:100],3))
+#   
+#   diagts <- data.frame(group  = rep(c("large zooplankton","lgzcsp","lgzcsp_dr"),each = length(sim$t)),
+#                        val    = c(as.numeric(p$lzprod_ts),as.numeric(sim$lgzcsp),as.numeric(sim$lgzcsp_dr)),
+#                        t      = rep(sim$t,3))
+#   
+#   #R
+#   diagts <- data.frame(group  = rep(c("large zooplankton","lgzcsp","lgzcsp_dr"),each = length(sim$t[1:(length(sim$t)-1)])),
+#                        val    = c(as.numeric(p$lzprod_ts[1:(length(sim$t)-1)]),as.numeric(sim$lgzcsp[1:(length(sim$t)-1)]),as.numeric(sim$lgzcsp_dr[1:(length(sim$t)-1)])),
+#                        t      = rep(sim$t[1:(length(sim$t)-1)],3))
+#   
+#   #F sim$lgzcsp_dr[2:length(sim$t)] = sim$mortpred[2:length(sim$t),2]*sim$R[1:(length(sim$t)-1),2]
+#   diagts <- data.frame(group  = rep(c("large zooplankton","lgzcsp","lgzcsp_dr"),each = length(sim$t[1:(length(sim$t)-1)])),
+#                        val    = c(as.numeric(p$lzprod_ts[1:(length(sim$t)-1)]),as.numeric(sim$lgzcsp[2:length(sim$t)]),as.numeric(sim$lgzcsp_dr[2:length(sim$t)])),
+#                        t      = rep(sim$t[1:(length(sim$t)-1)],3))
+#   plots <- defaultplot() +
+#     geom_line(data = diagts, 
+#               aes(x = t, y = val, color = group, group = group),
+#               linewidth = lwd_def) +  # Plot lines
+#     xlab("Time (yr)") + 
+#     ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")")) +
+#     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
+#     coord_cartesian(ylim = c(1E-2,max(1E-2*100,max(diagts$val)*5))) + 
+#     scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), 
+#                   labels = trans_format("log10", math_format(10^.x)))+
+#     theme(legend.key = element_blank())
+#   series <- getTimeseries(sim)
+#   series <- subset(series, series$group %in% allexistname)
+#   
+#   # convert zeros of biomass to a very small number (only for plotting purposes)
+#   series$bio <- ifelse(series$bio == 0, 1E-16,series$bio) 
+#   
+#   plots <- defaultplot() + 
+#     geom_line(data = series, 
+#               aes(x = t, y = bio, group = group, color = group),
+#               linewidth=lwd_def) + 
+#     scale_color_manual(name = "Groups", 
+#                        values = p$my_palette[allexistname],
+#                        breaks = allexistname,
+#                        labels = p$my_names[allexistname]) +
+#     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
+#     coord_cartesian(ylim = c(min_bio,max(min_bio*100,max(series$bio)*5))) + 
+#     scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), 
+#                   labels = trans_format("log10", math_format(10^.x))) +
+#     xlab("Time (yr)") + ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")"))+
+#     theme(legend.key = element_blank())
+#   
+#   return(plots)
+# }
 

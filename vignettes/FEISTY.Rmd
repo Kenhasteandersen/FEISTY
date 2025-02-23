@@ -751,7 +751,7 @@ The FEISTY model can be coupled with datasets or other model products that provi
 When consumption of one food item (here the resource) is decreased the predator can compensate by eating more of other resource. For simplicity, however, we assume that only the resource consumption is decreased, and the consumption of other prey is not increased to compensate. To follow this assumption, we introduce a down-regulation factor $f_{\mathrm{dr},j}$ and henceforth several variables change. The total consumption of all predators of the resource prey $j$ is equal to the predation mortality loss of that prey (Eq. \ref{eq:predationmortality}). That predation mortality is updated to:
 
 \begin{equation}
-f_{\mathrm{dr},j} \mu_{\mathrm{p},j} = \sum_i  \frac{V_i f_{\mathrm{dr},j} \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i.
+\mu_{\mathrm{p},j} = \sum_i  \frac{V_i f_{\mathrm{dr},j} \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i.
 \end{equation}
 where $E_i$ is the total encountered food. $j$ denotes indices of prey including all resource and fish. The down-regulation factor $f_{\mathrm{dr},j}$ is the ratio of the resource production and resource predation loss:
 
