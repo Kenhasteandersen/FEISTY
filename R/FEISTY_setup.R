@@ -1309,6 +1309,9 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' @author Yixin Zhao
 #'
 #' @usage setupTimeseries(p = setupVertical2(),
+#'                        tStep_ts = 1/12,
+#'                        tSpin = NA,
+#'                        nSpinloop = 4,
 #'                        szbio_ts = NA,
 #'                        lzbio_ts = NA,
 #'                        szprod_ts = NA,
@@ -1329,6 +1332,11 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' @param p Parameter set (setupBasic, setupBasic2, or setupVertical2, not for setupVertical). 
 #' Non time-varying data of a grid such as water column depth `depth` and photic zone depth `photic` should be assigned in `p = setupXX()`. Also the non-varying data defined by users should be put here. 
 #' For example, there are no time-varying temperature, then the temperature constants should be defined in `p = setupXX()`.
+#' @param tStep_ts Time step of time-series simulation [year]. This will be used for calculating the time-series data length and creating the time sequence for solving ode. 
+#' If the input is monthly discrete (but units must be in year), use `tStep_ts = 1/12` to represent month.
+#' @param tSpin Spin-up time span [year]. The function will extract a time sequence from 0 to the nearest time point less than or equal to `tSpin` from the total time sequence for spinning up.
+#' @param nSpinloop Loop number of spinning up. For example, if `tSpin = 10` and `nSpinloop = 4`, the simulation will run 0-10 years for 4 times to spin up. The first run uses the initial value from `p$u0`. 
+#' From the second run, it will use the last time step values from the previous run as the initial values of the new run.
 #' @param szbio_ts Small mesozooplankton biomass time-series data [g/m2].
 #' @param lzbio_ts Large mesozooplankton biomass time-series data [g/m2].
 #' @param szprod_ts Small mesozooplankton productivity time-series data [g/m2/year].
