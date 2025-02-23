@@ -667,7 +667,7 @@ simulateFEISTY = function(p      = setupBasic(),
                      initforc	= "initfeistyforc",
                      forcings	= pspin$forcings,
                      fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                     method = "ode45", rtol = rtol, atol = atol,
+                     #method = "ode45", rtol = rtol, atol = atol,
                      outnames = outnames, nout = length(outnames))
             yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
             cat(sprintf("spin-up progress: %.2f%%\n", 100*i/p$nSpinloop))
@@ -688,7 +688,7 @@ simulateFEISTY = function(p      = setupBasic(),
                  initforc	= "initfeistyforc",
                  forcings	= p$forcings,
                  fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                 method = "ode45", rtol = rtol, atol = atol,
+                 #method = "ode45", rtol = rtol, atol = atol,
                  outnames = outnames, nout = length(outnames))
       }
       
@@ -761,8 +761,7 @@ simulateFEISTY = function(p      = setupBasic(),
           approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
         }
         for (i in 1:p$nSpinloop) {
-          u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel,
-                  method = "ode45", rtol = rtol, atol = atol) #Run by R
+          u = ode(y=yini, times=timesspin, parms=pspin, func = Rmodel) #Run by R
           yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
           cat(sprintf("spin-up progress: %.2f%%\n", 100*i/p$nSpinloop))
         }
@@ -772,10 +771,12 @@ simulateFEISTY = function(p      = setupBasic(),
       p$getts=getts <- function(time, y) {
         approxfun(x = times, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
       }
+      
+      u = ode(y=yini, times=times, parms=p, func = Rmodel) #Run by R ts
+    }else{
+      u = ode(y=yini, times=times, parms=p, func = Rmodel,
+              method = "ode45", rtol = rtol, atol = atol) #Run by R non-ts
     }
-    
-    u = ode(y=yini, times=times, parms=p, func = Rmodel,
-            method = "ode45", rtol = rtol, atol = atol) #Run by R
     # assign colnames
     colnames(u)[(1+p$nStages+1):ncol(u)]=outnames
   }
