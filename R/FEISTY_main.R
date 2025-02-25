@@ -654,6 +654,9 @@ simulateFEISTY = function(p      = setupBasic(),
         dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
         #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
         
+        if(all(!is.na(p$szbio_ts))){yini[1] = p$szbio_ts[1]}
+        if(all(!is.na(p$lzbio_ts))){yini[2] = p$lzbio_ts[1]}
+        
         if(is.na(p$tSpin) == F){
           pspin=buildforcings(timesspin,p=pspin)
           for (i in 1:p$nSpinloop) {
@@ -756,6 +759,10 @@ simulateFEISTY = function(p      = setupBasic(),
   } else {               # R-code
     
     if(p$bTS == TRUE){
+      
+      if(all(!is.na(p$szbio_ts))){yini[1] = p$szbio_ts[1]}
+      if(all(!is.na(p$lzbio_ts))){yini[2] = p$lzbio_ts[1]}
+      
       if (is.na(p$tSpin) == F) {
         pspin$getts=getts <- function(time, y) {
           approxfun(x = timesspin, y = y, method = "constant", rule = 2, f = 0, ties = "ordered")(time)
