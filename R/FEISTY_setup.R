@@ -1304,7 +1304,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
 
 #' setupTimeseries
 #' 
-#' \code{setupTimeseries} creates the setup for time-series simulations based on prescribed setups (setupBasic, setupBasic2, or setupVertical2, not for setupVertical).
+#' \code{setupTimeseries} prepares the setup for time-series simulations based on prescribed setups: 
+#' \code{setupBasic}, \code{setupBasic2}, or \code{setupVertical2} (but not \code{setupVertical}).
 #' 
 #' @author Yixin Zhao
 #'
@@ -1329,88 +1330,99 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #'                        Fdem_ts = NA,
 #'                        benthosK = 80)
 #' 
-#' @param p Parameter set (setupBasic, setupBasic2, or setupVertical2, not for setupVertical). 
-#' Non time-varying data of a grid such as water column depth `depth` and photic zone depth `photic` should be assigned in `p = setupXX()`. Also the non-varying data defined by users should be put here. 
-#' For example, there are no time-varying temperature, then the temperature constants should be defined in `p = setupXX()`.
-#' @param tStep_ts Time step of time-series simulation [year]. This will be used for calculating the time-series data length and creating the time sequence for solving ode. 
-#' If the input is monthly discrete (but units must be in year), use `tStep_ts = 1/12` to represent month.
-#' @param tSpin Spin-up time span [year]. The function will extract a time sequence from 0 to the nearest time point less than or equal to `tSpin` from the total time sequence for spinning up.
-#' @param nSpinloop Loop number of spinning up. For example, if `tSpin = 10` and `nSpinloop = 4`, the simulation will run 0-10 years for 4 times to spin up. The first run uses the initial value from `p$u0`. 
-#' From the second run, it will use the last time step values from the previous run as the initial values of the new run.
-#' @param szbio_ts Small mesozooplankton biomass time-series data [g/m2].
-#' @param lzbio_ts Large mesozooplankton biomass time-series data [g/m2].
-#' @param szprod_ts Small mesozooplankton productivity time-series data [g/m2/year].
-#' @param lzprod_ts Large mesozooplankton productivity time-series data [g/m2/year].
-#' @param bprodin_ts Large Benthic productivity time-series data [g/m2/year].
-#' @param dfbot_ts Detrital flux reaching the bottom time-series data [g/m2/year]. It will multiply the trophic transfer efficiency (10\%) to get benthic productivity `bprod_ts`.
-#' @param dfpho_ts Detrital flux out of the photic zone time-series data [g/m2/year]. Default NA. 
-#' It will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity `bprod_ts` ultimately .
+#' @param p Prescribed parameter set (based on \code{setupBasic}, \code{setupBasic2}, or \code{setupVertical2}). \cr
+#' This determines which FEISTY setup is used for time-series simulation. This defines the non-time-varying data for the simulation grid, such as water column depth (\code{depth}) and photic zone depth (\code{photic}). 
+#' #' For example, if temperature is \strong{constant} over time, define it in \code{p = setupXX()} instead of providing a time-series input.
+#' @param tStep_ts Time step for the time-series simulation [years]. \cr
+#' This defines the resolution of the simulation. This will be used for calculating the time-series data length and creating the time sequence for solving ode. 
+#' If input data is in monthly intervals, use \code{tStep_ts = 1/12} (1 month = 1/12 year).
+#' @param tSpin Spin-up time span [year].\cr
+#' This function extracts a time sequence from \code{0} to the nearest time point \eqn{\le} \code{tSpin} from the total time sequence for spinning up.
+#' @param nSpinloop Loop number of spinning up. \cr
+#' For instance, if \code{tSpin = 10} and \code{nSpinloop = 4}, the simulation runs 0-10 years four times to stabilize initial conditions.  
+#' The first run starts with \code{p$u0}, while subsequent runs use the values of the last time step of the previous run as the new initial condition.
+#' @param szbio_ts Small mesozooplankton biomass time-series [g/m2].
+#' @param lzbio_ts Large mesozooplankton biomass time-series [g/m2].
+#' @param szprod_ts Small mesozooplankton productivity time-series [g/m2/year].
+#' @param lzprod_ts Large mesozooplankton productivity time-series [g/m2/year].
+#' @param bprodin_ts Benthic productivity time-series [g/m2/year].
+#' @param dfbot_ts time-series of detrital flux reaching the bottom [g/m2/year]. \cr
+#' It will multiply the trophic transfer efficiency (10\%) to get benthic productivity \code{bprod_ts}.
+#' @param dfpho_ts Detrital flux out of the photic zone time-series [g/m2/year]. Default NA. \cr
+#' It will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity \code{bprod_ts} ultimately .
 #' See source code of \code{setupTimeseries}.\cr
-#' Input either of `bprodin_ts`, `dfbot_ts` or `dfpho_ts`. If all are NAs then `p$bprod` will be used in ts simulation `p$r[3] = p$bprod`. In this case, remember to add benthos arguments in `p = setupXX()`.
-#' @param Tp_ts Pelagic water temperature, representing the top 100m average temperature [Celsius].
-#' @param Tm_ts Mid-water temperature, representing the average temperature of 500m - up to 1500m [Celsius].
-#' @param Tb_ts Bottom water (the bottom layer) temperature [Celsius].
-#' @param Fsmp_ts Small pelagic fish maximum fishing mortality time-series data [1/year].
-#' @param Fmesop_ts Mesopelagic fish maximum fishing mortality time-series data [1/year].
-#' @param Flgp_ts Large pelagic fish maximum fishing mortality time-series data [1/year].
-#' @param Fmidwp_ts Mid-water predator maximum fishing mortality time-series data [1/year].
-#' @param Fdem_ts Demersal fish maximum fishing mortality time-series data [1/year].
-#' @param benthosK Carrying capacity of small benthos used for logistic growth [g/m2]. Default is 80. 
-#' If not provided, the value will remain the same as the `p$bprod` set in `p = setupXX()`.
+#' Input either of \code{bprodin_ts}, \code{dfbot_ts} or \code{dfpho_ts}. If all are NAs then \code{p$bprod} is used for the simulation \code{p$r[3] = p$bprod}. In this case, remember to add benthos arguments in \code{p = setupXX()}.
+#' 
+#' @param Tp_ts Pelagic water temperature time-series, representing the top 100m average temperature [Celsius].
+#' @param Tm_ts Mid-water temperature time-series, representing the average temperature of 500m - up to 1500m [Celsius].
+#' @param Tb_ts Bottom water (the bottom layer) temperature time-series [Celsius].
+#' 
+#' @param Fsmp_ts Small pelagic fish maximum fishing mortality time-series [1/year].
+#' @param Fmesop_ts Mesopelagic fish maximum fishing mortality time-series [1/year].
+#' @param Flgp_ts Large pelagic fish maximum fishing mortality time-series [1/year].
+#' @param Fmidwp_ts Mid-water predator maximum fishing mortality time-series [1/year].
+#' @param Fdem_ts Demersal fish maximum fishing mortality time-series [1/year].
+#' @param benthosK Carrying capacity of small benthos for logistic growth [g/m2]. Default is 80. 
+#' If \code{NA}, the value remains the same as \code{p$bprod} from \code{p = setupXX()}.
 #' 
 #' @details
-#' The setupTimeseries extends the prescribed setup for time-series simulations. It adds time-series data input and parameters related to the time-series simulations.
-#' The main operation on each time-series data input is adding an extra element at the end, which is just a replicate of the last element of the input. It is required for time integration by the ode solver.
-#' All time-series data arrays should be the same length. 
+#' This function extends the prescribed setup by adding time-series data inputs and related parameters for time-series simulations.  
+#' The main operation on each time-series data input is adding an extra element at the end, which is just a replicate of the last element of the input. It is required for time integration by the ODE solver.
 #' 
-#' Zooplankton biomass of each time step are directly provided for fish consumption. Therefore, there are no zooplankton population dynamics in time-series simulations, which do not follow semi-chemostat or logistic growth.
-#' Benthos follow the logistic growth, due to the biomass is hard to get. Productivity and carrying capacity are required.
+#' \itemize{
+#' \item All time-series arrays should have the \strong{same length}.
+#' \item \strong{Zooplankton}: Biomass values are directly available for fish consumption (no population dynamics).
+#' \item \strong{Benthos}: Following \emph{logistic growth}, requiring productivity and carrying capacity inputs.
+#' \item \strong{Temperature}: In R, temperature data will be used for temperature-dependent effects computation in each time step. See source code \code{derivativesFEISTYR}.
+#' In Fortran, the temperature effects have been pre-calculated and stored in a large matrix (See source code \code{buildforcings}), which is transmitted to Fortran. The data of each time step will be called automatically.
+#' \item \strong{Fishing mortality}: In R, fishing mortality of each size class is calculated in each time step, based on the maximum fishing mortality time-series input.
+#' In Fortran, it is pre-calculated.
+#' }
 #' 
-#' Temperature data will be used for temperature effects computation in each timestep. See source code \code{derivativesFEISTYR}.
-#' In Fortran, the temperature effects have been pre-calculated and stored in a large matrix (See source code \code{buildforcings}), which is transmitted to Fortran. The data of each timestep will be called automatically.
-#' 
-#' Units of the bio-related time-series data should be in year. For example, if the original data is monthly data [g/m2/month], it must be converted to yearly data [g/m2/year] by multiplying by 12. See examples below.
-#' If a time-series data is input, it should not contain any NAs.
-#' `szbio_ts` and `lzbio_ts` must be provided for consumption by fish.
-#' `szprod_ts` and `lzprod_ts` must be provided for restricting consumption by fish.
-#' 
-#' Fishing mortality will be assigned to every size class of a functional type by \code{setFishing} based on the maximum fishing mortality time-series input (e.g., \code{Fsmp_ts}).
-#' 
+#' \strong{Important Notes:}
+#' \itemize{
+#'  \item Time-series data must be provided in \strong{yearly units}. 
+#'  If the input data is in monthly units (e.g., [g/m2/month]), convert it to [g/m2/year] by multiplying by 12.
+#'  \item Time-series inputs \strong{must not contain NAs}.
+#'  \item \code{szbio_ts} and \code{lzbio_ts} \strong{must} be provided for fish consumption.
+#'  \item \code{szprod_ts} and \code{lzprod_ts} \strong{must} be provided to limit fish consumption.
+#'  }
 #' 
 #' @return
-#' The last element of the output time-series data array is the replicate element of the last element in input time-series data array.
-#' Time-series data added:
+#' A modified parameter list (\code{p}) containing:\cr
+#' \strong{Time-Series Data:}
 #' \itemize{
-#' \item szbio_ts, small mesozooplankton biomass time-series data.
-#' \item lzbio_ts, large mesozooplankton biomass time-series data.
-#' \item szprod_ts, small mesozooplankton productivity time-series data.
-#' \item lzprod_ts, large mesozooplankton productivity time-series data.
-#' \item bprod_ts, benthic productivity time-series data, based on `bprodin_ts` or `dfbot_ts`, or `dfpho_ts` input.
-#' }
-#' Time-series temperature data, which will be used for temperature effects every time step (see source code of \code{\link{derivativesFEISTYR}}).
-#' \itemize{
-#' \item Tp_ts, pelagic water temperature time-series data.
-#' \item Tm_ts, mid-water temperature time-series data.
-#' \item Tb_ts, bottom water temperature time-series data.
-#' }
-#' 
-#' \item K[3], the third element of K is overwritten by the `benthosK` input, representing the carrying capacity of the small benthos community, which follows the logistic growth.
-#' Note the other elements in `K` do not effective since the time-series simulation has no zooplankton dynamics.
-#' 
-#' Fishery-related data:\cr
-#' \itemize{
-#' \item Fsmp_ts, Small pelagic fish maximum fishing mortality time-series data.
-#' \item Fmesop_ts, Mesopelagic fish maximum fishing mortality time-series data.
-#' \item Flgp_ts, Large pelagic fish maximum fishing mortality time-series data.
-#' \item Fmidwp_ts, Mid-water predator maximum fishing mortality time-series data.
-#' \item Fdem_ts, Demersal fish maximum fishing mortality time-series data.
-#' }
-#' 
-#' \item bTS, boolean flag of time-series simulation.
-#' 
+#'  \item \code{szbio_ts}: Small mesozooplankton biomass time-series.
+#'  \item \code{lzbio_ts}: Large mesozooplankton biomass time-series.
+#'  \item \code{szprod_ts}: Small mesozooplankton productivity time-series.
+#'  \item \code{lzprod_ts}: Large mesozooplankton productivity time-series.
+#'  \item \code{bprod_ts}: Benthic productivity (derived from \code{bprodin_ts}, \code{dfbot_ts}, or \code{dfpho_ts}).
+#'  \item \code{Tp_ts}: Pelagic water temperature time-series.
+#'  \item \code{Tm_ts}: Mid-water temperature time-series
+#'  \item \code{Tb_ts}: Bottom water temperature time-series.
+#'  \item \code{Fsmp_ts}: Small pelagic fish maximum fishing mortality time-series.
+#'  \item \code{Fmesop_ts}: Mesopelagic fish maximum fishing mortality time-series
+#'  \item \code{Flgp_ts}: Large pelagic fish maximum fishing mortality time-series.
+#'  \item \code{Fmidwp_ts}: Mid-water predator maximum fishing mortality time-series.
+#'  \item \code{Fdem_ts}: Demersal fish maximum fishing mortality time-series.
+#'  }
+#'  
+#'  \strong{Others:}
+#'  \itemize{
+#'  \item \code{tStep_ts}: Time step for the time-series simulation.
+#'  \item \code{tEnd_ts}: Simulation period, calculated by time-series input length divided by \code{tStep_ts}
+#'  \item \code{tSpin}: Spin-up time span
+#'  \item \code{nSpinloop}: Loop number of spinning up.
+#'  \item \code{bTS}: Boolean flag indicating a time-series simulation.
+#'  \item \code{K[3]}: Overwritten by \code{benthosK}, setting the carrying capacity for small benthos.
+#'  }
+#'  
+#' \strong{Note:}
+#' The last element of each output time-series array is the replicate element of the last element in input time-series data array to ensure smooth ODE solver integration. \cr
+#' The other elements in \code{K} are not effective since the time-series simulation has no zooplankton dynamics.
 #' 
 #' @examples
-#' # Two example time series data for 1850 (1 year) and 1850-2014 (165 year) of one grid. They are monthly data but converted to yearly by multiplying 12, since FEISTY units are in year.
+#' # Two example for 1850-1859 (10 year) and 1850-2014 (165 year) of one grid. They are monthly data but converted to yearly by multiplying 12, since FEISTY units are in year.
 #' # However in simulations, each data only run for 1/12 year to align with month.
 #' # Photic zone depth and water column depth are not time-varying so they are in `setupVertical2()`.
 #' # In the example data, zooplankton biomass (`Zbio`) and production (`Zhploss`) are halved to represent small and large zooplankton.
@@ -1430,12 +1442,12 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #'                   lzprod_ts = Zhploss[1:120]/2,
 #'                   dfbot_ts  = dfbot[1:120])
 #' # Run by R
-#' # `tEnd = 1` represents simulation time is one year. 
-#' # `tStep  = 1/12` represents 1/12 year (month), so the data for simulation will update every 1/12 year from the time-series.
-#' # If the user has yearly data for 20 years, the arguments should be `tEnd = 20` and `tStep = 1`.
+#' # `tStep_ts = 1/12` represents 1/12 year (month), so the data for simulation will update every 1/12 year from the time-series.
+#' # If the user has yearly data, the argument should be `tStep_ts = 1`.
 #' simR = simulateFEISTY(p = p, USEdll = F)
 #' # Run by Fortran
 #' simF = simulateFEISTY(p = p, USEdll = T)
+#' 
 #' plotBiomasstime(simR) # Run by R
 #' plotBiomasstime(simF) # Run by Fortran
 #'
