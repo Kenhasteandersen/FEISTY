@@ -1332,7 +1332,7 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' 
 #' @param p Prescribed parameter set (based on \code{setupBasic}, \code{setupBasic2}, or \code{setupVertical2}). \cr
 #' This determines which FEISTY setup is used for time-series simulation. This defines the non-time-varying data for the simulation grid, such as water column depth (\code{depth}) and photic zone depth (\code{photic}). 
-#' #' For example, if temperature is \strong{constant} over time, define it in \code{p = setupXX()} instead of providing a time-series input.
+#' For example, if temperature is \strong{constant} over time, define it in \code{p = setupXX()} instead of providing a time-series input.
 #' @param tStep_ts Time step for the time-series simulation [years]. \cr
 #' This defines the resolution of the simulation. This will be used for calculating the time-series data length and creating the time sequence for solving ode. 
 #' If input data is in monthly intervals, use \code{tStep_ts = 1/12} (1 month = 1/12 year).
@@ -1387,6 +1387,13 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #'  \item \code{szbio_ts} and \code{lzbio_ts} \strong{must} be provided for fish consumption.
 #'  \item \code{szprod_ts} and \code{lzprod_ts} \strong{must} be provided to limit fish consumption.
 #'  }
+#'  
+#' \strong{Spin up:} \cr
+#' Only one spin-up scheme is available, offering limited customization options. If a specific spin-up scheme is required, you can either:
+#' \itemize{
+#' \item concatenate the spin-up time series data with the simulation time series data and set \code{tSpin = NA},
+#' \item conduct two separate runs, one for spin-up and another for simulation.
+#' }
 #' 
 #' @return
 #' A modified parameter list (\code{p}) containing:\cr
@@ -1424,8 +1431,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' @examples
 #' # Two example for 1850-1859 (10 year) and 1850-2014 (165 year) of one grid. They are monthly data but converted to yearly by multiplying 12, since FEISTY units are in year.
 #' # However in simulations, each data only run for 1/12 year to align with month.
-#' # Photic zone depth and water column depth are not time-varying so they are in `setupVertical2()`.
-#' # In the example data, zooplankton biomass (`Zbio`) and production (`Zhploss`) are halved to represent small and large zooplankton.
+#' # Photic zone depth and water column depth are not time-varying so they are in setupVertical2().
+#' # In the example data, zooplankton biomass (Zbio) and production (Zhploss) are halved to represent small and large zooplankton.
 #' 
 #' # Example of 10 years (1850-1859, including 1859) of one grid.
 #' data(tsinput_example_1850_2014)
@@ -1442,8 +1449,8 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #'                   lzprod_ts = Zhploss[1:120]/2,
 #'                   dfbot_ts  = dfbot[1:120])
 #' # Run by R
-#' # `tStep_ts = 1/12` represents 1/12 year (month), so the data for simulation will update every 1/12 year from the time-series.
-#' # If the user has yearly data, the argument should be `tStep_ts = 1`.
+#' # tStep_ts = 1/12 represents 1/12 year (month), so the data for simulation will update every 1/12 year from the time-series.
+#' # If the user has yearly data, the argument should be tStep_ts = 1.
 #' simR = simulateFEISTY(p = p, USEdll = F)
 #' # Run by Fortran
 #' simF = simulateFEISTY(p = p, USEdll = T)
