@@ -308,8 +308,8 @@ derivativesFEISTYR = function(t,              # current time
 #'
 #' @description
 #' \code{simulateFEISTY} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
-#' It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}).
-#'
+#' It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}) as well as customized setups.\cr
+#' 
 #' @usage simulateFEISTY (p = setupBasic(), 
 #'                        tEnd = 500, tStep  = 1, times = seq(from=0, to=tEnd, by=tStep), 
 #'                        yini = p$u0, USEdll = TRUE, Rmodel = derivativesFEISTYR, 

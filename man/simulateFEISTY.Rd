@@ -66,10 +66,28 @@ totRecruit = totRepro * epsRepro (reproduction efficiency)
 \item `SSBAMean`, `SSBGMean`, `SSBMin`, `SSBMax`, and `SSB` can be found in \code{\link{calcSSB}}. \cr
 `yieldAMean`, `yieldGMean`, `yieldMin`, `yieldMax`, and `yield` can be found in \code{\link{calcYield}}.
 }
+
+Modified parameter set \code{p}:
+\itemize{
+\item bTS: logical flag. Default is FALSE, representing the original FEISTY simulation. TRUE: Time-series simulation is enabled, see \code{\link{setupTimeseries}}.
+\item tSpin: spin-up time span for time-series simulations. Default is NA for the original FEISTY simulation or when no prescribed spin-up scheme is applied in the time-series simulation.
+For time-series simulations, the spin-up time span is set by \code{\link{setupTimeseries}}.
+}
+
+If time-series simulation is enabled the diagnostic variables below are returned (see \code{\link{setupTimeseries}}):
+\itemize{
+\item smzcsp: small mesozooplankton consumption by fish [g/m2/year].
+\item smzcsp_dr: down-regulated small mesozooplankton consumption by fish [g/m2/year].
+\item lgzcsp: large mesozooplankton consumption by fish [g/m2/year].
+\item lgzcsp_dr: down-regulated large mesozooplankton consumption by fish [g/m2/year].
+}
+
+Also, some parameters in parameters set \code{p} could be ineffective when it is a time-series simulation. For instance, \code{p$szprod}, \code{p$lzprod}, and \code{p$Tp}. There are time-series data ending up with "_ts".
+If the spin-up process is enabled, \code{p$u0} archives the values of the last time step from the spin-up.
 }
 \description{
 \code{simulateFEISTY} runs simulations of the FEISTY model to resolve the dynamics of marine resources and fish populations over a specified time frame. \cr
-It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}).
+It provides options for integrating ordinary differential equations in Fortran or R for four prepared setups (\code{setupBasic}, \code{setupBasic2}, \code{setupVertical}, and \code{setupVertical2}) as well as customized setups.\cr
 }
 \details{
 The function runs the FEISTY model simulation over the specified time frame. \cr
@@ -78,6 +96,14 @@ The simulation supports published FEISTY setups and their revised versions:
 The simulation can be conducted by a FORTRAN-based approach or an R-based approach. Both methods rely on the \link{deSolve} package for ODE solving. 
 For efficiency, FORTRAN dll should be used. For model development, the R-version is preferred.
 Simulations based on customized setups can only be done with the FORTRAN-based approach.
+
+\strong{Note:}\cr
+When it is a time-series simulation, \strong{only} two arguments are required.
+\itemize{
+\item \code{p}: parameter set for time-series simulation. It must be set by \code{\link{setupTimeseries}}.
+\item \code{USEdll}: logical flag, indicating the time-series simulation is done by R (FALSE) or Fortran (TRUE).
+}
+Other arguments are ineffective even though they are given.
 }
 \examples{
 
@@ -163,6 +189,8 @@ Soetaert, K., Petzoldt, T., & Setzer, R. W. (2010). Solving differential equatio
 \code{\link{setupBasic2}} A revised setup based on `setupBasic` \cr
 \code{\link{setupVertical}} The setup following van Denderen et al. (2021) \cr
 \code{\link{setupVertical2}} A revised setup based on `setupVertical` \cr
+
+\code{\link{setupTimeseries}} Setup for time-series simulation \cr
 
 \code{\link{calcSSB}} Spawning stock biomass calculation \cr
 \code{\link{calcYield}} Yield calculation

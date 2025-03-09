@@ -1366,8 +1366,9 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' If \code{NA}, the value remains the same as \code{p$bprod} from \code{p = setupXX()}.
 #' 
 #' @details
+#' Revisions to the FEISTY model for time-series simulations can be found in the \strong{vignette} (run \code{vignette("FEISTY")}).\cr
 #' This function extends the prescribed setup by adding time-series data inputs and related parameters for time-series simulations.  
-#' The main operation on each time-series data input is adding an extra element at the end, which is just a replicate of the last element of the input. It is required for time integration by the ODE solver.
+#' The main operation on each time-series data input is adding an extra element at the end, which is just a replicate of the last element of the input. It is required for time integration by the ODE solver.\cr
 #' 
 #' \itemize{
 #' \item All time-series arrays should have the \strong{same length}.
@@ -1482,9 +1483,10 @@ setupVertical2 = function(szprod = 80, # small zoo production
 #' plotBiomasstime(sim)
 #' 
 #' @seealso
-#' \code{\link{setupBasic}}     \cr
-#' \code{\link{setupBasic2}} 	  \cr
-#' \code{\link{setupVertical2}} \cr
+#' \code{\link{setupBasic}} The setup following Petrik et al. (2019)    \cr
+#' \code{\link{setupBasic2}} A revised setup based on 'setupBasic'	  \cr
+#' \code{\link{setupVertical2}} A revised setup based on 'setupVertical' \cr
+#' \code{\link{simulateFEISTY}} The function to run FEISTY time-series simulations \cr
 #' 
 #' @aliases setupTimeseries
 #' @export
@@ -1549,6 +1551,14 @@ setupTimeseries = function (p = setupVertical2(),
   # print time parameters
   cat(sprintf("Time-series length: %s %s. \n", p$tEnd_ts, "years"))
   cat(sprintf("Time-series time step: %s %s. \n", MASS::fractions(p$tStep_ts), "years"))
+  # print spinup conditions
+  if (is.na(tSpin)) {
+    cat(sprintf("Spin-up is disabled."))
+  }else{
+    cat(sprintf("Spin-up length: %s %s. \n", MASS::fractions(tSpin), "years"))
+    cat(sprintf("Spin-up loop number: %s. \n", nSpinloop))
+  }
+  
   p$szbio_ts = szbio_ts #seq(from=100, to=800, length.out=12)
   p$szbio_ts[tslength+1] = szbio_ts[tslength] #p$zbio_ts[13] = 800
   p$lzbio_ts = lzbio_ts

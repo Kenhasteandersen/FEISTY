@@ -5,16 +5,19 @@
 \documentclass[
 ]{article}
 \usepackage{amsmath,amssymb}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -45,13 +48,13 @@
 \newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
 \newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
 \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
 \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
 \newcommand{\BuiltInTok}[1]{#1}
 \newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
 \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
 \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
 \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
 \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
@@ -59,7 +62,7 @@
 \newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
 \newcommand{\ExtensionTok}[1]{#1}
 \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
 \newcommand{\ImportTok}[1]{#1}
 \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
@@ -68,7 +71,7 @@
 \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
 \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
 \newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
 \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
@@ -101,36 +104,46 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
 \newlength{\cslhangindent}
 \setlength{\cslhangindent}{1.5em}
 \newlength{\csllabelwidth}
 \setlength{\csllabelwidth}{3em}
-\newlength{\cslentryspacingunit} % times entry-spacing
-\setlength{\cslentryspacingunit}{\parskip}
-\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
- {% don't indent paragraphs
-  \setlength{\parindent}{0pt}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
   % turn on hanging indent if param 1 is 1
   \ifodd #1
-  \let\oldpar\par
-  \def\par{\hangindent=\cslhangindent\oldpar}
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
   \fi
   % set entry spacing
-  \setlength{\parskip}{#2\cslentryspacingunit}
- }%
- {}
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
 \usepackage{calc}
-\newcommand{\CSLBlock}[1]{#1\hfill\break}
-\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
-\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 \usepackage{float}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
+\urlstyle{same}
 \hypersetup{
   pdftitle={FishErIes Size and functional TYpe model (FEISTY) in R},
   pdfauthor={Yixin Zhao, P. Daniël van Denderen, Karline Soetaert, and Ken H. Andersen},
@@ -145,19 +158,16 @@ Andersen}
 \begin{document}
 \maketitle
 
-\hypertarget{introduction}{%
-\section{Introduction}\label{introduction}}
+\section{Introduction}\label{introduction}
 
 This vignette provides a comprehensive description of the model
 equations, parameters, and numerical implementation used in the
 FishErIes Size and functional TYpe (FEISTY) model system
-(\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019};
-\protect\hyperlink{ref-van2021emergent}{Denderen et al. 2021}). This
-text is followed by several examples illustrating how to use the model
-within R.
+(\citeproc{ref-petrik2019bottom}{Petrik et al. 2019};
+\citeproc{ref-van2021emergent}{Denderen et al. 2021}). This text is
+followed by several examples illustrating how to use the model within R.
 
-\hypertarget{the-feisty-model}{%
-\section{The FEISTY model}\label{the-feisty-model}}
+\section{The FEISTY model}\label{the-feisty-model}
 
 The FEISTY model framework is designed to be mechanistic, simple and
 fast, generally applicable globally, and compatible with biogeochemical
@@ -172,33 +182,31 @@ The current FEISTY implementation includes four setups that define which
 fish functional types are present and how they predate upon one another.
 Two ``Basic'' setups contain three functional types: small and large
 pelagic fish species and demersal species
-(\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019}). Two
-``Vertical'' setups augment the model with two additional functional
-types, mesopelagic fish and midwater predators, and further automatize
-the calculation of the interaction between the functional types based on
-their vertical overlap (\protect\hyperlink{ref-van2021emergent}{Denderen
-et al. 2021}). The Basic and Vertical setups with the suffix ``2''
-modify the published setups with minor parameter and structural changes.
-All setups are detailed below.
+(\citeproc{ref-petrik2019bottom}{Petrik et al. 2019}). Two ``Vertical''
+setups augment the model with two additional functional types,
+mesopelagic fish and midwater predators, and further automatize the
+calculation of the interaction between the functional types based on
+their vertical overlap (\citeproc{ref-van2021emergent}{Denderen et al.
+2021}). The Basic and Vertical setups with the suffix ``2'' modify the
+published setups with minor parameter and structural changes. All setups
+are detailed below.
 
 Regardless of the setup type the biomass dynamics follow the same set of
 equations, which is detailed in the next section. The differences
 between the setups lie in how the interactions between the types and
 sizes are determined, which is detailed in the section ``Predation''.
 
-\hypertarget{biomass-dynamics}{%
-\subsection{Biomass dynamics}\label{biomass-dynamics}}
+\subsection{Biomass dynamics}\label{biomass-dynamics}
 
-\hypertarget{fish-dynamics}{%
-\subsubsection{Fish dynamics}\label{fish-dynamics}}
+\subsubsection{Fish dynamics}\label{fish-dynamics}
 
 FEISTY is a size-based model where the biomass of each size class of a
 functional type of fish (\(B_i\), gWW m\(^{-2}\)) \footnote{gWW: gram
   wet weight. From now on, we use ``g'' to represent ``gWW'' for
   simplicity.} changes over time (\(t\)) according to source and sink of
 energy determined by consumption, growth, reproduction and mortality
-(\protect\hyperlink{ref-deRoos2008}{De Roos et al. 2008}). The changes
-in biomass are described by:
+(\citeproc{ref-deRoos2008}{De Roos et al. 2008}). The changes in biomass
+are described by:
 
 \begin{equation}
 \dfrac{\mathrm{d}B_{i}}{\mathrm{d}t} =  J_{\mathrm{in},i}  + (\nu_{i} - \rho_i -\mu_i)B_i - J_{\mathrm{out},i},
@@ -227,8 +235,7 @@ all other size classes (\(i > 1\)), the growth flux into the size class
 \(i\) is from the growth of the previous neighboring size class
 (\(i-1\)).
 
-\hypertarget{resource-dynamics}{%
-\subsubsection{Resource dynamics}\label{resource-dynamics}}
+\subsubsection{Resource dynamics}\label{resource-dynamics}
 
 FEISTY coupling with the biophysical forcing can be accomplished in
 three ways: fully two-way (online), production-constrained one-way
@@ -249,11 +256,10 @@ predation mortality on the resource. Lastly, FEISTY has an option to
 model resource dynamics with the logistic growth equation:
 
 \begin{equation}
-\frac{\mathrm{d}R_i}{\mathrm{d}t}=r_i \cdot R_i \cdot (1-\frac{R_i}{K_i}) - \mu_{\mathrm{p},i} \cdot R_i,
+\frac{\mathrm{d}R_i}{\mathrm{d}t}=r_i \cdot R_i \cdot (1-\frac{R_i}{K_i}) - \mu_{\mathrm{p},i} \cdot R_i, \label{eq:dRdtlogistic}
 \end{equation} which can be set in \texttt{paramAddResource()} function.
 
-\hypertarget{physiological-rates}{%
-\subsection{Physiological rates}\label{physiological-rates}}
+\subsection{Physiological rates}\label{physiological-rates}
 
 There are three main biological rates based on the allometric scaling
 relationship of individual body size: the mass-specific maximum
@@ -281,8 +287,7 @@ the \texttt{paramAddPhysiology()} function. The scaling of biological
 rates with temperature is added subsequently (see Section
 \textbf{Temperature effects}).
 
-\hypertarget{energy-budget}{%
-\subsection{Energy budget}\label{energy-budget}}
+\subsection{Energy budget}\label{energy-budget}
 
 For a given individual size of fish \(m_i\), the mass-specific available
 energy for growth or reproduction (rate) \(\nu_{i}\) is the result of
@@ -306,8 +311,7 @@ a predator \(i\) on a prey \(j\) (see Section \textbf{Predation}).
 benthos, or fish. Therefore, the \(\sum_{j} \theta_{i,j} B_j\)
 represents the biomass of all prey available to a predator.
 
-\hypertarget{reproduction-and-growth}{%
-\subsection{Reproduction and growth}\label{reproduction-and-growth}}
+\subsection{Reproduction and growth}\label{reproduction-and-growth}
 
 When the assimilated energy is positive after meeting the metabolic
 demands, energy is available for fish growth and reproduction (when the
@@ -341,8 +345,8 @@ determining the half-maturation size relative to the maximum size
 The available energy for growth \(\kappa_i \nu_i\) gives a flux of
 biomass out of the size-class \(i\) that depends on the ratio \(z\)
 between the smallest and largest size of the size-class and total
-mortality \(\mu_i\) (\protect\hyperlink{ref-deRoos2008}{De Roos et al.
-2008}): \begin{equation}
+mortality \(\mu_i\) (\citeproc{ref-deRoos2008}{De Roos et al. 2008}):
+\begin{equation}
  \gamma_i =
   \begin{cases}
 \frac{ \kappa_i \nu_i - \mu_i }{1-(1/z)^{1-\mu_i/\kappa_i \nu_i}}, & \text{$ \nu_i > 0 $}   \\
@@ -358,8 +362,7 @@ mortality \(\mu_i\) (\protect\hyperlink{ref-deRoos2008}{De Roos et al.
 background mortality. The details of predation and fishing are described
 in the sections below.
 
-\hypertarget{predation}{%
-\subsection{Predation}\label{predation}}
+\subsection{Predation}\label{predation}
 
 FEISTY specifies of how each size class (and zooplankton and benthic
 prey resources) interact via predator-prey interactions in a feeding
@@ -384,17 +387,16 @@ fish size class) is eaten by all its predators (in nunit of per time).
 When \(j\) denotes a resource, \(\mu_{\mathrm{p},j} R_j\) is the
 predation loss of the resource (the second term in Eq. \ref{eq:dRdt}).
 
-\hypertarget{size-preference}{%
-\subsubsection{Size preference}\label{size-preference}}
+\subsubsection{Size preference}\label{size-preference}
 
 In the non-vertical setups (setupBasic and setupBasic2) \(\theta_{i,j}\)
 refers to the feeding preference based on the size preference. In
 setupVertical and setupVertical2, it is named \(\theta_{s,i,j}\) for
 differentiation purposes. The value of \(\theta_{i,j}\) can be assigned
 manually (setupBasic, see Table 2 in
-(\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019})) or it
-can be calculated using size-preference functions that are either based
-on the log-normal distribution (setupBasic2 and setupVertical2):
+(\citeproc{ref-petrik2019bottom}{Petrik et al. 2019})) or it can be
+calculated using size-preference functions that are either based on the
+log-normal distribution (setupBasic2 and setupVertical2):
 
 \begin{equation}
  \theta_{i, j} =
@@ -406,8 +408,7 @@ on the log-normal distribution (setupBasic2 and setupVertical2):
 \end{equation}
 
 or the error function (setupVertical,
-\protect\hyperlink{ref-van2021emergent}{Denderen et al. 2021}):
-\begin{equation}
+\citeproc{ref-van2021emergent}{Denderen et al. 2021}): \begin{equation}
 \theta_{i, j} = \frac{\sqrt{\frac{\pi}{2}} \cdot \sigma \cdot \left( \text{erf}\left(\frac{\log(m_{\mathrm{u},j}) - \log\left(\frac{m_{\mathrm{c},i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) - \text{erf}\left(\frac{\log(m_{\mathrm{l},j}) - \log\left(\frac{m_{\mathrm{c},i}}{\beta}\right)}{\sqrt{2} \cdot \sigma}\right) \right)}{\log(m_{\mathrm{u},j}) - \log(m_{\mathrm{l},j})}
 \label{eq:errorpreference}
 \end{equation} where \(\beta\) is preferred predator-prey mass ratio,
@@ -415,8 +416,7 @@ and \(\sigma\) is the size preference width for feeding. The
 size-preference function selection and the values of \(\beta\) and
 \(\sigma\) can be defined by the function \texttt{paramSizepref()}.
 
-\hypertarget{vertical-overlap}{%
-\subsubsection{Vertical overlap}\label{vertical-overlap}}
+\subsubsection{Vertical overlap}\label{vertical-overlap}
 
 The vertical distribution in setupVertical and setupVertical2 is modeled
 in a discretized water column: \begin{equation}
@@ -490,9 +490,8 @@ and used for the calculation of feeding preference \(\theta_{i,j}\):
 \label{eq:verttheta}
 \end{equation}
 
-\hypertarget{vertical-habitats-of-resources-and-fish}{%
 \subsubsection{Vertical habitats of resources and
-fish}\label{vertical-habitats-of-resources-and-fish}}
+fish}\label{vertical-habitats-of-resources-and-fish}
 
 Regardless of water conditions, Benthos are concentrated at the bottom
 (\(z_{\mathrm{loc},\mathrm{day},i} = z_{\mathrm{loc},\mathrm{night},i} = z_{\mathrm{bottom}}\))
@@ -634,9 +633,8 @@ Demersal fish & 0 & $z_{\mathrm{bottom}}$ & $z_{\mathrm{dvmdem}}$$^b$ & 0 & $z_{
 \end{tabular}
 \end{table}
 
-\hypertarget{modifications-to-the-preference-matrix}{%
 \subsubsection{Modifications to the preference
-matrix}\label{modifications-to-the-preference-matrix}}
+matrix}\label{modifications-to-the-preference-matrix}
 
 \texttt{setupBasic2}
 
@@ -706,14 +704,12 @@ matrix}\label{modifications-to-the-preference-matrix}}
   (\(\theta_{i,j}=\theta_{i,j} \cdot \theta_{\mathrm{A}}\)).
 \end{itemize}
 
-\hypertarget{fishing-mortality}{%
-\subsection{Fishing mortality}\label{fishing-mortality}}
+\subsection{Fishing mortality}\label{fishing-mortality}
 
 The fishing mortality rate \(\mu_{\mathrm{f},i}\) of a particular size
 class of fish \(i\) can be either determined by constant values or by a
-fishing selectivity function
-(\protect\hyperlink{ref-andersen2019fish}{Andersen 2019, chap. 5}):
-\begin{equation}
+fishing selectivity function (\citeproc{ref-andersen2019fish}{Andersen
+2019, chap. 5}): \begin{equation}
 \mu_{\mathrm{f},i}=\psi_{\mathrm{f},i}F_{\mathrm{max}}
 \label{eq:fishing}
 \end{equation} where \(F_{\mathrm{max}}\) is the baseline fishing
@@ -729,8 +725,7 @@ fish with a 50\% harvesting rate relative to the max weight of the
 functional type. The fishing mortality rate can be assigned by the
 function \texttt{setFishing()}.
 
-\hypertarget{temperature-effects}{%
-\subsection{Temperature effects}\label{temperature-effects}}
+\subsection{Temperature effects}\label{temperature-effects}
 
 The temperature effects on the mass-specific maximum consumption rate
 \(C_{\mathrm{max},i}\), the mass-specific clearance rate \(V_{i}\), and
@@ -771,8 +766,8 @@ according to the abundance of prey in these two zones: \begin{equation}
 \end{equation} where \(B_{\mathrm{pelprey}}\) denotes the total biomass
 of pelagic prey for large demersal fish, \(B_{\mathrm{allprey}}\) is the
 total biomass of all prey for large demersal fish. A simple case can be
-found in Eq. 15 in (\protect\hyperlink{ref-petrik2019bottom}{Petrik et
-al. 2019}).\\
+found in Eq. 15 in (\citeproc{ref-petrik2019bottom}{Petrik et al.
+2019}).\\
 Therefore, the temperature for large demersals is defined based on their
 time spent in the pelagic zone and benthic zone, which is called
 effective temperature:
@@ -790,8 +785,8 @@ biological rates of large demersals, which are handled by the function
 \texttt{updateET()}. The function \texttt{updateET()} is called every
 time step in \texttt{derivativesFEISTYR()}. The effective temperature
 scheme is forced turned on in \texttt{setupBasic()}
-(\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019}); it is an
-option in \texttt{setupBasic2()}.
+(\citeproc{ref-petrik2019bottom}{Petrik et al. 2019}); it is an option
+in \texttt{setupBasic2()}.
 
 \textbf{setupVertical}
 
@@ -944,9 +939,8 @@ follow the vertical distributions:
 \label{eq:xxxxxx3}
 \end{equation}
 
-\hypertarget{setup-of-the-size-spectrum-grid}{%
 \subsection{Setup of the size spectrum
-grid}\label{setup-of-the-size-spectrum-grid}}
+grid}\label{setup-of-the-size-spectrum-grid}
 
 The fish size span of a functional type is logarithmically discretized
 into \(n\) continuous size bins. Each size bin shares the same ratio
@@ -974,8 +968,7 @@ The size spectrum generation is done by calling the function
 
 \newpage
 
-\hypertarget{default-parameters}{%
-\section{Default parameters}\label{default-parameters}}
+\section{Default parameters}\label{default-parameters}
 
 \begin{table}[htbp]
 
@@ -1027,8 +1020,7 @@ $m_{\mathrm{large}}$ & boundary size of medium/large fish class  & \multicolumn{
 \end{tabular}
 \end{table}
 
-\hypertarget{demonstration}{%
-\section{Demonstration}\label{demonstration}}
+\section{Demonstration}\label{demonstration}
 
 FESITY includes four setups which each specifies the available
 functional groups and their parameters:
@@ -1037,7 +1029,7 @@ functional groups and their parameters:
 \tightlist
 \item
   setupBasic creates a basic three-functional type setup as described in
-  (\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019}).
+  (\citeproc{ref-petrik2019bottom}{Petrik et al. 2019}).
 \item
   setupBasic2 creates the same three-functional type setup as
   setupBasic(), but it allows more size numbers in each functional type,
@@ -1046,7 +1038,7 @@ functional groups and their parameters:
 \item
   setupVertical makes a basic five-functional type setup that includes
   vertical distribution of resources and fish
-  (\protect\hyperlink{ref-van2021emergent}{Denderen et al. 2021}).
+  (\citeproc{ref-van2021emergent}{Denderen et al. 2021}).
 \item
   setupVertical2 is the same as setupVertical but different it allows
   more size numbers in each functional type, size-based maturity,
@@ -1054,9 +1046,8 @@ functional groups and their parameters:
   mortality, and simpler temperature input.
 \end{itemize}
 
-\hypertarget{basic-simulation-and-visualization}{%
 \subsection{Basic simulation and
-visualization}\label{basic-simulation-and-visualization}}
+visualization}\label{basic-simulation-and-visualization}
 
 Here we demonstrate some examples of the basic usage of simulating
 FEISTY and visualization. Before a FEISTY simulation, first, we need to
@@ -1074,9 +1065,9 @@ generate a full parameter set:
 \end{Shaded}
 
 This parameter set contains three functional types according to
-(\protect\hyperlink{ref-petrik2019bottom}{Petrik et al. 2019}), created
-by \texttt{setupBasic()}. Once the parameter set is ready, we can run
-the simulation by \texttt{simulateFEISTY()}:
+(\citeproc{ref-petrik2019bottom}{Petrik et al. 2019}), created by
+\texttt{setupBasic()}. Once the parameter set is ready, we can run the
+simulation by \texttt{simulateFEISTY()}:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1100,7 +1091,7 @@ collection:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-3-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-3-1.pdf}
 
 This figure collection includes \texttt{plotSpectra()},
 \texttt{plotRates()}, \texttt{plotNetwork()}, and
@@ -1113,7 +1104,7 @@ For instance:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-4-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-4-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1121,11 +1112,10 @@ For instance:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-5-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-5-1.pdf}
 
-\hypertarget{fishing-mortality-assignment}{%
 \subsection{Fishing mortality
-assignment}\label{fishing-mortality-assignment}}
+assignment}\label{fishing-mortality-assignment}
 
 For simplicity, arguments of fishing in \texttt{setupbasic()} and
 \texttt{setupVertical()} only allow assigning fishing mortality to all
@@ -1155,14 +1145,16 @@ specific functional type can be assigned afterwards.
 
 \begin{longtable}[]{@{}lrr@{}}
 \caption{Fishing mortality before and after assignment}\tabularnewline
-\toprule()
+\toprule\noalign{}
 & mortF\_original & mortF\_new \\
-\midrule()
+\midrule\noalign{}
 \endfirsthead
-\toprule()
+\toprule\noalign{}
 & mortF\_original & mortF\_new \\
-\midrule()
+\midrule\noalign{}
 \endhead
+\bottomrule\noalign{}
+\endlastfoot
 smallPel\_1 & 0 & 0.0000000 \\
 smallPel\_2 & 0 & 0.0000000 \\
 smallPel\_3 & 0 & 0.0000006 \\
@@ -1178,7 +1170,6 @@ demersals\_6 & 0 & 0.0000009 \\
 demersals\_7 & 0 & 0.0004287 \\
 demersals\_8 & 0 & 0.1251281 \\
 demersals\_9 & 0 & 0.2991638 \\
-\bottomrule()
 \end{longtable}
 
 \begin{Shaded}
@@ -1205,7 +1196,7 @@ demersals\_9 & 0 & 0.2991638 \\
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-6-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-6-1.pdf}
 
 Since fishing mortality was assigned manually to two of three fish
 functional types, which is not the ready-to-use function
@@ -1232,7 +1223,7 @@ stock biomass changes over time.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-8-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-8-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1240,11 +1231,10 @@ stock biomass changes over time.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-9-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-9-1.pdf}
 
-\hypertarget{bottom-up-control-examples}{%
 \subsection{Bottom-up control
-examples}\label{bottom-up-control-examples}}
+examples}\label{bottom-up-control-examples}
 
 One of the goals of the FEISTY model is to obtain emergent fish food
 webs that vary with environmental conditions (i.e.~bottom-up mechanisms
@@ -1270,7 +1260,7 @@ are low and do not provide enough food for them (panel d).
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-11-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-11-1.pdf}
 
 On the contrary, in the eutrophic water, high resource productions
 support the existence of all five functional types (panel f). All fish
@@ -1284,35 +1274,51 @@ have feeding levels that are higher than their critical feeding levels
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/Admin/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-12-1.pdf}
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-12-1.pdf}
 
-\newpage
+\section{Time-series simulation}\label{time-series-simulation}
 
-\hypertarget{references}{%
-\section{References}\label{references}}
-
-\bibliography{references.bib}
-
-\hypertarget{time-series-input}{%
-\section{Time-series input}\label{time-series-input}}
-
-The FEISTY model can be coupled with datasets or other model products
+The new version of the FEISTY package provides functions allowing the
+FEISTY model to be able to couple with datasets or other model products
 that provide time-series inputs, of temperature, zooplankton biomass,
-zooplankton production, and benthic production. To avoid creation of new
-mass in the model, the consumption by the fish predators must not exceed
-the corresponding zooplankton production (\(P_{\mathrm{R},j}\), in
-mass/area/time). If the consumption, as calculated by the encounter with
-zooplankton (\(\mu_{\mathrm{p},j} R_j\)) exceeds the resource
-production, the consumption of the resource has to be down-regulated.
+zooplankton production, benthic production, as well as fishing
+mortality. Details of how to set up and run time-series simulations can
+be found on the help page of the \texttt{setupTimeseries()} function.
+There are revisions to the original FEISTY model.
+
+\subsection{Resources dynamics}\label{resources-dynamics}
+
+\subsubsection{Zooplankton}\label{zooplankton}
+
+Zooplankton dynamics in the original FEISTY model are revoked as the
+zooplankton biomass are time-varying input.
+
+\subsubsection{Benthos}\label{benthos}
+
+Due to the limited access to benthos biomass data, the benthos community
+follows the logistic growth according to the time-varying production
+data (\(r_i\) in Eq. \ref{eq:dRdtlogistic}), which is limited by the
+carrying capacity (\(K_i\) in Eq. \ref{eq:dRdtlogistic}, set by users).
+
+\subsection{Down-regulation of zooplankton
+consumption}\label{down-regulation-of-zooplankton-consumption}
+
+To avoid the creation of new mass in the model, the consumption by the
+fish predators must not exceed the corresponding zooplankton production
+(\(P_{\mathrm{R},j}\), in mass/area/time). If the consumption, as
+calculated by the product of predation mortality on zooplankton and
+zooplankton biomass (\(\mu_{\mathrm{p},j} R_j\), in mass/area/time)
+exceeds the resource production, the consumption of the resource has to
+be down-regulated.
 
 When consumption of one food item (here the resource) is decreased the
-predator can compensate by eating more of other resource. For
-simplicity, however, we assume that only the resource consumption is
-decreased, and the consumption of other prey is not increased to
-compensate. To follow this assumption, we introduce a down-regulation
-factor \(f_{\mathrm{dr},j}\) and henceforth several variables change.
-The total consumption of all predators of the resource prey \(j\) is
-equal to the predation mortality loss of that prey (Eq.
+predator can compensate by eating more of other prey. For simplicity,
+however, we assume that only the resource consumption is decreased, and
+the consumption of other prey is not increased to compensate. To follow
+this assumption, we introduce a down-regulation factor
+\(f_{\mathrm{dr},j}\), and henceforth several variables change. The
+total consumption of all predators of the resource prey \(j\) is equal
+to the predation mortality loss of that prey (Eq.
 \ref{eq:predationmortality}). That predation mortality is updated to:
 
 \begin{equation}
@@ -1354,24 +1360,345 @@ Note the \(E_i\) in the denominator is still identical to Eq.
 \ref{eq:encounter}, which is not the most ideal solution to
 down-regulate the predation mortality.
 
-\hypertarget{refs}{}
+Here, we provide an example demonstrating the down-regulation of large
+mesozooplankton consumption in a time-series simulation. When the
+zooplankton consumption by fish hits the zooplankton production (green
+lines above red), it is down-regulated (blues lines overlapped with
+red). The consumption value after down-regulation will be used in
+derivative calculation in the specific time steps.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# load example data from package }
+\FunctionTok{data}\NormalTok{(tsinput\_example\_1850\_2014)}
+\CommentTok{\# setup time series based on setupBasic2}
+\CommentTok{\# 10{-}year time{-}series simulation after 2{-}year spinning up (loop 4 times) }
+\NormalTok{p }\OtherTok{=} \FunctionTok{setupTimeseries}\NormalTok{(}\AttributeTok{p =} \FunctionTok{setupBasic2}\NormalTok{(}\AttributeTok{depth =}\NormalTok{ depth, }\AttributeTok{nStages =} \DecValTok{9}\NormalTok{),}
+                    \AttributeTok{tStep\_ts =} \DecValTok{1}\SpecialCharTok{/}\DecValTok{12}\NormalTok{,}
+                    \AttributeTok{tSpin =} \DecValTok{2}\NormalTok{,}
+                    \AttributeTok{nSpinloop =} \DecValTok{4}\NormalTok{, }
+                    \AttributeTok{Tp\_ts =}\NormalTok{ Tp[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{Tm\_ts =}\NormalTok{ Tm[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{Tb\_ts =}\NormalTok{ Tb[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{szbio =}\NormalTok{ Zbio[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{]}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                    \AttributeTok{lzbio =}\NormalTok{ Zbio[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{]}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                    \AttributeTok{szprod\_ts =}\NormalTok{ Zhploss[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{]}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                    \AttributeTok{lzprod\_ts =}\NormalTok{ Zhploss[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{]}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                    \AttributeTok{dfbot\_ts  =}\NormalTok{ dfbot[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{Fsmp\_ts   =}\NormalTok{ Fspel[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{Flgp\_ts   =}\NormalTok{ Flpel[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{],}
+                    \AttributeTok{Fdem\_ts   =}\NormalTok{ Fdem[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{120}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Time-series input: szbio_ts, lzbio_ts, szprod_ts, lzprod_ts, dfbot_ts, Tp_ts, Tm_ts, Tb_ts, Fsmp_ts, Flgp_ts, Fdem_ts. 
+## Time-series length: 10 years. 
+## Time-series time step: 1/12 years. 
+## Spin-up length: 2 years. 
+## Spin-up loop number: 4.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Run simulation by Fortran}
+\NormalTok{simF }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Set dateframe for plotting}
+\NormalTok{diagts }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{group =} \FunctionTok{factor}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"large zooplankton production"}\NormalTok{,}
+                                          \StringTok{"large zooplankton consumption"}\NormalTok{,}
+                                          \StringTok{"down{-}regulated large zooplankton consumption"}\NormalTok{),}
+                                           \AttributeTok{each =} \FunctionTok{length}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{t)),}
+                              \AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"large zooplankton production"}\NormalTok{,}
+                                         \StringTok{"large zooplankton consumption"}\NormalTok{,}
+                                         \StringTok{"down{-}regulated large zooplankton consumption"}\NormalTok{)), }
+                     \AttributeTok{val    =} \FunctionTok{c}\NormalTok{(}\FunctionTok{as.numeric}\NormalTok{(p}\SpecialCharTok{$}\NormalTok{lzprod\_ts),}
+                                \FunctionTok{as.numeric}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{lgzcsp),}
+                                \FunctionTok{as.numeric}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{lgzcsp\_dr)),}
+                     \AttributeTok{t      =} \FunctionTok{rep}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{t,}\DecValTok{3}\NormalTok{))}
+\CommentTok{\# Plot}
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ diagts, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ t, }\AttributeTok{y =}\NormalTok{ val, }\AttributeTok{color =}\NormalTok{ group, }\AttributeTok{group =}\NormalTok{ group)) }\SpecialCharTok{+}
+    \FunctionTok{geom\_line}\NormalTok{(}\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}  \CommentTok{\# Plot lines}
+    \FunctionTok{xlab}\NormalTok{(}\StringTok{"Time (yr)"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{ylab}\NormalTok{(}\FunctionTok{expression}\NormalTok{(}\StringTok{"production and consumption (g m"}\SpecialCharTok{\^{}}\StringTok{"{-}2"}\SpecialCharTok{*}\StringTok{" yr"}\SpecialCharTok{\^{}}\StringTok{"{-}1"}\SpecialCharTok{*}\StringTok{")"}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{annotation\_logticks}\NormalTok{(}\AttributeTok{sides =} \StringTok{"l"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.4}\NormalTok{, }\AttributeTok{colour =} \StringTok{"darkgrey"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{coord\_cartesian}\NormalTok{(}\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\FloatTok{1E{-}2}\NormalTok{, }\FunctionTok{max}\NormalTok{(}\FloatTok{1E{-}2} \SpecialCharTok{*} \DecValTok{100}\NormalTok{, }\FunctionTok{max}\NormalTok{(diagts}\SpecialCharTok{$}\NormalTok{val) }\SpecialCharTok{*} \DecValTok{5}\NormalTok{))) }\SpecialCharTok{+}
+    \FunctionTok{scale\_y\_log10}\NormalTok{(}\AttributeTok{breaks =} \FunctionTok{trans\_breaks}\NormalTok{(}\StringTok{"log10"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) }\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{x),}
+                  \AttributeTok{labels =} \FunctionTok{trans\_format}\NormalTok{(}\StringTok{"log10"}\NormalTok{, }\FunctionTok{math\_format}\NormalTok{(}\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{.x))) }\SpecialCharTok{+}
+    \FunctionTok{theme\_classic}\NormalTok{()}\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.key =} \FunctionTok{element\_blank}\NormalTok{())}\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"inside"}\NormalTok{,}
+          \AttributeTok{legend.position.inside =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.8}\NormalTok{, }\FloatTok{0.2}\NormalTok{))}\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+\subsection{Discrepancies between the simulation results produced by R
+and
+Fortran}\label{discrepancies-between-the-simulation-results-produced-by-r-and-fortran}
+
+The time-series simulation results produced by R and Fortran could be
+different due to the nature of chaotic systems, which are highly
+sensitive to even the tiniest perturbations. These perturbations may be
+introduced from the ode solving in R and Fortran. Here, two cases are
+presented. In the first case, the results from R and Fortran are nearly
+identical. In the second case, the discrepancies start to emerge after
+around 60 years.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# load example data from package }
+\FunctionTok{data}\NormalTok{(tsinput\_example\_1850\_2014)}
+\CommentTok{\# setup time series based on setupVertical2 (9 stages)}
+\CommentTok{\# 165{-}year time{-}series simulation after 16.5{-}year spinning up (loop 4 times)}
+\NormalTok{p }\OtherTok{=} \FunctionTok{setupTimeseries}\NormalTok{(}\AttributeTok{p =} \FunctionTok{setupVertical2}\NormalTok{(}\AttributeTok{photic =}\NormalTok{ photic, }\AttributeTok{depth =}\NormalTok{ depth, }\AttributeTok{nStages =} \DecValTok{9}\NormalTok{),}
+                  \AttributeTok{tStep\_ts =} \DecValTok{1}\SpecialCharTok{/}\DecValTok{12}\NormalTok{,}
+                  \AttributeTok{tSpin =} \FloatTok{16.5}\NormalTok{, }
+                  \AttributeTok{nSpinloop =} \DecValTok{4}\NormalTok{,}
+                  \AttributeTok{Tp\_ts =}\NormalTok{ Tp,}
+                  \AttributeTok{Tm\_ts =}\NormalTok{ Tm,}
+                  \AttributeTok{Tb\_ts =}\NormalTok{ Tb,}
+                  \AttributeTok{szbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{szprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{dfbot\_ts  =}\NormalTok{ dfbot,}
+                  \AttributeTok{Fsmp\_ts   =}\NormalTok{ Fspel,}
+                  \AttributeTok{Fmesop\_ts =}\NormalTok{ Fmeso,}
+                  \AttributeTok{Flgp\_ts   =}\NormalTok{ Flpel,}
+                  \AttributeTok{Fmidwp\_ts =}\NormalTok{ FmidP,}
+                  \AttributeTok{Fdem\_ts   =}\NormalTok{ Fdem)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Time-series input: szbio_ts, lzbio_ts, szprod_ts, lzprod_ts, dfbot_ts, Tp_ts, Tm_ts, Tb_ts, Fsmp_ts, Fmesop_ts, Flgp_ts, Fmidwp_ts, Fdem_ts. 
+## Time-series length: 165 years. 
+## Time-series time step: 1/12 years. 
+## Spin-up length: 33/2 years. 
+## Spin-up loop number: 4.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Run simulation by Fortran}
+\NormalTok{simF }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{simR }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ F)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot}
+\FunctionTok{plot}\NormalTok{(simR}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simR}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{) ,}\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{xlab=}\StringTok{"year"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"tot biomass"}\NormalTok{,}
+      \AttributeTok{log=}\StringTok{""}\NormalTok{, }\AttributeTok{ylim=}\FunctionTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{,}\DecValTok{40}\NormalTok{), }\AttributeTok{xlim=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{165}\NormalTok{), }\AttributeTok{col=}\StringTok{\textquotesingle{}red\textquotesingle{}}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{col=}\StringTok{\textquotesingle{}black\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# setup time series based on setupVertical2 (3 stages)}
+\CommentTok{\# 165{-}year time{-}series simulation after 16.5{-}year spinning up (loop 4 times)}
+\NormalTok{p }\OtherTok{=} \FunctionTok{setupTimeseries}\NormalTok{(}\AttributeTok{p =} \FunctionTok{setupVertical2}\NormalTok{(}\AttributeTok{photic =}\NormalTok{ photic, }\AttributeTok{depth =}\NormalTok{ depth, }\AttributeTok{nStages =} \DecValTok{3}\NormalTok{),}
+                  \AttributeTok{tStep\_ts =} \DecValTok{1}\SpecialCharTok{/}\DecValTok{12}\NormalTok{,}
+                  \AttributeTok{tSpin =} \FloatTok{16.5}\NormalTok{, }
+                  \AttributeTok{nSpinloop =} \DecValTok{4}\NormalTok{,}
+                  \AttributeTok{Tp\_ts =}\NormalTok{ Tp,}
+                  \AttributeTok{Tm\_ts =}\NormalTok{ Tm,}
+                  \AttributeTok{Tb\_ts =}\NormalTok{ Tb,}
+                  \AttributeTok{szbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{szprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{dfbot\_ts  =}\NormalTok{ dfbot,}
+                  \AttributeTok{Fsmp\_ts   =}\NormalTok{ Fspel,}
+                  \AttributeTok{Fmesop\_ts =}\NormalTok{ Fmeso,}
+                  \AttributeTok{Flgp\_ts   =}\NormalTok{ Flpel,}
+                  \AttributeTok{Fmidwp\_ts =}\NormalTok{ FmidP,}
+                  \AttributeTok{Fdem\_ts   =}\NormalTok{ Fdem)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Time-series input: szbio_ts, lzbio_ts, szprod_ts, lzprod_ts, dfbot_ts, Tp_ts, Tm_ts, Tb_ts, Fsmp_ts, Fmesop_ts, Flgp_ts, Fmidwp_ts, Fdem_ts. 
+## Time-series length: 165 years. 
+## Time-series time step: 1/12 years. 
+## Spin-up length: 33/2 years. 
+## Spin-up loop number: 4.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Run simulation by Fortran}
+\NormalTok{simF }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{simR }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ F)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot}
+\FunctionTok{plot}\NormalTok{(simR}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simR}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{) ,}\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{xlab=}\StringTok{"year"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"tot biomass"}\NormalTok{,}
+      \AttributeTok{log=}\StringTok{""}\NormalTok{, }\AttributeTok{ylim=}\FunctionTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{,}\DecValTok{40}\NormalTok{), }\AttributeTok{xlim=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{165}\NormalTok{), }\AttributeTok{col=}\StringTok{\textquotesingle{}red\textquotesingle{}}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{col=}\StringTok{\textquotesingle{}black\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-14-2.pdf}
+
+Based on the second case (Fortran), an additional perturbation is
+introduced while other settings remain the same. Two simulation results
+are visualized, demonstrating the discrepancies.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# load example data from package }
+\FunctionTok{data}\NormalTok{(tsinput\_example\_1850\_2014)}
+\CommentTok{\# add a perturbation}
+\NormalTok{Zbio[}\DecValTok{100}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 6.178579
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Zbio[}\DecValTok{100}\NormalTok{]}\OtherTok{=}\NormalTok{Zbio[}\DecValTok{100}\NormalTok{]}\SpecialCharTok{+}\FloatTok{1E{-}5}
+\CommentTok{\# setup time series based on setupVertical2 (3 stages)}
+\CommentTok{\# 165{-}year time{-}series simulation after 16.5{-}year spinning up (loop 4 times)}
+\NormalTok{p }\OtherTok{=} \FunctionTok{setupTimeseries}\NormalTok{(}\AttributeTok{p =} \FunctionTok{setupVertical2}\NormalTok{(}\AttributeTok{photic =}\NormalTok{ photic, }\AttributeTok{depth =}\NormalTok{ depth, }\AttributeTok{nStages =} \DecValTok{3}\NormalTok{),}
+                  \AttributeTok{tStep\_ts =} \DecValTok{1}\SpecialCharTok{/}\DecValTok{12}\NormalTok{,}
+                  \AttributeTok{tSpin =} \FloatTok{16.5}\NormalTok{, }
+                  \AttributeTok{nSpinloop =} \DecValTok{4}\NormalTok{,}
+                  \AttributeTok{Tp\_ts =}\NormalTok{ Tp,}
+                  \AttributeTok{Tm\_ts =}\NormalTok{ Tm,}
+                  \AttributeTok{Tb\_ts =}\NormalTok{ Tb,}
+                  \AttributeTok{szbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzbio =}\NormalTok{ Zbio}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{szprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{lzprod\_ts =}\NormalTok{ Zhploss}\SpecialCharTok{/}\DecValTok{2}\NormalTok{,}
+                  \AttributeTok{dfbot\_ts  =}\NormalTok{ dfbot,}
+                  \AttributeTok{Fsmp\_ts   =}\NormalTok{ Fspel,}
+                  \AttributeTok{Fmesop\_ts =}\NormalTok{ Fmeso,}
+                  \AttributeTok{Flgp\_ts   =}\NormalTok{ Flpel,}
+                  \AttributeTok{Fmidwp\_ts =}\NormalTok{ FmidP,}
+                  \AttributeTok{Fdem\_ts   =}\NormalTok{ Fdem)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Time-series input: szbio_ts, lzbio_ts, szprod_ts, lzprod_ts, dfbot_ts, Tp_ts, Tm_ts, Tb_ts, Fsmp_ts, Fmesop_ts, Flgp_ts, Fmidwp_ts, Fdem_ts. 
+## Time-series length: 165 years. 
+## Time-series time step: 1/12 years. 
+## Spin-up length: 33/2 years. 
+## Spin-up loop number: 4.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Run simulation by Fortran}
+\NormalTok{simF2 }\OtherTok{=} \FunctionTok{simulateFEISTY}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{USEdll =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## spin-up progress: 25.00%
+## spin-up progress: 50.00%
+## spin-up progress: 75.00%
+## spin-up progress: 100.00%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot}
+\FunctionTok{plot}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simF}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{) ,}\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{xlab=}\StringTok{"year"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"tot biomass"}\NormalTok{,}
+      \AttributeTok{log=}\StringTok{""}\NormalTok{, }\AttributeTok{ylim=}\FunctionTok{c}\NormalTok{(}\FloatTok{0.1}\NormalTok{,}\DecValTok{40}\NormalTok{), }\AttributeTok{xlim=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{165}\NormalTok{), }\AttributeTok{col=}\StringTok{\textquotesingle{}green\textquotesingle{}}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(simF2}\SpecialCharTok{$}\NormalTok{t, }\FunctionTok{rowSums}\NormalTok{(simF2}\SpecialCharTok{$}\NormalTok{totBiomass,}\DecValTok{2}\NormalTok{), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{col=}\StringTok{\textquotesingle{}black\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\newpage
+
+\section{References}\label{references}
+
+\bibliography{references.bib}
+
+\phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
-\leavevmode\vadjust pre{\hypertarget{ref-andersen2019fish}{}}%
+\bibitem[\citeproctext]{ref-andersen2019fish}
 Andersen, Ken H. 2019. \emph{Fish Ecology, Evolution, and Exploitation:
 A New Theoretical Synthesis}. Princeton University Press.
 
-\leavevmode\vadjust pre{\hypertarget{ref-deRoos2008}{}}%
+\bibitem[\citeproctext]{ref-deRoos2008}
 De Roos, André M, Tim Schellekens, Tobias Van Kooten, Karen Van De
 Wolfshaar, David Claessen, and Lennart Persson. 2008. {``Simplifying a
 Physiologically Structured Population Model to a Stage-Structured
 Biomass Model.''} \emph{Theoretical Population Biology} 73 (1): 47--62.
 
-\leavevmode\vadjust pre{\hypertarget{ref-van2021emergent}{}}%
+\bibitem[\citeproctext]{ref-van2021emergent}
 Denderen, P Daniël van, Colleen M Petrik, Charles A Stock, and Ken H
 Andersen. 2021. {``Emergent Global Biogeography of Marine Fish Food
 Webs.''} \emph{Global Ecology and Biogeography} 30 (9): 1822--34.
 
-\leavevmode\vadjust pre{\hypertarget{ref-petrik2019bottom}{}}%
+\bibitem[\citeproctext]{ref-petrik2019bottom}
 Petrik, Colleen M, Charles A Stock, Ken H Andersen, P Daniël van
 Denderen, and James R Watson. 2019. {``Bottom-up Drivers of Global
 Patterns of Demersal, Forage, and Pelagic Fishes.''} \emph{Progress in

@@ -81,3 +81,36 @@ plotSimulation(sim1)
 sim2=simulateFEISTY(p=p2,tEnd=500)
 plotSimulation(sim2)
 
+## ----fig.width = 8, fig.height = 6, cache = TRUE------------------------------
+# load example data from package 
+data(tsinput_example_1850_2014)
+# add a perturbation
+Zbio[100]
+Zbio[100]=Zbio[100]+1E-5
+# setup time series based on setupVertical2 (3 stages)
+# 165-year time-series simulation after 16.5-year spinning up (loop 4 times)
+p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 3),
+                  tStep_ts = 1/12,
+                  tSpin = 16.5, 
+                  nSpinloop = 4,
+                  Tp_ts = Tp,
+                  Tm_ts = Tm,
+                  Tb_ts = Tb,
+                  szbio = Zbio/2,
+                  lzbio = Zbio/2,
+                  szprod_ts = Zhploss/2,
+                  lzprod_ts = Zhploss/2,
+                  dfbot_ts  = dfbot,
+                  Fsmp_ts   = Fspel,
+                  Fmesop_ts = Fmeso,
+                  Flgp_ts   = Flpel,
+                  Fmidwp_ts = FmidP,
+                  Fdem_ts   = Fdem)
+# Run simulation by Fortran
+simF2 = simulateFEISTY(p = p, USEdll = T)
+# Plot
+plot(simF$t, rowSums(simF$totBiomass,2) ,type='l', xlab="year",ylab="tot biomass",
+      log="", ylim=c(0.1,40), xlim=c(0,165), col='green')
+lines(simF2$t, rowSums(simF2$totBiomass,2), type='l', col='black')
+
+
