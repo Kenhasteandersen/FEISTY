@@ -150,7 +150,7 @@ Only one spin-up scheme is available, offering limited customization options. If
 # Two example for 1850-1859 (10 year) and 1850-2014 (165 year) of one grid. They are monthly data but converted to yearly by multiplying 12, since FEISTY units are in year.
 # However in simulations, each data only run for 1/12 year to align with month.
 # Photic zone depth and water column depth are not time-varying so they are in setupVertical2().
-# In the example data, zooplankton biomass (Zbio) and production (Zhploss) are halved to represent small and large zooplankton.\cr
+# In the example data, zooplankton biomass (Zbio) and production (Zhploss) are halved to represent small and large zooplankton.
 # The information of the example data can be found in the README file in the package source file (...\FEISTY\data).
 
 # Example of 10 years (1850-1859, including 1859) of one grid.
