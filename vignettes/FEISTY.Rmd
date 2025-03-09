@@ -1,7 +1,7 @@
 ---
 title: "FishErIes Size and functional TYpe model (FEISTY) in R"
 author: "Yixin Zhao, P. Daniël van Denderen, Karline Soetaert, and Ken H. Andersen"
-date: "November 1, 2024"
+date: "March, 2025"
 output:
   pdf_document:
     latex_engine: pdflatex
