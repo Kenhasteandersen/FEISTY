@@ -255,7 +255,7 @@ derivativesFEISTYR = function(t,              # current time
       dRdt = p$r*R*(1-R/p$K) - mortpred[p$ixR]*R
   }else if (!is.null(p$bTS) & isTRUE(p$bTS)){
     dRdt = c(0,0,0,0)
-    dRdt[3] = p$r[3]*R[3]*(1-R[3]/p$K[3]) - mortpred[3]*R[3]
+    dRdt[3] = p$r[3]*(1-R[3]/p$K[3]) - mortpred[3]*R[3]
   }
   
   

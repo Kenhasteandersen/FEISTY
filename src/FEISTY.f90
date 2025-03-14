@@ -572,7 +572,7 @@ end if
 
       if(bTS .eqv. .TRUE.)then
         dRdt = 0.d0
-        dRdt(3) = rr(3)*R(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
+        dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
       else
         if (Rtype == 1) then
           dRdt = rr*(K-R) - mortRes*R       ! chemostat formulation
