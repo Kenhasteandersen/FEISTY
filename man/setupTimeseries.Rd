@@ -45,17 +45,17 @@ The first run starts with \code{p$u0}, while subsequent runs use the values of t
 
 \item{lzbio_ts}{Large mesozooplankton biomass time-series [g/m2].}
 
-\item{szprod_ts}{Small mesozooplankton productivity time-series [g/m2/year].}
+\item{szprod_ts}{Small mesozooplankton production time-series [g/m2/year].}
 
-\item{lzprod_ts}{Large mesozooplankton productivity time-series [g/m2/year].}
+\item{lzprod_ts}{Large mesozooplankton production time-series [g/m2/year].}
 
-\item{bprodin_ts}{Benthic productivity time-series [g/m2/year].}
+\item{bprodin_ts}{Benthic production time-series [g/m2/year].}
 
 \item{dfbot_ts}{time-series of detrital flux reaching the bottom [g/m2/year]. \cr
-It will multiply the trophic transfer efficiency (10\%) to get benthic productivity \code{bprod_ts}.}
+It will multiply the trophic transfer efficiency (10\%) to get benthic production \code{bprod_ts}.}
 
 \item{dfpho_ts}{Detrital flux out of the photic zone time-series [g/m2/year]. Default NA. \cr
-It will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic productivity \code{bprod_ts} ultimately .
+It will be further calculated based on the Martin curve to get detrital flux reaching the bottom and then multiplied the trophic transfer efficiency (10\%) to get benthic production \code{bprod_ts} ultimately .
 See source code of \code{setupTimeseries}.\cr
 Input either of \code{bprodin_ts}, \code{dfbot_ts} or \code{dfpho_ts}. If all are NAs then \code{p$bprod} is used for the simulation \code{p$r[3] = p$bprod}. In this case, remember to add benthos arguments in \code{p = setupXX()}.}
 
@@ -84,9 +84,9 @@ A modified parameter list (\code{p}) containing:\cr
 \itemize{
  \item \code{szbio_ts}: Small mesozooplankton biomass time-series.
  \item \code{lzbio_ts}: Large mesozooplankton biomass time-series.
- \item \code{szprod_ts}: Small mesozooplankton productivity time-series.
- \item \code{lzprod_ts}: Large mesozooplankton productivity time-series.
- \item \code{bprod_ts}: Benthic productivity (derived from \code{bprodin_ts}, \code{dfbot_ts}, or \code{dfpho_ts}).
+ \item \code{szprod_ts}: Small mesozooplankton production time-series.
+ \item \code{lzprod_ts}: Large mesozooplankton production time-series.
+ \item \code{bprod_ts}: Benthic production (derived from \code{bprodin_ts}, \code{dfbot_ts}, or \code{dfpho_ts}).
  \item \code{Tp_ts}: Pelagic water temperature time-series.
  \item \code{Tm_ts}: Mid-water temperature time-series
  \item \code{Tb_ts}: Bottom water temperature time-series.
@@ -123,7 +123,7 @@ The main operation on each time-series data input is adding an extra element at 
 \itemize{
 \item All time-series arrays should have the \strong{same length}.
 \item \strong{Zooplankton}: Biomass values are directly available for fish consumption (no population dynamics).
-\item \strong{Benthos}: Following \emph{logistic growth}, requiring productivity and carrying capacity inputs.
+\item \strong{Benthos}: Following \emph{logistic growth}, requiring production and carrying capacity inputs.
 \item \strong{Temperature}: In R, temperature data will be used for temperature-dependent effects computation in each time step. See source code \code{derivativesFEISTYR}.
 In Fortran, the temperature effects have been pre-calculated and stored in a large matrix (See source code \code{buildforcings}), which is transmitted to Fortran. The data of each time step will be called automatically.
 \item \strong{Fishing mortality}: In R, fishing mortality of each size class is calculated in each time step, based on the maximum fishing mortality time-series input.

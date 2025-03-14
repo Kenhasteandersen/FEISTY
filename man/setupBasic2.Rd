@@ -18,17 +18,17 @@ setupBasic2(szprod = 100,
                    bET=TRUE)
 }
 \arguments{
-\item{szprod}{Small mesozooplankton productivity. \cr
-The parameter represents small mesozooplankton carrying capacity [g/m2] and multiplied with the growth rate \bold{r}, which is always 1 [1/yr], it gives the maximum resource productivity [g/m2/year].
-Therefore, it is described as small mesozooplankton productivity [g/m2/year]. \code{lzprod} and \code{bprod} are same.}
+\item{szprod}{Small mesozooplankton production. \cr
+The parameter represents small mesozooplankton carrying capacity [g/m2] and multiplied with the growth rate \bold{r}, which is always 1 [1/yr], it gives the maximum resource production [g/m2/year].
+Therefore, it is described as small mesozooplankton production [g/m2/year]. \code{lzprod} and \code{bprod} are same.}
 
-\item{lzprod}{Large mesozooplankton productivity.}
+\item{lzprod}{Large mesozooplankton production.}
 
-\item{bprodin}{Benthic productivity input [g/m2/year]. Default NA. Input either of `bprodin` or `dfbot`.
-The benthic productivity `bprod` equals `bprodin`.}
+\item{bprodin}{Benthic production input [g/m2/year]. Default NA. Input either of `bprodin` or `dfbot`.
+The benthic production `bprod` equals `bprodin`.}
 
 \item{dfbot}{Detrital flux reaching the bottom [g/m2/year]. Default NA. Input either of `bprodin` or `dfbot`.
-It will multiply the trophic transfer efficiency (10\%) to get the benthic productivity `bprod`. If both are NAs then `bprod = 5`.}
+It will multiply the trophic transfer efficiency (10\%) to get the benthic production `bprod`. If both are NAs then `bprod = 5`.}
 
 \item{depth}{Water column depth [meter]. depth>=200 is characterized as deep water, and depth<200 is characterized as shallow water. 
 depth=300 and depth=1000 do not have any different effects on simulations.}
@@ -58,11 +58,11 @@ If users want to assign fishing mortality to specific functional types with diff
 \value{
 Additional parameters added by the function \code{\link{paramInit}}:
 \itemize{
-\item szprod, Small mesozooplankton productivity, from parameter input.
-\item lzprod, Large mesozooplankton productivity, from parameter input.
-\item bprodin, Benthic productivity input, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
+\item szprod, Small mesozooplankton production, from parameter input.
+\item lzprod, Large mesozooplankton production, from parameter input.
+\item bprodin, Benthic production input, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
 \item dfbot, Detrital flux reaching the bottom, from parameter input. If input is NA, the returned value is -1 for passing to FORTRAN.
-\item bprod, Benthic productivity, from calculation based on `bprodin` or `dfbot`.
+\item bprod, Benthic production, from calculation based on `bprodin` or `dfbot`.
 \item depth, Water column depth, from parameter input.
 \item Tp, Pelagic water temperature, from parameter input.
 \item Tb, Bottom water temperature, from parameter input.

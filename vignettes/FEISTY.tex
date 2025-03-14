@@ -1278,7 +1278,7 @@ have feeding levels that are higher than their critical feeding levels
 
 \section{Time-series simulation}\label{time-series-simulation}
 
-The new version of the FEISTY package provides functions allowing the
+The version 1.1 of the FEISTY package provides functions allowing the
 FEISTY model to be able to couple with datasets or other model products
 that provide time-series inputs, of temperature, zooplankton biomass,
 zooplankton production, benthic production, as well as fishing
@@ -1297,8 +1297,16 @@ zooplankton biomass are time-varying input.
 
 Due to the limited access to benthos biomass data, the benthos community
 follows the logistic growth according to the time-varying production
-data (\(r_i\) in Eq. \ref{eq:dRdtlogistic}), which is limited by the
-carrying capacity (\(K_i\) in Eq. \ref{eq:dRdtlogistic}, set by users).
+data, which is limited by the carrying capacity (\(K_i\), set by users):
+
+\begin{equation}
+\frac{\mathrm{d}R_i}{\mathrm{d}t}=r_i \cdot (1-\frac{R_i}{K_i}) - \mu_{\mathrm{p},i} \cdot R_i .
+\end{equation}
+
+Note, this is slightly different from Eq. \ref{eq:dRdtlogistic}. The
+\(r_i\) in Eq. \ref{eq:dRdtlogistic} is the growth rate in the unit of
+per time, while the \(r_i\) here represents the production
+(biomass/area/time).
 
 \subsection{Down-regulation of zooplankton
 consumption}\label{down-regulation-of-zooplankton-consumption}
@@ -1355,10 +1363,6 @@ production which is not accounted for. Further, as mentioned above, the
 fish are not allowed to compensate for the reduction in zooplankton
 consumption by an increase in consumption of other prey. We believe that
 this latter assumption has a quite small impact.
-
-Note the \(E_i\) in the denominator is still identical to Eq.
-\ref{eq:encounter}, which is not the most ideal solution to
-down-regulate the predation mortality.
 
 Here, we provide an example demonstrating the down-regulation of large
 mesozooplankton consumption in a time-series simulation. When the
@@ -1457,6 +1461,13 @@ introduced from the ode solving in R and Fortran. Here, two cases are
 presented. In the first case, the results from R and Fortran are nearly
 identical. In the second case, the discrepancies start to emerge after
 around 60 years.
+
+This ``drifting apart'' of the solutions is not an error but is due to
+the sometimes chaotic nature of the solution of the ODE system. The
+solutions are not always chaotic (for instance, the first case). The
+fact that the solutions may be chaotic shows the limitation of what we
+can expect the model to predict: we can predict average values, but not
+the accurate time trajectory of any of the species groups.
 
 \begin{Shaded}
 \begin{Highlighting}[]
