@@ -839,7 +839,7 @@ ggplot(data = diagts, aes(x = t, y = val, color = group, group = group)) +
 ```
 
 ## Discrepancies between the simulation results produced by R and Fortran
-The time-series simulation results produced by R and Fortran could be different due to the nature of chaotic systems, which are highly sensitive to even the tiniest perturbations. These perturbations may be introduced from the ode solving in R and Fortran. Here, two cases are presented. In the first case, the results from R and Fortran are nearly identical. In the second case, the discrepancies start to emerge after around 60 years. 
+The time-series simulation results produced by R and Fortran could be different due to the nature of chaotic systems, which are highly sensitive to even the tiniest perturbations. These perturbations may be introduced from the ode solving in R and Fortran. Here, two cases are presented. In the first case, the results from R and Fortran are nearly identical. In the second case, the discrepancies start to emerge after around 80 years. 
 
 This “drifting apart” of the solutions is not an error but is due to the sometimes chaotic nature of the solution of the ODE system. The solutions are not always chaotic (for instance, the first case). The fact that the solutions may be chaotic shows the limitation of what we can expect the model to predict: we can predict average values, but not the accurate time trajectory of any of the species groups.
 
