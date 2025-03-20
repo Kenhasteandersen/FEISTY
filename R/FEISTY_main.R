@@ -297,6 +297,7 @@ derivativesFEISTYR = function(t,              # current time
     out$smzcsp_dr = smzcsp_dr
     out$lgzcsp = lgzcsp
     out$lgzcsp_dr = lgzcsp_dr
+    out$mortF_ts  = p$mortF
     }
     return(out)
   }
@@ -394,6 +395,8 @@ derivativesFEISTYR = function(t,              # current time
 #' \item smzcsp_dr: down-regulated small mesozooplankton consumption by fish [g/m2/year].
 #' \item lgzcsp: large mesozooplankton consumption by fish [g/m2/year].
 #' \item lgzcsp_dr: down-regulated large mesozooplankton consumption by fish [g/m2/year].
+#' \item p$mortF: fishing mortality time-series [1/year]. This matrix replaces the original \code{p$mortF}, containing the fishing mortality for all state variables (resources and fish) at each output time point. 
+#' It is used for yield calculation (see \code{\link{calcYield}}).
 #' }
 #' 
 #' Also, some parameters in parameters set \code{p} could be ineffective when it is a time-series simulation. For instance, \code{p$szprod}, \code{p$lzprod}, and \code{p$Tp}. There are time-series data ending up with "_ts".
@@ -546,7 +549,7 @@ simulateFEISTY = function(p      = setupBasic(),
   
   # if ts simulation, add output names for diagnosis, rewrite time parameters based on setupTimeseries().
   if (p$bTS == TRUE) {
-     outnames = c(outnames,"smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr")
+     outnames = c(outnames,"smzcsp","smzcsp_dr","lgzcsp","lgzcsp_dr",paste("mortF_ts", Sname, sep="."))
      tStep    = p$tStep_ts
      tEnd     = p$tEnd_ts
      times    = seq(from=0, to=tEnd, by=tStep)
@@ -878,6 +881,9 @@ simulateFEISTY = function(p      = setupBasic(),
   sim$lgzcsp=u[,col_lgzcsp]
   col_lgzcsp_dr=grep("lgzcsp_dr$", colnames(u), value = TRUE)
   sim$lgzcsp_dr=u[,col_lgzcsp_dr]
+  col_mortF_ts=grep("^mortF_ts", colnames(u), value = TRUE)
+  mortF_ts=u[,col_mortF_ts]
+  sim$p$mortF=mortF_ts
   }
   
   #

@@ -56,7 +56,8 @@ setFishing = function(p, Fmax=0, etaF=0.05, groupidx=c(1:p$nGroups)) {
 #'
 #' @details
 #' This function calculates the yield for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
-#' Yield is the product of biomass \code{u} [g/m2] and fishing mortality \code{mortF} [1/year]. Negative values in \code{u} are corrected to 0. \cr
+#' Yield is the product of biomass \code{u} [g/m2] and fishing mortality \code{mortF} [1/year]. Negative values in \code{u} are corrected to 0. 
+#' The yield calculation is automatically adaptive to non-time-series simulations or time-series simulations. \cr
 #' This function has been integrated into \code{\link{simulateFEISTY}}. It cannot be called independently.
 #'
 #' @return 
@@ -96,7 +97,17 @@ calcYield = function(
   
   for (iGroup in 1:p$nGroups) {
     ix = p$ix[[iGroup]]    
-    yieldAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$mortF[ix]) 
+    if(is.null(dim(p$mortF))){ # if it is not a matrix (non-ts)
+    mortF_mat = matrix(data=rep(p$mortF[ix], each = sim$nTime), 
+                       nrow = sim$nTime, 
+                       ncol = length(p$mortF[ix]), 
+                       byrow = FALSE)
+  }else{
+    mortF_mat = p$mortF[,ix]
+    }
+    
+    #yieldAllgrid[,ix-length(p$ixR)] =t(t(sim$u[, ix]) * p$mortF[ix]) 
+    yieldAllgrid[,ix-length(p$ixR)] = sim$u[, ix] * mortF_mat
     yieldAllgrid[,ix-length(p$ixR)][yieldAllgrid[,ix-length(p$ixR)]<0]=0
     yield[,iGroup]= rowSums(yieldAllgrid[,ix-length(p$ixR)])
     

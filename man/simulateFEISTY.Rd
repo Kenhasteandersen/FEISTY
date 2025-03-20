@@ -80,6 +80,8 @@ If time-series simulation is enabled the diagnostic variables below are returned
 \item smzcsp_dr: down-regulated small mesozooplankton consumption by fish [g/m2/year].
 \item lgzcsp: large mesozooplankton consumption by fish [g/m2/year].
 \item lgzcsp_dr: down-regulated large mesozooplankton consumption by fish [g/m2/year].
+\item p$mortF: fishing mortality time-series [1/year]. This matrix replaces the original \code{p$mortF}, containing the fishing mortality for all state variables (resources and fish) at each output time point. 
+It is used for yield calculation (see \code{\link{calcYield}}).
 }
 
 Also, some parameters in parameters set \code{p} could be ineffective when it is a time-series simulation. For instance, \code{p$szprod}, \code{p$lzprod}, and \code{p$Tp}. There are time-series data ending up with "_ts".

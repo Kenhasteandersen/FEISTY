@@ -816,6 +816,10 @@ end if
         ir = ir + 1
         yout(ir) = lgzcsp_dr
         ir = ir + 1
+         do i = 1, nGrid
+          yout(ir) = mortF(i)
+          ir = ir + 1
+         end do
     end if
 
    end subroutine outfeisty
