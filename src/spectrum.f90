@@ -8,33 +8,33 @@ module spectrum
    type, abstract :: typeSpectrum
       integer:: n
 ! Grid:
-      real(dp), allocatable:: m(:)  ! Geometric center mass of size-bin
-      real(dp), allocatable:: mLower(:)  ! Smallest size in the bin
-      real(dp), allocatable:: mUpper(:)   ! Width of the bin
-      real(dp), allocatable:: z(:) ! Ratio btw upper and lower size of bin
+      real(rk), allocatable:: m(:)  ! Geometric center mass of size-bin
+      real(rk), allocatable:: mLower(:)  ! Smallest size in the bin
+      real(rk), allocatable:: mUpper(:)   ! Width of the bin
+      real(rk), allocatable:: z(:) ! Ratio btw upper and lower size of bin
 
-      real(dp), allocatable::psiMature(:)          ! Maturity level indicator
+      real(rk), allocatable::psiMature(:)          ! Maturity level indicator
 !feeding
-      real(dp):: beta, sigma                       ! Pred:prey mass ratio and width
-      real(dp):: epsAssim                          ! Assimilation efficiency
-      real(dp), allocatable:: Enc(:)               ! Encounter
-      real(dp), allocatable:: flvl(:)              ! Feeding level
-      real(dp), allocatable :: Cmax(:)             ! Maximum consumption rate
-      real(dp), allocatable ::  V(:)               ! Clearance rate
-      real(dp), allocatable  :: metabolism(:)      ! Standard metabolism
-      real(dp), allocatable  :: Eavail(:)          ! Available energy
+      real(rk):: beta, sigma                       ! Pred:prey mass ratio and width
+      real(rk):: epsAssim                          ! Assimilation efficiency
+      real(rk), allocatable:: Enc(:)               ! Encounter
+      real(rk), allocatable:: flvl(:)              ! Feeding level
+      real(rk), allocatable :: Cmax(:)             ! Maximum consumption rate
+      real(rk), allocatable ::  V(:)               ! Clearance rate
+      real(rk), allocatable  :: metabolism(:)      ! Standard metabolism
+      real(rk), allocatable  :: Eavail(:)          ! Available energy
 
 !mortality
-      real(dp), dimension(:), allocatable:: mort, mortpred, mort0, mortF
+      real(rk), dimension(:), allocatable:: mort, mortpred, mort0, mortF
 ! total mortality=predation mortality+intrinsic mortality+fishing mortality :  mort=mortpred+mort0+mortF
 !flux
-      real(dp), dimension(:), allocatable:: Jin, Jout                 !
-      real(dp), dimension(:), allocatable:: nu, nupositive, Repro, g  !nu = Eavail
+      real(rk), dimension(:), allocatable:: Jin, Jout                 !
+      real(rk), dimension(:), allocatable:: nu, nupositive, Repro, g  !nu = Eavail
 
       ! save for temperature (Feb 2024 added)
-      real(dp), allocatable :: Cmaxsave(:)             !
-      real(dp), allocatable :: Vsave(:)                !
-      real(dp), allocatable :: metabolismsave(:)      !
+      real(rk), allocatable :: Cmaxsave(:)             !
+      real(rk), allocatable :: Vsave(:)                !
+      real(rk), allocatable :: metabolismsave(:)      !
 
    contains
 
@@ -52,7 +52,7 @@ contains
    subroutine initSpectrum(this, n, mMin, mMax)
       class(typeSpectrum) :: this
       integer, intent(in):: n
-      real(dp), intent(in):: mMin, mMax
+      real(rk), intent(in):: mMin, mMax
 
       this%n = n
       allocate (this%m(n))
@@ -87,13 +87,13 @@ contains
 ! Set up grids in terms of given minimum and maximum boundary masses
 !
       subroutine calcGrid()
-         real(dp):: mb(n + 1)
+         real(rk):: mb(n + 1)
 
          mb = exp(linspace(log(mMin), log(mMax), n + 1))        ! boundary mass   grid of lower sizes, with the last being the upper size of the last cell
          this%mLower = mb(1:n)                                  ! lower boundary
          this%mUpper = mb(2:(n + 1))                            ! upper boundary
          this%z = this%mUpper/this%mLower                       ! The ratio between upper and lower sizes
-         this%m = exp(log(this%mLower) + 0.5d0*(log(this%z)))   ! Geometric mean center mass
+         this%m = exp(log(this%mLower) + 0.5_rk*(log(this%z)))   ! Geometric mean center mass
 
       end subroutine calcGrid
 

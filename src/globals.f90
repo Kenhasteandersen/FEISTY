@@ -5,29 +5,29 @@
 module globals
    use input
    implicit none
-   integer, parameter :: dp = kind(0.d0) ! double precision
+   integer, parameter :: rk = selected_real_kind(13) ! dp =  kind(0.d0) ! double precision
 
-   real(dp), parameter :: pi = 4*ATAN(1.d0)
+   real(rk), parameter :: pi = 4*ATAN(1._rk)
 
    ! Small number to avoid divisions by zero
-   real(dp), parameter :: eps = 1d-200
+   real(rk), parameter :: eps = 1.0e-200_rk
 
    ! Temperature Q10 corrections
-   real(dp), parameter :: Q10=1.88d0, Q10m=1.88d0, Q10mPetrik=2.35d0
-   real(dp) :: fTemp, fTempm, fTempdem, fTempmdem, fTempdem_shallow, fTempmdem_shallow
-   real(dp),save :: fTempold=1.d0, fTempmold=1.d0, fTempdemold=1.d0, fTempmdemold=1.d0
-   real(dp),save :: fTempdem_shallowold=1.d0, fTempmdem_shallowold=1.d0
-   real(dp), parameter:: Tref = 10.d0 ! Reference temperature
+   real(rk), parameter :: Q10=1.88_rk, Q10m=1.88_rk, Q10mPetrik=2.35_rk
+   real(rk) :: fTemp, fTempm, fTempdem, fTempmdem, fTempdem_shallow, fTempmdem_shallow
+   real(rk),save :: fTempold=1._rk, fTempmold=1._rk, fTempdemold=1._rk, fTempmdemold=1._rk
+   real(rk),save :: fTempdem_shallowold=1._rk, fTempmdem_shallowold=1._rk
+   real(rk), parameter:: Tref = 10._rk ! Reference temperature
 
-   real(dp), allocatable :: fTempV(:), fTempmV(:)
+   real(rk), allocatable :: fTempV(:), fTempmV(:)
 
 contains
 
   ! linspace function:
       function linspace(value_start, value_end, length) result(res)
-         real(dp), intent(in)::value_start, value_end
+         real(rk), intent(in)::value_start, value_end
          integer, intent(in)::length
-         real(dp) ::dx, res(length)
+         real(rk) ::dx, res(length)
          integer::i
 
          dx = (value_end - value_start)/(length - 1)
@@ -36,10 +36,10 @@ contains
 
       ! a simple function to create diagonal matrix, only for 1-D array
     function diag(A) result(res)
-    real(dp), intent(in) :: A(:)
-    real(dp) :: res(size(A),size(A))
+    real(rk), intent(in) :: A(:)
+    real(rk) :: res(size(A),size(A))
     integer :: i
-    res=0.d0
+    res=0._rk
     do i = 1, size(A)
         res(i,i) = A(i)
     end do

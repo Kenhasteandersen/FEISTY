@@ -23,8 +23,8 @@
       implicit none
       integer,  intent(in)   :: n
       integer,  intent(inout):: ir
-      real(dp), intent(out)  :: vec(n)
-      real(dp), intent(in)   :: rpar(*)
+      real(rk), intent(out)  :: vec(n)
+      real(rk), intent(in)   :: rpar(*)
       integer :: i
 
       do i = 1, n
@@ -51,7 +51,7 @@
     use  setup
       implicit none
       integer, intent(in):: ipar(*)
-      real(dp), intent(in):: rpar(*)
+      real(rk), intent(in):: rpar(*)
 
       integer:: i, j, ii, ir
 
@@ -148,7 +148,7 @@
       call getVec(rr, rpar, ir, nResources)
 
 !     CALL intpr ("ir   ", 4, ir, 1)
-!     tmp(:) = 0.d0
+!     tmp(:) = 0._rk
 !      do i=1,4
 !        tmp(i) = K(i)
 !      end do
@@ -336,8 +336,8 @@
    subroutine allocfeisty_ts(u)
     use  setup
       implicit none
-      !real(dp), intent(in):: tsinput(*)
-      real(dp), intent(inout):: u(nGrid) !state variable vector
+      !real(rk), intent(in):: tsinput(*)
+      real(rk), intent(inout):: u(nGrid) !state variable vector
 
       integer:: i, ir
 
@@ -380,11 +380,11 @@
    subroutine checknan(vec, n)
         use  setup
       integer, intent(in)::n
-      real(dp), intent(inout) :: vec(n)
+      real(rk), intent(inout) :: vec(n)
       integer :: i
 
       do i = 1, n
-         if (isnan(vec(i))) vec(i) = 0.d0
+         if (isnan(vec(i))) vec(i) = 0._rk
       end do
    end subroutine checknan
 
@@ -402,14 +402,14 @@
 
   subroutine calcderivatives(uin, dudt)
     use  setup
-      real(dp), intent(in)    :: uin(nGrid)
-      real(dp), intent(inout) :: dudt(nGrid)
-      real(dp):: u(nGrid)
+      real(rk), intent(in)    :: uin(nGrid)
+      real(rk), intent(inout) :: dudt(nGrid)
+      real(rk):: u(nGrid)
 
       integer :: i, j, ii, istart, istop!, iGroup
 
 ! ----------------------------------------------------------------------
-dudt=0.d0
+dudt=0._rk
 
 ! ----------------------------------------------
 ! Get proper state variable
@@ -419,7 +419,7 @@ u=uin
 if(bTS .eqv. .TRUE.) call allocfeisty_ts(u)
 
 do i = 1, nGrid
-  u(i) = max(0.d0 , u(i))
+  u(i) = max(0._rk , u(i))
 end do
 
 if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
@@ -438,7 +438,7 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
 
 ! down-regulation in time-series input
 if(bTS .eqv. .TRUE.)then
-    dr_fac_theta = 1.d0
+    dr_fac_theta = 1._rk
 ! original zooplankton consumption by fish
     smzcsp = mortpred(1)*u(1)
     lgzcsp = mortpred(2)*u(2)
@@ -480,7 +480,7 @@ end if
 
       grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
 
-      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
+      loss    = (1._rk-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
 
 ! add basal and fishing mortality)
       mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
@@ -495,15 +495,15 @@ end if
       do i = nResources+1, nGrid
         B(ii)        = u(i)                              ! fish stages          [g/m2]
         eFish(ii)    = Eavail(i)                         ! availabel energy     [/yr]
-        eplus(ii)    = max(0d0, Eavail(i))               ! net growth rate      [/yr]
+        eplus(ii)    = max(0._rk, Eavail(i))               ! net growth rate      [/yr]
         mortFish(ii) = mort(i)                           ! total mortality      [/yr]
         ii = ii+1
       end do
 
-      grow = (1.d0 - psiMature)*eplus                    ! energy  for growth   [/yr]
+      grow = (1._rk - psiMature)*eplus                    ! energy  for growth   [/yr]
 
       gamma_vec = (grow - mortFish) /   &                    ! growth to next stage [/yr]
-            (1d0 - (1/z)**(1d0-mortFish/grow) )
+            (1._rk - (1/z)**(1._rk-mortFish/grow) )
 
       call checknan(gamma_vec, nFGrid)    ! No growth of fully mature classes (grow=0)
 
@@ -526,7 +526,7 @@ end if
 
       ! Add the waste energy in reproduction of each stages.
       ! Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
-        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1.d0-epsRepro_vec(i)) * Repro(istart:istop)
+        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1._rk-epsRepro_vec(i)) * Repro(istart:istop)
 
         do j = istart+1, istop
           Fin(j)         = Fout(j-1)
@@ -541,9 +541,9 @@ end if
         istart = ixStart(i) ! + nResources
         istop  = ixEnd(i)  ! + nResources
 
-        totGrazing(i)  = 0d0
-        totLoss(i)     = 0d0
-        totMort(i)     = 0d0
+        totGrazing(i)  = 0._rk
+        totLoss(i)     = 0._rk
+        totMort(i)     = 0._rk
 
         do j = istart, istop
           totGrazing(i)  = totGrazing(i) + grazing(j)
@@ -551,7 +551,7 @@ end if
           totMort(i)     = totMort(i)    + mort(j)*u(j)
         end do
       ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
-        totLoss(i)=totLoss(i) + (1.d0 - epsRepro_vec(i)) * Fout(istop-nResources)
+        totLoss(i)=totLoss(i) + (1._rk - epsRepro_vec(i)) * Fout(istop-nResources)
 
       end do
       totRecruit   = totRepro*epsRepro_vec
@@ -571,7 +571,7 @@ end if
       enddo
 
       if(bTS .eqv. .TRUE.)then
-        dRdt = 0.d0
+        dRdt = 0._rk
         dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
       else
         if (Rtype == 1) then
@@ -610,7 +610,7 @@ end if
     use setup
     implicit none
     external steadyparms  ! not used
-!    real(dp) :: pars
+!    real(rk) :: pars
 
        feistyinitialised = .FALSE.
 
@@ -620,7 +620,7 @@ end if
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(7)
+    real(rk) :: parmsbasic(7)
 
        feistyinitialised = .FALSE.
 
@@ -635,7 +635,7 @@ end if
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(12)
+    real(rk) :: parmsbasic(12)
 
        feistyinitialised = .FALSE.
 
@@ -651,7 +651,7 @@ end if
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(8)
+    real(rk) :: parmsbasic(8)
 
        feistyinitialised = .FALSE.
 
@@ -667,7 +667,7 @@ end if
     use setup
     implicit none
     external steadyparms  ! not used
-    real(dp) :: parmsbasic(16)
+    real(rk) :: parmsbasic(16)
 
        feistyinitialised = .FALSE.
 
@@ -731,9 +731,9 @@ end if
     implicit none
 
     integer,  intent(in):: neq, ip(*)
-    real(dp), intent(in):: t, conc(neq)
-    real(dp), intent(inout):: yout(*)
-    real(dp), intent(out):: dconc(neq)
+    real(rk), intent(in):: t, conc(neq)
+    real(rk), intent(inout):: yout(*)
+    real(rk), intent(out):: dconc(neq)
 !    integer              :: i
 !..........................................................................
 
@@ -753,7 +753,7 @@ end if
     use setup
     implicit none
 
-    real(dp), intent(out):: yout(*)
+    real(rk), intent(out):: yout(*)
     integer:: ir, i
 
 !..........................................................................
@@ -838,16 +838,16 @@ end if
 !
 !  subroutine calcderivatives(uin, dudt)
 !    use  setup
-!      real(dp), intent(in)    :: uin(nGrid)
-!      real(dp), intent(inout) :: dudt(nGrid)
-!      real(dp):: u(nGrid)
+!      real(rk), intent(in)    :: uin(nGrid)
+!      real(rk), intent(inout) :: dudt(nGrid)
+!      real(rk):: u(nGrid)
 !
 !      integer :: i, j, ii, istart, istop!, iGroup
 !
 !! ----------------------------------------------------------------------
-!dudt=0.d0
+!dudt=0._rk
 !do i = 1, nGrid
-!  u(i) = max(0.d0 , uin(i))
+!  u(i) = max(0._rk , uin(i))
 !end do
 !
 !if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
@@ -863,7 +863,7 @@ end if
 !
 !      grazing = Cmax * flvl*u                           ! grazing             [gWW/m2/yr]
 !
-!      loss    = (1.d0-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
+!      loss    = (1._rk-epsAssim_vec)*grazing + metabolism*u  ! Energy loss to environments  [gWW/m2/yr] Updated below.
 !
 !! ----------------------------------------------
 !! Mortality for resources and fish grids:
@@ -887,15 +887,15 @@ end if
 !      do i = nResources+1, nGrid
 !        B(ii)        = u(i)                              ! fish stages          [g/m2]
 !        eFish(ii)    = Eavail(i)                         ! availabel energy     [/yr]
-!        eplus(ii)    = max(0d0, Eavail(i))               ! net growth rate      [/yr]
+!        eplus(ii)    = max(0._rk, Eavail(i))               ! net growth rate      [/yr]
 !        mortFish(ii) = mort(i)                           ! total mortality      [/yr]
 !        ii = ii+1
 !      end do
 !
-!      grow = (1.d0 - psiMature)*eplus                    ! energy  for growth   [/yr]
+!      grow = (1._rk - psiMature)*eplus                    ! energy  for growth   [/yr]
 !
 !      gamma_vec = (grow - mortFish) /   &                    ! growth to next stage [/yr]
-!            (1d0 - (1/z)**(1d0-mortFish/grow) )
+!            (1._rk - (1/z)**(1._rk-mortFish/grow) )
 !
 !      call checknan(gamma_vec, nFGrid)    ! No growth of fully mature classes (grow=0)
 !
@@ -918,7 +918,7 @@ end if
 !
 !      ! Add the waste energy in reproduction of each stages.
 !      ! Note it does not include the waste energy from last stage energy flux out, added in `totLoss` below.
-!        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1.d0-epsRepro_vec(i)) * Repro(istart:istop)
+!        loss(ixStart(i):ixEnd(i)) = loss(ixStart(i):ixEnd(i)) + (1._rk-epsRepro_vec(i)) * Repro(istart:istop)
 !
 !        do j = istart+1, istop
 !          Fin(j)         = Fout(j-1)
@@ -933,9 +933,9 @@ end if
 !        istart = ixStart(i) ! + nResources
 !        istop  = ixEnd(i)  ! + nResources
 !
-!        totGrazing(i)  = 0d0
-!        totLoss(i)     = 0d0
-!        totMort(i)     = 0d0
+!        totGrazing(i)  = 0._rk
+!        totLoss(i)     = 0._rk
+!        totMort(i)     = 0._rk
 !
 !        do j = istart, istop
 !          totGrazing(i)  = totGrazing(i) + grazing(j)
@@ -943,7 +943,7 @@ end if
 !          totMort(i)     = totMort(i)    + mort(j)*u(j)
 !        end do
 !      ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
-!        totLoss(i)=totLoss(i) + (1.d0 - epsRepro_vec(i)) * Fout(istop-nResources)
+!        totLoss(i)=totLoss(i) + (1._rk - epsRepro_vec(i)) * Fout(istop-nResources)
 !
 !      end do
 !      totRecruit   = totRepro*epsRepro_vec
