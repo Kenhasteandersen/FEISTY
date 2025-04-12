@@ -194,7 +194,7 @@ contains
             call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
-      mc(1:nResources) = [2.d-06*sqrt(500._rk), 1.d-3*sqrt(500._rk), 0.5d-03*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! overwrite by resource mass
+      mc(1:nResources) = [2.e-06_rk*sqrt(500._rk), 1.e-3_rk*sqrt(500._rk), 0.5e-03_rk*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! overwrite by resource mass
       !mU(1:nResources) = [2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)] ! weight central size
       !mL(1:nResources) = [2e-06,0.001, 0.5e-03, 0.25] ! weight lower limit)
 
@@ -313,7 +313,7 @@ contains
             call formmassvector(spec, iGroup, mc, mL, mU)
          end select
       end do
-      mc(1:nResources) = [2.d-06*sqrt(500._rk), 1.d-3*sqrt(500._rk), 1.d-4*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! overwrite by resource mass
+      mc(1:nResources) = [2.e-06_rk*sqrt(500._rk), 1.e-3_rk*sqrt(500._rk), 1.e-4_rk*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! overwrite by resource mass
       !mU = c(2e-06*sqrt(500), 0.001*sqrt(500), 0.5e-03*sqrt(250000), 0.25*sqrt(500)) ! weight central size
       !mL = c(2e-06,0.001, 0.5e-03, 0.25) ! weight lower limit)
 
@@ -563,9 +563,9 @@ contains
          end select
       end do
       !from baseparameters.m
-      mc(1:nResources) = [2.d-06*sqrt(500._rk), 1.d-3*sqrt(500._rk), 0.5d-03*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
+      mc(1:nResources) = [2.e-06_rk*sqrt(500._rk), 1.e-3_rk*sqrt(500._rk), 0.5e-03_rk*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
       mU(1:nResources) = [0.001_rk, 0.5_rk, 125._rk, 125._rk]  ! resource mass upper limit
-      mL(1:nResources) = [2.d-6, 0.001_rk, 0.5d-3, 0.25_rk] ! resource mass lower limit
+      mL(1:nResources) = [2.e-6_rk, 0.001_rk, 0.5e-3_rk, 0.25_rk] ! resource mass lower limit
 !! basic feeding preference matrix theta
       do i = idxF, nGrid
          do j = 1, nGrid
@@ -995,9 +995,9 @@ contains
          end select
       end do
       !from baseparameters.m
-      mc(1:nResources) = [2.d-06*sqrt(500._rk), 1.d-3*sqrt(500._rk), 1.d-4*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
+      mc(1:nResources) = [2.e-06_rk*sqrt(500._rk), 1.e-3_rk*sqrt(500._rk), 1.e-4_rk*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
       mU(1:nResources) = [0.001_rk, 0.5_rk, 25._rk, 125._rk]  ! resource mass upper limit
-      mL(1:nResources) = [2.d-6, 0.001_rk, 1.d-4, 0.25_rk] ! resource mass lower limit
+      mL(1:nResources) = [2.e-6_rk, 0.001_rk, 1.e-4_rk, 0.25_rk] ! resource mass lower limit
 !! basic feeding preference matrix theta
 !      do i = idxF, nGrid
 !         do j = 1, nGrid
@@ -1524,9 +1524,9 @@ contains
          end select
       end do
 
-      mc(1:nResources) = [2.d-06*sqrt(500._rk), 1.d-3*sqrt(500._rk), 0.5d-03*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
+      mc(1:nResources) = [2.e-06_rk*sqrt(500._rk), 1.e-3_rk*sqrt(500._rk), 0.5e-03_rk*sqrt(250000._rk), 0.25_rk*sqrt(500._rk)] ! resource central mass
       mU(1:nResources) = [0.001_rk, 0.5_rk, 125._rk, 125._rk]  ! resource mass upper limit
-      mL(1:nResources) = [2.d-6, 0.001_rk, 0.5d-3, 0.25_rk] ! resource mass lower limit
+      mL(1:nResources) = [2.e-6_rk, 0.001_rk, 0.5e-3_rk, 0.25_rk] ! resource mass lower limit
 ! basic feeding preference matrix theta
       do i = idxF, nGrid ! all
          do j = 1, nGrid
@@ -2323,7 +2323,7 @@ subroutine updateET(u)
     pelpreyidx = pack(pelgrididx, theta(i, pelgrididx) /= 0._rk)
     allpreyidx = pack(allgrididx, theta(i, allgrididx) /= 0._rk)
 
-    lambda = sum(u(pelpreyidx)) / (sum(u(allpreyidx)) + eps) ! Eq. 15     eps = 1d-200 in case NA values generated 0/0
+    lambda = sum(u(pelpreyidx)) / (sum(u(allpreyidx)) + eps) ! Eq. 15     eps = 1e-200_rk in case NA values generated 0/0
     eT = pelagicT * lambda + benthicT * (1 - lambda)
     fTempdem_shallow  = calfTemp(Q10ET, eT)
     fTempmdem_shallow = calfTemp(Q10mET, eT)
