@@ -41,6 +41,14 @@ Module setup
 
 ! resource parameters    input from input file
    real(rk), allocatable:: K(:), rr(:)   ! Carrying capacity of resources and growth rate of resources
+   
+! predation preference coefficient from input.nml
+      real(rk) :: thetaS
+      real(rk) :: thetaA
+      real(rk) :: thetaD
+!      real(rk),parameter ::   thetaS = 0.25_rk ! Medium fish pref for small zooplankton
+!      real(rk),parameter ::   thetaA = 0.5_rk  ! Large fish pref for medium forage fish
+!      real(rk),parameter ::   thetaD = 0.75_rk ! Pref of large demersal on pelagic prey
 
 !=======================================================================================================
 ! New from Karline Soetaert package   (Oct 2023 added)
@@ -130,13 +138,6 @@ contains
       real(rk), intent(in)::szprod,lzprod, bprodin, dfbot, depth, Ts, Tb ! bprodin: benthic productivity, dfbot: detrital flux reaching the sea floor
       real(rk) :: bprod                                                  ! only one of them works, keep the unused arguments negative e.g., bprodin = 100._rk, dfbot = -1._rk
       integer :: iGroup
-! predation preference coefficient
-      real(rk) :: thetaS
-      real(rk) :: thetaA
-      real(rk) :: thetaD
-!      real(rk),parameter ::   thetaS = 0.25_rk ! Medium fish pref for small zooplankton
-!      real(rk),parameter ::   thetaA = 0.5_rk  ! Large fish pref for medium forage fish
-!      real(rk),parameter ::   thetaD = 0.75_rk ! Pref of large demersal on pelagic prey
 
       !benthic productivity
       if (bprodin < 0._rk .and. dfbot<0._rk) then
@@ -258,11 +259,6 @@ contains
       integer, intent(in) :: nStages,bETin
       real(rk) :: bprod
       integer :: iGroup, i, j
-! predation preference coefficient
-      real(rk) :: thetaA
-      real(rk) :: thetaD
-!      real(rk),parameter ::   thetaA = 0.5_rk  ! Large fish pref for medium forage fish
-!      real(rk),parameter ::   thetaD = 0.75_rk ! Pref of large demersal on pelagic prey
 
       !benthic productivity
       if (bprodin < 0._rk .and. dfbot<0._rk) then
