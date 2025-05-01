@@ -24,13 +24,12 @@ ui <- fluidPage(
     sidebarPanel(
       
       h3('Setup:'),
-      radioButtons("Setup", 
-                   ("Setup"),
-                   choices = list("SetupBasic" = "setupBasic", 
+      selectInput("Setup","Setup",
+                    choices = list("SetupBasic" = "setupBasic", 
                                   "SetupBasic2" = "setupBasic2", 
                                   "SetupVertical" = "setupVertical",
                                   "SetupVertical2" = "setupVertical2"),
-                   selected = "setupVertical2" ,inline = TRUE),
+                   selected = "setupVertical2" ),
       radioButtons("sh_de", 
                    ("Region (shallow or deep)"),
                    choices = list("Continental shelf (< 200m)" = 100, "Deep water (>= 200m)" = 300),
