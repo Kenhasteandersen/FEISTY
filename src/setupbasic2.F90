@@ -88,8 +88,8 @@ contains
       ! Register model parameters and variables here.
       
       !call setupbasic(szprod, lzprod, bprodin, dfbot, depth, Tp, Tb)
-      if (bET == .true.) bETin = 1
-      if (bET == .false.) bETin = 0
+      if (bET) bETin = 1
+      if (.not. bET) bETin = 0
       call setupbasic2(szprod, lzprod, bprodin, dfbot, nStages, depth, Tp, Tb, etaMature,Fmax,etaF,bETin)
       
       ! Register state variables
