@@ -1,7 +1,7 @@
 !
 ! FEISTY model
 ! References: Petrik et al., 2019; van Denderen et al., 2020.
-! The library follows MATLAB/R codes from Ken H. Andersen; P. Daniël van Denderen; Rémy Denéchère; Daniel Ottmann Riera ...
+! The library follows MATLAB/R codes from Ken H. Andersen; P. DaniÃ«l van Denderen; RÃ©my DenÃ©chÃ¨re; Daniel Ottmann Riera ...
 ! Programmed by Yixin Zhao, August 2022.
 !
 Module setup
