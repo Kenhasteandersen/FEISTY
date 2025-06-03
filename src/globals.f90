@@ -3,9 +3,11 @@
 !
 
 module globals
-   use input
+   
+   use fabm_types
+   
    implicit none
-   integer, parameter :: rk = selected_real_kind(13) ! dp =  kind(0.d0) ! double precision
+   !integer, parameter :: rk = selected_real_kind(13) ! dp =  kind(0.d0) ! double precision
 
    real(rk), parameter :: pi = 4*ATAN(1._rk)
 
