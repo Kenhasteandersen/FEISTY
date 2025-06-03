@@ -3,6 +3,7 @@ Contains the fortran code for FEISTY
 FEISTY wrappers:
 
  * `FEISTY_FABM.F90`: The wrapper for the FABM system
+ * `CMakeLists.txt`: CMake definitions for FABM
  
 Class definitions:
  * `globals.F90`: global variables
