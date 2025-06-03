@@ -1,7 +1,7 @@
 module feisty_model_library
 
    use fabm_types, only: type_base_model_factory, type_base_model
-   use feisty_setupbasic
+   use FEISTY_FABM
    use feisty_setupbasic2
    ! Add use statements for new models here
 
@@ -25,7 +25,7 @@ contains
       class (type_base_model), pointer :: model
 
       select case (name)
-         case ('setupbasic');                        allocate(type_feisty_setupbasic::model)
+         case ('FEISTY_FABM');                        allocate(type_feisty_fabm::model)
          case ('setupbasic2');                       allocate(type_feisty_setupbasic2::model)
          ! Add case statements for new feisty models here
       end select
