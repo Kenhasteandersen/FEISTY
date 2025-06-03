@@ -5,7 +5,7 @@ add_library(fabm_models_feisty OBJECT
             fish.F90
             spectrum.F90
             globals.F90
-            setupbasic.F90
+            FEISTY_FABM.F90
             setupbasic2.F90
            )
 
