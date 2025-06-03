@@ -40,11 +40,6 @@ module FEISTY_FABM
       ! Carcasses:
       type (type_bottom_state_variable_id)                      :: id_carcasses, id_carcasses_n, id_carcasses_p 
  
-      type (type_bottom_state_variable_id)                      :: id_excre_n, id_excre_p
-      type (type_bottom_state_variable_id)                      :: id_respiration_c
-      type (type_bottom_state_variable_id)                      :: id_feces_c, id_feces_n, id_feces_p
-      type (type_bottom_state_variable_id)                      :: id_carcasses_c, id_carcasses_n, id_carcasses_p
- 
       ! Coupling; pointer to which model contains the zooplankton state varaiable
       ! that we will integrater over the water column:
       type (type_model_id)                                      :: id_zooplankton 
