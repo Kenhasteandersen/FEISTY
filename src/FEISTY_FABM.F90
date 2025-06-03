@@ -1,6 +1,6 @@
 #include "fabm_driver.h"
 
-module feisty_setupbasic
+module FEISTY_FABM
 
    use globals
    use spectrum
@@ -14,21 +14,36 @@ module feisty_setupbasic
 
    private
 
-   type, extends(type_depth_integrated_particle), public :: type_feisty_setupbasic
+   type, extends(type_depth_integrated_particle), public :: type_feisty_fabm
       ! Add variable identifiers and parameters here.
-      type (type_surface_state_variable_id),         allocatable :: id_u(:)
+     ! type (type_bottom_state_variable_id),         allocatable :: id_u(:)
+      type (type_bottom_state_variable_id),         allocatable :: id_smpel(:),id_mesopel(:),id_lgpel(:),id_midp(:),id_dem(:)
+      type (type_bottom_state_variable_id)                      :: id_benthos
+      type (type_state_variable_id)                             :: id_detritus_c, id_detritus_n, id_detritus_p
+      type (type_surface_dependency_id)                         :: id_smzoo_c, id_smzoo_n, id_smzoo_p
+      !type (type_surface_dependency_id)                         :: id_lgzoo_c,id_lgzoo_n,id_lgzoo_p
+   ! type (type_surface_dependency_id)                           :: id_temp
+      
+      type (type_bottom_state_variable_id)                         :: id_excre_n, id_excre_p
+      type (type_bottom_state_variable_id)                         :: id_respiration
+      type (type_bottom_state_variable_id)                         :: id_feces
+      type (type_bottom_state_variable_id)                         :: id_carcasses 
+  ! coupling
+      type (type_model_id)                                         :: id_zooplankton
+      
+      
       
       
    contains
       procedure :: initialize
-      !  procedure :: do_surface
+      !  procedure :: do_bottom
       ! Reference model procedures here.
-   end type type_feisty_setupbasic
+   end type type_feisty_fabm
 
 contains
 
    subroutine initialize(self, configunit)
-      class (type_feisty_setupbasic), intent(inout), target :: self
+      class (type_feisty_fabm), intent(inout), target :: self
       integer,                          intent(in)            :: configunit
       
       real(rk)           :: smz_ini, lgz_ini, smbent_ini, lgbent_ini, b_ini
