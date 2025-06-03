@@ -15,23 +15,39 @@ module FEISTY_FABM
    private
 
    type, extends(type_depth_integrated_particle), public :: type_feisty_fabm
-      ! Add variable identifiers and parameters here.
-     ! type (type_bottom_state_variable_id),         allocatable :: id_u(:)
+      ! State variables for fish (small pelagics, mesopelagics, large pelagics, 
+      ! mid-water predators, and demersal fish):
       type (type_bottom_state_variable_id),         allocatable :: id_smpel(:), id_mesopel(:), id_lgpel(:), id_midp(:), id_dem(:)
+      ! The vertical distributios of the fish:
       type (type_vertical_distribution_id),         allocatable :: id_smpel_w(:), id_mesopel_w(:), id_lgpel_w(:), id_midp_w(:), id_dem_w(:)
+      ! The benthos state variable:
       type (type_bottom_state_variable_id)                      :: id_benthos
-!      type (type_state_variable_id)                             :: id_detritus_c, id_detritus_n, id_detritus_p
+
+      ! Dependency IDs for the state variables in the biogeochemical model:
+      ! Small zooplankton carbon (c), nitrogen (n), and phosphorus (p):
+      ! (note that we register as a bottom variable, but it is actually summed over the water column)
       type (type_bottom_dependency_id)                         :: id_smzoo_c, id_smzoo_n, id_smzoo_p
-      !type (type_bottom_dependency_id)                         :: id_lgzoo_c,id_lgzoo_n,id_lgzoo_p
-   ! type (type_bottom_dependency_id)                           :: id_temp
-      
-      type (type_bottom_state_variable_id)                         :: id_excre_n, id_excre_p
-      type (type_bottom_state_variable_id)                         :: id_respiration_c
-      type (type_bottom_state_variable_id)                         :: id_feces_c, id_feces_n, id_feces_p
-      type (type_bottom_state_variable_id)                         :: id_carcasses_c, id_carcasses_n, id_carcasses_p
-  ! coupling
-      type (type_model_id)                                       :: id_zooplankton
-      
+      ! type (type_bottom_dependency_id)                         :: id_lgzoo_c,id_lgzoo_n,id_lgzoo_p
+      ! type (type_bottom_dependency_id)                           :: id_temp
+
+      ! Dependency IDs for the outputs from FEISTY
+      ! Excretion of nitrogen (n) and phosphorus (p):
+      type (type_bottom_state_variable_id)                      :: id_excre_n, id_excre_p
+      ! Respiration (CO2 / DIC):
+      type (type_bottom_state_variable_id)                      :: id_respiration_c
+      ! Fecal pellets (for detritus / POM):
+      type (type_bottom_state_variable_id)                      :: id_feces_c, id_feces_n, id_feces_p
+      ! Carcasses:
+      type (type_bottom_state_variable_id)                      :: id_carcasses, id_carcasses_n, id_carcasses_p 
+ 
+      type (type_bottom_state_variable_id)                      :: id_excre_n, id_excre_p
+      type (type_bottom_state_variable_id)                      :: id_respiration_c
+      type (type_bottom_state_variable_id)                      :: id_feces_c, id_feces_n, id_feces_p
+      type (type_bottom_state_variable_id)                      :: id_carcasses_c, id_carcasses_n, id_carcasses_p
+ 
+      ! Coupling; pointer to which model contains the zooplankton state varaiable
+      ! that we will integrater over the water column:
+      type (type_model_id)                                      :: id_zooplankton 
       
    contains
       procedure :: initialize
