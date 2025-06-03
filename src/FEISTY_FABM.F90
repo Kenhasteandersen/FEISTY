@@ -17,7 +17,8 @@ module FEISTY_FABM
    type, extends(type_depth_integrated_particle), public :: type_feisty_fabm
       ! Add variable identifiers and parameters here.
      ! type (type_bottom_state_variable_id),         allocatable :: id_u(:)
-      type (type_bottom_state_variable_id),         allocatable :: id_smpel(:),id_mesopel(:),id_lgpel(:),id_midp(:),id_dem(:)
+      type (type_bottom_state_variable_id),         allocatable :: id_smpel(:), id_mesopel(:), id_lgpel(:), id_midp(:), id_dem(:)
+      type (type_vertical_distribution_id),         allocatable :: id_smpel_w(:), id_mesopel_w(:), id_lgpel_w(:), id_midp_w(:), id_dem_w(:)
       type (type_bottom_state_variable_id)                      :: id_benthos
       type (type_state_variable_id)                             :: id_detritus_c, id_detritus_n, id_detritus_p
       type (type_surface_dependency_id)                         :: id_smzoo_c, id_smzoo_n, id_smzoo_p
@@ -29,9 +30,7 @@ module FEISTY_FABM
       type (type_bottom_state_variable_id)                         :: id_feces
       type (type_bottom_state_variable_id)                         :: id_carcasses 
   ! coupling
-      type (type_model_id)                                         :: id_zooplankton
-      
-      
+      type (type_model_id)                                       :: id_zooplankton
       
       
    contains
