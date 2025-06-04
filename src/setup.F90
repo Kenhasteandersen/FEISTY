@@ -6,7 +6,7 @@
 !
 Module setup
    use globals
-   use input
+   use inputnml
    use spectrum
    use fish
 
