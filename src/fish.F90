@@ -3,7 +3,7 @@
 module fish
    use globals
    use spectrum
-   use input
+   use inputnml
 
    implicit none
 

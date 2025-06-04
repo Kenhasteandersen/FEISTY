@@ -9,8 +9,8 @@ OBJECTS = $(SOURCES:.F90=.o)
 %.o: %.F90
 	$(FC) $(F90FLAGS) -c $< -o $@
 
-clean:
-	rm -f *.o *.mod
+#clean:
+#	rm -f *.o *.mod
 
 
 

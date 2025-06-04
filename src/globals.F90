@@ -3,7 +3,7 @@
 !
 
 module globals
-   use input
+   use inputnml
    implicit none
    integer, parameter :: dp = selected_real_kind(13) ! dp =  kind(0.d0) ! double precision
 

@@ -1,7 +1,7 @@
 !
 ! Module to handle the reading of the input file
 !
-module input
+module inputnml
   implicit none
   character(256) :: file_path, file_path_V
 
@@ -40,13 +40,13 @@ module input
 
 
 
-end module input
+end module inputnml
 
 !
 ! Routines used to pass the paths for the input files from R to the Fortran library:
 !
     subroutine passpath(length, file_path_in) bind(C)
-      use input
+      use inputnml
      use iso_c_binding, only: c_int, c_char
      integer(c_int), intent(in):: length ! Length of the character string being sent in
      character(c_char), dimension(length), intent(in) :: file_path_in
@@ -59,7 +59,7 @@ end module input
     end subroutine passpath
 
     subroutine passpathv(length, file_path_in) bind(C)
-      use input
+      use inputnml
       use iso_c_binding, only: c_int, c_char
       integer(c_int), intent(in):: length ! Length of the character string being sent in
       character(c_char), dimension(length), intent(in) :: file_path_in
