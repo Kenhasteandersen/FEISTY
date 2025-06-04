@@ -4,15 +4,10 @@ F90FLAGS = $(FFLAGS) -cpp
 SOURCES = input.F90 globals.F90 spectrum.F90 fish.F90 setup.F90 FEISTY.F90 FEISTYtest.F90
 OBJECTS = $(SOURCES:.F90=.o)
 
-#PKG_LIBS = $(FLIBS)
+PKG_LIBS = $(FLIBS)
 
 %.o: %.F90
 	$(FC) $(F90FLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o *.mod
-
-
-
-
-

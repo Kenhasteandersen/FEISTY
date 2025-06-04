@@ -152,8 +152,11 @@ contains
         bprod=dfbot*0.1_dp
        end if
       end if
-
+      
+#ifndef _FABM_
       call read_namelist_setupbasic()
+#endif
+
       call parametersInit(3, 2 + 3 + 3, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages 2stages+3stages+3stages, 4 resources, szprod,lzprod, bprod,none)
       call parametersAddGroup(2, 2.50e2_dp, 0.5_dp) ! fishSmall
       call parametersAddGroup(3, 1.25e5_dp, 2.5e2_dp) ! fishLarge
@@ -274,7 +277,9 @@ contains
        end if
       end if
 
-      call read_namelist_setupbasic2()    !
+#ifndef _FABM_
+      call read_namelist_setupbasic2()
+#endif
       call parametersInit(3, nint(0.66_dp*nStages) + nStages + nStages, 4, szprod,lzprod, bprod) ! (fish groups, total fish stages, 4 resources,szprod,lzprod, bprod,none)
       call parametersAddGroup(nint(0.66_dp*nStages), 2.50e2_dp, etaMature*2.50e2_dp) ! fishSmall  original mature mass is 0.002 *2.50e2_dp=0.5_dp
       call parametersAddGroup(nStages, 1.25e5_dp, etaMature*1.25e5_dp) ! fishLarge (stages, max mass, mature mass) 0.002 *1.25e5_dp=2.5e2_dp
@@ -475,7 +480,10 @@ contains
       real(dp), parameter :: etaMature = 0.002_dp
       integer, parameter :: nStages = 6
 
+#ifndef _FABM_    
       call read_namelist_setupvertical()
+#endif    
+      
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
@@ -902,8 +910,10 @@ contains
       real(dp) :: Tday, Tnight, Tdaylarge, Tdaynonlarge, &
                   Tsmall, Tmedium, Tnightlarge, Tnightnonlarge
 
-
+#ifndef _FABM_
       call read_namelist_setupvertical()
+#endif
+
       allocate(xrange(int(bottom) + 1))
 
 ! calc bprod before initialization
@@ -1432,7 +1442,10 @@ contains
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
       integer :: iGroup, i, j, ixmedium, ixlarge
 
+#ifndef _FABM_
       call read_namelist_setupsquid()
+#endif      
+      
       allocate(xrange(int(bottom) + 1))
       allocate(sizes(nStages+1))
 
