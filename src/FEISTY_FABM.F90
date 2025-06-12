@@ -134,7 +134,7 @@ contains
          call self%register_vertical_distribution(self%id_smpel_w(i),'smpel_w'//trim(strindex))
          allocate(depth_distribution)
          call self%add_child(depth_distribution, 'habitat_smpel_w'//trim(strindex))
-         call self%request_coupling('smpel_w'//trim(strindex), 'habitat_smpel_w'//trim(strindex)//'/w')
+         call self%request_coupling(self%id_smpel_w(i), 'habitat_smpel_w'//trim(strindex)//'/w')
       end do
 
       allocate(self%id_lgpel(3))
@@ -151,7 +151,7 @@ contains
          call self%register_vertical_distribution(self%id_lgpel_w(i),'lgpel_w'//trim(strindex))
          allocate(depth_distribution)
          call self%add_child(depth_distribution, 'habitat_lgpel_w'//trim(strindex))
-         call self%request_coupling('lgpel_w'//trim(strindex), 'habitat_lgpel_w'//trim(strindex)//'/w')
+         call self%request_coupling(self%id_lgpel_w(i), 'habitat_lgpel_w'//trim(strindex)//'/w')
       
       end do
       
@@ -169,7 +169,7 @@ contains
          call self%register_vertical_distribution(self%id_dem_w(i),'dem_w'//trim(strindex))
          allocate(depth_distribution)         
          call self%add_child(depth_distribution, 'habitat_dem_w'//trim(strindex))
-         call self%request_coupling('dem_w'//trim(strindex), 'habitat_dem_w'//trim(strindex)//'/w')      
+         call self%request_coupling(self%id_dem_w(i), 'habitat_dem_w'//trim(strindex)//'/w')      
       end do
       
       
@@ -197,9 +197,9 @@ contains
        call self%register_state_dependency(self%id_carcasses_p,'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
       
        
-       call self%request_mapped_coupling_to_model(self%id_smzoo_c, 'small zooplankton',standard_variables%total_carbon)
-       call self%request_mapped_coupling_to_model(self%id_smzoo_n, 'small zooplankton',standard_variables%total_nitrogen)
-       call self%request_mapped_coupling_to_model(self%id_smzoo_p, 'small zooplankton',standard_variables%total_phosphorus)
+       call self%request_mapped_coupling_to_model(self%id_smzoo_c, 'small_zooplankton',standard_variables%total_carbon)
+       call self%request_mapped_coupling_to_model(self%id_smzoo_n, 'small_zooplankton',standard_variables%total_nitrogen)
+       call self%request_mapped_coupling_to_model(self%id_smzoo_p, 'small_zooplankton',standard_variables%total_phosphorus)
 
        call self%request_mapped_coupling_to_model(self%id_excre_n, 'excretion',standard_variables%total_nitrogen)
        call self%request_mapped_coupling_to_model(self%id_excre_p, 'excretion',standard_variables%total_phosphorus)  
@@ -212,7 +212,7 @@ contains
        call self%request_mapped_coupling_to_model(self%id_carcasses_n, 'carcasses',standard_variables%total_nitrogen)
        call self%request_mapped_coupling_to_model(self%id_carcasses_p, 'carcasses',standard_variables%total_phosphorus)
        
-       call self%register_mapped_model_dependency(self%id_zooplankton, 'small zooplankton', proportional_change=.true., domain=domain_bottom)
+       call self%register_mapped_model_dependency(self%id_zooplankton, 'small_zooplankton', proportional_change=.true., domain=domain_bottom)
        
        
        
