@@ -14,5 +14,6 @@ R package required:
  * `R_init_feisty.c`: This registers Fortran routines with R, so they can be called from R.
 
 FABM-FEISTY wrappers:
- * `FEISTY_FABM.F90`: The wrapper for the FABM system
- * `CMakeLists.txt`: CMake definitions for FABM
+ * `feisty_model_library.F90`: Entry point for FABM to look for which FEISTY setup is nominated.
+ * `FEISTY_FABM.F90`: The wrapper for the FABM-FEISTY.
+ * `CMakeLists.txt`: The CMake file specifies which source files need to be compiled.
