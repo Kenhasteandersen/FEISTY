@@ -46,7 +46,7 @@ module FEISTY_FABM
       
    contains
       procedure :: initialize
-      !  procedure :: do_bottom
+        procedure :: do_bottom
       ! Reference model procedures here.
    end type type_feisty_fabm
    
@@ -68,6 +68,8 @@ contains
       character(len=10)  :: strindex
       
       class (type_vertical_depth_range), pointer :: depth_distribution
+      
+      call self%type_depth_integrated_particle%initialize(configunit)
       
       ! Register model parameters  
       ! Fish pysilogical parameters. See input.nml in the original FEISTY R package and Fortran library
@@ -204,6 +206,8 @@ contains
        call self%request_mapped_coupling_to_model(self%id_excre_n, 'excretion',standard_variables%total_nitrogen)
        call self%request_mapped_coupling_to_model(self%id_excre_p, 'excretion',standard_variables%total_phosphorus)  
        
+       call self%request_mapped_coupling_to_model(self%id_respiration_c,'respiration',standard_variables%total_carbon)
+       
        call self%request_mapped_coupling_to_model(self%id_feces_c, 'feces',standard_variables%total_carbon)
        call self%request_mapped_coupling_to_model(self%id_feces_n, 'feces',standard_variables%total_nitrogen)
        call self%request_mapped_coupling_to_model(self%id_feces_p, 'feces',standard_variables%total_phosphorus)
@@ -225,6 +229,82 @@ contains
       
    end subroutine initialize
 
+   subroutine do_bottom(self, _ARGUMENTS_DO_BOTTOM_)
+      class (type_feisty_fabm), intent(in) :: self
+      _DECLARE_ARGUMENTS_DO_BOTTOM_
+
+      real(rk) :: c, temp, prey_c, prey_n, prey_p, prey_s, w_int
+      real(rk) :: ingestion_c, ingestion_n, ingestion_p, prey_loss_rate, p, net_growth
+      integer  :: iGroup, i, istate
+      real(rk),dimension(ixEnd(1)-ixStart(1)+1)  :: smpel
+      real(rk),dimension(ixEnd(2)-ixStart(2)+1)  :: lgpel
+      real(rk),dimension(ixEnd(3)-ixStart(3)+1)  :: dem
+
+      _BOTTOM_LOOP_BEGIN_
+         ! Get depth-integrated predator biomass
+      ! small pelagic
+         do i = 1,(ixEnd(1)-ixStart(1)+1)
+         _GET_BOTTOM_(self%id_smpel(i), smpel(i))
+         end do
+      ! large pelagic
+         do i = 1,(ixEnd(2)-ixStart(2)+1)
+         _GET_BOTTOM_(self%id_lgpel(i), lgpel(i))
+         end do
+      ! demersal
+         do i = 1,(ixEnd(3)-ixStart(3)+1)
+         _GET_BOTTOM_(self%id_dem(i), dem(i))
+         end do         
+         
+
+         ! Depth-averaged environmental dependencies and prey concentrations
+         !_GET_BOTTOM_(self%id_temp, temp)
+         !_GET_BOTTOM_(self%id_prey_c, prey_c)
+         !_GET_BOTTOM_(self%id_prey_n, prey_n)
+         !_GET_BOTTOM_(self%id_prey_p, prey_p)
+         _GET_BOTTOM_(self%id_smzoo_c, c)
+
+         ! Calculate ingested fluxes of different chemical elements
+         ! Predator population growth will be based on the most limiting of these
+         !ingestion_c = self%clearance_rate * c * prey_c
+         !ingestion_n = self%clearance_rate * c * prey_n
+         !ingestion_p = self%clearance_rate * c * prey_p
+         !net_growth = min(ingestion_c, ingestion_n / NC, ingestion_p / PC) - self%mortality * c
+
+         ! The specific loss rate of prey is the depth-integrated ingestion,
+         ! divided by depth-integrated prey biomass, e.g., ingestion_c / prey_c_int.
+         ! In turn, prey_c_int is related to depth-averaged prey as prey_c = prey_c_int / w_int,
+         ! with w_int representing the depth-integral weights of the predator's vertical distibution.
+         ! Thus, the specific loss rate is ingestion_c / (prey_c * w_int), which simplifies to
+         ! clearance_rate * c / w_int (see expression for ingestion_c above)
+         _GET_BOTTOM_(self%id_w%integral, w_int)
+         !prey_loss_rate = self%clearance_rate * c / w_int
+
+        ! small pelagic
+         do i = 1,(ixEnd(1)-ixStart(1)+1)
+         _GET_BOTTOM_(self%id_smpel_w(i)%integral, w_int)
+         end do
+         
+         ! Source term for predator
+         !_ADD_BOTTOM_SOURCE_(self%id_c, net_growth)
+
+         ! Apply the same specific loss rate of all state variables of the prey
+         do istate = 1, size(self%id_zooplankton%bottom_state)
+            _GET_BOTTOM_(self%id_zooplankton%bottom_state(istate), p)
+            !_ADD_BOTTOM_SOURCE_(self%id_prey_int%bottom_state(istate), -prey_loss_rate * p)
+         end do
+
+         ! Send unused ingested matter and dead biomass to waste pools
+         !_ADD_BOTTOM_SOURCE_(self%id_waste_c, ingestion_c - net_growth)
+         !_ADD_BOTTOM_SOURCE_(self%id_waste_n, ingestion_n - net_growth * NC)
+         !_ADD_BOTTOM_SOURCE_(self%id_waste_p, ingestion_p - net_growth * PC)
+
+         ! Save diagnostics
+         !_SET_BOTTOM_DIAGNOSTIC_(self%id_net_growth, net_growth * 86400.0_rk)
+         !_SET_BOTTOM_DIAGNOSTIC_(self%id_prey_loss_rate, prey_loss_rate * 86400.0_rk)
+         
+      _BOTTOM_LOOP_END_
+   end subroutine   
+   
    ! Add model subroutines here.
 
 end module
