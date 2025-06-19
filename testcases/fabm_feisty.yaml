@@ -1,0 +1,112 @@
+check_conservation: false
+require_initialization: false
+instances:
+# 
+  fish:
+    model: feisty/FEISTY_FABM
+    check_conservation: false
+    parameters:
+#      physiology
+      h:     20                     # Max. consumption coefficient                 [g^nn yr-1]
+      nn:    -0.25                 # Metabolic exponent                           [ ]
+      gamma: 70                 # Coef. for clearance rate                     [m2 g^q yr-1]
+      q:     -0.2                   # Clearance rate exponent                      [ ]
+      kk:    4                      # 0.2*h Metabolism coefficient        [g^p yr-1]
+      p:     -0.175                 # Metabolism exponent                          [ ]
+      epsAssim: 0.7             # Assimilation efficiency                      [ ]
+      epsRepro: 0.01            # reproduction * recruitment efficiency        [ ]
+#
+      beta:  400
+      sigma: 1.3
+      mMin:  0.001               #min fish mass  (boundary of the grid)         [g]
+#
+      mMedium: 0.5               #medium fish central mass used for feeding preference calc [g]
+      mLarge:  250              #large fish central mass used for feeding preference calc  [g]
+
+#      resources
+      lbenk:  0               # large benthos carry capacity                   [g m-2]
+      szoog:  1               # small zooplankton growth rate                  [yr-1]
+      lzoog:  1               # large zooplankton growth rate                  [yr-1]
+      sbeng:  1               # small benthos growth rate                      [yr-1]
+      lbeng:  0               # large benthos growth rate                      [yr-1]
+# predation preference coefficient
+      thetaS : 0.25               # Medium fish pref for small zooplankton
+      thetaA : 0.5                # Large fish pref for medium forage fish
+      thetaD : 0.75               # Pref of large demersal on pelagic prey
+# initial values
+      smz_ini:    1e2                       # initial small mesozooplankton biomass [g m-2]
+      lgz_ini:    1e2                       # initial large mesozooplankton biomass [g m-2]
+      smbent_ini: 5                         # initial small benthos biomass [g m-2]
+      # lgbent_ini: 0                         # initial large benthos biomass [g m-2] do not exist
+      b_ini:      1e-5                      # initial fish biomass of each size class [g m-2]
+# input
+      szprod:      100                     # small mesozooplankton production [g m-2 yr-1]
+      lzprod:      100                     # large mesozooplankton production [g m-2 yr-1]
+      bprodin:     5                       # benthos production [g m-2 yr-1]
+      dfbot:       -1                      # detrital flux reaching the bottom [g m-2 yr-1]
+      depth:       100                     # water column depth [m]
+      Tp:          10                      # pelagic layer averaged temperature [Celsius]
+      Tb:          8                       # bottom layer depth temperature [Celsius]
+
+#      nStages:     12                      # size number of large fish functional groups [ ]
+#      etaMature:   0.25                    # coefficient determines the fish size with a 50% maturity level                     					     (etaMature*asymptotic size) [ ]
+#      Fmax:        0                       # maximum fishing mortality [yr-1]
+#      etaF:        0.05                    # coefficient determines the fish size with a 50% fishing selectivity 						     (etaF*asymptotic size) [ ]
+#      bET:         true                    # whether to enable effective temperature effects on the large demersal fish 					     (1: on, 0: off) [ ]
+    coupling:
+      small_zooplankton: zoo           # nutrient source (mmol m-3)
+      excretion: nut
+      respiration: nut
+      feces: det
+      carcasses: zoo
+
+  nut:
+    long_name: nutrient
+    model: examples/npzd/nut
+    initialization:
+      c: 4.5                         # concentration (mmol m-3)
+  phy:
+    long_name: phytoplankton
+    model: examples/npzd/phy
+    parameters:
+      p0: 0.0225                     # background concentration (mmol m-3), default = 0.0225
+      kc: 0.03                       # specific light extinction (m2 mmol-1), default = 0.03
+      i_min: 25.0                    # minimum light intensity in euphotic zone (W m-2), default = 25.0
+      rmax: 1.0                      # maximum specific growth rate (d-1), default = 1.0
+      alpha: 1.35                    # half-saturation nutrient concentration (mmol m-3), default = 0.3
+      rpn: 0.01                      # excretion rate (d-1), default = 0.01
+      rpdu: 0.02                     # mortality in euphotic zone (d-1), default = 0.02
+      rpdl: 0.1                      # mortality below euphotic zone (d-1), default = 0.1
+      w_p: -1.0                      # vertical velocity (<0 for sinking) (m d-1), default = -1.0
+    initialization:
+      c: 1e-15                       # concentration (mmol m-3)
+    coupling:
+      uptake_target: nut/c           # nutrient source (mmol m-3)
+      excretion_target: nut/c        # sink for excreted matter (mmol m-3)
+      mortality_target: det/c        # sink for dead matter (mmol m-3)
+  zoo:
+    long_name: zooplankton
+    model: examples/npzd/zoo
+    parameters:
+      z0: 0.0225                     # background concentration (mmol m-3), default = 0.0225
+      gmax: 0.2                      # maximum specific grazing rate (d-1), default = 0.5
+      iv: 1.1                        # Ivlev grazing constant (m3 mmol-1), default = 1.1
+      rzn: 0.01                      # excretion rate (d-1), default = 0.01
+      rzd: 0.02                      # mortality (d-1), default = 0.02
+    initialization:
+      c: 1e-15                       # concentration (mmol m-3)
+    coupling:
+      grazing_target: phy/c          # prey source (mmol m-3)
+      excretion_target: nut/c        # sink for excreted matter (mmol m-3)
+      mortality_target: det/c        # sink for dead matter (mmol m-3)
+  det:
+    long_name: detritus
+    model: examples/npzd/det
+    parameters:
+      w_d: -5.0                      # vertical velocity (<0 for sinking) (m d-1), default = -5.0
+      kc: 0.03                       # specific light extinction (m2 mmol-1), default = 0.03
+      rdn: 0.003                     # remineralization rate (d-1), default = 0.003
+    initialization:
+      c: 4.5                         # concentration (mmol m-3)
+    coupling:
+      mineralisation_target: nut/c   # sink for remineralized matter (mmol m-3)
