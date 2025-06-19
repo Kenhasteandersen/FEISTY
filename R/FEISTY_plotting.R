@@ -38,8 +38,8 @@ plotSSBtime = function(sim) {
   p <- sim$p
   fish <- c((p$nResources+1):(p$nResources+p$nGroups))
 # extract existing fish types according to initial values
-  inival=p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))]
-  names(inival)=p$groupnames[fish]
+  inival=p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(inival)=sub("_1$", "", names(inival))
   fishexistname=names(inival[inival!=0])
  
   series <- getTimeseries(sim)
@@ -95,8 +95,8 @@ plotYieldtime = function(sim) {
   p <- sim$p
   fish <- c((p$nResources+1):(p$nResources+p$nGroups))
 # extract existing fish types according to initial values
-  inival=p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))]
-  names(inival)=p$groupnames[fish]
+  inival=p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(inival)=sub("_1$", "", names(inival))
   fishexistname=names(inival[inival!=0])
   
   series <- getTimeseries(sim)
@@ -153,10 +153,10 @@ plotBiomasstime = function(sim) {
   all  <- c(p$ixR,fish)
   
 # extract existing resources and fish types according to initial values
-  base_vals <- p$u0[p$ixR]
-  suffix_vals <- p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
-  names(suffix_vals) <- sub("_1$", "", names(suffix_vals))
-  inival <- c(base_vals, suffix_vals)
+  base_vals = p$u0[p$ixR]
+  suffix_vals = p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(suffix_vals) = sub("_1$", "", names(suffix_vals))
+  inival = c(base_vals, suffix_vals)
   allexistname=names(inival[inival!=0])
   
   series <- getTimeseries(sim)
@@ -246,8 +246,8 @@ plotSpectra = function(sim, norm=T) {
   spec <- subset(spec, !(spec$group %in% c("smallPel","mesoPel") & spec$bio ==0))
 
 # extract existing fish types according to initial values
-  inival=p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))]
-  names(inival)=p$groupnames[fish]
+  inival = p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(inival) = sub("_1$", "", names(inival))
   fishexistname=names(inival[inival!=0])
   
   spec <- subset(spec, spec$group %in% c("total",fishexistname))
@@ -933,8 +933,8 @@ getRates = function(sim) {
   x_lim  <- range(p$mc[p$ixFish])
   
 # extract existing fish types according to initial values
-  inival=p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))]
-  names(inival)=p$groupnames[fish]
+  inival = p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(inival) = sub("_1$", "", names(inival))
   fishexistname=names(inival[inival!=0])
   
   rates <- subset(rates, rates$group %in% fishexistname)
