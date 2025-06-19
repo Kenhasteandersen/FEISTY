@@ -153,8 +153,10 @@ plotBiomasstime = function(sim) {
   all  <- c(p$ixR,fish)
   
 # extract existing resources and fish types according to initial values
-  inival=c( p$u0[p$ixR], p$u0[-p$ixR][grep("_1", names(p$u0[-p$ixR]))] )
-  names(inival)=p$groupnames
+  base_vals <- p$u0[p$ixR]
+  suffix_vals <- p$u0[-p$ixR][grep("_1$", names(p$u0[-p$ixR]))]
+  names(suffix_vals) <- sub("_1$", "", names(suffix_vals))
+  inival <- c(base_vals, suffix_vals)
   allexistname=names(inival[inival!=0])
   
   series <- getTimeseries(sim)
