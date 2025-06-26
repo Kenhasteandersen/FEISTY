@@ -53,6 +53,9 @@ instances:
 #      Fmax:        0                       # maximum fishing mortality [yr-1]
 #      etaF:        0.05                    # coefficient determines the fish size with a 50% fishing selectivity 						     (etaF*asymptotic size) [ ]
 #      bET:         true                    # whether to enable effective temperature effects on the large demersal fish 					     (1: on, 0: off) [ ]
+
+      #fft_long_name_: small pelagic
+      #fft_short_name_1: smpel
     coupling:
       small_zooplankton: zoo           # nutrient source (mmol m-3)
       excretion: nut

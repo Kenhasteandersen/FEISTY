@@ -570,6 +570,9 @@ end if
         R(i)       = u(i)                 ! resource [gWW/m2]
       enddo
 
+#ifdef _COUPLING_    
+      dRdt = - mortRes*R
+#else  
       if(bTS .eqv. .TRUE.)then
         dRdt = 0._dp
         dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
@@ -580,6 +583,7 @@ end if
           dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
         end if
       end if
+#endif
 
       do i = 1, nResources
         dudt(i) = dRdt(i)
