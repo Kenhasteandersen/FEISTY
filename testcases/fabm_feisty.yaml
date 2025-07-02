@@ -15,6 +15,7 @@ instances:
       p:     -0.175                 # Metabolism exponent                          [ ]
       epsAssim: 0.7             # Assimilation efficiency                      [ ]
       epsRepro: 0.01            # reproduction * recruitment efficiency        [ ]
+      bgmort: 0.1               # background mortality of all fish             [yr-1]
 #
       beta:  400
       sigma: 1.3
