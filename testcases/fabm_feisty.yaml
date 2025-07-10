@@ -63,6 +63,7 @@ instances:
       respiration: nut
       feces: det
       carcasses: zoo
+      detritus_bottom: det/c
 
   nut:
     long_name: nutrient

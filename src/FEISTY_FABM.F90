@@ -22,6 +22,7 @@ module FEISTY_FABM
       type (type_vertical_distribution_id),         allocatable :: id_fish_w(:)!, id_smpel_w(:), id_mesopel_w(:), id_lgpel_w(:), id_midp_w(:), id_dem_w(:)
       ! The benthos state variable:
       type (type_bottom_state_variable_id)                      :: id_benthos
+      type (type_state_variable_id)                      :: id_det_bot
 
       ! Dependency IDs for the state variables in the biogeochemical model:
       ! Small zooplankton carbon (c), nitrogen (n), and phosphorus (p):
@@ -73,7 +74,7 @@ contains
       real(rk)           :: szprod, lzprod, bprodin, dfbot, depth, Tp, Tb
       real(rk)           :: bgmort
       integer :: i,j
-      character(len=100)  :: strindex, i_str, j_str, fft_long_name,fft_short_name
+      character(len=100)  :: strindex, i_str, j_str, size_number_str, fft_long_name,fft_short_name
       
       class (type_vertical_depth_range), pointer :: depth_distribution
       
@@ -169,8 +170,10 @@ contains
 
             do j = ixStart(i)-nResources, ixEnd(i)-nResources
                write (j_str,'(i0)') j
+               write (size_number_str,'(i0)') j+nResources-ixStart(i)+1
                ! assign the initial biomass to each fish size class of a functional type.
-                call self%register_state_variable(self%id_fish(j), trim(fft_short_name)//'_size_'//trim(j_str), 'g m-2', trim(fft_short_name)//'_size_'//trim(i_str)//'_biomass', initial_value=b_ini, minimum=0.0_rk)
+               !!change names!!
+                call self%register_state_variable(self%id_fish(j), trim(fft_short_name)//'_size_'//trim(size_number_str), 'g m-2', trim(fft_short_name)//'_size_'//trim(size_number_str)//'_biomass', initial_value=b_ini, minimum=0.0_rk)
 
             end do
       end do 
@@ -229,6 +232,7 @@ contains
       
       !benthos register
       call self%register_state_variable(self%id_benthos, 'benthos', 'g m-2', 'benthos biomass', initial_value=smbent_ini, minimum=0.0_rk)
+      call self%register_state_dependency(self%id_det_bot, 'detritus_bottom', 'mmol N m-2', 'detritus reaching the bottom for driving benthos')
       
        ! Depth-averaged dependencies
        !call self%register_dependency(self%id_temp, 'temp', 'degrees_Celsius', 'depthaveraged temperature')
@@ -269,13 +273,6 @@ contains
        !call self%request_mapped_coupling_to_model(self%id_carcasses_p, 'carcasses',standard_variables%total_phosphorus)
        
        !call self%register_mapped_model_dependency(self%id_zooplankton, 'small_zooplankton', proportional_change=.true., domain=domain_bottom)
-       
-
-!      do i = idxF, nGrid
-!         write (strindex,'(i0)') i
-!         call self%register_state_variable(self%id_u(i), 'u'//trim(strindex), 'g m-2', 'biomass', initial_value=b_ini, minimum=0.0_rk)
-!               call self%set_variable_property(self%id_u(i), 'disable_transport', .true.)
-!      end do
       
    end subroutine initialize
 
@@ -290,7 +287,7 @@ contains
       real(rk),dimension(ixEnd(2)-ixStart(2)+1)  :: lgpel
       real(rk),dimension(ixEnd(3)-ixStart(3)+1)  :: dem
       real(rk),dimension(nGrid-nResources)       :: fish
-      real(rk)                                   :: zoo1, zoo2, benthos1, benthos2, zoo1_sum, zoo2_sum, benthos1_sum, benthos2_sum
+      real(rk)                                   :: zoo1, zoo2, benthos1, benthos2, zoo1_sum, zoo2_sum, benthos1_sum, benthos2_sum, det_bot
       real(rk),dimension(nGrid)                  :: uin, dudt, mortpred_contri_zoo1, mortpred_contri_zoo2
 
       _BOTTOM_LOOP_BEGIN_
@@ -299,28 +296,46 @@ contains
          _GET_BOTTOM_(self%id_fish(i), fish(i))
          end do      
          !print*,(sum(fish))
+         zoo1=0._rk
+         zoo2=0._rk
+         zoo1_sum=0._rk
+         zoo2_sum=0._rk
          do i = 1, size(self%id_smzoo_fish_c)
+            !print*,zoo1_sum,zoo1
             _GET_BOTTOM_(self%id_smzoo_fish_c(i), zoo1)   
             !print*,(zoo1)
             _GET_BOTTOM_(self%id_smzoo_fish_c(i),zoo2)
-            _GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos1)
-            _GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos2)
+            !_GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos1)
+            !_GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos2)
             if (i == 1) then
                zoo1_sum = zoo1
                zoo2_sum = zoo2
-               benthos1_sum = benthos1
-               benthos2_sum = benthos2
+               !benthos1_sum = benthos1
+               !benthos2_sum = benthos2
             else
-               zoo1 = zoo1_sum + zoo1
-               zoo2 = zoo2_sum + zoo2
-               benthos1 = benthos1_sum + benthos1
-               benthos2 = benthos2_sum + benthos2
+               zoo1_sum = zoo1_sum + zoo1
+               zoo2_sum = zoo2_sum + zoo2
+               !benthos1 = benthos1_sum + benthos1
+               !benthos2 = benthos2_sum + benthos2
             end if
          end do
          zoo1 = zoo1_sum/2._rk*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
          zoo2 = zoo2_sum/2._rk*106._rk/16._rk* 0.01201_rk * 9_rk
-         benthos1 = benthos1_sum
-         benthos2 = benthos2_sum
+         !benthos1 = benthos1_sum
+         !benthos2 = benthos2_sum
+         
+         _GET_BOTTOM_(self%id_smzoo_fish_c(1), zoo1) 
+         _GET_BOTTOM_(self%id_smzoo_fish_c(1), zoo2) 
+         zoo1 = zoo1/2._rk*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
+         zoo2 = zoo2/2._rk*106._rk/16._rk* 0.01201_rk * 9_rk
+         
+         _GET_BOTTOM_(self%id_benthos,benthos1)
+         _GET_BOTTOM_(self%id_benthos,benthos2)
+         _GET_(self%id_det_bot,det_bot)
+         !det_bot=det_bot*106._rk/16._rk*0.01201_rk * 9_rk) !mmol N/m3 to gww/m3
+         !_GET_BOTTOM_(self%id_det_bot,det_bot)
+         benthos1=benthos1!/2._rk*106._rk/16._rk*0.01201_rk * 9_rk
+         benthos2=benthos2!/2._rk*106._rk/16._rk*0.01201_rk * 9_rk
 
          ! Depth-averaged environmental dependencies and prey concentrations
          !_GET_BOTTOM_(self%id_temp, temp)
@@ -331,25 +346,38 @@ contains
          !_GET_SURFACE_(self%id_w%integral, w_int)
          !print*, size(self%id_fish_w)
          !print*, w_int
-         uin= [zoo1,zoo2 ,zoo1,0._rk ,fish]
+         uin= [zoo1,zoo2 ,0._rk,0._rk ,fish]
          !uin= [100._rk,100._rk,5._rk,0._rk,fish]
          !print*,zoo1
          call calcderivatives(uin, dudt)
-         print*,uin
+         !print*,uin
          do i = 1, nGrid
           uin(i) = max(0._rk , uin(i))
             end do
          ! recalculate mortality contribution from each predator
-         mortpred_contri_zoo1= theta(:,1) * Cmax*V/(Enc + Cmax)*uin
+         mortpred_contri_zoo1= theta(:,1) * Cmax*V/(Enc + Cmax)*uin* uin(1)
          call checknan(mortpred_contri_zoo1, nGrid)
          !print*,mortpred_contri_zoo1
-         mortpred_contri_zoo2= theta(:,2) * Cmax*V/(Enc + Cmax)*uin
+         mortpred_contri_zoo2= theta(:,2) * Cmax*V/(Enc + Cmax)*uin* uin(2)
          call checknan(mortpred_contri_zoo2, nGrid)
-         
+         !print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk
          do i = 1, nGrid-nResources
          _ADD_BOTTOM_SOURCE_(self%id_fish(i), dudt(i+nResources) )!gww/m2
-         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo1(i+nResources) /0.01201_rk/9_rk /86400_rk/365_rk*16._rk/106._rk)!gww/m2 to mmol C/m2
+         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo1(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo2(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)
          end do
+       !print*,dudt(1)/0.01201_rk/9_rk *16._rk/106._rk 
+         !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(1), dudt(1)/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(1), dudt(2)/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2
+         
+         !do i = 3, 4
+         !_ADD_BOTTOM_SOURCE_(self%id_benthos, 0.1_rk*det_bot/(1-benthos1/80) +dudt(i) )!gww/m2  dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3) K is 80
+         !!_ADD_BOTTOM_SOURCE_(self%id_benthos, +dudt(i) )
+         !det_bot=det_bot*106._rk/16._rk*0.01201_rk * 9_rk) !mmol N/m3 to gww/m3
+         !_ADD_BOTTOM_FLUX_(self%id_det_bot, -0.1_rk*det_bot)
+         !_ADD_BOTTOM_FLUX_(self%id_det_bot, -0.1_rk*det_bot)
+         !end do
+         
 
          ! Calculate ingested fluxes of different chemical elements
          ! Predator population growth will be based on the most limiting of these
