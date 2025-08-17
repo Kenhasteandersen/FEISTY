@@ -17,37 +17,29 @@ module FEISTY_FABM
    type, extends(type_depth_integrated_particle), public :: type_feisty_fabm
       ! State variables for fish (small pelagics, mesopelagics, large pelagics, 
       ! mid-water predators, and demersal fish):
-      type (type_bottom_state_variable_id),         allocatable :: id_fish(:)!, id_smpel(:), id_mesopel(:), id_lgpel(:), id_midp(:), id_dem(:)
+      type (type_bottom_state_variable_id),         allocatable :: id_fish(:)
       ! The vertical distributios of the fish:
       type (type_vertical_distribution_id),         allocatable :: id_fish_w(:)!, id_smpel_w(:), id_mesopel_w(:), id_lgpel_w(:), id_midp_w(:), id_dem_w(:)
       ! The benthos state variable:
       type (type_bottom_state_variable_id)                      :: id_benthos
-      type (type_state_variable_id)                      :: id_det_bot
+      type (type_state_variable_id)                      :: id_det,id_nut
 
       ! Dependency IDs for the state variables in the biogeochemical model:
       ! Small zooplankton carbon (c), nitrogen (n), and phosphorus (p):
       ! (note that we register as a bottom variable, but it is actually summed over the water column)
       type (type_bottom_state_variable_id),         allocatable   :: id_smzoo_fish_c(:), id_smzoo_fish_n(:), id_smzoo_fish_p(:)
-      !type (type_bottom_dependency_id),         allocatable   :: id_smzoo_smpel_c(:), id_smzoo_smpel_n(:), id_smzoo_smpel_p(:)
-      !type (type_bottom_dependency_id),         allocatable   :: id_smzoo_lgpel_c(:), id_smzoo_lgpel_n(:), id_smzoo_lgpel_p(:)      
-      !type (type_bottom_dependency_id),         allocatable   :: id_smzoo_dem_c(:), id_smzoo_dem_n(:), id_smzoo_dem_p(:)      
-      ! type (type_bottom_dependency_id)                         :: id_lgzoo_c,id_lgzoo_n,id_lgzoo_p
+      type (type_bottom_state_variable_id),         allocatable   :: id_lgzoo_fish_c(:), id_lgzoo_fish_n(:), id_lgzoo_fish_p(:) 
       ! type (type_bottom_dependency_id)                           :: id_temp
 
       ! Dependency IDs for the outputs from FEISTY
       ! Excretion of nitrogen (n) and phosphorus (p):
-      type (type_bottom_state_variable_id)                      :: id_excre_n, id_excre_p
+      type (type_bottom_state_variable_id),    allocatable      :: id_excre_fish_n(:), id_excre_fish_p(:)
       ! Respiration (CO2 / DIC):
-      type (type_bottom_state_variable_id)                      :: id_respiration_c
+      type (type_bottom_state_variable_id),    allocatable      :: id_respiration_fish_c(:)
       ! Fecal pellets (for detritus / POM):
-      type (type_bottom_state_variable_id)                      :: id_feces_c, id_feces_n, id_feces_p
+      type (type_bottom_state_variable_id),    allocatable      :: id_feces_fish_c(:), id_feces_fish_n(:), id_feces_fish_p(:)
       ! Carcasses:
-      type (type_bottom_state_variable_id)                      :: id_carcasses_c, id_carcasses_n, id_carcasses_p 
-      
-      !type (type_bottom_dependency_id),    allocatable      :: id_excre_smpel_n(:), id_excre_smpel_p(:), id_respiration_smpel_c(:),id_feces_smpel_c(:), id_feces_smpel_n(:), id_feces_smpel_p(:),id_carcasses_smpel_c(:), id_carcasses_smpel_n(:), id_carcasses_smpel_p(:)
-      !type (type_bottom_dependency_id),    allocatable      :: id_excre_lgpel_n(:), id_excre_lgpel_p(:), id_respiration_lgpel_c(:),id_feces_lgpel_c(:), id_feces_lgpel_n(:), id_feces_lgpel_p(:),id_carcasses_lgpel_c(:), id_carcasses_lgpel_n(:), id_carcasses_lgpel_p(:) 
-      !type (type_bottom_dependency_id),    allocatable      :: id_excre_dem_n(:), id_excre_dem_p(:), id_respiration_dem_c(:),id_feces_dem_c(:), id_feces_dem_n(:), id_feces_dem_p(:),id_carcasses_dem_c(:), id_carcasses_dem_n(:), id_carcasses_dem_p(:) 
-      type (type_bottom_state_variable_id),    allocatable      :: id_excre_fish_n(:), id_excre_fish_p(:), id_respiration_fish_c(:),id_feces_fish_c(:), id_feces_fish_n(:), id_feces_fish_p(:),id_carcasses_fish_c(:), id_carcasses_fish_n(:), id_carcasses_fish_p(:) 
+      type (type_bottom_state_variable_id),    allocatable      :: id_carcasses_fish_c(:), id_carcasses_fish_n(:), id_carcasses_fish_p(:)
       ! Coupling; pointer to which model contains the zooplankton state varaiable
       ! that we will integrater over the water column:
       !type (type_model_id)                                      :: id_zooplankton 
@@ -59,10 +51,13 @@ module FEISTY_FABM
    end type type_feisty_fabm
    
     ! Redfieldian N:C and P:C ratios of predator biomass
-    real(rk), parameter :: NC = 16.0_rk/ 106.0_rk
-    real(rk), parameter :: PC = 1.0_rk / 106.0_rk
+    real(rk), parameter :: CN = 16.0_rk/ 106.0_rk
+    real(rk), parameter :: CP = 1.0_rk / 106.0_rk
     !from gww to C
     real(rk), parameter :: gwwC = 1._rk/9._rk
+    real(rk), parameter :: gww_mmolC = 1._rk/9_rk /(12.01_rk/1000._rk) ! gww to gwwC to mol C to mmol C
+    real(rk), parameter :: gww_mmolN = 1._rk/9_rk /(12.01_rk/1000._rk) *16._rk/106._rk ! gww to mmol C to mmol N
+    real(rk), parameter :: gww_mmolP = 1._rk/9_rk /(12.01_rk/1000._rk) /106._rk ! gww to mmol C to mmol P    
 
 contains
 
@@ -146,6 +141,7 @@ contains
       !call self%register_state_variable(self%id_u(4), 'u4', 'g m-2', 'biomass', initial_value=lgbent_ini, minimum=0.0_rk)      
 
       call self%register_model_dependency("small_zooplankton")
+      call self%register_model_dependency("large_zooplankton")
       call self%register_model_dependency("excretion")
       call self%register_model_dependency("respiration")
       call self%register_model_dependency("feces")
@@ -154,6 +150,7 @@ contains
       allocate(self%id_fish(nGrid-nResources))
       allocate(self%id_fish_w(nGrid-nResources))! allpcate size of vertical distribution of small pelagics     
       allocate(self%id_smzoo_fish_c(nGrid-nResources), self%id_smzoo_fish_n(nGrid-nResources), self%id_smzoo_fish_p(nGrid-nResources))
+      allocate(self%id_lgzoo_fish_c(nGrid-nResources), self%id_lgzoo_fish_n(nGrid-nResources), self%id_lgzoo_fish_p(nGrid-nResources))
       allocate(self%id_excre_fish_n(nGrid-nResources), self%id_excre_fish_p(nGrid-nResources))
       allocate(self%id_respiration_fish_c(nGrid-nResources))
       allocate(self%id_feces_fish_c(nGrid-nResources), self%id_feces_fish_n(nGrid-nResources), self%id_feces_fish_p(nGrid-nResources))
@@ -181,17 +178,21 @@ contains
       do i = 1, nGrid-nResources
          write (i_str,'(i0)') i
          call self%add_to_aggregate_variable(standard_variables%total_carbon, self%id_fish(i), scale_factor = gwwC)
-         call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_fish(i), scale_factor = gwwC*NC)
-         call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_fish(i), scale_factor = gwwC*PC)
+         call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_fish(i), scale_factor = gwwC*CN)
+         call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_fish(i), scale_factor = gwwC*CP)
          
-         call self%register_vertical_distribution(self%id_fish_w(i),'fish_w'//trim(i_str))
+         call self%register_vertical_distribution(self%id_fish_w(i),'fish_'//trim(i_str))
          allocate(depth_distribution)
-         call self%add_child(depth_distribution, 'habitat_fish_w'//trim(i_str))
-         call self%request_coupling(self%id_fish_w(i), 'habitat_fish_w'//trim(i_str)//'/'//'w')
+         call self%add_child(depth_distribution, 'habitat_fish_'//trim(i_str))
+         call self%request_coupling(self%id_fish_w(i), 'habitat_fish_'//trim(i_str)//'/'//'w')
          
          call self%register_state_dependency(self%id_smzoo_fish_c(i), 'smzoo_c', 'mmol C m-2', 'depth-integrated small zooplankton carbon')
          call self%register_state_dependency(self%id_smzoo_fish_n(i), 'smzoo_n', 'mmol N m-2', 'depth-integrated small zooplankton nitrogen')
          call self%register_state_dependency(self%id_smzoo_fish_p(i), 'smzoo_p', 'mmol P m-2', 'depth-integrated small zooplankton phosphorus')   
+         
+         call self%register_state_dependency(self%id_lgzoo_fish_c(i), 'lgzoo_c', 'mmol C m-2', 'depth-integrated large zooplankton carbon')
+         call self%register_state_dependency(self%id_lgzoo_fish_n(i), 'lgzoo_n', 'mmol N m-2', 'depth-integrated large zooplankton nitrogen')
+         call self%register_state_dependency(self%id_lgzoo_fish_p(i), 'lgzoo_p', 'mmol P m-2', 'depth-integrated large zooplankton phosphorus')   
          
          call self%register_state_dependency(self%id_excre_fish_n(i),'excretion_n', 'mmol N m-2', 'excretion nitrogen')
          call self%register_state_dependency(self%id_excre_fish_p(i),'excretion_p', 'mmol C m-2', 'excretion phosphorus')
@@ -205,11 +206,16 @@ contains
          call self%register_state_dependency(self%id_carcasses_fish_c(i),'carcasses_c', 'mmol C m-2', 'carcasses carbon')
          call self%register_state_dependency(self%id_carcasses_fish_n(i),'carcasses_n', 'mmol N m-2', 'carcasses nitrogen')
          call self%register_state_dependency(self%id_carcasses_fish_p(i),'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
-         
+         ! ??????? self%id_smzoo_fish_c standard_variables%total_carbon
          call self%request_mapped_coupling_to_model(self%id_smzoo_fish_c(i), 'small_zooplankton_fish_'//trim(i_str),standard_variables%total_carbon, id_w=self%id_fish_w(i))
          call self%request_mapped_coupling_to_model(self%id_smzoo_fish_n(i), 'small_zooplankton_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
          call self%request_mapped_coupling_to_model(self%id_smzoo_fish_p(i), 'small_zooplankton_fish_'//trim(i_str),standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
          call self%couplings%set_string('small_zooplankton_fish_'//trim(i_str), "small_zooplankton")
+         
+         call self%request_mapped_coupling_to_model(self%id_lgzoo_fish_c(i), 'large_zooplankton_fish_'//trim(i_str),standard_variables%total_carbon, id_w=self%id_fish_w(i))
+         call self%request_mapped_coupling_to_model(self%id_lgzoo_fish_n(i), 'large_zooplankton_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
+         call self%request_mapped_coupling_to_model(self%id_lgzoo_fish_p(i), 'large_zooplankton_fish_'//trim(i_str),standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
+         call self%couplings%set_string('large_zooplankton_fish_'//trim(i_str), "large_zooplankton")
        
          call self%request_mapped_coupling_to_model(self%id_excre_fish_n(i), 'excretion_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
          call self%request_mapped_coupling_to_model(self%id_excre_fish_p(i), 'excretion_fish_'//trim(i_str),standard_variables%total_phosphorus, id_w=self%id_fish_w(i))  
@@ -232,7 +238,8 @@ contains
       
       !benthos register
       call self%register_state_variable(self%id_benthos, 'benthos', 'g m-2', 'benthos biomass', initial_value=smbent_ini, minimum=0.0_rk)
-      call self%register_state_dependency(self%id_det_bot, 'detritus_bottom', 'mmol N m-2', 'detritus reaching the bottom for driving benthos')
+      call self%register_state_dependency(self%id_det, 'detritus', 'mmol N m-3', 'detritus reaching the bottom for driving benthos')
+      call self%register_state_dependency(self%id_nut, 'nutrient', 'mmol N m-3', 'nutrient in the bottom layer')
       
        ! Depth-averaged dependencies
        !call self%register_dependency(self%id_temp, 'temp', 'degrees_Celsius', 'depthaveraged temperature')
@@ -241,38 +248,12 @@ contains
        !call self%register_dependency(self%id_smzoo_p, 'smzoo_p', 'mmol P m-2', 'depth-integrated small zooplankton phosphorus') 
        
        
-       !call self%register_state_dependency(self%id_excre_n,'excretion_N', 'mmol N m-2', 'excretion nitrogen')
-       !call self%register_state_dependency(self%id_excre_p,'excretion_p', 'mmol C m-2', 'excretion phosphorus')
-       !
-       !call self%register_state_dependency(self%id_respiration_c,'respiration_c', 'mmol C m-2', 'respiration carbon')
-       !
-       !call self%register_state_dependency(self%id_feces_c,'feces_c', 'mmol C m-2', 'feces carbon')
-       !call self%register_state_dependency(self%id_feces_n,'feces_n', 'mmol N m-2', 'feces nitrogen')
-       !call self%register_state_dependency(self%id_feces_p,'feces_p', 'mmol P m-2', 'feces phosphorus')
-       !
-       !call self%register_state_dependency(self%id_carcasses_c,'carcasses_c', 'mmol C m-2', 'carcasses carbon')
-       !call self%register_state_dependency(self%id_carcasses_n,'carcasses_n', 'mmol N m-2', 'carcasses nitrogen')
-       !call self%register_state_dependency(self%id_carcasses_p,'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
-      
-       
-       !call self%request_mapped_coupling_to_model(self%id_smzoo_c, 'small_zooplankton',standard_variables%total_carbon, vertical_distribution=self%id_lgpel_w(i))
-       !call self%request_mapped_coupling_to_model(self%id_smzoo_n, 'small_zooplankton',standard_variables%total_nitrogen, vertical_distribution=self%id_lgpel_w(i))
-       !call self%request_mapped_coupling_to_model(self%id_smzoo_p, 'small_zooplankton',standard_variables%total_phosphorus, vertical_distribution=self%id_lgpel_w(i))
-       !
-       !call self%request_mapped_coupling_to_model(self%id_excre_n, 'excretion',standard_variables%total_nitrogen)
-       !call self%request_mapped_coupling_to_model(self%id_excre_p, 'excretion',standard_variables%total_phosphorus)  
-       !
-       !call self%request_mapped_coupling_to_model(self%id_respiration_c,'respiration',standard_variables%total_carbon)
-       !
-       !call self%request_mapped_coupling_to_model(self%id_feces_c, 'feces',standard_variables%total_carbon)
-       !call self%request_mapped_coupling_to_model(self%id_feces_n, 'feces',standard_variables%total_nitrogen)
-       !call self%request_mapped_coupling_to_model(self%id_feces_p, 'feces',standard_variables%total_phosphorus)
-       !
-       !call self%request_mapped_coupling_to_model(self%id_carcasses_c, 'carcasses',standard_variables%total_carbon)
-       !call self%request_mapped_coupling_to_model(self%id_carcasses_n, 'carcasses',standard_variables%total_nitrogen)
-       !call self%request_mapped_coupling_to_model(self%id_carcasses_p, 'carcasses',standard_variables%total_phosphorus)
-       
        !call self%register_mapped_model_dependency(self%id_zooplankton, 'small_zooplankton', proportional_change=.true., domain=domain_bottom)
+!   -----declared in setup.f90-----
+      allocate (excretion(nGrid))
+      allocate (respiration(nGrid))
+      allocate (carcasses(nGrid))
+      allocate (feces(nGrid))
       
    end subroutine initialize
 
@@ -287,10 +268,11 @@ contains
       real(rk),dimension(ixEnd(2)-ixStart(2)+1)  :: lgpel
       real(rk),dimension(ixEnd(3)-ixStart(3)+1)  :: dem
       real(rk),dimension(nGrid-nResources)       :: fish
-      real(rk)                                   :: zoo1, zoo2, benthos1, benthos2, zoo1_sum, zoo2_sum, benthos1_sum, benthos2_sum, det_bot
+      real(rk)                                   :: zoo1, zoo2, benthos1, benthos2, zoo1_sum, zoo2_sum, det_bot
       real(rk),dimension(nGrid)                  :: uin, dudt, mortpred_contri_zoo1, mortpred_contri_zoo2
 
       _BOTTOM_LOOP_BEGIN_
+      
          ! Get depth-integrated predator biomass       
          do i = 1, nGrid-nResources
          _GET_BOTTOM_(self%id_fish(i), fish(i))
@@ -302,40 +284,32 @@ contains
          zoo2_sum=0._rk
          do i = 1, size(self%id_smzoo_fish_c)
             !print*,zoo1_sum,zoo1
-            _GET_BOTTOM_(self%id_smzoo_fish_c(i), zoo1)   
-            !print*,(zoo1)
-            _GET_BOTTOM_(self%id_smzoo_fish_c(i),zoo2)
-            !_GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos1)
-            !_GET_BOTTOM_(self%id_smzoo_fish_c(i),benthos2)
+            _GET_BOTTOM_(self%id_smzoo_fish_n(i), zoo1)   
+            !print*,(zoo1/2._rk*106._rk/16._rk*0.01201_rk * 9_rk)
+            _GET_BOTTOM_(self%id_lgzoo_fish_n(i),zoo2)
             if (i == 1) then
                zoo1_sum = zoo1
                zoo2_sum = zoo2
-               !benthos1_sum = benthos1
-               !benthos2_sum = benthos2
             else
                zoo1_sum = zoo1_sum + zoo1
                zoo2_sum = zoo2_sum + zoo2
-               !benthos1 = benthos1_sum + benthos1
-               !benthos2 = benthos2_sum + benthos2
             end if
          end do
-         zoo1 = zoo1_sum/2._rk*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
-         zoo2 = zoo2_sum/2._rk*106._rk/16._rk* 0.01201_rk * 9_rk
-         !benthos1 = benthos1_sum
-         !benthos2 = benthos2_sum
+         zoo1 = zoo1_sum/2._rk/gww_mmolN!*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
+         zoo2 = zoo2_sum/2._rk/gww_mmolN!*106._rk/16._rk*0.01201_rk * 9_rk
          
-         _GET_BOTTOM_(self%id_smzoo_fish_c(1), zoo1) 
-         _GET_BOTTOM_(self%id_smzoo_fish_c(1), zoo2) 
-         zoo1 = zoo1/2._rk*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
-         zoo2 = zoo2/2._rk*106._rk/16._rk* 0.01201_rk * 9_rk
+         _GET_BOTTOM_(self%id_smzoo_fish_n(1), zoo1) 
+         _GET_BOTTOM_(self%id_lgzoo_fish_n(1), zoo2) 
+         zoo1 = zoo1/2._rk/gww_mmolN!*106._rk/16._rk*0.01201_rk * 9_rk ! mmol N/m2 to gww/m2
+         zoo2 = zoo2/2._rk/gww_mmolN!*106._rk/16._rk*0.01201_rk * 9_rk
+         !print*,(zoo1)
          
          _GET_BOTTOM_(self%id_benthos,benthos1)
+         !print*,benthos1
          _GET_BOTTOM_(self%id_benthos,benthos2)
-         _GET_(self%id_det_bot,det_bot)
-         !det_bot=det_bot*106._rk/16._rk*0.01201_rk * 9_rk) !mmol N/m3 to gww/m3
-         !_GET_BOTTOM_(self%id_det_bot,det_bot)
-         benthos1=benthos1!/2._rk*106._rk/16._rk*0.01201_rk * 9_rk
-         benthos2=benthos2!/2._rk*106._rk/16._rk*0.01201_rk * 9_rk
+         _GET_(self%id_det,det_bot)
+         det_bot=det_bot*5.0_rk/86400.0_rk !det_bot*w_d   mmol N m-3 to mmol N m-3 * m s-1
+         det_bot=det_bot/gww_mmolN!*106._rk/16._rk*0.01201_rk * 9_rk !mmol N/m2 s-1 to gww/m2 s-1
 
          ! Depth-averaged environmental dependencies and prey concentrations
          !_GET_BOTTOM_(self%id_temp, temp)
@@ -344,47 +318,72 @@ contains
          !_GET_BOTTOM_(self%id_prey_p, prey_p)
 !         _GET_BOTTOM_(self%id_smzoo_c, c)
          !_GET_SURFACE_(self%id_w%integral, w_int)
+
          !print*, size(self%id_fish_w)
          !print*, w_int
-         uin= [zoo1,zoo2 ,0._rk,0._rk ,fish]
+         uin= [zoo1,zoo2 ,benthos1,0._rk ,fish]
          !uin= [100._rk,100._rk,5._rk,0._rk,fish]
          !print*,zoo1
          call calcderivatives(uin, dudt)
          !print*,uin
          do i = 1, nGrid
           uin(i) = max(0._rk , uin(i))
-            end do
+         end do
          ! recalculate mortality contribution from each predator
          mortpred_contri_zoo1= theta(:,1) * Cmax*V/(Enc + Cmax)*uin* uin(1)
          call checknan(mortpred_contri_zoo1, nGrid)
          !print*,mortpred_contri_zoo1
          mortpred_contri_zoo2= theta(:,2) * Cmax*V/(Enc + Cmax)*uin* uin(2)
          call checknan(mortpred_contri_zoo2, nGrid)
-         !print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk
+         !print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk 
+         
          do i = 1, nGrid-nResources
+         ! fish dynamics
          _ADD_BOTTOM_SOURCE_(self%id_fish(i), dudt(i+nResources) )!gww/m2
-         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo1(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
-         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo2(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)
+         ! zooplankton dynamics
+         !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(i), -mortpred_contri_zoo1(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         _ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_n(i), -mortpred_contri_zoo1(i+nResources) * gww_mmolN )!/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_p(i), -mortpred_contri_zoo1(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol P/m2
+         
+         !_ADD_BOTTOM_SOURCE_(self%id_lgzoo_fish_c(i), -mortpred_contri_zoo2(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)
+         _ADD_BOTTOM_SOURCE_(self%id_lgzoo_fish_n(i), -mortpred_contri_zoo2(i+nResources) * gww_mmolN)!/0.01201_rk/9_rk *16._rk/106._rk)
+         !_ADD_BOTTOM_SOURCE_(self%id_lgzoo_fish_p(i), -mortpred_contri_zoo2(i+nResources) /0.01201_rk/9_rk *16._rk/106._rk)
+         ! excretion
+         _ADD_BOTTOM_SOURCE_(self%id_excre_fish_n(i), excretion(i+nResources) *gww_mmolN)!* CN /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_excre_fish_p(i), dudt(i) * CP /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol P/m2
+         ! respiration
+         !_ADD_BOTTOM_SOURCE_(self%id_respiration_fish_c(i), dudt(i) * gwwC /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol C/m2
+         ! feces
+         !_ADD_BOTTOM_SOURCE_(self%id_feces_fish_c(i), dudt(i) * gwwC /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol C/m2
+         _ADD_BOTTOM_SOURCE_(self%id_feces_fish_n(i), feces(i+nResources) *gww_mmolN)!* CN /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_feces_fish_p(i), dudt(i) * CP /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol P/m2
+         ! carcasses
+         !_ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_c(i), dudt(i) * gwwC /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol C/m2
+         _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_n(i), carcasses(i+nResources) *gww_mmolN)!* CN /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_p(i), dudt(i) * CP /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol P/m2
          end do
-       !print*,dudt(1)/0.01201_rk/9_rk *16._rk/106._rk 
+         !print*,dudt(1)/0.01201_rk/9_rk *16._rk/106._rk 
          !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(1), dudt(1)/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2
-         !_ADD_BOTTOM_SOURCE_(self%id_smzoo_fish_c(1), dudt(2)/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2
+         !_ADD_BOTTOM_SOURCE_(self%id_lgzoo_fish_c(1), dudt(2)/0.01201_rk/9_rk *16._rk/106._rk)!gww/m2
          
-         !do i = 3, 4
-         !_ADD_BOTTOM_SOURCE_(self%id_benthos, 0.1_rk*det_bot/(1-benthos1/80) +dudt(i) )!gww/m2  dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3) K is 80
-         !!_ADD_BOTTOM_SOURCE_(self%id_benthos, +dudt(i) )
-         !det_bot=det_bot*106._rk/16._rk*0.01201_rk * 9_rk) !mmol N/m3 to gww/m3
-         !_ADD_BOTTOM_FLUX_(self%id_det_bot, -0.1_rk*det_bot)
-         !_ADD_BOTTOM_FLUX_(self%id_det_bot, -0.1_rk*det_bot)
+         ! benthos dynamics         
+          i = 3!,3!, 4
+         _ADD_BOTTOM_SOURCE_(self%id_benthos, 0.1_rk*det_bot*(1-benthos1/80) +dudt(i) )!gww/m2  dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3) K is 80
+         det_bot=det_bot*gww_mmolN!/106._rk*16._rk/0.01201_rk / 9_rk !gww/m2 s-1 to mmol N/m2 s-1
+         _ADD_BOTTOM_FLUX_(self%id_det, -det_bot) !
+         _ADD_BOTTOM_FLUX_(self%id_nut, +0.9_rk *det_bot+ 0.1_rk*det_bot*(1-(1-benthos1/80))) !
          !end do
+         !print*,det_bot
+         !print*,benthos1
+         !print*,0.1_rk*det_bot*(1-benthos1/80) 
+         !print*,dudt(i)
          
-
          ! Calculate ingested fluxes of different chemical elements
          ! Predator population growth will be based on the most limiting of these
          !ingestion_c = self%clearance_rate * c * prey_c
          !ingestion_n = self%clearance_rate * c * prey_n
          !ingestion_p = self%clearance_rate * c * prey_p
-         !net_growth = min(ingestion_c, ingestion_n / NC, ingestion_p / PC) - self%mortality * c
+         !net_growth = min(ingestion_c, ingestion_n / CN, ingestion_p / CP) - self%mortality * c
 
          ! The specific loss rate of prey is the depth-integrated ingestion,
          ! divided by depth-integrated prey biomass, e.g., ingestion_c / prey_c_int.
@@ -411,8 +410,8 @@ contains
 
          ! Send unused ingested matter and dead biomass to waste pools
          !_ADD_BOTTOM_SOURCE_(self%id_waste_c, ingestion_c - net_growth)
-         !_ADD_BOTTOM_SOURCE_(self%id_waste_n, ingestion_n - net_growth * NC)
-         !_ADD_BOTTOM_SOURCE_(self%id_waste_p, ingestion_p - net_growth * PC)
+         !_ADD_BOTTOM_SOURCE_(self%id_waste_n, ingestion_n - net_growth * CN)
+         !_ADD_BOTTOM_SOURCE_(self%id_waste_p, ingestion_p - net_growth * CP)
 
          ! Save diagnostics
          !_SET_BOTTOM_DIAGNOSTIC_(self%id_net_growth, net_growth * 86400.0_rk)

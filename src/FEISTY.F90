@@ -484,6 +484,19 @@ end if
 
 ! add basal and fishing mortality)
       mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
+      
+#ifdef _FABM_   
+     excretion   = 0._dp
+     respiration = 0._dp
+     carcasses   = 0._dp
+     feces       = 0._dp
+     
+     carcasses = mort0*u
+     feces = (1._dp-epsAssim_vec) * grazing ! update below
+     excretion =  metabolism*u ! update below
+     !respiration = 0._dp
+     
+#endif
 
 ! ----------------------------------------------
 !  Flux out of the fish size group:
@@ -553,6 +566,17 @@ end if
       ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
         totLoss(i)=totLoss(i) + (1._dp - epsRepro_vec(i)) * Fout(istop-nResources)
 
+#ifdef _FABM_   
+     !carcasses = mort0*u
+     feces(ixStart(i):ixEnd(i))     = feces(ixStart(i):ixEnd(i)) + &
+                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     excretion(ixStart(i):ixEnd(i)) = excretion(ixStart(i):ixEnd(i)) + &
+                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     
+     feces(ixEnd(i))     = feces(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources)     !
+     excretion(ixEnd(i)) = excretion(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources) !
+#endif        
+        
       end do
       totRecruit   = totRepro*epsRepro_vec
 
@@ -592,7 +616,7 @@ end if
       do i = 1, nFGrid
         dudt(i+nResources) = dBdt(i)
       enddo
-
+      
   end subroutine calcderivatives
 
 !============================================================
