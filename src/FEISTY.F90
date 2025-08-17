@@ -484,6 +484,19 @@ end if
 
 ! add basal and fishing mortality)
       mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
+      
+#ifdef _FABM_   
+     excretion   = 0._dp
+     respiration = 0._dp
+     carcasses   = 0._dp
+     feces       = 0._dp
+     
+     carcasses = mort0*u
+     feces = (1._dp-epsAssim_vec) * grazing ! update below
+     excretion =  metabolism*u ! update below
+     !respiration = 0._dp
+     
+#endif
 
 ! ----------------------------------------------
 !  Flux out of the fish size group:
@@ -553,6 +566,17 @@ end if
       ! Add the waste energy in reproduction from flux out of the last stage of each functional group.
         totLoss(i)=totLoss(i) + (1._dp - epsRepro_vec(i)) * Fout(istop-nResources)
 
+#ifdef _FABM_   
+     !carcasses = mort0*u
+     feces(ixStart(i):ixEnd(i))     = feces(ixStart(i):ixEnd(i)) + &
+                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     excretion(ixStart(i):ixEnd(i)) = excretion(ixStart(i):ixEnd(i)) + &
+                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     
+     feces(ixEnd(i))     = feces(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources)     !
+     excretion(ixEnd(i)) = excretion(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources) !
+#endif        
+        
       end do
       totRecruit   = totRepro*epsRepro_vec
 
@@ -570,6 +594,9 @@ end if
         R(i)       = u(i)                 ! resource [gWW/m2]
       enddo
 
+#ifdef _COUPLING_    
+      dRdt = - mortRes*R
+#else  
       if(bTS .eqv. .TRUE.)then
         dRdt = 0._dp
         dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3)   ! logistic formulation
@@ -580,6 +607,7 @@ end if
           dRdt = rr*R*(1-R/K) - mortRes*R   ! logistic formulation
         end if
       end if
+#endif
 
       do i = 1, nResources
         dudt(i) = dRdt(i)
@@ -588,7 +616,7 @@ end if
       do i = 1, nFGrid
         dudt(i+nResources) = dBdt(i)
       enddo
-
+      
   end subroutine calcderivatives
 
 !============================================================

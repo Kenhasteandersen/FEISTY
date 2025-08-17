@@ -124,7 +124,14 @@ Module setup
          logical :: bTS
          real(dp) :: smzcsp, lgzcsp, smzcsp_dr, lgzcsp_dr
 
-
+!===================================
+!for FABM-FEISTY (Aug 2025)
+!       -----allocated in FEISTY_FABM.f90 subroutine initialize-----
+         real(dp), allocatable :: excretion(:)
+         real(dp), allocatable :: respiration(:)
+         real(dp), allocatable :: carcasses(:)
+         real(dp), allocatable :: feces(:)
+         
 
 contains
 ! ======================================

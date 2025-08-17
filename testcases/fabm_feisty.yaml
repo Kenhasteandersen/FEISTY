@@ -1,10 +1,10 @@
-check_conservation: false
+check_conservation: true
 require_initialization: false
 instances:
 # 
   fish:
     model: feisty/FEISTY_FABM
-    check_conservation: false
+    #check_conservation: false
     parameters:
 #      physiology
       h:     20                     # Max. consumption coefficient                 [g^nn yr-1]
@@ -15,6 +15,7 @@ instances:
       p:     -0.175                 # Metabolism exponent                          [ ]
       epsAssim: 0.7             # Assimilation efficiency                      [ ]
       epsRepro: 0.01            # reproduction * recruitment efficiency        [ ]
+      bgmort: 0.1               # background mortality of all fish             [yr-1]
 #
       beta:  400
       sigma: 1.3
@@ -36,9 +37,9 @@ instances:
 # initial values
       smz_ini:    1e2                       # initial small mesozooplankton biomass [g m-2]
       lgz_ini:    1e2                       # initial large mesozooplankton biomass [g m-2]
-      smbent_ini: 5                         # initial small benthos biomass [g m-2]
+      smbent_ini: 1                         # initial small benthos biomass [g m-2]
       # lgbent_ini: 0                         # initial large benthos biomass [g m-2] do not exist
-      b_ini:      1e-5                      # initial fish biomass of each size class [g m-2]
+      b_ini:      1                      # initial fish biomass of each size class [g m-2]
 # input
       szprod:      100                     # small mesozooplankton production [g m-2 yr-1]
       lzprod:      100                     # large mesozooplankton production [g m-2 yr-1]
@@ -53,12 +54,24 @@ instances:
 #      Fmax:        0                       # maximum fishing mortality [yr-1]
 #      etaF:        0.05                    # coefficient determines the fish size with a 50% fishing selectivity 						     (etaF*asymptotic size) [ ]
 #      bET:         true                    # whether to enable effective temperature effects on the large demersal fish 					     (1: on, 0: off) [ ]
+
+      #fft_long_name_: small pelagic
+      #fft_short_name_1: smpel
     coupling:
       small_zooplankton: zoo           # nutrient source (mmol m-3)
+      large_zooplankton: zoo
       excretion: nut
       respiration: nut
       feces: det
       carcasses: zoo
+      detritus: det/c
+      nutrient: nut/c
+
+  #habitat_fish_1:
+  #  model: vertical_depth_range
+  #  parameters:
+  #    minimum_depth: 1 # meter
+  #    maximum_depth: 10000
 
   nut:
     long_name: nutrient

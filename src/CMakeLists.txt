@@ -20,4 +20,4 @@ elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     target_compile_options(fabm_models_feisty PRIVATE -cpp)
 endif()
 
-target_compile_definitions(fabm_models_feisty PRIVATE _FABM_)
+target_compile_definitions(fabm_models_feisty PRIVATE _FABM_ _COUPLING_)
