@@ -299,6 +299,9 @@ derivativesFEISTYR = function(t,              # current time
     out$lgzcsp_dr = lgzcsp_dr
     out$mortF_ts  = p$mortF
     }
+    # mass conservation check (should close to zero)
+    # Resources net change-Resources growth + fish change + fish losses(feces, excretion, metabolism) + dead fish
+    #print(sum(dRdt)-sum(p$r*(p$K-R)) + sum(dBdt) + sum(out$totLoss) + sum(p$mort0*u))
     return(out)
   }
   else # Output just the derivatives

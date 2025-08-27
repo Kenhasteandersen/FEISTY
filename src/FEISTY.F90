@@ -493,8 +493,8 @@ end if
      
      carcasses = mort0*u
      feces = (1._dp-epsAssim_vec) * grazing ! update below
-     excretion =  metabolism*u ! update below
-     !respiration = 0._dp
+     excretion =  0._dp ! update below
+     respiration = metabolism*u
      
 #endif
 
@@ -579,7 +579,9 @@ end if
         
       end do
       totRecruit   = totRepro*epsRepro_vec
-
+!print*,sum(totLoss)
+!      totLoss = totLoss + feces + excretion + carcasses ! add feces, excretion and carcasses to total loss
+!print*,sum(feces + excretion+  respiration)
 ! ----------------------------------------------
 ! Derivatives of fish:
 ! ----------------------------------------------
@@ -616,6 +618,13 @@ end if
       do i = 1, nFGrid
         dudt(i+nResources) = dBdt(i)
       enddo
+
+      !mass conservation check
+      !print*,sum(dudt(1:nGrid)) +sum(excretion + respiration +carcasses + feces)
+      !print*,sum(dudt(1:4))+sum(dudt(5:nGrid)) +sum(excretion + respiration +carcasses + feces)
+      !print*, sum(dudt(1:nGrid)) - sum(totLoss) - sum(carcasses)
+      !print*,sum(totLoss) - sum(excretion + respiration + feces)
+      
       
   end subroutine calcderivatives
 
