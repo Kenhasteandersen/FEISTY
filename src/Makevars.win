@@ -1,5 +1,5 @@
 FC = $(F90)
-F90FLAGS = $(FFLAGS) -cpp
+F90FLAGS = $(FFLAGS) -cpp -fPIC
 
 SOURCES = input.F90 globals.F90 spectrum.F90 fish.F90 setup.F90 FEISTY.F90 FEISTYtest.F90
 OBJECTS = $(SOURCES:.F90=.o)

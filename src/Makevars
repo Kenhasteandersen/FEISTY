@@ -1,16 +1,17 @@
 FC = $(F90)
-F90FLAGS = $(FFLAGS) -cpp
+F90FLAGS = $(FFLAGS) -cpp -fPIC
+#CXXFLAGS = -O2 -fno-tree-vectorize
+#CFLAGS = -O2 -fno-tree-vectorize -fno-math-errno
+PKG_LIBS = $(FLIBS)
 
 SOURCES = input.F90 globals.F90 spectrum.F90 fish.F90 setup.F90 FEISTY.F90 FEISTYtest.F90
 OBJECTS = $(SOURCES:.F90=.o)
 
-#PKG_LIBS = $(FLIBS)
-
 %.o: %.F90
-	$(FC) $(F90FLAGS) -c $< -o $@
+$(FC) $(F90FLAGS) -c $< -o $@
 
 #clean:
-#	rm -f *.o *.mod
+# rm -f *.o *.mod
 
 
 
