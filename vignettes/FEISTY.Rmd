@@ -777,7 +777,7 @@ For the other prey whose predation loss do not need down-regulation, the factor 
 
 The predation loss of a resource prey reflects the consumption of its predators, which requires corresponding updates to maintain mass conservation within the system. We begin by revising the feeding levels of predators. The mass-specific feeding level of a predator $f_i$ (Eq. \ref{eq:feedinglvl}, also see Eq. \ref{eq:encounter}) is consequently modified to
 \begin{equation}
-f_{i} = \frac{V_{i}{E_{i}+C_{\mathrm{max},i}}}  \sum_{j} f_{\mathrm{dr},j} \theta_{i,j} B_j  .
+f_{i} = \frac{V_{i}}{E_{i}+C_{\mathrm{max},i}}  \sum_{j} f_{\mathrm{dr},j} \theta_{i,j} B_j  .
 \end{equation}
 This procedure ensures that mass is not created in the system. However, it does not ensure perfect mass balance. If the fish predators do not eat all the zooplankton production, there is an “excess” zooplankton production which is not accounted for. Further, as mentioned above, the fish are not allowed to compensate for the reduction in zooplankton consumption by an increase in consumption of other prey. We believe that this latter assumption has a quite small impact.
 
