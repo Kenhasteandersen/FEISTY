@@ -4,7 +4,9 @@
 library(FEISTY)
 
 #
-# Compute: flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
+# Calculate the flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
+# The fluxes are calculated at the position of each size class in units of
+# gWW/m2/year.
 #
 # In:
 #  A simulation object
@@ -48,9 +50,8 @@ calcCarbonFluxes <- function(sim) {
   return(sim)
 }
 
-
 #
-# Return injection fluxes calculated at all z-levels
+# Calculate injection fluxes calculated at all z-levels
 # Units i gC/m3/year
 #
 calcCarbonInjection = function(sim) {
@@ -196,8 +197,32 @@ simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
 }
 
 
-testCarbonCalculations -> function() {
-  p = setupVertical2()
+testCarbonCalculations = function() {
+  # Simulate the position 60, -15 using Cobalt output:
+  sim = simulatePosition(setupVertical2, 60, -15)
+  
+  # Calculate carbon fluxes at the position of the fish:
+  sim = calcCarbonFluxes(sim) 
+  totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
+  barplot(totalFlux, xlab="Size class", ylab="Flux (gWW/m2/yr)")
+  
+  # Calculate the injection
+  inject = calcCarbonInjection(sim)
+  
+  z = -inject$z
+  plot( inject$total, z, type="l", lwd=3, 
+        xlim=c(0,max(inject$total[1:length(inject$total)-1])),
+        xlab="Injection (gC/m3/yr)",
+        ylab="Depth (m)")
+  lines( inject$Fecal, z, col="brown" )
+  lines( inject$Carcass, z, col="grey" )
+  lines( inject$Repro, z, col="darkgreen")
+  lines( inject$Respiration, z, col="darkred")
+  legend("top",
+         c("Total","Fecal pellets","Carcasses","Reproduction","Respiration"),
+         lwd=c(3,1,1,1,1),
+         col=c("black","brown","grey","darkgreen","darkred")
+  )
   
 }
 
