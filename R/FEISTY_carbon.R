@@ -1,7 +1,12 @@
 #
 # Code for calculating carbon fluxes, carbon injection, and carbon sequestration.
 #
+# Written by Julie Lemoine and Ken H Andersen.
+# Sequestration calculations based on code by Andre W Visser
+#
 library(FEISTY)
+library(data.table)
+library(pracma)
 
 #
 # Calculate the flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
@@ -196,10 +201,62 @@ simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
   return(sim)
 }
 
+loadTransportMatrix = function(sFilename="data/CTL.R") {
+  #
+  # Transport matrix: 
+  #
+  TM <- readMat(sFilename, sparseMatrixClass="Matrix")
+  TM <- CTL.mat$output
+  
+  ## When loaded the names of every variables were missing in the CTL.mat object
+  # missing variable names in "CTL.mat"
+  var_names <- dimnames(TM)[[1]]
+  TM <- setNames(as.list(TM[,1,1]), var_names)
+  
+  # missing variable names in "msk"
+  msk_names <- dimnames(TM$msk)[[1]]
+  TM$msk <- setNames(as.list(TM$msk[,1,1]), msk_names)
+  
+  # missing variable names in "grid"
+  grid_names <- dimnames(TM$grid)[[1]]
+  TM$grid <- setNames(as.list(TM$grid[,1,1]), grid_names)
+  
+  # missing variable names in "MSKS"
+  MSKS_names <- dimnames(TM$MSKS)[[1]]
+  TM$MSKS <- setNames(as.list(TM$MSKS[,1,1]), MSKS_names)
+  
+  return(TM)
+}
+#
+# Project the injection calculations onto the TM grid by integrating
+# over the entire vertical cell
+#
+# gC/m2/yr
+#
+project_injection_to_TM <- function(inject, lat,lon, TM) {
+  integral = 0*unique(TM$grid$zt)
+  # Find closest grid point:
+  ix = list( 
+    y=which.min( (lat-TM$grid$yt)^2 ),
+    x= which.min( (lon-TM$grid$xt)^2 ))
+  # Integrate along the depth:
+  for (j in 1:length(TM$grid$zt)) {
+      idx = ( (inject$z > TM$grid$zw[j]) 
+            & (inject$z <= (TM$grid$zw[j] + TM$grid$dzt[j])))
+      integral[j] = trapz( inject$z[idx], inject$total[idx])
+      
+    }
+  return(list(inject=integral, ix=ix))
+}
+
+
+
 
 testCarbonCalculations = function() {
+  lat = 60
+  lon = -15
   # Simulate the position 60, -15 using Cobalt output:
-  sim = simulatePosition(setupVertical2, 60, -15)
+  sim = simulatePosition(setupVertical2, lat, lon)
   
   # Calculate carbon fluxes at the position of the fish:
   sim = calcCarbonFluxes(sim) 
@@ -224,5 +281,9 @@ testCarbonCalculations = function() {
          col=c("black","brown","grey","darkgreen","darkred")
   )
   
+  # Calculate injection on TM grid:
+  #TM = loadTransportMatrix()
+  injectTM = project_injection_to_TM(inject, lat,lon, TM) 
+
 }
 
