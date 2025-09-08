@@ -759,12 +759,12 @@ Note, this is slightly different from Eq. \ref{eq:dRdtlogistic}. The $r_i$ in Eq
 ## Down-regulation of zooplankton consumption
 To avoid the creation of new mass in the model, the consumption by the fish predators must not exceed the corresponding zooplankton production ($P_{\mathrm{R},j}$, in mass/area/time). If the total consumption by all fish, as calculated by the product of predation mortality on zooplankton and zooplankton biomass ($\mu_{\mathrm{p},j} R_j$, in mass/area/time) exceeds the resource production, the consumption of the resource has to be down-regulated.
 
-When consumption of one food item (here the resource) is decreased the predator can compensate by eating more of other prey. For simplicity, however, we assume that only the resource consumption is decreased, and the consumption of other prey is not increased to compensate. To follow this assumption, we introduce a down-regulation factor $f_{\mathrm{dr},j}$, and henceforth several variable changes. The total consumption of all predators of the resource prey $j$ is equal to the predation mortality loss of that prey (Eq. \ref{eq:predationmortality}). That predation mortality is updated to:
+When consumption of one food item (here the resource) is decreased the predator can compensate by eating more of other prey. For simplicity, however, we assume that only the resource consumption is decreased, and the consumption of other prey is not increased to compensate. To follow this assumption, we introduce a down-regulation factor $f_{\mathrm{dr},j}$, and henceforth several variable changes. The total consumption rate of a resource prey $j$ by all predators is equal to the predation mortality rate of that prey (Eq. \ref{eq:predationmortality}). The predation mortality rate of a prey $j$ is updated by multiplying the down-regulation factor $f_{\mathrm{dr},j}$:
 
 \begin{equation}
 \mu_{\mathrm{p},j} = f_{\mathrm{dr},j} \sum_i  \frac{V_i \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i,
 \end{equation}
-where $E_i$ is the total encountered food. $j$ denotes indices of prey including all resource and fish. The down-regulation factor $f_{\mathrm{dr},j}$ is the ratio of the resource production and resource predation loss:
+where $E_i$ is the mass-specific encounter rate of a predator $i$, and $j$ denotes indices of prey including all resources and fish. The down-regulation factor $f_{\mathrm{dr},j}$ is the ratio of the resource production and resource predation loss:
 
 \begin{equation}
     f_{\mathrm{dr},j} =
