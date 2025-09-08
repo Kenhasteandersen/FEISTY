@@ -1313,24 +1313,24 @@ consumption}\label{down-regulation-of-zooplankton-consumption}
 
 To avoid the creation of new mass in the model, the consumption by the
 fish predators must not exceed the corresponding zooplankton production
-(\(P_{\mathrm{R},j}\), in mass/area/time). If the consumption, as
-calculated by the product of predation mortality on zooplankton and
-zooplankton biomass (\(\mu_{\mathrm{p},j} R_j\), in mass/area/time)
-exceeds the resource production, the consumption of the resource has to
-be down-regulated.
+(\(P_{\mathrm{R},j}\), in mass/area/time). If the total consumption by
+all fish, as calculated by the product of predation mortality on
+zooplankton and zooplankton biomass (\(\mu_{\mathrm{p},j} R_j\), in
+mass/area/time) exceeds the resource production, the consumption of the
+resource has to be down-regulated.
 
 When consumption of one food item (here the resource) is decreased the
 predator can compensate by eating more of other prey. For simplicity,
 however, we assume that only the resource consumption is decreased, and
 the consumption of other prey is not increased to compensate. To follow
 this assumption, we introduce a down-regulation factor
-\(f_{\mathrm{dr},j}\), and henceforth several variables change. The
+\(f_{\mathrm{dr},j}\), and henceforth several variable changes. The
 total consumption of all predators of the resource prey \(j\) is equal
 to the predation mortality loss of that prey (Eq.
 \ref{eq:predationmortality}). That predation mortality is updated to:
 
 \begin{equation}
-\mu_{\mathrm{p},j} = \sum_i  \frac{V_i f_{\mathrm{dr},j} \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i.
+\mu_{\mathrm{p},j} = f_{\mathrm{dr},j} \sum_i  \frac{V_i \theta_{i,j}}{E_i+C_{\mathrm{max},i}} C_{\mathrm{max},i} B_i,
 \end{equation} where \(E_i\) is the total encountered food. \(j\)
 denotes indices of prey including all resource and fish. The
 down-regulation factor \(f_{\mathrm{dr},j}\) is the ratio of the
@@ -1342,10 +1342,8 @@ resource production and resource predation loss:
 \max\{1, \, \frac{P_{\mathrm{R},j}}{\mu_{\mathrm{p},j} R_j} \},      & \text{$ j \in \mathrm{resource\ requiring\ down}-\mathrm{regulation} $} \\
      1, & \text{$ j \in \mathrm{other\ prey} $} 
   \end{cases}
-\end{equation}
-
-For the other prey whose predation loss do not need down-regulation, the
-factor is 1 to keep everything unchanged.
+\end{equation} For the other prey whose predation loss do not need
+down-regulation, the factor is 1 to keep everything unchanged.
 
 The predation loss of a resource prey reflects the consumption of its
 predators, which requires corresponding updates to maintain mass
@@ -1353,16 +1351,15 @@ conservation within the system. We begin by revising the feeding levels
 of predators. The mass-specific feeding level of a predator \(f_i\) (Eq.
 \ref{eq:feedinglvl}, also see Eq. \ref{eq:encounter}) is consequently
 modified to \begin{equation}
-f_{i} = \frac{V_{i}  \sum_{j} f_{\mathrm{dr},j} \theta_{i,j} B_j}{E_{i}+C_{\mathrm{max},i}}  .
-\end{equation}
-
-This procedure ensures that mass is not created in the system. However,
-it does not ensure perfect mass balance. If the fish predators do not
-eat all the zooplankton production, there is an ``excess'' zooplankton
-production which is not accounted for. Further, as mentioned above, the
-fish are not allowed to compensate for the reduction in zooplankton
-consumption by an increase in consumption of other prey. We believe that
-this latter assumption has a quite small impact.
+f_{i} = \frac{V_{i}}{E_{i}+C_{\mathrm{max},i}}  \sum_{j} f_{\mathrm{dr},j} \theta_{i,j} B_j  .
+\end{equation} This procedure ensures that mass is not created in the
+system. However, it does not ensure perfect mass balance. If the fish
+predators do not eat all the zooplankton production, there is an
+``excess'' zooplankton production which is not accounted for. Further,
+as mentioned above, the fish are not allowed to compensate for the
+reduction in zooplankton consumption by an increase in consumption of
+other prey. We believe that this latter assumption has a quite small
+impact.
 
 Here, we provide an example demonstrating the down-regulation of large
 mesozooplankton consumption in a time-series simulation. When the
