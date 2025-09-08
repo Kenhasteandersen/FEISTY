@@ -37,9 +37,9 @@ instances:
 # initial values
       smz_ini:    1e2                       # initial small mesozooplankton biomass [g m-2]
       lgz_ini:    1e2                       # initial large mesozooplankton biomass [g m-2]
-      smbent_ini: 1                         # initial small benthos biomass [g m-2]
-      # lgbent_ini: 0                         # initial large benthos biomass [g m-2] do not exist
-      b_ini:      1                      # initial fish biomass of each size class [g m-2]
+      smbent_ini: 5                         # initial small benthos biomass [g m-2]
+      # lgbent_ini: 0                       # initial large benthos biomass [g m-2] do not exist
+      b_ini:      1e-5                      # initial fish biomass of each size class [g m-2]
 # input
       szprod:      100                     # small mesozooplankton production [g m-2 yr-1]
       lzprod:      100                     # large mesozooplankton production [g m-2 yr-1]
@@ -63,7 +63,7 @@ instances:
       excretion: nut
       respiration: nut
       feces: det
-      carcasses: zoo
+      carcasses: det
       detritus: det/c
       nutrient: nut/c
 
