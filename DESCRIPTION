@@ -1,5 +1,5 @@
 Package: FEISTY
-Version: 1.0.0
+Version: 1.1.1
 Title: FishErIes Size and functional TYpe model (FEISTY)
 Authors@R: c(
   person("Yixin", "Zhao", email = "yixzh@aqua.dtu.dk", role = c("aut", "cre")),
