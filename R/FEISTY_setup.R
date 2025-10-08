@@ -915,7 +915,7 @@ setupVertical = function(szprod = 80, # small zoo production
 #' The size number of small fish functional types (e.g., small pelagic fish and mesopelagic fish) is \code{round(2/3*nStages)}. 
 #' Generally, \code{nStages} is multiples of 3 (e.g., \code{nStages = 3, 6, 9, or 12}...).
 #' @param Tp Pelagic water temperature, representing the top 100m average temperature [Celsius]. Default NA. Input NA means Tp = 10.
-#' @param Tm Mid-water temperature, representing the average temperature of 500m - up to 1500m. Default NA. Input NA means Tp = Tb.
+#' @param Tm Mid-water temperature, representing the average temperature of 500m - up to 1500m. Default NA. Input NA means Tm = Tb.
 #' @param Tb Bottom water (the bottom layer) temperature [Celsius]. Default NA. Input NA means Tb = 10.
 #' @param depth  Water column depth [meter]. \cr 
 #' Different \code{depth} values will influence fish vertical overlap and temperature-dependent physiological rates. See source code of \code{setupVertical}
