@@ -452,12 +452,12 @@ contains
       integer, intent(in) :: region!, nStages                    ! Mature mass relative to asymptotic size default 0.25, original in van Denderen et al., 2021 was 0.002
 
 ! for theta calc
-       real(dp) :: ssigma
-       real(dp) :: tau
+!       real(dp) :: ssigma
+!       real(dp) :: tau
        !real(dp) :: bottom
        !real(dp) :: photic
-       real(dp) :: shelfdepth
-       real(dp) :: visual
+!       real(dp) :: shelfdepth
+!       real(dp) :: visual
 !      real(dp) :: ssigma = 10._dp
 !      real(dp) :: tau = 10._dp
 !      real(dp), parameter :: bottom = 1500._dp ! total depth meter
@@ -881,8 +881,8 @@ contains
       real(dp), intent(in) :: visual      ! >1 visual predation primarily during the day, = 1 equal day and night. default 1.5
 
 ! for theta calc
-       real(dp) :: ssigma
-       real(dp) :: tau
+!       real(dp) :: ssigma
+!       real(dp) :: tau
        !real(dp) :: bottom
        !real(dp) :: photic
        !real(dp) :: mesop !change to shelfdepth
@@ -913,9 +913,9 @@ contains
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
 !      real(dp),allocatable :: sizes(:)
       integer :: iGroup, i, j, ixmedium, ixlarge!, nsize, matstageS, matstageL
-      real(dp), allocatable :: Teff (:)
-      real(dp) :: Tday, Tnight, Tdaylarge, Tdaynonlarge, &
-                  Tsmall, Tmedium, Tnightlarge, Tnightnonlarge
+      !real(dp), allocatable :: Teff (:)
+      !real(dp) :: Tday, Tnight, Tdaylarge, Tdaynonlarge, &
+      !            Tsmall, Tmedium, Tnightlarge, Tnightnonlarge
 
 #ifndef _FABM_
       call read_namelist_setupvertical()
@@ -1284,99 +1284,8 @@ contains
       idx_prey = [prey1, prey2]
       theta(idx_predat, idx_prey) = theta(idx_predat, idx_prey)*0.5_dp
 
-! ====================
-! update temperature
-! ====================
-      if (allocated (fTempV)) then
-        deallocate (fTempV)
-        deallocate (fTempmV)
-        !deallocate (Teff)
-      end if
-
-      allocate (fTempV(nGrid))
-      allocate (fTempmV(nGrid))
-      allocate (Teff(nGrid))
-
-      fTempV  = 0._dp
-      fTempmV = 0._dp
-      Teff   = 0._dp
-
-! zooplankton (no use)
-      Tday = (Tp + Tm) / 2  ! half surface half dvm  dvm = photic + 500
-      if (dvm == bottom) Tday = (Tp + Tb) / 2 ! when bottom < (photic + 500)
-      if (dvm == 0) Tday = Tp  ! when bottom <= shelfdepth
-      Tnight = Tp  ! all surface
-      Teff(1:2) = (Tday + Tnight) / 2
-! benthos (no use)
-      Teff(3:4) = Tb
-! small pelagics
-      deallocate (ix)
-      allocate (ix(ixEnd(1) - ixStart(1) + 1))
-      ix = [(i, i=ixStart(1), ixEnd(1))]
-      Teff(ix) = Tp ! always surface
-! mesopelagics
-      deallocate (ix)
-      allocate (ix(ixEnd(2) - ixStart(2) + 1))
-      ix = [(i, i=ixStart(2), ixEnd(2))]
-      Tday = Tm ! dvm
-      if (dvm == bottom) Tday = Tb
-      if (dvm == 0) Tday = Tp
-      Tnight = Tp ! surface
-      Teff(ix) = (Tday + Tnight) / 2
-! large pelagics
-      deallocate (ix)
-      allocate (ix(ixEnd(3) - ixStart(3) + 1))
-      ix = [(i, i=ixStart(3), ixEnd(3))]
-      ! daytime large half at surface half at dvm
-      Tdaylarge = (Tp + Tm) / 2
-      if (dvm == bottom) Tdaylarge = (Tp + Tb) / 2
-      if (dvm == 0) Tdaylarge = Tp
-      Tdaynonlarge = Tp  ! non-large at surface at daytime
-      Tnight = Tp        ! all at surface at night
-      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnight) / 2 ! large
-      Teff(ix(1:(ixlarge-1))) = (Tdaynonlarge + Tnight) / 2 ! non-large
-! bathypelagics
-      deallocate (ix)
-      allocate (ix(ixEnd(4) - ixStart(4) + 1))
-      ix = [(i, i=ixStart(4), ixEnd(4))]
-      Tday = Tm ! all at dvm at daytime
-      if (dvm == bottom) Tday = Tb
-      if (dvm == 0)      Tday = Tp
-      Tnightlarge = Tm ! large at dvm
-      if (dvm == bottom) Tnightlarge = Tb
-      if (dvm == 0)      Tnightlarge = Tp
-      Tnightnonlarge = Tp ! non-large at surface at night
-      Teff(ix(ixlarge:size(ix))) = (Tday + Tnightlarge) / 2 ! large
-      Teff(ix(1:ixlarge-1)) = (Tday + Tnightnonlarge) / 2 ! non-large
-! demersals
-      deallocate (ix)
-      allocate (ix(ixEnd(5) - ixStart(5) + 1))
-      ix = [(i, i=ixStart(5), ixEnd(5))]
-      Tsmall = Tp ! small always at surface
-      Tmedium = Tb ! medium always at bottom
-      ! large
-      ! daytime
-      Tdaylarge = Tm ! large at middle
-      ! if the water is very deep large demersals always stay at the bottom
-      if ((bottom - dvm) >= 1500) Tdaylarge = Tb
-      ! if the water is very shallow large demersals migrate over the whole water column both day and night
-      if (bottom <= photic) then
-        Tdaylarge = (Tp + Tb) / 2
-      end if
-      ! nighttime
-      Tnightlarge = Tb ! large at bottom if water is deep enough
-      ! if the water is very shallow large demersals migrate over the whole water column both day and night
-      if (bottom <= photic) then
-        Tnightlarge = (Tp + Tb) / 2
-      end if
-
-      Teff(ix(1:ixmedium-1)) = Tsmall ! small
-      Teff(ix(ixmedium:ixlarge-1)) = Tmedium ! medium
-      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnightlarge) / 2 ! large
-
-      fTempV = Q10**((Teff - 10._dp) / 10._dp)
-      fTempmV = Q10m**((Teff - 10._dp) / 10._dp)
-
+    ! update temperature
+    call updateTempV2(Tp, Tm, Tb, dvm, bottom, photic, ixmedium, ixlarge)  
     ! all fish group
     do iGroup = 1, nGroups
         group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
@@ -2404,6 +2313,108 @@ fTempmV = sum(fTempm_stepV,1)
 
 end subroutine updateTempV
 
+! update Temperature for vertical2 Oct 2025
+subroutine updateTempV2(Tp, Tm, Tb, dvm, bottom, photic, ixmedium, ixlarge)
+real(dp), intent(in)  :: Tp, Tm,Tb, dvm, bottom, photic
+integer,  intent(in)  :: ixmedium, ixlarge
+real(dp)              :: Tday, Tnight, Tdaylarge, Tdaynonlarge, &
+                         Tsmall, Tmedium, Tnightlarge, Tnightnonlarge
+integer, allocatable  :: ix(:)
+integer               :: i
+
+
+      if (allocated (fTempV)) then
+        deallocate (fTempV)
+        deallocate (fTempmV)
+      end if
+
+      allocate (fTempV(nGrid))
+      allocate (fTempmV(nGrid))
+      
+      if (allocated (Teff)) deallocate (Teff)
+      allocate (Teff(nGrid))
+
+      fTempV  = 0._dp
+      fTempmV = 0._dp
+      Teff   = 0._dp
+      
+! zooplankton (no use)
+      Tday = (Tp + Tm) / 2  ! half surface half dvm  dvm = photic + 500
+      if (dvm == bottom) Tday = (Tp + Tb) / 2 ! when bottom < (photic + 500)
+      if (dvm == 0) Tday = Tp  ! when bottom <= shelfdepth
+      Tnight = Tp  ! all surface
+      Teff(1:2) = (Tday + Tnight) / 2
+! benthos (no use)
+      Teff(3:4) = Tb
+! small pelagics
+      if (allocated (ix)) deallocate (ix)
+      allocate (ix(ixEnd(1) - ixStart(1) + 1))
+      ix = [(i, i=ixStart(1), ixEnd(1))]
+      Teff(ix) = Tp ! always surface
+! mesopelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(2) - ixStart(2) + 1))
+      ix = [(i, i=ixStart(2), ixEnd(2))]
+      Tday = Tm ! dvm
+      if (dvm == bottom) Tday = Tb
+      if (dvm == 0) Tday = Tp
+      Tnight = Tp ! surface
+      Teff(ix) = (Tday + Tnight) / 2
+! large pelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(3) - ixStart(3) + 1))
+      ix = [(i, i=ixStart(3), ixEnd(3))]
+      ! daytime large half at surface half at dvm
+      Tdaylarge = (Tp + Tm) / 2
+      if (dvm == bottom) Tdaylarge = (Tp + Tb) / 2
+      if (dvm == 0) Tdaylarge = Tp
+      Tdaynonlarge = Tp  ! non-large at surface at daytime
+      Tnight = Tp        ! all at surface at night
+      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnight) / 2 ! large
+      Teff(ix(1:(ixlarge-1))) = (Tdaynonlarge + Tnight) / 2 ! non-large
+! bathypelagics
+      deallocate (ix)
+      allocate (ix(ixEnd(4) - ixStart(4) + 1))
+      ix = [(i, i=ixStart(4), ixEnd(4))]
+      Tday = Tm ! all at dvm at daytime
+      if (dvm == bottom) Tday = Tb
+      if (dvm == 0)      Tday = Tp
+      Tnightlarge = Tm ! large at dvm
+      if (dvm == bottom) Tnightlarge = Tb
+      if (dvm == 0)      Tnightlarge = Tp
+      Tnightnonlarge = Tp ! non-large at surface at night
+      Teff(ix(ixlarge:size(ix))) = (Tday + Tnightlarge) / 2 ! large
+      Teff(ix(1:ixlarge-1)) = (Tday + Tnightnonlarge) / 2 ! non-large
+! demersals
+      deallocate (ix)
+      allocate (ix(ixEnd(5) - ixStart(5) + 1))
+      ix = [(i, i=ixStart(5), ixEnd(5))]
+      Tsmall = Tp ! small always at surface
+      Tmedium = Tb ! medium always at bottom
+      ! large
+      ! daytime
+      Tdaylarge = Tm ! large at middle
+      ! if the water is very deep large demersals always stay at the bottom
+      if ((bottom - dvm) >= 1500) Tdaylarge = Tb
+      ! if the water is very shallow large demersals migrate over the whole water column both day and night
+      if (bottom <= photic) then
+        Tdaylarge = (Tp + Tb) / 2
+      end if
+      ! nighttime
+      Tnightlarge = Tb ! large at bottom if water is deep enough
+      ! if the water is very shallow large demersals migrate over the whole water column both day and night
+      if (bottom <= photic) then
+        Tnightlarge = (Tp + Tb) / 2
+      end if
+
+      Teff(ix(1:ixmedium-1)) = Tsmall ! small
+      Teff(ix(ixmedium:ixlarge-1)) = Tmedium ! medium
+      Teff(ix(ixlarge:size(ix))) = (Tdaylarge + Tnightlarge) / 2 ! large
+
+      fTempV = Q10**((Teff - 10._dp) / 10._dp)
+      fTempmV = Q10m**((Teff - 10._dp) / 10._dp)
+
+end subroutine updateTempV2
 
 
 end module setup

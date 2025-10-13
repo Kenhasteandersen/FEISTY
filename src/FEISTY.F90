@@ -492,9 +492,9 @@ end if
      feces       = 0._dp
      
      carcasses = mort0*u
-     feces = (1._dp-epsAssim_vec) * grazing ! update below
+     feces = (1._dp-epsAssim_vec)/2 * grazing ! update below
      excretion =  0._dp ! update below
-     respiration = metabolism*u
+     respiration = metabolism*u + (1._dp-epsAssim_vec)/2* grazing
      
 #endif
 
@@ -570,11 +570,17 @@ end if
      !carcasses = mort0*u
      feces(ixStart(i):ixEnd(i))     = feces(ixStart(i):ixEnd(i)) + &
                                     & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
-     excretion(ixStart(i):ixEnd(i)) = excretion(ixStart(i):ixEnd(i)) + &
-                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     !excretion(ixStart(i):ixEnd(i)) = excretion(ixStart(i):ixEnd(i)) + &
+     !                               & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
      
      feces(ixEnd(i))     = feces(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources)     !
-     excretion(ixEnd(i)) = excretion(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources) !
+     !excretion(ixEnd(i)) = excretion(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources) !
+     
+     
+     respiration(ixStart(i):ixEnd(i)) = respiration(ixStart(i):ixEnd(i)) + &
+                                    & 0.5_dp * (1._dp-epsRepro_vec(i)) * Repro(ixStart(i)-nResources:ixEnd(i)-nResources)  ! 
+     
+     respiration(ixEnd(i)) = respiration(ixEnd(i)) + 0.5_dp * (1._dp-epsRepro_vec(i)) * Fout(ixEnd(i)-nResources) !
 #endif        
         
       end do
@@ -619,11 +625,74 @@ end if
         dudt(i+nResources) = dBdt(i)
       enddo
 
-      !mass conservation check
-      !print*,sum(dudt(1:nGrid)) +sum(excretion + respiration +carcasses + feces)
-      !print*,sum(dudt(1:4))+sum(dudt(5:nGrid)) +sum(excretion + respiration +carcasses + feces)
-      !print*, sum(dudt(1:nGrid)) - sum(totLoss) - sum(carcasses)
-      !print*,sum(totLoss) - sum(excretion + respiration + feces)
+      !if(ANY((epsAssim_vec(nResources+1:nGrid)*flvl(nResources+1:nGrid)*Cmax(nResources+1:nGrid) * 1._dp/9._dp *u(nResources+1:nGrid) - &
+      !    metabolism(nResources+1:nGrid)*1._dp/9._dp *u(nResources+1:nGrid))/106._dp .gt.&
+      !    (epsAssim_vec(nResources+1:nGrid)*flvl(nResources+1:nGrid)*Cmax(nResources+1:nGrid) * 1._dp/9._dp /106._dp *u(nResources+1:nGrid)))) then
+      !   p_limit_count=p_limit_count+1
+      !!print*, sum(epsAssim_vec*flvl*Cmax * 1._dp/9._dp *u - metabolism*1._dp/9._dp *u)
+      !!print*, sum(epsAssim_vec*flvl*Cmax * 1._dp/9._dp /106._dp *u)
+      !   
+      !   print*, "Warning: P is the limiting element."
+      !   stop
+      !end if
+
+      
+!print*,sum(eplus*B)! available energy (minimum 0)
+!print*,sum(Repro + Fout + (grow-gamma_vec)*B)! available energy = reproduction investment + growth to next size class + self-growth
+!print*,sum(max(0._dp, Eavail)  *u )
+!!avaialble gram c
+!print*, sum(max(0._dp,(epsAssim_vec*flvl*Cmax - metabolism)) * 1._dp/9._dp *u)
+!print*, sum(Repro + Fout + (grow-gamma_vec)*B)* 1._dp/9._dp
+!print*, sum(epsAssim_vec*flvl*Cmax * 1._dp/9._dp *u)
+!print*, sum(Repro + Fout + (grow-gamma_vec)*B)* 1._dp/9._dp +sum(metabolism(11:12) * 1._dp/9._dp *u(11:12))+ sum((epsAssim_vec(5:10)*flvl(5:10)*Cmax(5:10))*u(5:10) * 1._dp/9._dp )
+!
+!print*, sum(Repro(7:8) + Fout(7:8) + (grow(7:8)-gamma_vec(7:8))*B(7:8))* 1._dp/9._dp
+!print*, sum((epsAssim_vec(11:12)*flvl(11:12)*Cmax(11:12))*u(11:12) * 1._dp/9._dp ) - sum(metabolism(11:12) * 1._dp/9._dp *u(11:12))
+!
+!!avaialble gram n
+!print*, sum(epsAssim_vec*flvl*Cmax* 1._dp/9._dp * 16._dp/106._dp *u)! all assimilted food in nitrogen
+!print*, sum(Repro + Fout + (grow-gamma_vec)*B)* 1._dp/9._dp* 16._dp/106._dp +& ! reproduction investment + growth to next size class + self-growth in nitrogen (converted from carbon)
+!        sum(metabolism(11:12) * 1._dp/9._dp * 16._dp/106._dp *u(11:12))+ & ! metabolism of size classes having enough energy (Eavail(i) >0)
+!        sum((epsAssim_vec(5:10)*flvl(5:10)*Cmax(5:10))*u(5:10) * 1._dp/9._dp * 16._dp/106._dp) ! all assimiled food is used for metabolism (Eavail(i) <0)
+!
+!!sda
+!print*,(1._dp-epsAssim_vec(10))/2 * flvl(10) * Cmax(10)*u(10)
+!print*, (1._dp-epsAssim_vec(10)-(1._dp-epsAssim_vec(10))/2) * flvl(10) * Cmax(10)*u(10)
+!
+!
+!! Compute waste fluxes: total ingestion plus mortality, minus mass used in growth, minus recruitment, plus growth over right edge of resolved size range.
+!print*,sum((1._dp-epsAssim_vec)/2 * flvl * Cmax*u) + sum(((epsAssim_vec + (1._dp-epsAssim_vec)/2) * flvl * Cmax ) *u) -sum(eFish*B) -sum(epsRepro_vec*totRepro) 
+!print*,sum( respiration  + feces)!+carcasses
+!
+!print*,sum((1._dp-epsAssim_vec)/2 * flvl * Cmax*u) + sum(((epsAssim_vec + (1._dp-epsAssim_vec)/2) * flvl * Cmax + mort0) *u) -sum(grow*B) - sum(epsRepro_vec*totRepro)
+!!print*,sum((flvl * Cmax + mort0) *u) -sum(metabolism*u)
+!!avaialble gram p
+!print*, sum(epsAssim_vec*flvl*Cmax* 1._dp/9._dp /106._dp *u)
+!print*,sum(Repro + Fout + (grow-gamma_vec)*B)* 1._dp/9._dp /106._dp +sum(metabolism(11:12) * 1._dp/9._dp /106._dp *u(11:12))+ sum((epsAssim_vec(5:10)*flvl(5:10)*Cmax(5:10))*u(5:10) * 1._dp/9._dp /106._dp)
+!
+!print*,SUM(flvl*Cmax*u)
+!print*,SUM(Repro + Fout + (grow-gamma_vec)*B + metabolism*u + (1._dp-epsAssim_vec)*grazing)
+!print*,sum(dudt(1:nGrid))
+!print*,sum(excretion + respiration +carcasses + feces)
+!print*, sum(flvl*Cmax*u)
+!
+!print*, sum(max(0._dp,(epsAssim_vec*flvl*Cmax - metabolism))  *u)
+!print*, sum(Repro + Fout + (grow-gamma_vec)*B)
+!
+!!small demersal only eat small zooplankton
+!print*, theta(10,1) * Cmax(10)*V(10)/(Enc(10) + Cmax(10))*uin(10)* uin(1)
+!!print*, theta(10,2) * Cmax(10)*V(10)/(Enc(10) + Cmax(10))*uin(10)* uin(2)
+!print*,flvl(10)*Cmax(10) *u(10)
+!print*, (metabolism(10))*u(10)
+!print*,(1-epsAssim_vec(10))*flvl(10)*Cmax(10) *u(10)!+
+!print*,(epsAssim_vec(10))*flvl(10)*Cmax(10) *u(10)
+!print*,(metabolism(10))*u(10)+eFish(6)*B(6)
+!
+!      !mass conservation check
+!      print*,sum(dudt(1:nGrid)) +sum(excretion + respiration +carcasses + feces)
+!      !print*,sum(dudt(1:4))+sum(dudt(5:nGrid)) +sum(excretion + respiration +carcasses + feces)
+!      !print*, sum(dudt(1:nGrid)) - sum(totLoss) - sum(carcasses)
+!      !print*,sum(totLoss) - sum(excretion + respiration + feces)
       
       
   end subroutine calcderivatives
