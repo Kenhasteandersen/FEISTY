@@ -2,14 +2,15 @@
 
 module FEISTY_FABM
 
-   use globals
-   use spectrum
-   use fish
-   use setup
-   use fabm_types
-   use fabm_particle
-   use fabm_builtin_depth_mapping   
-   use fabm_expressions
+   use globals                            ! FEISTY
+   use spectrum                           ! FEISTY
+   use fish                               ! FEISTY
+   use setup                              ! FEISTY
+   use fabm_types                         ! FABM
+   use fabm_particle                      ! FABM
+   use fabm_builtin_depth_mapping         ! FABM
+   use feisty_fabm_vertical_distribution  ! FEISTY-controlled vertical distributions
+   use fabm_expressions                   ! FABM
    
    implicit none
 
@@ -47,13 +48,18 @@ module FEISTY_FABM
       ! that we will integrater over the water column:
       type (type_model_id)                                      :: id_smzoo_int, id_lgzoo_int
       
-      type (type_dependency_id)                                 :: id_temp
-      type (type_horizontal_dependency_id)                      :: id_temp_vertmean_100m,id_bottom_depth
+      type (type_dependency_id)                                 :: id_temp,id_kpar
+      type (type_horizontal_dependency_id)                      :: id_temp_vertmean_100m,id_temp_vertmean_500to1500m,id_bottom_depth
       type (type_bottom_diagnostic_variable_id)                 :: id_temp_vertmean_100m_diag
       type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_total_biomass(:)
       
       real (rk)                              :: b_ini
-      real (rk) ,    allocatable             :: depth_array(:),theta_matrix(:,:,:)
+      real (rk) ,    allocatable             :: depth_array(:), photic_depth_array(:), theta_matrix(:,:,:,:) !(predator,prey,dvm_depth,bottom_depth,photic_depth)
+      real (rk) ,    allocatable             :: vertical_distribution_matrix(:,:,:,:) !(depth_level,nFGrid,n_depth,n_photic_depth)
+      
+      real(rk)                               :: shelfdepth
+      real(rk)                               :: max_depth, depth_interval, max_photic_depth, photic_depth_interval
+      integer                                :: n_depth, n_photic_depth
       
    contains
       procedure :: initialize
@@ -79,14 +85,15 @@ contains
       real(rk)           :: smz_ini, lgz_ini, smbent_ini, lgbent_ini
       real(rk)           :: szprod, lzprod, bprodin, dfbot, depth, Tp, Tb
       real(rk)           :: bgmort
-      real(rk)           :: dfpho, Tm, photic, etamature, shelfdepth, visual, Fmax, etaF!, ssigma, tau
+      real(rk)           :: dfpho, Tm, photic, etamature, visual, Fmax, etaF!, ssigma, tau, shelfdepth
       integer            :: nStages, bET_val
-      integer :: i,j
-      character(len=100)  :: strindex, i_str, j_str, size_number_str, fft_long_name,fft_short_name
-      real (rk) ,    parameter               :: max_depth = 6000._rk, depth_interval = 50._rk
-      integer ,      parameter               :: n_depth = int(max_depth/depth_interval)
+      integer            :: i,j
+      character(len=100) :: strindex, i_str, j_str, size_number_str, fft_long_name,fft_short_name
+      logical            :: file_exists
+      integer            :: dims(4)
       
       class (type_vertical_depth_range), pointer :: depth_distribution
+      class (type_feisty_vertical_distribution), pointer :: feisty_vertical_distribution
       
       !call self%type_depth_integrated_particle%initialize(configunit)
       
@@ -137,7 +144,7 @@ contains
       call self%get_parameter(Tm, 'Tm', 'Celsius', 'mid-water temperature', default=Tb)
       call self%get_parameter(photic, 'photic', 'm', 'photic zone depth', default=150._rk)
       call self%get_parameter(etamature, 'etamature', '-', 'the coefficient determines the fish size with a 50% maturity level', default=0.25_rk)
-      call self%get_parameter(shelfdepth, 'shelfdepth', 'm', 'continental shelf depth', default=250._rk)
+      call self%get_parameter(self%shelfdepth, 'shelfdepth', 'm', 'continental shelf depth', default=250._rk)
       call self%get_parameter(visual, 'visual', '-', 'the coefficient determines the visual ability of fish', default=1.5_rk) ! 1.5:visual predator or 1:non-visual predator. Be careful to use other values.
       call self%get_parameter(Fmax, 'Fmax', 'yr-1', 'Maximum fishing mortality', default=0._rk)
       call self%get_parameter(etaF, 'etaF', '-', 'the coefficient determines the fish size with 50% fishing selectivity', default=0.05_rk)
@@ -145,6 +152,13 @@ contains
       call self%get_parameter(tau, 'tau', '-', 'increase in width', default=10._rk)
       
       call self%get_parameter(bET_val, 'bET_val', '-', 'whether turn on the effective temperature (integer 1 or 0)', default=1)
+      
+      call self%get_parameter(self%max_depth, 'max_depth', 'm', 'maximum depth of the model domain', default=6000._rk)
+      call self%get_parameter(self%depth_interval, 'depth_interval', 'm', 'depth interval for vertical distribution', default=50._rk)
+      call self%get_parameter(self%max_photic_depth, 'max_photic_depth', 'm', 'maximum photic depth of the model domain', default=200._rk)
+      call self%get_parameter(self%photic_depth_interval, 'photic_depth_interval', 'm', 'photic depth interval for vertical distribution', default=10._rk)! 10 meters?
+      self%n_depth        = int(self%max_depth/self%depth_interval)
+      self%n_photic_depth = int(self%max_photic_depth/self%photic_depth_interval)
       
       ! Register model parameters and variables here.
       
@@ -158,8 +172,8 @@ contains
       !call setupbasic(szprod, lzprod, bprodin, dfbot, depth, Tp, Tb)
             !call setupbasic2(szprod, lzprod, bprodin, dfbot,nStages, depth, Tp, Tb,etaMature,Fmax,etaF,bET_val)
       !   case()
-       call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,3,Tp,Tm,Tb,depth,photic,etamature,shelfdepth,visual,Fmax,etaF)
-       call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,9,Tp,Tm,Tb,depth,photic,etamature,shelfdepth,visual,Fmax,etaF)
+       !call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,3,Tp,Tm,Tb,depth,photic,etamature,shelfdepth,visual,Fmax,etaF)
+       call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,9,Tp,Tm,Tb,depth,photic,etamature,self%shelfdepth,visual,Fmax,etaF)
       !      
       
       !end select     
@@ -192,6 +206,77 @@ contains
       allocate(self%id_carcasses_fish_c(nGrid-nResources), self%id_carcasses_fish_n(nGrid-nResources), self%id_carcasses_fish_p(nGrid-nResources))
 
       allocate(self%id_fish_total_biomass(nGroups))
+      
+
+
+      
+! theta_matrix and vertical_distribution_matrix preparation (MUST be done before creating child models)
+      allocate (self%depth_array(self%n_depth))
+      allocate (self%photic_depth_array(self%n_photic_depth))
+      allocate (self%theta_matrix(nGrid,nGrid,self%n_depth,self%n_photic_depth)) ! 120 depth layers from 50 to 6000 m, interval 50 m
+      allocate (self%vertical_distribution_matrix(int(self%max_depth)+1,nFGrid,self%n_depth,self%n_photic_depth))
+      
+      self%depth_array = [(real(i*self%depth_interval, rk), i=1, self%n_depth)] ! depth_array will contain: 50, 100, ..., 6000
+      self%photic_depth_array = [(real(i*self%photic_depth_interval, rk), i=1, self%n_photic_depth)] ! photic depth array will contain: 1, 2, ..., 200
+      self%theta_matrix=0._rk
+      self%vertical_distribution_matrix=-999._rk  ! mark invalid data
+         
+      inquire(file='matrix.dat', exist=file_exists)
+
+      if (file_exists) then
+
+         print*, "Reading matrices from existing file..."
+         open(unit=10, file='matrix.dat', form='unformatted', access='stream', status='old')
+         read(10) dims
+         if (dims(1)==size(self%theta_matrix,1) .and. dims(2)==size(self%theta_matrix,2) .and. dims(3)==size(self%theta_matrix,3) .and. dims(4)==size(self%theta_matrix,4)) then
+            print *, "Dimensions match.", dims, ". Reading matrices..."
+            read(10) self%theta_matrix
+            read(10) self%vertical_distribution_matrix
+            close(10)
+            print *, "Matrices read successfully."
+         else
+            print *, "Dimension mismatch! Expected:", size(self%theta_matrix,1),size(self%theta_matrix,2),size(self%theta_matrix,3),size(self%theta_matrix,4), " Got:", dims, "."
+            file_exists = .FALSE.
+         end if      
+      end if 
+      
+      if ( .NOT. file_exists ) then
+         print*, "Preparing the theta matrix data file..."
+
+         do i = 1, size(self%theta_matrix,3)
+            depth = real(i*self%depth_interval,rk)
+            do j = 1, size(self%theta_matrix,4)
+               photic = real(j*self%photic_depth_interval,rk)
+               call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,nStages,Tp,Tm,Tb,depth,photic,etamature,self%shelfdepth,visual,Fmax,etaF)
+               self%theta_matrix(:,:,i,j)=theta
+               
+               ! Save vertical distribution (averaged day/night) - only fish (idxF:nGrid)
+               self%vertical_distribution_matrix(1:size(depthDay,1),:,i,j) = (depthDay(:,idxF:nGrid) + depthNight(:,idxF:nGrid))/2._rk
+               
+               ! shallow water column on shelf: no mesopelagics and mid-water predators
+               if(depth.le.self%shelfdepth) self%theta_matrix(ixStart(2):ixEnd(2),:,i,j)=0._rk
+               if(depth.le.self%shelfdepth) self%theta_matrix(ixStart(4):ixEnd(4),:,i,j)=0._rk
+            end do
+         end do
+         mort0 = mort0/365._rk/86400._rk
+         mortF = mortF/365._rk/86400._rk
+
+         print *, "Saving matrices to file..."
+         dims(1:4)=[size(self%theta_matrix,1),size(self%theta_matrix,2),size(self%theta_matrix,3),size(self%theta_matrix,4)]
+         open(unit=10, file='matrix.dat', form='unformatted', access='stream', status='replace')
+         write(10) dims
+         write(10) self%theta_matrix
+         write(10) self%vertical_distribution_matrix
+         close(10)
+         print *, "Matrices saved successfully."
+      end if
+
+      print *, "Matrices (theta, vertical_distribution) ready for computation."
+
+
+
+
+
       
       do i = 1, nGroups
          write (i_str,'(i0)') i
@@ -230,10 +315,19 @@ contains
          call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_fish(i), scale_factor = gww_mmolN)
          call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_fish(i), scale_factor = gww_mmolP)
          
+         ! Register vertical distribution for this fish size class
          call self%register_vertical_distribution(self%id_fish_w(i),'fish_'//trim(i_str))
-         allocate(depth_distribution)
-         call self%add_child(depth_distribution, 'habitat_fish_'//trim(i_str))
-         call self%request_coupling(self%id_fish_w(i), 'habitat_fish_'//trim(i_str)//'/'//'w')
+         
+         ! Create FEISTY-controlled vertical distribution model
+         allocate(feisty_vertical_distribution)
+         call self%add_child(feisty_vertical_distribution, 'feisty_vertical_distribution_'//trim(i_str), configunit=-1)
+         call self%request_coupling(self%id_fish_w(i), 'feisty_vertical_distribution_'//trim(i_str)//'/'//'w')
+         
+         ! Set pointers to parent FEISTY model's data
+         feisty_vertical_distribution%vertical_distribution_matrix => self%vertical_distribution_matrix
+         feisty_vertical_distribution%depth_array => self%depth_array
+         feisty_vertical_distribution%photic_depth_array => self%photic_depth_array
+         feisty_vertical_distribution%fish_index = i
          
          !call self%register_state_dependency(self%id_smzoo_fish_c(i), 'smzoo_c', 'mmol C m-2', 'depth-integrated small zooplankton carbon')
          !call self%register_state_dependency(self%id_smzoo_fish_n(i), 'smzoo_n', 'mmol N m-2', 'depth-integrated small zooplankton nitrogen')
@@ -298,7 +392,7 @@ contains
       call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_benthos, scale_factor = gww_mmolN)
       call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_benthos, scale_factor = gww_mmolP)
       
-       ! Depth-averaged dependencies
+       ! Depth-integrated dependencies
        call self%register_dependency(self%id_smzoo_c, 'small_zooplankton_c', 'mmol C m-2', 'depth-integrated small zooplankton carbon')
        call self%register_dependency(self%id_smzoo_n, 'small_zooplankton_n', 'mmol N m-2', 'depth-integrated small zooplankton nitrogen')
        call self%register_dependency(self%id_smzoo_p, 'small_zooplankton_p', 'mmol P m-2', 'depth-integrated small zooplankton phosphorus') 
@@ -320,10 +414,16 @@ contains
        call self%request_mapped_coupling_to_model(self%id_lgzoo_p, 'large_zooplankton', standard_variables%total_phosphorus, id_w=self%dummy_w)!, average=.true.)
        !call self%couplings%set_string('large_zooplankton', "large_zooplankton")
        
+       !???????????????????????????????????????????????????????????????????????
+       !???????????????????????????????????????????????????????????????????????
+       !???????????????????????????????????????????????????????????????????????
+       call self%register_dependency(self%id_kpar, standard_variables%attenuation_coefficient_of_photosynthetic_radiative_flux)
+       !======================================================================
        
        
        call self%register_dependency(self%id_temp, standard_variables%temperature)
        call self%register_dependency(self%id_temp_vertmean_100m, vertical_mean(self%id_temp, maximum_depth=100._rk))
+       call self%register_dependency(self%id_temp_vertmean_500to1500m, vertical_mean(self%id_temp, minimum_depth=500._rk, maximum_depth=1500._rk))
        call self%register_diagnostic_variable(self%id_temp_vertmean_100m_diag, 'temp_vertmean_100m', 'degree_C', 'vertical mean temperature above 100 m')
        call self%register_dependency(self%id_bottom_depth, standard_variables%bottom_depth)
        
@@ -335,29 +435,6 @@ contains
       allocate (carcasses(nGrid))
       allocate (feces(nGrid))
       
-      
-! theta_matrix preparation
-      allocate (self%depth_array(n_depth))
-      allocate (self%theta_matrix(nGrid,nGrid,n_depth)) ! 120 depth layers from 50 to 6000 m, interval 50 m
-      
-      self%depth_array = [(real(i*50, rk), i=1, n_depth)] ! depth_array will contain: 50, 100, ..., 6000
-
-      self%theta_matrix=0._rk
-      do i = 1, size(self%theta_matrix,3)
-         depth = real(i*50,rk)
-         call setupVertical2(szprod,lzprod,bprodin,dfbot,dfpho,nStages,Tp,Tm,Tb,depth,photic,etamature,shelfdepth,visual,Fmax,etaF)
-         self%theta_matrix(:,:,i)=theta
-         !print*, self%theta_matrix(1,1,:)
-         !print*,self%theta_matrix(:,:,i)
-         ! shallow water column on shelf: no mesopelagics and mid-water predators
-         if(depth.le.shelfdepth) self%theta_matrix(ixStart(2):ixEnd(2),:,i)=0._rk
-         if(depth.le.shelfdepth) self%theta_matrix(ixStart(4):ixEnd(4),:,i)=0._rk
-      end do
-      
-      !print*, 'done'
-      
-      
-      
    end subroutine initialize
 
    subroutine do_bottom(self, _ARGUMENTS_DO_BOTTOM_)
@@ -366,7 +443,7 @@ contains
 
       real(rk) :: c, temp, prey_c, prey_n, prey_p, prey_s, w_int
       real(rk) :: ingestion_c, ingestion_n, ingestion_p, prey_loss_rate, p1,p2, net_growth
-      integer  :: iGroup, i, istate, closest_depth_idx
+      integer  :: iGroup, i, istate, closest_bottom_depth_idx,closest_photic_depth_idx
       real(rk),dimension(ixEnd(1)-ixStart(1)+1)  :: smpel
       real(rk),dimension(ixEnd(2)-ixStart(2)+1)  :: lgpel
       real(rk),dimension(ixEnd(3)-ixStart(3)+1)  :: dem
@@ -378,7 +455,9 @@ contains
       real(rk)                                   :: zoo1, zoo2, benthos1, benthos2
       real(rk)                                   :: det_bot, det_bot_flux_gww, benthos_g_gww, benthos_loss_gww
       real(rk),dimension(nGrid)                  :: uin, dudt, mortpred_contri_zoo1, mortpred_contri_zoo2
-      real(rk)                                   :: temp_100m,temp_bottom, bottom_depth
+      real(rk)                                   :: temp_100m,temp_bottom, temp_500to1500m, bottom_depth
+      real(rk)                                   :: kpar,photic_depth
+      real(rk), allocatable, dimension(:,:)      :: vertical_dist  ! averaged vertical distribution (day+night)/2 (xrange, nFGrid - fish only)
       
       _BOTTOM_LOOP_BEGIN_
 
@@ -416,22 +495,55 @@ contains
          !print*,benthos1
          
          ! Depth-averaged environmental dependencies
+         _GET_BOTTOM_(self%id_bottom_depth, bottom_depth) 
          _GET_BOTTOM_(self%id_temp_vertmean_100m, temp_100m)
          _GET_(self%id_temp, temp_bottom)
+         _GET_BOTTOM_(self%id_temp_vertmean_500to1500m,temp_500to1500m)
+         if(bottom_depth .lt. 500._rk) temp_500to1500m = temp_bottom
+         _GET_(self%id_kpar, kpar)
+         if (kpar > 1.0e-10_rk) then
+            photic_depth = log(0.01_rk)/(-kpar) ! get the photic zone depth from the light attenuation coeffcient
+         else
+            ! If kpar is zero or near-zero (no attenuation), entire column is photic
+            photic_depth = bottom_depth
+         end if
+         !print*, 'photic depth', photic_depth
          !print*,temp_100m
          _SET_BOTTOM_DIAGNOSTIC_(self%id_temp_vertmean_100m_diag, temp_100m)
          
-         _GET_BOTTOM_(self%id_bottom_depth, bottom_depth) 
+
          !call updateTemp(temp_100m, temp_bottom, bottom_depth, [1,2],2,[3],1)
          !call set2vec
          !mort0 = mort0/365._rk/86400._rk
          !mortF = mortF/365._rk/86400._rk
          !call setupbasic(100._rk, 100._rk, 100._rk, -1._rk, bottom_depth, temp_100m, temp_bottom)
 
-         closest_depth_idx = minloc(abs(self%depth_array - bottom_depth), dim=1)
+         !update theta and vertical distribution
+         closest_bottom_depth_idx = minloc(abs(self%depth_array - bottom_depth), dim=1)
+         closest_photic_depth_idx= minloc(abs(self%photic_depth_array - photic_depth), dim=1)
          !print*, closest_depth_idx
-         theta= self%theta_matrix(:,:,closest_depth_idx)
+         theta= self%theta_matrix(:,:,closest_bottom_depth_idx,closest_photic_depth_idx)
          
+         ! Retrieve vertical distribution from matrix (only fish)
+         if (allocated(vertical_dist)) deallocate(vertical_dist)
+         allocate(vertical_dist(int(bottom_depth)+1, nFGrid))
+         vertical_dist = self%vertical_distribution_matrix(1:int(bottom_depth)+1,:,closest_bottom_depth_idx,closest_photic_depth_idx)
+         
+         dvm = photic_depth + 500._dp ! 650._dp
+         if (bottom_depth .lt. (photic_depth + 500._dp)) dvm = bottom_depth 
+         if (bottom_depth .le. self%shelfdepth) dvm = 0._dp
+
+         !update temperature effect
+         call updateTempV2(temp_100m, temp_500to1500m, temp_bottom, dvm, bottom_depth, photic_depth, ixmedium, ixlarge)
+         do iGroup = 1, nGroups
+             group(iGroup)%spec%V=group(iGroup)%spec%Vsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+             group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmaxsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+             group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+         end do
+         call set2vec
+         mort0 = mort0/365._rk/86400._rk
+         mortF = mortF/365._rk/86400._rk
+
          
          uin= [zoo1,zoo2 ,benthos1,0._rk ,fish]
          !print*,uin
@@ -447,7 +559,7 @@ contains
          !!print*,mortpred_contri_zoo1
          !mortpred_contri_zoo2= theta(:,2) * Cmax*V/(Enc + Cmax)*uin* uin(2)
          !call checknan(mortpred_contri_zoo2, nGrid)
-         !!print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk 
+         !!print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk  
          
          !small zooplankton
          do istate = 1, size(self%id_smzoo_int%bottom_state)

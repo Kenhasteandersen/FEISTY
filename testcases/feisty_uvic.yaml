@@ -1,0 +1,238 @@
+check_conservation: true
+#check_conservation: true
+instances:
+# 
+  fish:
+    model: feisty/FEISTY_FABM
+    #check_conservation: false
+    parameters:
+#      physiology
+      h:     20                     # Max. consumption coefficient                 [g^nn yr-1]
+      nn:    -0.25                 # Metabolic exponent                           [ ]
+      gamma: 70                 # Coef. for clearance rate                     [m2 g^q yr-1]
+      q:     -0.2                   # Clearance rate exponent                      [ ]
+      kk:    4                      # 0.2*h Metabolism coefficient        [g^p yr-1]
+      p:     -0.175                 # Metabolism exponent                          [ ]
+      epsAssim: 0.7             # Assimilation efficiency                      [ ]
+      epsRepro: 0.01            # reproduction * recruitment efficiency        [ ]
+      bgmort: 0.1               # background mortality of all fish             [yr-1]
+#
+      beta:  400
+      sigma: 1.3
+      mMin:  0.001               #min fish mass  (boundary of the grid)         [g]
+#
+      mMedium: 10               #medium fish central mass used for feeding preference calc [g] for vertical distribution 10 for non-vertical distribution 0.5
+      mLarge:  5000              #large fish central mass used for feeding preference calc  [g] for vertical distribution 5000 for vertical distribution 250
+
+#      resources
+      lbenk:  0               # large benthos carry capacity                   [g m-2]
+      szoog:  1               # small zooplankton growth rate                  [yr-1]
+      lzoog:  1               # large zooplankton growth rate                  [yr-1]
+      sbeng:  1               # small benthos growth rate                      [yr-1]
+      lbeng:  0               # large benthos growth rate                      [yr-1]
+# predation preference coefficient
+      thetaS : 0.25               # Medium fish pref for small zooplankton
+      thetaA : 0.5                # Large fish pref for medium forage fish
+      thetaD : 0.75               # Pref of large demersal on pelagic prey
+# initial values
+      smz_ini:    1e2                       # initial small mesozooplankton biomass [g m-2]
+      lgz_ini:    1e2                       # initial large mesozooplankton biomass [g m-2]
+      smbent_ini: 5                         # initial small benthos biomass [g m-2]
+      # lgbent_ini: 0                       # initial large benthos biomass [g m-2] do not exist
+      b_ini:      1e-5                      # initial fish biomass of each size class [g m-2]
+# input
+      szprod:      100                     # small mesozooplankton production [g m-2 yr-1]
+      lzprod:      100                     # large mesozooplankton production [g m-2 yr-1]
+      bprodin:     5                       # benthos production [g m-2 yr-1]
+      dfbot:       -1                      # detrital flux reaching the bottom [g m-2 yr-1]
+      depth:       100                     # water column depth [m]
+      Tp:          10                      # pelagic layer averaged temperature [Celsius]
+      Tb:          8                       # bottom layer depth temperature [Celsius]
+
+#      nStages:     12                      # size number of large fish functional groups [ ]
+#      etaMature:   0.25                    # coefficient determines the fish size with a 50% maturity level                     					     (etaMature*asymptotic size) [ ]
+#      Fmax:        0                       # maximum fishing mortality [yr-1]
+#      etaF:        0.05                    # coefficient determines the fish size with a 50% fishing selectivity 						     (etaF*asymptotic size) [ ]
+#      bET:         true                    # whether to enable effective temperature effects on the large demersal fish 					     (1: on, 0: off) [ ]
+
+      #fft_long_name_: small pelagic
+      #fft_short_name_1: smpel
+    coupling:
+      small_zooplankton: zooplankton           # nutrient source (mmol m-3)
+      large_zooplankton: zooplankton
+      #excretion: nut
+      respiration: nut_chem
+      feces: detritus
+      carcasses: detritus
+      detritus: detritus/detritus
+      nutrient: nut_chem/no3
+
+  sediment:
+    model: uvic/sediment
+    parameters:
+      dtsed: 0.02083333333
+      ibmax: 20
+      kmax: 7
+      nzmax: 8
+      dissc: 1.1574e-5
+      dissn: 4.5
+    coupling:
+      dic: nut_chem/dic
+      alkalinity: nut_chem/alkalinity
+      o2: nut_chem/o2
+      rain_org: detritus/rain_org
+      rain_cal: nut_chem/rain_cal
+  nut_chem:
+    model: uvic/nut_chem
+    parameters:
+      nitrogen: true
+      dcaco3: 650000.0
+      rstd: 1.176e-12
+    initialization:
+      o2: 200.0
+      p: 2.5
+      dic: 2.3
+      alkalinity: 2.4
+      c14: 1e-12
+      no3: 30.0
+    coupling:
+      dc14ccn: dc14ccn/data
+      atco2: atco2/data
+      aice: ice/data
+  detritus:
+    model: uvic/detritus
+    parameters:
+      o2_sens: true
+      nitrogen: true
+      no3_sens: true
+      no_temp_sens: false
+      bbio: 1.066
+      cbio: 1.0
+      nud0: 0.5
+      wd0: 6.0
+    initialization:
+      detritus: 0.001
+    coupling:
+      o2: nut_chem/o2
+      oxi: nut_chem/o2_dummy
+      p: nut_chem/p
+      no3: nut_chem/no3
+  light:
+    model: uvic/light
+    parameters:
+      kc: 0.047
+      kw: 0.04
+      par: 0.43
+    coupling:
+      rctheta: solar/rctheta
+  phytoplankton:
+    model: uvic/phytoplankton
+    parameters:
+      alpha: 0.1
+      k1n: 0.7
+      nup: 0.025
+      nupt0: 0.02
+      capr: 0.018
+      nitrogen: true
+      nfix: false
+      extra_diags: true
+      abio: 0.18
+      no_temp_sens: false
+      bbio: 1.066
+      cbio: 1.0
+      fe_limitation: false
+      cdom_attenuation: false
+    initialization:
+      phytoplankton: 0.001
+    coupling:
+      sw_par: light/sw_par
+      f1: light/f1
+      dayfrac: solar/dayfrac
+      p: nut_chem/p
+      detritus: detritus/detritus
+      oxygen: nut_chem/o2
+      oxi: nut_chem/o2_dummy
+      alkalinity: nut_chem/alkalinity
+      calcite_detritus: nut_chem/calc_dummy
+      no3: nut_chem/no3
+  diazotrophs:
+    model: uvic/phytoplankton
+    parameters:
+      alpha: 0.1
+      k1n: 0.7
+      nup: 0.025
+      nupt0: 0.02
+      capr: 0.018
+      nitrogen: true
+      nfix: true
+      jdiar: 0.5
+      #extra_diags: true
+      abio: 0.18
+      no_temp_sens: false
+      bbio: 1.066
+      cbio: 1.0
+      fe_limitation: false
+      cdom_attenuation: false
+    initialization:
+      phytoplankton: 0.03
+    coupling:
+      sw_par: light/sw_par
+      f1: light/f1
+      dayfrac: solar/dayfrac
+      p: nut_chem/p
+      detritus: detritus/detritus
+      oxygen: nut_chem/o2
+      oxi: nut_chem/o2_dummy
+      alkalinity: nut_chem/alkalinity
+      calcite_detritus: nut_chem/calc_dummy
+      no3: nut_chem/no3
+  solar:
+    model: uvic/solar
+  zooplankton:
+    model: uvic/zooplankton
+    parameters:
+      extra_diags: true
+      no_temp_sens: false
+      bbio: 1.066
+      cbio: 1.0
+      graz_upper_temp_limit: true
+      nitrogen: true
+      gbio: 0.18
+      nprey: 4
+      nu: 0 #0.34
+      gamma1: 0.7
+      geZ: 0.5
+      kzoo: 0.15
+      capr: 0.018
+      zpref1: 0.3
+      zpref2: 0.3
+      zpref3: 0.3
+      zpref4: 0.1
+    initialization:
+      zoop: 0.0005
+    coupling:
+      prey1: phytoplankton
+      prey2: zooplankton
+      prey3: detritus
+      prey4: diazotrophs
+      p: nut_chem/p
+      detritus: detritus/detritus
+      o2: nut_chem/o2
+      oxi: nut_chem/o2_dummy
+      calcite_detritus: nut_chem/calc_dummy
+      no3: nut_chem/no3
+  dc14ccn:
+    model: surface_constant                   
+    parameters:
+      standard_name:                          
+      value: 1.3e-12   
+  atco2:
+    model: surface_constant                   
+    parameters:
+      standard_name:                          
+      value: 350.0   
+  ice:
+    model: surface_constant
+    parameters:
+      standard_name: ice_area_fraction
+      value: 0.0

@@ -132,6 +132,12 @@ Module setup
          real(dp), allocatable :: carcasses(:)
          real(dp), allocatable :: feces(:)
          
+!        move out from subroutines to allow global use
+         real(dp) ::  dvm  ! vertical migration depth photic + 500._dp
+         integer  ::  ixmedium, ixlarge
+         real(dp), allocatable :: depthDay(:, :), depthNight(:, :)  ! vertical distribution for day and night
+         
+         
 
 contains
 ! ======================================
@@ -468,7 +474,7 @@ contains
       !real(dp) :: bent ! for bprod calc
       real(dp) :: bprod
       real(dp), dimension(:), allocatable :: xrange
-      real(dp) :: dvm  ! vertical migration depth photic + 500._dp
+      !real(dp) :: dvm  ! vertical migration depth photic + 500._dp
       real(dp) :: xloc ! vertical location    will be overwritten again and again
       real(dp), allocatable :: xlocvec(:) ! vertical location vector used for some species
       real(dp), allocatable :: zp_n(:, :), zp_d(:, :), & ! zooplankton day / night
@@ -480,10 +486,11 @@ contains
       real(dp) :: demmig ! demersal migration
       integer, allocatable :: ix(:), idx_be(:), idx_smd(:), pred1(:), pred2(:), pred3(:), prey1(:), prey2(:), &
                               idx_predat(:), idx_prey(:)
-      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
+!      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)  ! depthDay & depthNight moved to module level
+      real(dp), allocatable :: dayout(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
       real(dp),allocatable :: sizes(:)
-      integer :: iGroup, i, j, ixmedium, ixlarge, nsize, matstageS, matstageL
+      integer :: iGroup, i, j, nsize, matstageS, matstageL!, ixmedium, ixlarge
       real(dp), parameter :: etaMature = 0.002_dp
       integer, parameter :: nStages = 6
 
@@ -760,6 +767,7 @@ contains
       end if
 
 ! calculate overlap during day
+      if (allocated(depthDay)) deallocate(depthDay)
       allocate (depthDay(size(xrange), nGrid))
       allocate (test(size(xrange), nGrid))
       allocate (dayout(nGrid, nGrid))
@@ -781,6 +789,7 @@ contains
       end do
 
 ! calculate overlap during night
+      if (allocated(depthNight)) deallocate(depthNight)
       allocate (depthNight(size(xrange), nGrid))
       !test has already allocated
       allocate (nightout(nGrid, nGrid))
@@ -842,9 +851,9 @@ contains
     call updateTempV(depthDay, depthNight, bottom, region)
     ! all fish group
     do iGroup = 1, nGroups
-        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%V=group(iGroup)%spec%Vsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmaxsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave*fTempmV(ixStart(iGroup):ixEnd(iGroup))
     end do
 
       !vector
@@ -897,7 +906,7 @@ contains
       !real(dp) :: bent ! for bprod calc
       real(dp) :: bprod
       real(dp), dimension(:), allocatable :: xrange
-      real(dp) :: dvm  ! vertical migration depth photic + 500._dp
+      !real(dp) :: dvm  ! vertical migration depth photic + 500._dp
       real(dp) :: xloc ! vertical location    will be overwritten again and again
       real(dp), allocatable :: xlocvec(:) ! vertical location vector used for some species
       real(dp), allocatable :: zp_n(:, :), zp_d(:, :), & ! zooplankton day / night
@@ -909,10 +918,11 @@ contains
       real(dp) :: demmig ! demersal migration
       integer, allocatable :: ix(:), idx_be(:), idx_smd(:), pred1(:), pred2(:), pred3(:), prey1(:), prey2(:), &
                               idx_predat(:), idx_prey(:)
-      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
+!      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)  ! depthDay & depthNight moved to module level
+      real(dp), allocatable :: dayout(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
 !      real(dp),allocatable :: sizes(:)
-      integer :: iGroup, i, j, ixmedium, ixlarge!, nsize, matstageS, matstageL
+      integer :: iGroup, i, j!, ixmedium, ixlarge!, nsize, matstageS, matstageL
       !real(dp), allocatable :: Teff (:)
       !real(dp) :: Tday, Tnight, Tdaylarge, Tdaynonlarge, &
       !            Tsmall, Tmedium, Tnightlarge, Tnightnonlarge
@@ -1206,6 +1216,7 @@ contains
       end if
 
 ! calculate overlap during day
+      if (allocated(depthDay)) deallocate(depthDay)
       allocate (depthDay(size(xrange), nGrid))
       allocate (test(size(xrange), nGrid))
       allocate (dayout(nGrid, nGrid))
@@ -1227,6 +1238,7 @@ contains
       end do
 
 ! calculate overlap during night
+      if (allocated(depthNight)) deallocate(depthNight)
       allocate (depthNight(size(xrange), nGrid))
       !test has already allocated
       allocate (nightout(nGrid, nGrid))
@@ -1288,9 +1300,9 @@ contains
     call updateTempV2(Tp, Tm, Tb, dvm, bottom, photic, ixmedium, ixlarge)  
     ! all fish group
     do iGroup = 1, nGroups
-        group(iGroup)%spec%V=group(iGroup)%spec%V*fTempV(ixStart(iGroup):ixEnd(iGroup))
-        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmax*fTempV(ixStart(iGroup):ixEnd(iGroup))
-        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolism*fTempmV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%V=group(iGroup)%spec%Vsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%Cmax=group(iGroup)%spec%Cmaxsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
+        group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave*fTempmV(ixStart(iGroup):ixEnd(iGroup))
     end do
 
       !vector
@@ -1341,7 +1353,7 @@ contains
       real(dp) :: bprod
       real(dp) :: mat_const, smaxfish, lmaxfish, smat, lmat ! for maturity mass calc
       real(dp), dimension(:), allocatable ::  sizes, xrange
-      real(dp) :: dvm  ! vertical migration depth photic + 500._dp
+      !real(dp) :: dvm  ! vertical migration depth photic + 500._dp
       real(dp) :: xloc ! vertical location    will be overwritten again and again
       real(dp), allocatable :: xlocvec(:) ! vertical location vector used for some species
       real(dp), allocatable :: zp_n(:, :), zp_d(:, :), &       ! zooplankton day / night
@@ -1354,9 +1366,10 @@ contains
       real(dp) :: demmig ! ?
       integer, allocatable :: ix(:), idx_be(:), idx_smd(:), pred1(:), pred2(:), pred3(:), prey1(:), prey2(:), &
                               idx_predat(:), idx_prey(:)
-      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)
+!      real(dp), allocatable :: depthDay(:, :), dayout(:, :), depthNight(:, :), nightout(:, :), test(:, :)  ! depthDay & depthNight moved to module level
+      real(dp), allocatable :: dayout(:, :), nightout(:, :), test(:, :)
       integer, allocatable :: visualpred(:), pelpred(:), preytwi(:)
-      integer :: iGroup, i, j, ixmedium, ixlarge
+      integer :: iGroup, i, j!, ixmedium, ixlarge
 
 #ifndef _FABM_
       call read_namelist_setupsquid()
@@ -1649,6 +1662,7 @@ contains
       bpel_d = matmul(bpel_d, diag(1._dp/sum(bpel_d, 1)))
 
 ! calculate overlap during day
+      if (allocated(depthDay)) deallocate(depthDay)
       allocate (depthDay(size(xrange), nGrid))
       allocate (test(size(xrange), nGrid))
       allocate (dayout(nGrid, nGrid))
@@ -1672,6 +1686,7 @@ contains
       end do
 
 ! calculate overlap during night
+      if (allocated(depthNight)) deallocate(depthNight)
       allocate (depthNight(size(xrange), nGrid))
       !test has already allocated
       allocate (nightout(nGrid, nGrid))

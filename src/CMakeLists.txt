@@ -6,6 +6,7 @@ add_library(fabm_models_feisty OBJECT
             fish.F90
             spectrum.F90
             globals.F90
+            feisty_fabm_vertical_distribution.F90
             FEISTY_FABM.F90
            )
 
