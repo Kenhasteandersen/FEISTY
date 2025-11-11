@@ -389,7 +389,7 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
   
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
-  result$Cseq_per_area= calc_per_area_sum( result$Cseq )
+  result$Cseq_per_area = calc_per_area_sum( result$Cseq ). # (gC/yr/m2)
   
   # Total carbon injection [PgC/yr]
   TotExport <- crossprod(V, q_ocim) / 1e15
@@ -409,7 +409,6 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
   TotSeqTime <- TotSeq / TotExport
   result$TotSeqTime <- TotSeqTime
   
-  
   #  df_long <- as.data.frame(cc) %>%
   #    setNames(unique(Cseq_JPOC$lon)) %>%
   #    mutate(lat = unique(Cseq_JPOC$lat)) %>%
@@ -423,59 +422,64 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
 # Test carbon calculations at a range of positions:
 # (longitude given in -180:180 range)
 #
-calc_global_carbon_sequestration = function(lon=c(1,60), lat=c(-60,60)) {
+calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
   # Load the transport matrix
   TM = loadTransportMatrix()
   
   # Initialize a matrix with all injections
   matrixInject = array(dim=dim(TM$M3d), data=0)
   
+  # Make indices for the lat/lon range:
+  ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
+  ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
+  grid_idx <- expand.grid(i = ix_lon, j = ix_lat)
+  
+  # Setup parallel backend:
   cl <- makeCluster(detectCores()-1)
   registerDoParallel(cl)
   
-  ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
-  ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
-  #grid_idx <- expand.grid(i = ix_lat, j = lon_idx)
+  # Loop over all grid points in the lat/lon range:
+  cat("Simulating FEISTY to calculate injections\n")
+  injectTM = foreach(i = 1:dim(grid_idx)[1],
+                     .packages = c("FEISTY","pracma")) %dopar% 
+    {
+      sim = simulatePosition(setupVertical2, 
+                             TM$grid$yt[ grid_idx$i[i]], 
+                             inverse_longitude_correction(TM$grid$xt[grid_idx$j[i]]) )
+      
+      # Calculate carbon fluxes at the position of the fish:
+      sim = calcCarbonFluxes(sim) 
+      totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
+      
+      # Calculate the injection
+      inject = calcCarbonInjection(sim)
+      
+      # Calculate injection on TM grid:
+      injectTM = project_injection_to_TM(inject, 
+                                         TM$grid$yt[grid_idx$i[i]], 
+                                         TM$grid$xt[grid_idx$j[i]], TM) 
+      injectTM$inject
+    } 
+  # Put into the injection matrix:
+  for (i in 1:dim(grid_idx)[1])
+    matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]
+
+  # Plot the total injection in the water column:
+  filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
+         xlab="Longitude", ylab="Latitude", 
+         key.title = title(main="g/m2/yr"))
   
-  for ( j in ix_lon ) 
-  {
-    cat("Lon:", TM$grid$xt[j], "\n" )
-    injectTM_lat = foreach(i = ix_lat,
-                           .packages = c("FEISTY","pracma")) %dopar% 
-      {
-        #for ( i in which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] ))
-        #{
-        #  
-        
-        sim = simulatePosition(setupVertical2, TM$grid$yt[i], 
-                               inverse_longitude_correction(TM$grid$xt[j]) )
-        
-        # Calculate carbon fluxes at the position of the fish:
-        sim = calcCarbonFluxes(sim) 
-        totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
-        
-        # Calculate the injection
-        inject = calcCarbonInjection(sim)
-        
-        # Calculate injection on TM grid:
-        injectTM = project_injection_to_TM(inject, TM$grid$yt[i], TM$grid$xt[j], TM) 
-        injectTM$inject
-      } 
-    for (i in 1:length(ix_lat))
-      matrixInject[j,ix_lat,] = injectTM_lat[[i]]
-  }
-
-  image( calc_per_area_sum( matrixInject ) )
-
-
   # Solve the transport matrix to get sequestration etc.:
-  #sequestration = calc_CarbonSequestration(TM, matrixInject)
-
+  cat("Calculating carbon sequestration\n")
+  sequestration = calc_CarbonSequestration(TM, matrixInject)
+  
+  # Plot the total injection in the water column:
+  filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
+                  xlab="Longitude", ylab="Latitude", 
+                  key.title = title(main="g/m2/yr"))
+  
   return(sequestration)
 }
-
-
-
 #
 # Test carbon calculations at a single position
 #
