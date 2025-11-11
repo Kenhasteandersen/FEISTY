@@ -1,4 +1,15 @@
 #
+# TODO
+# - Make functions for plotting results
+# - Make global calculation
+# - Optimize TM calculations
+# - Reduce size of TM < 100 Mb
+#
+
+
+
+
+#
 # Code for calculating carbon fluxes, carbon injection, and carbon sequestration.
 #
 # Written by Julie Lemoine and Ken H Andersen.
@@ -7,7 +18,24 @@
 library(FEISTY)
 library(data.table)
 library(pracma)
+library(Matrix)
+library(doParallel)
+library(foreach)
 
+# 
+# Correct a longitude from the range -180:180 to 0:360:
+#
+longitude_correction = function(lon) {
+  if (lon < 0)
+    lon = 360 + lon
+  return(lon)
+}
+
+inverse_longitude_correction = function(lon) {
+  if (lon > 180)
+    lon = lon-360
+  return(lon)
+}
 #
 # Calculate the flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
 # The fluxes are calculated at the position of each size class in units of
@@ -201,32 +229,70 @@ simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
   return(sim)
 }
 
+#
+# Function to read the original matlab TM file.
+#
+# loadMatlabTransportMatrix = function(sFilename="data/CTL.mat") {
+#   library("R.matlab")
+#   #
+#   # Transport matrix:
+#   #
+#   TM <- readMat(sFilename, sparseMatrixClass="Matrix")
+# 
+#   ## When loaded the names of every variables were missing in the CTL.mat object
+#   # missing variable names in "CTL.mat"
+#   var_names <- dimnames(TM)[[1]]
+#   TM <- setNames(as.list(TM[,1,1]), var_names)
+# 
+#   # missing variable names in "msk"
+#   msk_names <- dimnames(TM$msk)[[1]]
+#   TM$msk <- setNames(as.list(TM$msk[,1,1]), msk_names)
+# 
+#   # missing variable names in "grid"
+#   grid_names <- dimnames(TM$grid)[[1]]
+#   TM$grid <- setNames(as.list(TM$grid[,1,1]), grid_names)
+# 
+#   # missing variable names in "MSKS"
+#   MSKS_names <- dimnames(TM$MSKS)[[1]]
+#   TM$MSKS <- setNames(as.list(TM$MSKS[,1,1]), MSKS_names)
+# 
+#   # Transfer only the needed variables:
+#   T$TR = TM$TR
+#   T$M3d = TM$M3d
+#   T$msk = TM$msk
+#   T$grid$xt = TM$grid$xt
+#   T$grid$yt = TM$grid$yt
+#   T$grid$zt = TM$grid$zt
+#   T$grid$zw = TM$grid$zw
+#   T$grid$dzt = TM$grid$dzt
+#   T$grid$DXT3d = TM$grid$DXT3d
+#   T$grid$DYT3d = TM$grid$DYT3d
+#   T$grid$DZT3d = TM$grid$DZT3d
+#   
+#   return(T)
+# }
+
 loadTransportMatrix = function(sFilename="data/CTL.R") {
-  #
-  # Transport matrix: 
-  #
-  TM <- readMat(sFilename, sparseMatrixClass="Matrix")
-  TM <- CTL.mat$output
-  
-  ## When loaded the names of every variables were missing in the CTL.mat object
-  # missing variable names in "CTL.mat"
-  var_names <- dimnames(TM)[[1]]
-  TM <- setNames(as.list(TM[,1,1]), var_names)
-  
-  # missing variable names in "msk"
-  msk_names <- dimnames(TM$msk)[[1]]
-  TM$msk <- setNames(as.list(TM$msk[,1,1]), msk_names)
-  
-  # missing variable names in "grid"
-  grid_names <- dimnames(TM$grid)[[1]]
-  TM$grid <- setNames(as.list(TM$grid[,1,1]), grid_names)
-  
-  # missing variable names in "MSKS"
-  MSKS_names <- dimnames(TM$MSKS)[[1]]
-  TM$MSKS <- setNames(as.list(TM$MSKS[,1,1]), MSKS_names)
-  
+  load(sFilename)
   return(TM)
 }
+
+# simplifyTransportMatrix = function(TM) {
+#   T$TR = TM$TR
+#   T$M3d = TM$M3d
+#   T$msk = TM$msk
+#   T$grid$xt = TM$grid$xt
+#   T$grid$yt = TM$grid$yt
+#   T$grid$zt = TM$grid$zt
+#   T$grid$zw = TM$grid$zw
+#   T$grid$dzt = TM$grid$dzt
+#   T$grid$DXT3d = TM$grid$DXT3d
+#   T$grid$DYT3d = TM$grid$DYT3d
+#   T$grid$DZT3d = TM$grid$DZT3d
+#   
+#   return(T)
+# }
+
 #
 # Project the injection calculations onto the TM grid by integrating
 # over the entire vertical cell
@@ -237,24 +303,183 @@ project_injection_to_TM <- function(inject, lat,lon, TM) {
   integral = 0*unique(TM$grid$zt)
   # Find closest grid point:
   ix = list( 
-    y=which.min( (lat-TM$grid$yt)^2 ),
-    x= which.min( (lon-TM$grid$xt)^2 ))
+    y = which.min( (lat-TM$grid$yt)^2 ),
+    x = which.min( (lon-TM$grid$xt)^2 ))
   # Integrate along the depth:
   for (j in 1:length(TM$grid$zt)) {
-      idx = ( (inject$z > TM$grid$zw[j]) 
+    idx = ( (inject$z > TM$grid$zw[j]) 
             & (inject$z <= (TM$grid$zw[j] + TM$grid$dzt[j])))
-      integral[j] = trapz( inject$z[idx], inject$total[idx])
-      
-    }
+    integral[j] = trapz( inject$z[idx], inject$total[idx])
+    
+  }
   return(list(inject=integral, ix=ix))
+}
+
+calc_per_area_sum = function(matrix) {
+  return( apply(replace(matrix, is.na(matrix), 0) * TM$grid$DZT3d, c(1,2), sum) )
+}
+
+# ========== CarbonSequestration() ==========
+calc_CarbonSequestration <- function(TM,  # Transport matrix
+                                     matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
+){
+  
+  project_to_TM = function(vector) {
+    return( replace(array(NA, dim = dim(TM$M3d)), TM$msk$pkeep, vector) )
+  }
+  
+  
+  # Initialization of result list
+  result <- NULL
+  
+  
+  ## Load the model outputs
+  #---------------------------
+  M3d <- TM$M3d                             # 3D array (lon x lat x depth) containing :
+  # 1 = ocean
+  # 0 = land
+  grid <- TM$grid                           # grid metrics with coordinates and depth
+  msk <- TM$msk                             # cells of interest masks
+  # hkeep = surface cells
+  # pkeep = ocean cells
+  # ckeep = interior ocean cells (ckeep = pkeep - hkeep)
+  VOL = grid$DXT3d*grid$DYT3d*grid$DZT3d         # volume for each grid cell [m^-3]
+  V = VOL[msk$pkeep]                             # volume for each ocean grid cell in the transport matrix
+  
+  
+  ## Calculation of A = TR - Sink
+  #---------------------------------
+  m <- nrow(TM$TR)
+  sink <- rep(0,m)
+  sink[1:length(msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
+  SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
+  A <- TM$TR - SSINK # calculation of A matrix
+  
+  
+  ## Injection
+  #--------------------------------------
+  dz = grid$dzt  #  thickness of each layers
+  Q <- array(0, dim = dim(M3d))   # latitude x longitude x depth
+  
+  index <- which(matrixInject > 0, arr.ind = TRUE)
+  latindex <- index[, 1]  # latitude indices
+  lonindex <- index[, 2]  # longitude indices
+  depthindex <- index[, 3] # depth indices
+  
+  for(i in seq_along(latindex)) {
+    lati <- latindex[i]
+    loni <- lonindex[i]
+    depthi <- depthindex[i]
+    
+    Q[lati, loni, depthi] <- matrixInject[lati, loni, depthi] / dz[depthi]
+  }
+  #result$Q <- Q
+  
+  # Carbon flux in the ocean cells [gC.m^-3.yr^-1] -> a vector
+  q_ocim <- Q[msk$pkeep]
+  q_ocim[is.na(q_ocim)] <- 0
+  
+  # Carbon sequestration in each grid cell [gC/m^3] -> a vector
+  cseq <- solve(A, -q_ocim, sparse=TRUE)
+  result$cseq <- cseq
+  
+  #
+  # Calculate quantities in total, per area, and on the TM grid:
+  #
+  
+  # Carbon sequestered on the grid and per area (gC/yr/m3):
+  result$Cseq = project_to_TM( cseq )
+  result$Cseq_per_area= calc_per_area_sum( result$Cseq )
+  
+  # Total carbon injection [PgC/yr]
+  TotExport <- crossprod(V, q_ocim) / 1e15
+  result$TotExport <- TotExport
+  
+  # Total carbon sequestered in the ocean [PgC]
+  TotSeq <- crossprod(V, cseq) / 1e15
+  result$TotSeq <- TotSeq
+  
+  # Sequestration time [year] on the TM grid
+  local_export <- q_ocim
+  local_export[local_export == 0] <- NA
+  SeqTime <- cseq / local_export
+  result$SeqTime <- project_to_TM( SeqTime )
+  
+  # Total sequestration time [year]
+  TotSeqTime <- TotSeq / TotExport
+  result$TotSeqTime <- TotSeqTime
+  
+  
+  #  df_long <- as.data.frame(cc) %>%
+  #    setNames(unique(Cseq_JPOC$lon)) %>%
+  #    mutate(lat = unique(Cseq_JPOC$lat)) %>%
+  #    pivot_longer(cols = -lat, names_to = "lon", values_to = "cseq") %>%
+  #    mutate(lon = as.numeric(lon), cseq = na_if(cseq, 0))
+  
+  return(result)
+}
+
+#
+# Test carbon calculations at a range of positions:
+# (longitude given in -180:180 range)
+#
+calc_global_carbon_sequestration = function(lon=c(1,60), lat=c(-60,60)) {
+  # Load the transport matrix
+  TM = loadTransportMatrix()
+  
+  # Initialize a matrix with all injections
+  matrixInject = array(dim=dim(TM$M3d), data=0)
+  
+  cl <- makeCluster(detectCores()-1)
+  registerDoParallel(cl)
+  
+  ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
+  ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
+  #grid_idx <- expand.grid(i = ix_lat, j = lon_idx)
+  
+  for ( j in ix_lon ) 
+  {
+    cat("Lon:", TM$grid$xt[j], "\n" )
+    injectTM_lat = foreach(i = ix_lat,
+                           .packages = c("FEISTY","pracma")) %dopar% 
+      {
+        #for ( i in which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] ))
+        #{
+        #  
+        
+        sim = simulatePosition(setupVertical2, TM$grid$yt[i], 
+                               inverse_longitude_correction(TM$grid$xt[j]) )
+        
+        # Calculate carbon fluxes at the position of the fish:
+        sim = calcCarbonFluxes(sim) 
+        totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
+        
+        # Calculate the injection
+        inject = calcCarbonInjection(sim)
+        
+        # Calculate injection on TM grid:
+        injectTM = project_injection_to_TM(inject, TM$grid$yt[i], TM$grid$xt[j], TM) 
+        injectTM$inject
+      } 
+    for (i in 1:length(ix_lat))
+      matrixInject[j,ix_lat,] = injectTM_lat[[i]]
+  }
+
+  image( calc_per_area_sum( matrixInject ) )
+
+
+  # Solve the transport matrix to get sequestration etc.:
+  #sequestration = calc_CarbonSequestration(TM, matrixInject)
+
+  return(sequestration)
 }
 
 
 
-
-testCarbonCalculations = function() {
-  lat = 60
-  lon = -15
+#
+# Test carbon calculations at a single position
+#
+testCarbonCalculations_one_position = function(lat=60, lon=-15) {
   # Simulate the position 60, -15 using Cobalt output:
   sim = simulatePosition(setupVertical2, lat, lon)
   
@@ -282,8 +507,48 @@ testCarbonCalculations = function() {
   )
   
   # Calculate injection on TM grid:
-  #TM = loadTransportMatrix()
-  injectTM = project_injection_to_TM(inject, lat,lon, TM) 
-
+  TM = loadTransportMatrix()
+  long=lon
+  if (lon<0)
+    long = 360+lon
+  
+  injectTM = project_injection_to_TM(inject, lat, long, TM) 
+  plot( injectTM$inject, -TM$grid$zt, ylim=c(2*min(z),0) )
+  
+  # Assemble a matrix with all injections
+  matrixInject = array(dim=dim(TM$M3d), data=0)
+  matrixInject[injectTM$ix$y, injectTM$ix$x, ] = injectTM$inject
+  
+  # Solve the transport matrix to get sequestration etc.:
+  sequestration = calc_CarbonSequestration(TM, matrixInject)
+  
+  #
+  # Plots:
+  #
+  sequestration$lat = grid$xt
+  sequestration$lon = grid$yt
+  
+  dat = as.data.frame( sequestration$Cseq_per_area )
+  world <- map_data("world2")
+  
+  image( x=c(grid$xt[1]-1,grid$xt), y=c(-90,grid$yt), z=log10(t(sequestration$Cseq_per_area)))
 }
+
+
+test_global_carbon = function(lat=c(-15,-10), lon=c(60,70)) {
+  
+  seq = calc_global_carbon_sequestration(lat, lon)
+  
+  
+}
+
+#
+# Basal test-kode til at evaluere hvorfor TM-løsningen er så langsom
+#
+testTM = function() {
+  load('test.R')
+  cseq <- solve(A, -q_ocim, sparse=TRUE)
+}
+
+
 
