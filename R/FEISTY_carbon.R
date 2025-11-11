@@ -389,7 +389,7 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
   
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
-  result$Cseq_per_area = calc_per_area_sum( result$Cseq ). # (gC/yr/m2)
+  result$Cseq_per_area = calc_per_area_sum( result$Cseq ) # (gC/yr/m2)
   
   # Total carbon injection [PgC/yr]
   TotExport <- crossprod(V, q_ocim) / 1e15
@@ -419,8 +419,7 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
 }
 
 #
-# Test carbon calculations at a range of positions:
-# (longitude given in -180:180 range)
+# Calculate carbon sequestration at a range of positions:
 #
 calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
   # Load the transport matrix
@@ -537,22 +536,3 @@ testCarbonCalculations_one_position = function(lat=60, lon=-15) {
   
   image( x=c(grid$xt[1]-1,grid$xt), y=c(-90,grid$yt), z=log10(t(sequestration$Cseq_per_area)))
 }
-
-
-test_global_carbon = function(lat=c(-15,-10), lon=c(60,70)) {
-  
-  seq = calc_global_carbon_sequestration(lat, lon)
-  
-  
-}
-
-#
-# Basal test-kode til at evaluere hvorfor TM-løsningen er så langsom
-#
-testTM = function() {
-  load('test.R')
-  cseq <- solve(A, -q_ocim, sparse=TRUE)
-}
-
-
-
