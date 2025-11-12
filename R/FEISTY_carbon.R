@@ -320,8 +320,10 @@ calc_per_area_sum = function(matrix) {
   return( apply(replace(matrix, is.na(matrix), 0) * TM$grid$DZT3d, c(1,2), sum) )
 }
 
-# ========== CarbonSequestration() ==========
-calc_CarbonSequestration <- function(TM,  # Transport matrix
+#
+# Calculate the amount of carbon sequestered and the sequstration time
+#
+calcCarbonSequestration <- function(TM,  # Transport matrix
                                      matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
 ){
   
@@ -422,7 +424,7 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
 #
 # Calculate carbon sequestration at a range of positions:
 #
-calc_global_carbon_sequestration = function(lon=c(0,360), lat=c(-90,90)) {
+calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90)) {
   # Load the transport matrix
   TM = loadTransportMatrix()
   
@@ -461,6 +463,8 @@ calc_global_carbon_sequestration = function(lon=c(0,360), lat=c(-90,90)) {
                                          TM$grid$xt[grid_idx$j[i]], TM) 
       injectTM$inject
     } 
+  stopCluster(cl)
+  
   # Put into the injection matrix:
   for (i in 1:dim(grid_idx)[1])
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]
@@ -479,8 +483,26 @@ calc_global_carbon_sequestration = function(lon=c(0,360), lat=c(-90,90)) {
                   xlab="Longitude", ylab="Latitude", 
                   key.title = title(main="g/m2"))
   
+  
+  
   return(sequestration)
 }
+
+plotGlobal = function(lat, lon, data) {
+  if (max(lon > 180))
+    lon = inverse_longitude_correction(lon)
+    
+  df <- expand.grid(lon = lon, lat = lat)
+  df$value <- as.vector(data)
+  
+  ggplot(df, aes(x = lon, y = lat, fill = value)) +
+    geom_tile() +
+    borders("world", colour = "black") +
+    scale_fill_viridis_c() +
+    coord_fixed(ratio = 1.3) +
+    theme_minimal()
+}
+
 #
 # Test carbon calculations at a single position
 #
