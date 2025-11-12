@@ -207,6 +207,7 @@ calcCarbonInjection = function(sim) {
 
 ### PERHAPS MOVE TO MAIN FEISTY (including data file)
 #
+#' @export
 simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
   # Output from COBALT
   glob <- read.csv("data/Cobalt global data.csv")
@@ -272,7 +273,7 @@ simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
 #   return(T)
 # }
 
-loadTransportMatrix = function(sFilename="data/CTL.R") {
+loadTransportMatrix = function(sFilename="data/CTL.Rdata") {
   load(sFilename)
   return(TM)
 }
@@ -421,7 +422,7 @@ calc_CarbonSequestration <- function(TM,  # Transport matrix
 #
 # Calculate carbon sequestration at a range of positions:
 #
-calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
+calc_global_carbon_sequestration = function(lon=c(0,360), lat=c(-90,90)) {
   # Load the transport matrix
   TM = loadTransportMatrix()
   
@@ -431,7 +432,7 @@ calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
   # Make indices for the lat/lon range:
   ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
   ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
-  grid_idx <- expand.grid(i = ix_lon, j = ix_lat)
+  grid_idx <- expand.grid(i = ix_lat, j = ix_lon)
   
   # Setup parallel backend:
   cl <- makeCluster(detectCores()-1)
@@ -440,11 +441,12 @@ calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
   # Loop over all grid points in the lat/lon range:
   cat("Simulating FEISTY to calculate injections\n")
   injectTM = foreach(i = 1:dim(grid_idx)[1],
-                     .packages = c("FEISTY","pracma")) %dopar% 
+                     .packages = c("FEISTY","pracma"),
+                     .verbose = FALSE) %dopar% 
     {
       sim = simulatePosition(setupVertical2, 
                              TM$grid$yt[ grid_idx$i[i]], 
-                             inverse_longitude_correction(TM$grid$xt[grid_idx$j[i]]) )
+                             TM$grid$xt[grid_idx$j[i]] )
       
       # Calculate carbon fluxes at the position of the fish:
       sim = calcCarbonFluxes(sim) 
@@ -463,19 +465,19 @@ calc_global_carbon_sequestration = function(lon=c(1,360), lat=c(-60,60)) {
   for (i in 1:dim(grid_idx)[1])
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]
 
-  # Plot the total injection in the water column:
-  filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
-         xlab="Longitude", ylab="Latitude", 
-         key.title = title(main="g/m2/yr"))
-  
   # Solve the transport matrix to get sequestration etc.:
   cat("Calculating carbon sequestration\n")
   sequestration = calc_CarbonSequestration(TM, matrixInject)
   
   # Plot the total injection in the water column:
-  filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
+  filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
                   xlab="Longitude", ylab="Latitude", 
                   key.title = title(main="g/m2/yr"))
+
+  # Plot the total sequestration in the water column:
+  filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
+                  xlab="Longitude", ylab="Latitude", 
+                  key.title = title(main="g/m2"))
   
   return(sequestration)
 }
