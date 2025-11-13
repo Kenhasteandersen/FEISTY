@@ -21,6 +21,9 @@ library(pracma)
 library(Matrix)
 library(doParallel)
 library(foreach)
+library(ggplot2)
+library(patchwork) # To arrange two plots
+library(maps)
 
 # 
 # Correct a longitude from the range -180:180 to 0:360:
@@ -316,7 +319,10 @@ project_injection_to_TM <- function(inject, lat,lon, TM) {
   return(list(inject=integral, ix=ix))
 }
 
-calc_per_area_sum = function(matrix) {
+calc_per_area_sum = function(grid, matrix, depthUpper=0) {
+  ix = grid$zt>depthUpper
+  dz = grid$DZT3d
+  dz[!ix] = 0
   return( apply(replace(matrix, is.na(matrix), 0) * TM$grid$DZT3d, c(1,2), sum) )
 }
 
@@ -324,7 +330,7 @@ calc_per_area_sum = function(matrix) {
 # Calculate the amount of carbon sequestered and the sequstration time
 #
 calcCarbonSequestration <- function(TM,  # Transport matrix
-                                     matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
+                                    matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
 ){
   
   project_to_TM = function(vector) {
@@ -390,13 +396,18 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   # Calculate quantities in total, per area, and on the TM grid:
   #
   
+  result$lon = TM$grid$xt
+  result$lat = TM$grid$yt
+  result$depth = TM$grid$zt
+  result$inject = matrixInject
+  
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
-  result$Cseq_per_area = calc_per_area_sum( result$Cseq ) # (gC/yr/m2)
+  result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/yr/m2)
   
   # Total carbon injection [PgC/yr]
-  TotExport <- crossprod(V, q_ocim) / 1e15
-  result$TotExport <- TotExport
+  TotInject <- crossprod(V, q_ocim) / 1e15
+  result$TotInject <- TotInject
   
   # Total carbon sequestered in the ocean [PgC]
   TotSeq <- crossprod(V, cseq) / 1e15
@@ -424,7 +435,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
 #
 # Calculate carbon sequestration at a range of positions:
 #
-calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90)) {
+calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
   # Load the transport matrix
   TM = loadTransportMatrix()
   
@@ -468,39 +479,67 @@ calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90)) {
   # Put into the injection matrix:
   for (i in 1:dim(grid_idx)[1])
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]
-
+  
   # Solve the transport matrix to get sequestration etc.:
   cat("Calculating carbon sequestration\n")
-  sequestration = calc_CarbonSequestration(TM, matrixInject)
+  sequestration = calcCarbonSequestration(TM, matrixInject)
   
   # Plot the total injection in the water column:
-  filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
-                  xlab="Longitude", ylab="Latitude", 
-                  key.title = title(main="g/m2/yr"))
-
+  #filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
+  #                xlab="Longitude", ylab="Latitude", 
+  #                key.title = title(main="g/m2/yr"))
+  
   # Plot the total sequestration in the water column:
-  filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
-                  xlab="Longitude", ylab="Latitude", 
-                  key.title = title(main="g/m2"))
+  #filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
+  #                xlab="Longitude", ylab="Latitude", 
+  #                key.title = title(main="g/m2"))
+  
+  #dfArea = expand.grid(lon = TM$grid$xt, lat = TM$grid$yt)
+  #dfArea$Cseq = as.vector( sequestration$Cseq_per_area )
+  
+  #dfVolume = expand.grid(lon = TM$grid$xt, lat = TM$grid$yt, depth=TM$grid$zt)
+  #dfVolume$Cseq = as.vector( sequestration$Cseq )
+  #dfVolume$SeqTime = as.vector( sequestration$SeqTime )
+  #dfVolume$inject = as.vector( matrixInject )
+  
+  if (bPrintStatus) {
+    cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pGC/yr \n"))
+    cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pGC \n') )
+    cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
+    
+    p1 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
+                sTitle="Carbon sequestered", "gC/m2")
+    inj = calc_per_area_sum(TM$grid, sequestration$inject, depthUpper = 200)
+    p2= plotGlobal( sequestration$lon, sequestration$lat, inj, 
+                      sTitle="Injection below 200 m", "gC/m2/yr")
+    
+    p1 + p2
+  }
   
   
-  
-  return(sequestration)
+  return( sequestration )
 }
 
-plotGlobal = function(lat, lon, data) {
-  if (max(lon > 180))
-    lon = inverse_longitude_correction(lon)
-    
-  df <- expand.grid(lon = lon, lat = lat)
-  df$value <- as.vector(data)
+plotGlobal = function(lon, lat, data, sTitle="", sUnits="") {
+  # Fix range of longitudes if needed:
+  ix = which(lon>180)
+  lon[ix] = lon[ix]-360
   
-  ggplot(df, aes(x = lon, y = lat, fill = value)) +
+  # Transform the data into a data frame:
+  df <- expand.grid(lon = lon, lat = lat)
+  df$value <- as.vector(t(data))
+  
+  # Plot:
+  ggplot(
+    df, 
+    aes(x = lon, y = lat, fill = value)) +
     geom_tile() +
     borders("world", colour = "black") +
     scale_fill_viridis_c() +
     coord_fixed(ratio = 1.3) +
-    theme_minimal()
+    theme_minimal() +
+    labs(x="Longitude", y="Latitude", fill=sUnits, title=sTitle)
+    
 }
 
 #
