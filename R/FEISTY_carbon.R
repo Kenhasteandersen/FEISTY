@@ -211,25 +211,44 @@ calcCarbonInjection = function(sim) {
 ### PERHAPS MOVE TO MAIN FEISTY (including data file)
 #
 #' @export
-simulatePosition = function(setup, lat, lon, nStages=9, tEnd=500) {
+simulatePosition = function(setup, lat, lon, nStages=9, tEnd=200) {
   # Output from COBALT
   glob <- read.csv("data/Cobalt global data.csv")
   
   ix = which.min( (glob$lat-lat)^2 + (glob$lon-lon)^2 ) # Find the best fitting location
   
-  p = setup(
-    szprod = glob[ix, "szprod"],        # small zooplankton production
-    lzprod = glob[ix, "lzprod"],        # large zooplankton production
-    dfbot  = glob[ix, "dfbot"],         # detrital flux reaching the bottom
-    photic = glob[ix, "photic"],        # photic zone depth
-    depth  = glob[ix, "depth"],         # water column depth
-    Tp     = glob[ix, "Tp"],            # pelagic water temperature
-    Tm     = glob[ix, "Tm"],            # mid-water temperature
-    Tb     = glob[ix, "Tb"],            # bottom water temperature
-    nStages = nStages                   # size class number
-  )
-  
-  sim = simulateFEISTY(p = p, tEnd = tEnd)
+  if ( min((glob$lat-lat)^2 + (glob$lon-lon)^2) < 10)
+  {
+    p = setup(
+      szprod = glob[ix, "szprod"],        # small zooplankton production
+      lzprod = glob[ix, "lzprod"],        # large zooplankton production
+      dfbot  = glob[ix, "dfbot"],         # detrital flux reaching the bottom
+      photic = glob[ix, "photic"],        # photic zone depth
+      depth  = glob[ix, "depth"],         # water column depth
+      Tp     = glob[ix, "Tp"],            # pelagic water temperature
+      Tm     = glob[ix, "Tm"],            # mid-water temperature
+      Tb     = glob[ix, "Tb"],            # bottom water temperature
+      nStages = nStages                   # size class number
+    )
+    
+    sim = simulateFEISTY(p = p, tEnd = tEnd) }
+  else
+  {
+    # No need to simulate land points for long:
+    p = setup(
+      szprod = 0,        # small zooplankton production
+      lzprod = 0,        # large zooplankton production
+      dfbot  = 0,         # detrital flux reaching the bottom
+      photic = 200,        # photic zone depth
+      depth  = 10,         # water column depth
+      Tp     = 10,            # pelagic water temperature
+      Tm     = 10,            # mid-water temperature
+      Tb     = 10,            # bottom water temperature
+      nStages = nStages                   # size class number
+    )
+    
+    sim = simulateFEISTY(p = p, tEnd = 10) 
+  }
   return(sim)
 }
 
@@ -420,7 +439,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   result$SeqTime <- project_to_TM( SeqTime )
   
   # Total sequestration time [year]
-  TotSeqTime <- TotSeq / TotExport
+  TotSeqTime <- TotSeq / TotInject
   result$TotSeqTime <- TotSeqTime
   
   #  df_long <- as.data.frame(cc) %>%
@@ -508,10 +527,10 @@ calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90), bPrintStat
     cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
     
     p1 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
-                sTitle="Carbon sequestered", "gC/m2")
+                     sTitle="Carbon sequestered", "gC/m2")
     inj = calc_per_area_sum(TM$grid, sequestration$inject, depthUpper = 200)
     p2= plotGlobal( sequestration$lon, sequestration$lat, inj, 
-                      sTitle="Injection below 200 m", "gC/m2/yr")
+                    sTitle="Injection below 200 m", "gC/m2/yr")
     
     p1 + p2
   }
@@ -539,7 +558,7 @@ plotGlobal = function(lon, lat, data, sTitle="", sUnits="") {
     coord_fixed(ratio = 1.3) +
     theme_minimal() +
     labs(x="Longitude", y="Latitude", fill=sUnits, title=sTitle)
-    
+  
 }
 
 #
