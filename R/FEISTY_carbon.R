@@ -15,7 +15,7 @@
 # Written by Julie Lemoine and Ken H Andersen.
 # Sequestration calculations based on code by Andre W Visser
 #
-library(FEISTY)
+#library(FEISTY)
 library(data.table)
 library(pracma)
 library(Matrix)
@@ -213,43 +213,63 @@ calcCarbonInjection = function(sim) {
 #' @export
 simulatePosition = function(setup, lat, lon, nStages=9, tEnd=200) {
   # Output from COBALT
-  glob <- read.csv("data/Cobalt global data.csv")
+    
+    pp = getParametersPosition(lat,lon)
+    p = setup(szprod = pp$szprod,
+              lzprod = pp$lzprod,
+              dfpho  = pp$dfbot,
+              depth  = pp$depth,
+              Tp     = pp$Tp,
+              Tm     = pp$Tm,
+              Tb     = pp$Tb,
+              nStages = nStages)
+  
+    sim = simulateFEISTY(p = p, tEnd = 10) 
+  return(sim)
+}
+
+getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") {
+  glob <- read.csv(sFile)
+  
+  if (lon<0)
+    lon = 360+lon
   
   ix = which.min( (glob$lat-lat)^2 + (glob$lon-lon)^2 ) # Find the best fitting location
   
   if ( min((glob$lat-lat)^2 + (glob$lon-lon)^2) < 10)
   {
-    p = setup(
-      szprod = glob[ix, "szprod"],        # small zooplankton production
-      lzprod = glob[ix, "lzprod"],        # large zooplankton production
-      dfbot  = glob[ix, "dfbot"],         # detrital flux reaching the bottom
-      photic = glob[ix, "photic"],        # photic zone depth
-      depth  = glob[ix, "depth"],         # water column depth
-      Tp     = glob[ix, "Tp"],            # pelagic water temperature
-      Tm     = glob[ix, "Tm"],            # mid-water temperature
-      Tb     = glob[ix, "Tb"],            # bottom water temperature
-      nStages = nStages                   # size class number
-    )
-    
-    sim = simulateFEISTY(p = p, tEnd = tEnd) }
+      szprod = glob[ix, "szprod"]        # small zooplankton production
+      lzprod = glob[ix, "lzprod"]        # large zooplankton production
+      dfbot  = glob[ix, "dfbot"]         # detrital flux reaching the bottom
+      photic = glob[ix, "photic"]        # photic zone depth
+      depth  = glob[ix, "depth"]         # water column depth
+      Tp     = glob[ix, "Tp"]            # pelagic water temperature
+      Tm     = glob[ix, "Tm"]            # mid-water temperature
+      Tb     = glob[ix, "Tb"]            # bottom water temperature
+  }
   else
   {
     # No need to simulate land points for long:
-    p = setup(
-      szprod = 0,        # small zooplankton production
-      lzprod = 0,        # large zooplankton production
-      dfbot  = 0,         # detrital flux reaching the bottom
-      photic = 200,        # photic zone depth
-      depth  = 10,         # water column depth
-      Tp     = 10,            # pelagic water temperature
-      Tm     = 10,            # mid-water temperature
-      Tb     = 10,            # bottom water temperature
-      nStages = nStages                   # size class number
-    )
-    
-    sim = simulateFEISTY(p = p, tEnd = 10) 
+      szprod = 0        # small zooplankton production
+      lzprod = 0        # large zooplankton production
+      dfbot  = 0         # detrital flux reaching the bottom
+      photic = 200        # photic zone depth
+      depth  = 10         # water column depth
+      Tp     = 10            # pelagic water temperature
+      Tm     = 10            # mid-water temperature
+      Tb     = 10            # bottom water temperature
   }
-  return(sim)
+  
+  return( list(
+    szprod = szprod,        # small zooplankton production
+    lzprod = lzprod,        # large zooplankton production
+    dfbot  = dfbot,         # detrital flux reaching the bottom
+    photic = photic,        # photic zone depth
+    depth  = depth,         # water column depth
+    Tp     = Tp,            # pelagic water temperature
+    Tm     = Tm,            # mid-water temperature
+    Tb     = Tb  
+  ))
 }
 
 #
@@ -454,10 +474,8 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
 #
 # Calculate carbon sequestration at a range of positions:
 #
-calcGlobalCarbonSequestration = function(lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
-  # Load the transport matrix
-  TM = loadTransportMatrix()
-  
+calcGlobalCarbonSequestration = function(TM=loadTRansportMatrix(), lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
+
   # Initialize a matrix with all injections
   matrixInject = array(dim=dim(TM$M3d), data=0)
   
