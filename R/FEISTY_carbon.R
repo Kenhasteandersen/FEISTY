@@ -1,15 +1,4 @@
 #
-# TODO
-# - Make functions for plotting results
-# - Make global calculation
-# - Optimize TM calculations
-# - Reduce size of TM < 100 Mb
-#
-
-
-
-
-#
 # Code for calculating carbon fluxes, carbon injection, and carbon sequestration.
 #
 # Written by Julie Lemoine and Ken H Andersen.
@@ -315,6 +304,7 @@ getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") 
 #   return(T)
 # }
 
+#' @export
 loadTransportMatrix = function(sFilename="data/CTL.Rdata") {
   load(sFilename)
   return(TM)
@@ -368,6 +358,7 @@ calc_per_area_sum = function(grid, matrix, depthUpper=0) {
 #
 # Calculate the amount of carbon sequestered and the sequstration time
 #
+#' @export
 calcCarbonSequestration <- function(TM,  # Transport matrix
                                     matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
 ){
@@ -474,7 +465,8 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
 #
 # Calculate carbon sequestration at a range of positions:
 #
-calcGlobalCarbonSequestration = function(TM=loadTRansportMatrix(), lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
+#' @export
+calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
 
   # Initialize a matrix with all injections
   matrixInject = array(dim=dim(TM$M3d), data=0)
@@ -557,6 +549,7 @@ calcGlobalCarbonSequestration = function(TM=loadTRansportMatrix(), lon=c(0,360),
   return( sequestration )
 }
 
+#' @export
 plotGlobal = function(lon, lat, data, sTitle="", sUnits="") {
   # Fix range of longitudes if needed:
   ix = which(lon>180)

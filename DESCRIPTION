@@ -18,7 +18,11 @@ Imports:
     scales, 
     cowplot, 
     shiny, 
-    shinyjs
+    shinyjs,
+    doParallel,
+    foreach,
+    patchwork,
+    maps
 Suggests: 
     knitr,
     rmarkdown,
