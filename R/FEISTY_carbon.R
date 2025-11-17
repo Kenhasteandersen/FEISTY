@@ -434,7 +434,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   
   # Carbon injected below euphotic zone (gC/m2/yr):
   ixBelowEuphotic = TM$grid$zt > 200
-  result$inject_below_euphotic = apply( sequestration$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
+  result$inject_below_euphotic = apply( result$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
   
 
   # Carbon sequestered on the grid and per area (gC/yr/m3):
