@@ -330,7 +330,7 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata") {
 # Project the injection calculations onto the TM grid by integrating
 # over the entire vertical cell
 #
-# gC/m2/yr
+# gC/m2/yr for each cell
 #
 project_injection_to_TM <- function(inject, lat,lon, TM) {
   integral = 0*unique(TM$grid$zt)
@@ -367,36 +367,33 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
     return( replace(array(NA, dim = dim(TM$M3d)), TM$msk$pkeep, vector) )
   }
   
-  
   # Initialization of result list
   result <- NULL
   
-  
-  ## Load the model outputs
-  #---------------------------
+  #
+  # Setup grid from TM:
+  #
   M3d <- TM$M3d                             # 3D array (lon x lat x depth) containing :
-  # 1 = ocean
-  # 0 = land
+                                            #   1 = ocean
+                                            #   0 = land
   grid <- TM$grid                           # grid metrics with coordinates and depth
   msk <- TM$msk                             # cells of interest masks
-  # hkeep = surface cells
-  # pkeep = ocean cells
-  # ckeep = interior ocean cells (ckeep = pkeep - hkeep)
-  VOL = grid$DXT3d*grid$DYT3d*grid$DZT3d         # volume for each grid cell [m^-3]
-  V = VOL[msk$pkeep]                             # volume for each ocean grid cell in the transport matrix
-  
-  
-  ## Calculation of A = TR - Sink
-  #---------------------------------
+                                            #   hkeep = surface cells
+                                            #   pkeep = ocean cells
+                                            #   ckeep = interior ocean cells (ckeep = pkeep - hkeep)
+  VOL = grid$DXT3d*grid$DYT3d*grid$DZT3d    # volume for each grid cell [m^3]
+  V = VOL[msk$pkeep]                        # volume for each ocean grid cell in the transport matrix
+  #
+  # Calculation of A = TR - Sink:
+  #
   m <- nrow(TM$TR)
   sink <- rep(0,m)
   sink[1:length(msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
   SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
   A <- TM$TR - SSINK # calculation of A matrix
-  
-  
-  ## Injection
-  #--------------------------------------
+  #
+  # Injection
+  #
   dz = grid$dzt  #  thickness of each layers
   Q <- array(0, dim = dim(M3d))   # latitude x longitude x depth
   
@@ -410,15 +407,14 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
     loni <- lonindex[i]
     depthi <- depthindex[i]
     
-    Q[lati, loni, depthi] <- matrixInject[lati, loni, depthi] / dz[depthi]
+    Q[lati, loni, depthi] <- matrixInject[lati, loni, depthi] / dz[depthi] # gC/m3/yr
   }
-  #result$Q <- Q
-  
-  # Carbon flux in the ocean cells [gC.m^-3.yr^-1] -> a vector
+
+  # Carbon flux in the ocean cells [gC/m3/yr] -> a vector
   q_ocim <- Q[msk$pkeep]
   q_ocim[is.na(q_ocim)] <- 0
   
-  # Carbon sequestration in each grid cell [gC/m^3] -> a vector
+  # Carbon sequestration in each grid cell [gC/m3] -> a vector
   cseq <- solve(A, -q_ocim, sparse=TRUE)
   result$cseq <- cseq
   
@@ -429,7 +425,8 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   result$lon = TM$grid$xt
   result$lat = TM$grid$yt
   result$depth = TM$grid$zt
-  result$inject = matrixInject
+  result$inject_pr_vol = Q
+  result$inject = matrixInject # Injection in each cell (gC/yr/m2)
   
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
@@ -472,8 +469,19 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   matrixInject = array(dim=dim(TM$M3d), data=0)
   
   # Make indices for the lat/lon range:
-  ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
-  ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
+  lon[ lon<0 ] = 360 + lon[ lon<0 ]
+  
+  if (length(lon)==1) {
+    ix_lon = which.min( (TM$grid$xt-lon)^2 + (TM$grid$xt-lon)^2 ) # Find the best fitting location
+  } else {
+    ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
+  }
+  
+  if (length(lat)==1) {
+    ix_lat = which.min( (TM$grid$yt-lat)^2 + (TM$grid$yt-lat)^2 ) # Find the best fitting location
+  } else {
+    ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
+  }
   grid_idx <- expand.grid(i = ix_lat, j = ix_lon)
   
   # Setup parallel backend:
@@ -481,7 +489,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   registerDoParallel(cl)
   
   # Loop over all grid points in the lat/lon range:
-  cat("Simulating FEISTY to calculate injections\n")
+  cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], " position(s).\n")
   injectTM = foreach(i = 1:dim(grid_idx)[1],
                      .packages = c("FEISTY","pracma"),
                      .verbose = FALSE) %dopar% 
@@ -513,6 +521,12 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   cat("Calculating carbon sequestration\n")
   sequestration = calcCarbonSequestration(TM, matrixInject)
   
+  # Calculate the per-area sequestration for the cells which are simulated:
+  area = 0 # Area of all simulated cells
+  for (i in 1:dim(grid_idx)[1])
+    area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
+  sequestration$TotSeq_per_area = sequestration$TotSeq / area # gC/m2
+  
   # Plot the total injection in the water column:
   #filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
   #                xlab="Longitude", ylab="Latitude", 
@@ -538,7 +552,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
     
     p1 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
                      sTitle="Carbon sequestered", "gC/m2")
-    inj = calc_per_area_sum(TM$grid, sequestration$inject, depthUpper = 200)
+    inj = calc_per_area_sum(TM$grid, sequestration$inject_per_area, depthUpper = 200)
     p2= plotGlobal( sequestration$lon, sequestration$lat, inj, 
                     sTitle="Injection below 200 m", "gC/m2/yr")
     
@@ -564,7 +578,7 @@ plotGlobal = function(lon, lat, data, sTitle="", sUnits="") {
     df, 
     aes(x = lon, y = lat, fill = value)) +
     geom_tile() +
-    borders("world", colour = "black") +
+    annotation_borders("world", colour = "black") +
     scale_fill_viridis_c() +
     coord_fixed(ratio = 1.3) +
     theme_minimal() +
