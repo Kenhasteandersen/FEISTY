@@ -301,12 +301,44 @@ getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") 
 #   T$grid$DYT3d = TM$grid$DYT3d
 #   T$grid$DZT3d = TM$grid$DZT3d
 #   
+#
+# Calculation of A = TR - Sink:
+#
+  # m <- nrow(TM$TR)
+  # sink <- rep(0,m)
+  # sink[1:length(msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
+  # SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
+  # A <- TM$TR - SSINK # calculation of A matrix
+  # T$A = lu(A)
+  
 #   return(T)
 # }
 
 #' @export
-loadTransportMatrix = function(sFilename="data/CTL.Rdata") {
-  load(sFilename)
+loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
+  sLUfilename = 'data/LU decomposed TM.Rdata'
+  
+  # Always do LU decomposition if the LU-decomposed version does not exist:
+  if (!file.exists()) bLUdecompose=TRUE
+  
+  if (bLUdecompose) {
+    # Load the original transport matrix:
+    load(sFilename)
+    
+    # Calculation of A = TR - Sink:
+    m <- nrow(TM$TR)
+    sink <- rep(0,m)
+    sink[1:length(TM$msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
+    SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
+    A <- TM$TR - SSINK # calculation of A matrix
+    TM$A = lu(A)
+    
+    # Save the LU-decomposed version:
+    save(TM, file=sLUfilename, compression_level=9)
+  }
+  else
+    load(sLUfilename)
+
   return(TM)
 }
 
