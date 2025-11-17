@@ -8,6 +8,7 @@
 library(data.table)
 library(pracma)
 library(Matrix)
+library(parallel)
 library(doParallel)
 library(foreach)
 library(ggplot2)
@@ -322,8 +323,7 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
   if (!file.exists(sLUfilename)) bLUdecompose=TRUE
   
   if (bLUdecompose) {
-    cat("LU decomposing transport matrix.\n
-        Takes time, but is only done once and then saved on disk for future use.\n")
+    cat("LU decomposing transport matrix.\nTakes time, but is only done once and then saved on disk for future use.\n")
     # Load the original transport matrix:
     load(sFilename)
     
@@ -621,57 +621,61 @@ plotGlobal = function(lon, lat, data, sTitle="", sUnits="") {
 #
 # Test carbon calculations at a single position
 #
+#' @export
 testCarbonCalculations_one_position = function(lat=60, lon=-15) {
+  
+  calcGlobalCarbonSequestration(lon=lon,lat=lat)
+  
   # Simulate the position 60, -15 using Cobalt output:
-  sim = simulatePosition(setupVertical2, lat, lon)
-  
-  # Calculate carbon fluxes at the position of the fish:
-  sim = calcCarbonFluxes(sim) 
-  totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
-  barplot(totalFlux, xlab="Size class", ylab="Flux (gWW/m2/yr)")
-  
-  # Calculate the injection
-  inject = calcCarbonInjection(sim)
-  
-  z = -inject$z
-  plot( inject$total, z, type="l", lwd=3, 
-        xlim=c(0,max(inject$total[1:length(inject$total)-1])),
-        xlab="Injection (gC/m3/yr)",
-        ylab="Depth (m)")
-  lines( inject$Fecal, z, col="brown" )
-  lines( inject$Carcass, z, col="grey" )
-  lines( inject$Repro, z, col="darkgreen")
-  lines( inject$Respiration, z, col="darkred")
-  legend("top",
-         c("Total","Fecal pellets","Carcasses","Reproduction","Respiration"),
-         lwd=c(3,1,1,1,1),
-         col=c("black","brown","grey","darkgreen","darkred")
-  )
-  
-  # Calculate injection on TM grid:
-  TM = loadTransportMatrix()
-  long=lon
-  if (lon<0)
-    long = 360+lon
-  
-  injectTM = project_injection_to_TM(inject, lat, long, TM) 
-  plot( injectTM$inject, -TM$grid$zt, ylim=c(2*min(z),0) )
-  
-  # Assemble a matrix with all injections
-  matrixInject = array(dim=dim(TM$M3d), data=0)
-  matrixInject[injectTM$ix$y, injectTM$ix$x, ] = injectTM$inject
-  
-  # Solve the transport matrix to get sequestration etc.:
-  sequestration = calc_CarbonSequestration(TM, matrixInject)
-  
-  #
-  # Plots:
-  #
-  sequestration$lat = grid$xt
-  sequestration$lon = grid$yt
-  
-  dat = as.data.frame( sequestration$Cseq_per_area )
-  world <- map_data("world2")
-  
-  image( x=c(grid$xt[1]-1,grid$xt), y=c(-90,grid$yt), z=log10(t(sequestration$Cseq_per_area)))
+  # sim = simulatePosition(setupVertical2, lat, lon)
+  # 
+  # # Calculate carbon fluxes at the position of the fish:
+  # sim = calcCarbonFluxes(sim) 
+  # totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
+  # barplot(totalFlux, xlab="Size class", ylab="Flux (gWW/m2/yr)")
+  # 
+  # # Calculate the injection
+  # inject = calcCarbonInjection(sim)
+  # 
+  # z = -inject$z
+  # plot( inject$total, z, type="l", lwd=3, 
+  #       xlim=c(0,max(inject$total[1:length(inject$total)-1])),
+  #       xlab="Injection (gC/m3/yr)",
+  #       ylab="Depth (m)")
+  # lines( inject$Fecal, z, col="brown" )
+  # lines( inject$Carcass, z, col="grey" )
+  # lines( inject$Repro, z, col="darkgreen")
+  # lines( inject$Respiration, z, col="darkred")
+  # legend("top",
+  #        c("Total","Fecal pellets","Carcasses","Reproduction","Respiration"),
+  #        lwd=c(3,1,1,1,1),
+  #        col=c("black","brown","grey","darkgreen","darkred")
+  # )
+  # 
+  # # Calculate injection on TM grid:
+  # TM = loadTransportMatrix()
+  # long=lon
+  # if (lon<0)
+  #   long = 360+lon
+  # 
+  # injectTM = project_injection_to_TM(inject, lat, long, TM) 
+  # plot( injectTM$inject, -TM$grid$zt, ylim=c(2*min(z),0) )
+  # 
+  # # Assemble a matrix with all injections
+  # matrixInject = array(dim=dim(TM$M3d), data=0)
+  # matrixInject[injectTM$ix$y, injectTM$ix$x, ] = injectTM$inject
+  # 
+  # # Solve the transport matrix to get sequestration etc.:
+  # sequestration = calc_CarbonSequestration(TM, matrixInject)
+  # 
+  # #
+  # # Plots:
+  # #
+  # sequestration$lat = grid$xt
+  # sequestration$lon = grid$yt
+  # 
+  # dat = as.data.frame( sequestration$Cseq_per_area )
+  # world <- map_data("world2")
+  # 
+  # image( x=c(grid$xt[1]-1,grid$xt), y=c(-90,grid$yt), z=log10(t(sequestration$Cseq_per_area)))
 }
