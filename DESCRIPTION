@@ -19,6 +19,7 @@ Imports:
     cowplot, 
     shiny, 
     shinyjs,
+    Matrix,
     doParallel,
     foreach,
     patchwork,
