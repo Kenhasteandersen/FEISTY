@@ -319,9 +319,11 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
   sLUfilename = 'data/LU decomposed TM.Rdata'
   
   # Always do LU decomposition if the LU-decomposed version does not exist:
-  if (!file.exists()) bLUdecompose=TRUE
+  if (!file.exists(sLUfilename)) bLUdecompose=TRUE
   
   if (bLUdecompose) {
+    cat("LU decomposing transport matrix.\n
+        Takes time, but is only done once and then saved on disk for future use.\n")
     # Load the original transport matrix:
     load(sFilename)
     
@@ -334,6 +336,7 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
     TM$A = lu(A)
     
     # Save the LU-decomposed version:
+    cat("Saving LU decomposed matrix on disk.\n")
     save(TM, file=sLUfilename, compression_level=9)
   }
   else
@@ -575,16 +578,16 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
     cat( c("Average sequestered per area: ", format(sequestration$TotSeq_per_area,digits=3), 'gC/m2 \n') )
     cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
     
-    p1 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
-                     sTitle="Carbon sequestered", "gC/m2")
-    
-    p2= plotGlobal( sequestration$lon, sequestration$lat, 
+    p1= plotGlobal( sequestration$lon, sequestration$lat, 
                     sequestration$inject_below_euphotic,
                     sTitle="Injection below 200 m", "gC/m2/yr")
+
+    p2 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
+                     sTitle="Carbon sequestered", "gC/m2")
     
     p3 = plotGlobal( sequestration$lon, sequestration$lat,
-                     sequestration$SeqTime[,,2],
-                     sTitle="Sequestration time", "yr")
+                     sequestration$SeqTime[,,6],
+                     sTitle="Sequestration time at 246 m", "yr")
     
     p1 + p2 + p3
   }
