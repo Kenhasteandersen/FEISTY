@@ -426,15 +426,20 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   result$lat = TM$grid$yt
   result$depth = TM$grid$zt
   result$inject_pr_vol = Q
-  result$inject = matrixInject # Injection in each cell (gC/yr/m2)
-  
-  # Carbon sequestered on the grid and per area (gC/yr/m3):
-  result$Cseq = project_to_TM( cseq )
-  result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/yr/m2)
+  result$inject_per_area = matrixInject # Injection in each cell (gC/yr/m2)
   
   # Total carbon injection [PgC/yr]
   TotInject <- crossprod(V, q_ocim) / 1e15
   result$TotInject <- TotInject
+  
+  # Carbon injected below euphotic zone (gC/m2/yr):
+  ixBelowEuphotic = TM$grid$zt > 200
+  result$inject_below_euphotic = apply( sequestration$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
+  
+
+  # Carbon sequestered on the grid and per area (gC/yr/m3):
+  result$Cseq = project_to_TM( cseq )
+  result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/yr/m2)
   
   # Total carbon sequestered in the ocean [PgC]
   TotSeq <- crossprod(V, cseq) / 1e15
@@ -472,13 +477,13 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   lon[ lon<0 ] = 360 + lon[ lon<0 ]
   
   if (length(lon)==1) {
-    ix_lon = which.min( (TM$grid$xt-lon)^2 + (TM$grid$xt-lon)^2 ) # Find the best fitting location
+    ix_lon = which.min( (TM$grid$xt-lon)^2 ) # Find the best fitting location
   } else {
     ix_lon = which( TM$grid$xt>=lon[1] & TM$grid$xt<=lon[2] )
   }
   
   if (length(lat)==1) {
-    ix_lat = which.min( (TM$grid$yt-lat)^2 + (TM$grid$yt-lat)^2 ) # Find the best fitting location
+    ix_lat = which.min( (TM$grid$yt-lat)^2 ) # Find the best fitting location
   } else {
     ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
   }
@@ -489,26 +494,26 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   registerDoParallel(cl)
   
   # Loop over all grid points in the lat/lon range:
-  cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], " position(s).\n")
+  cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "position(s).\n")
   injectTM = foreach(i = 1:dim(grid_idx)[1],
                      .packages = c("FEISTY","pracma"),
                      .verbose = FALSE) %dopar% 
     {
       sim = simulatePosition(setupVertical2, 
-                             TM$grid$yt[ grid_idx$i[i]], 
-                             TM$grid$xt[grid_idx$j[i]] )
+                             TM$grid$yt[ grid_idx$i[i] ], 
+                             TM$grid$xt[ grid_idx$j[i] ] )
       
       # Calculate carbon fluxes at the position of the fish:
       sim = calcCarbonFluxes(sim) 
-      totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
+      #totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
       
       # Calculate the injection
       inject = calcCarbonInjection(sim)
       
       # Calculate injection on TM grid:
       injectTM = project_injection_to_TM(inject, 
-                                         TM$grid$yt[grid_idx$i[i]], 
-                                         TM$grid$xt[grid_idx$j[i]], TM) 
+                                         TM$grid$yt[ grid_idx$i[i] ], 
+                                         TM$grid$xt[ grid_idx$j[i] ], TM) 
       injectTM$inject
     } 
   stopCluster(cl)
@@ -525,40 +530,32 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   area = 0 # Area of all simulated cells
   for (i in 1:dim(grid_idx)[1])
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
-  sequestration$TotSeq_per_area = sequestration$TotSeq / area # gC/m2
+  sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e15 # gC/m2
   
-  # Plot the total injection in the water column:
-  #filled.contour( TM$grid$xt, TM$grid$yt, t(calc_per_area_sum( matrixInject )),
-  #                xlab="Longitude", ylab="Latitude", 
-  #                key.title = title(main="g/m2/yr"))
-  
-  # Plot the total sequestration in the water column:
-  #filled.contour( TM$grid$xt, TM$grid$yt, t(sequestration$Cseq_per_area),
-  #                xlab="Longitude", ylab="Latitude", 
-  #                key.title = title(main="g/m2"))
-  
-  #dfArea = expand.grid(lon = TM$grid$xt, lat = TM$grid$yt)
-  #dfArea$Cseq = as.vector( sequestration$Cseq_per_area )
-  
-  #dfVolume = expand.grid(lon = TM$grid$xt, lat = TM$grid$yt, depth=TM$grid$zt)
-  #dfVolume$Cseq = as.vector( sequestration$Cseq )
-  #dfVolume$SeqTime = as.vector( sequestration$SeqTime )
-  #dfVolume$inject = as.vector( matrixInject )
-  
+  sequestration$ix_lat = ix_lat
+  sequestration$ix_lon = ix_lon
+  #
+  # Print summary and make plots:
+  #
   if (bPrintStatus) {
-    cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pGC/yr \n"))
-    cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pGC \n') )
+    cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pgC/yr \n"))
+    cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pgC \n') )
+    cat( c("Average sequestered per area: ", format(sequestration$TotSeq_per_area,digits=3), 'gC/m2 \n') )
     cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
     
     p1 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
                      sTitle="Carbon sequestered", "gC/m2")
-    inj = calc_per_area_sum(TM$grid, sequestration$inject_per_area, depthUpper = 200)
-    p2= plotGlobal( sequestration$lon, sequestration$lat, inj, 
+    
+    p2= plotGlobal( sequestration$lon, sequestration$lat, 
+                    sequestration$inject_below_euphotic,
                     sTitle="Injection below 200 m", "gC/m2/yr")
     
-    p1 + p2
+    p3 = plotGlobal( sequestration$lon, sequestration$lat,
+                     sequestration$SeqTime[,,2],
+                     sTitle="Sequestration time", "yr")
+    
+    p1 + p2 + p3
   }
-  
   
   return( sequestration )
 }
