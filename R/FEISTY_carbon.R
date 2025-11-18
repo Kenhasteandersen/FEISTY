@@ -451,7 +451,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   q_ocim[is.na(q_ocim)] <- 0
   
   # Carbon sequestration in each grid cell [gC/m3] -> a vector
-  cseq <- solve(TM$A, -q_ocim, sparse=TRUE)
+  cseq <- Matrix::solve(TM$A, -q_ocim, sparse=TRUE)
   result$cseq <- cseq
   
   #
