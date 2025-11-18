@@ -5,15 +5,15 @@
 # Sequestration calculations based on code by Andre W Visser
 #
 #library(FEISTY)
-library(data.table)
-library(pracma)
-library(Matrix)
-library(parallel)
-library(doParallel)
-library(foreach)
-library(ggplot2)
-library(patchwork) # To arrange two plots
-library(maps)
+#library(data.table)
+#library(pracma)
+#library(Matrix)
+#library(parallel)
+#library(doParallel)
+#library(foreach)
+#library(ggplot2)
+#library(patchwork) # To arrange two plots
+#library(maps)
 
 # 
 # Correct a longitude from the range -180:180 to 0:360:
@@ -42,6 +42,7 @@ inverse_longitude_correction = function(lon) {
 #   fluxCarcass, fluxFecal,fluxRepro, and fluxRespiration
 #  all in units: gWW/m2/year
 #
+#' @export
 calcCarbonFluxes <- function(sim) {
   
   p = sim$p # parameters
@@ -421,11 +422,11 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   #
   # Calculation of A = TR - Sink:
   #
-  m <- nrow(TM$TR)
-  sink <- rep(0,m)
-  sink[1:length(msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
-  SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
-  A <- TM$TR - SSINK # calculation of A matrix
+  #m <- nrow(TM$TR)
+  #sink <- rep(0,m)
+  #sink[1:length(msk$hkeep)] <- 1e10 # a strong sink force (1e10) is attributed on surface cells only
+  #SSINK <- sparseMatrix(i = 1:m, j = 1:m, x = sink) # sink vector on the diagonal of the SSINK matrix
+  #A <- TM$TR - SSINK # calculation of A matrix
   #
   # Injection
   #
@@ -450,13 +451,12 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   q_ocim[is.na(q_ocim)] <- 0
   
   # Carbon sequestration in each grid cell [gC/m3] -> a vector
-  cseq <- solve(A, -q_ocim, sparse=TRUE)
+  cseq <- solve(TM$A, -q_ocim, sparse=TRUE)
   result$cseq <- cseq
   
   #
   # Calculate quantities in total, per area, and on the TM grid:
   #
-  
   result$lon = TM$grid$xt
   result$lat = TM$grid$yt
   result$depth = TM$grid$zt
@@ -525,7 +525,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   grid_idx <- expand.grid(i = ix_lat, j = ix_lon)
   
   # Setup parallel backend:
-  cl <- makeCluster(detectCores()-1)
+  cl <- makeCluster( detectCores()-1 )
   registerDoParallel(cl)
   
   # Loop over all grid points in the lat/lon range:
@@ -585,11 +585,11 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
     p2 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
                      sTitle="Carbon sequestered", "gC/m2")
     
-    p3 = plotGlobal( sequestration$lon, sequestration$lat,
-                     sequestration$SeqTime[,,6],
-                     sTitle="Sequestration time at 246 m", "yr")
+    #p3 = plotGlobal( sequestration$lon, sequestration$lat,
+    #                 sequestration$SeqTime[,,6],
+    #                 sTitle="Sequestration time at 246 m", "yr")
     
-    p1 + p2 + p3
+    p1 + p2
   }
   
   return( sequestration )
