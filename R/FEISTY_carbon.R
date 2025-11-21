@@ -15,20 +15,6 @@
 #library(patchwork) # To arrange two plots
 #library(maps)
 
-# 
-# Correct a longitude from the range -180:180 to 0:360:
-#
-longitude_correction = function(lon) {
-  if (lon < 0)
-    lon = 360 + lon
-  return(lon)
-}
-
-inverse_longitude_correction = function(lon) {
-  if (lon > 180)
-    lon = lon-360
-  return(lon)
-}
 #
 # Calculate the flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
 # The fluxes are calculated at the position of each size class in units of
@@ -81,6 +67,7 @@ calcCarbonFluxes <- function(sim) {
 # Calculate injection fluxes calculated at all z-levels
 # Units i gC/m3/year
 #
+#' @export
 calcCarbonInjection = function(sim) {
   rho_gC_gWW = 9 # Gram carbon per gram wet weight
   #
@@ -388,7 +375,7 @@ calc_per_area_sum = function(grid, matrix, depthUpper=0) {
   ix = grid$zt>depthUpper
   dz = grid$DZT3d
   dz[!ix] = 0
-  return( apply(replace(matrix, is.na(matrix), 0) * TM$grid$DZT3d, c(1,2), sum) )
+  return( apply(replace(matrix, is.na(matrix), 0) * grid$DZT3d, c(1,2), sum) )
 }
 
 #
@@ -565,7 +552,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
   area = 0 # Area of all simulated cells
   for (i in 1:dim(grid_idx)[1])
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
-  sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e15 # gC/m2
+  sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e12 # gC/m2
   
   sequestration$ix_lat = ix_lat
   sequestration$ix_lon = ix_lon
@@ -589,7 +576,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
     #                 sequestration$SeqTime[,,6],
     #                 sTitle="Sequestration time at 246 m", "yr")
     
-    p1 + p2
+    combined <- plot_grid(p1,p2,ncol=2)
+    print(combined)
   }
   
   return( sequestration )

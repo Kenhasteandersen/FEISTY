@@ -18,18 +18,17 @@ Imports:
     scales, 
     cowplot, 
     shiny, 
-    shinyjs,
-    Matrix,
-    parallel,
-    doParallel,
-    foreach,
-    patchwork,
-    maps
+    shinyjs
 Suggests: 
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    MASS
+    MASS,
+    Matrix,
+    parallel,
+    doParallel,
+    foreach,
+    maps
 VignetteBuilder: knitr
 Description: A size- and trait-based model of higher trophic level dynamics.
 License: MIT + file LICENSE
