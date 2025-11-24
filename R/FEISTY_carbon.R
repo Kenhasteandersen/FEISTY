@@ -189,7 +189,10 @@ calcCarbonInjection = function(sim) {
 ### PERHAPS MOVE TO MAIN FEISTY (including data file)
 #
 #' @export
-simulatePosition = function(setup, lat, lon, nStages=9, tEnd=200) {
+simulatePosition = function(setup, 
+                            lat, lon, 
+                            Fmax=0, ixGroups=NULL, # Specification of fishing parameters sent to setFishing()
+                            nStages=9, tEnd=200) {
   # Output from COBALT
     
     pp = getParametersPosition(lat,lon)
@@ -201,6 +204,7 @@ simulatePosition = function(setup, lat, lon, nStages=9, tEnd=200) {
               Tm     = pp$Tm,
               Tb     = pp$Tb,
               nStages = nStages)
+    p = setFishing(p,Fmax, ixGroups)
   
     sim = simulateFEISTY(p = p, tEnd = 10) 
   return(sim)
@@ -490,7 +494,10 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
 # Calculate carbon sequestration at a range of positions:
 #
 #' @export
-calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360), lat=c(-90,90), bPrintStatus=TRUE) {
+calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), 
+                                         lon=c(0,360), lat=c(-90,90),  # Which latitudes to simulate over
+                                         Fmax=0, ixGroups=NULL,        # Specification of fishing (set to setFishing())
+                                         bPrintStatus=TRUE) {
 
   # Initialize a matrix with all injections
   matrixInject = array(dim=dim(TM$M3d), data=0)
@@ -521,9 +528,10 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), lon=c(0,360),
                      .packages = c("FEISTY","pracma"),
                      .verbose = FALSE) %dopar% 
     {
-      sim = simulatePosition(setupVertical2, 
+      sim = simulatePosition(setupVertical2,
                              TM$grid$yt[ grid_idx$i[i] ], 
-                             TM$grid$xt[ grid_idx$j[i] ] )
+                             TM$grid$xt[ grid_idx$j[i] ],
+                             Fmax=Fmax, ixGroups=ixGroups)
       
       # Calculate carbon fluxes at the position of the fish:
       sim = calcCarbonFluxes(sim) 
