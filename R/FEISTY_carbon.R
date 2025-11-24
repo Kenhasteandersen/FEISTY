@@ -204,7 +204,8 @@ simulatePosition = function(setup,
               Tm     = pp$Tm,
               Tb     = pp$Tb,
               nStages = nStages)
-    p = setFishing(p,Fmax, ixGroups)
+    if (length(ixGroups)>0)
+      p = setFishing(p,Fmax, ixGroups)
   
     sim = simulateFEISTY(p = p, tEnd = 10) 
   return(sim)
