@@ -360,16 +360,16 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
 #
 # gC/m2/yr for each cell
 #
-project_injection_to_TM <- function(inject, lat,lon, TM) {
-  integral = 0*unique(TM$grid$zt)
+project_injection_to_TM <- function(inject, lat,lon, grid) {
+  integral = 0*unique(grid$zt)
   # Find closest grid point:
   ix = list( 
-    y = which.min( (lat-TM$grid$yt)^2 ),
-    x = which.min( (lon-TM$grid$xt)^2 ))
+    y = which.min( (lat-grid$yt)^2 ),
+    x = which.min( (lon-grid$xt)^2 ))
   # Integrate along the depth:
-  for (j in 1:length(TM$grid$zt)) {
-    idx = ( (inject$z > TM$grid$zw[j]) 
-            & (inject$z <= (TM$grid$zw[j] + TM$grid$dzt[j])))
+  for (j in 1:length(grid$zt)) {
+    idx = ( (inject$z > grid$zw[j]) 
+            & (inject$z <= (grid$zw[j] + grid$dzt[j])))
     integral[j] = trapz( inject$z[idx], inject$total[idx])
     
   }
@@ -545,7 +545,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
       # Calculate injection on TM grid:
       injectTM = project_injection_to_TM(inject, 
                                          grid$yt[ grid_idx$i[i] ], 
-                                         grid$xt[ grid_idx$j[i] ], TM) 
+                                         grid$xt[ grid_idx$j[i] ], grid) 
       injectTM$inject
     } 
   stopCluster(cl)
