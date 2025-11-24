@@ -2,6 +2,7 @@
 
 S3method(plot,FEISTY)
 export(calcCarbonFluxes)
+export(calcCarbonInjection)
 export(calcCarbonSequestration)
 export(calcGlobalCarbonSequestration)
 export(derivativesFEISTYR)
