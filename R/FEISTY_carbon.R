@@ -205,7 +205,7 @@ simulatePosition = function(setup,
               Tb     = pp$Tb,
               nStages = nStages)
     if (length(ixGroups)>0)
-      p = setFishing(p,Fmax, ixGroups)
+      p = setFishing(p,Fmax, groupdx=ixGroups)
   
     sim = simulateFEISTY(p = p, tEnd = 10) 
   return(sim)
@@ -525,13 +525,14 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   
   # Loop over all grid points in the lat/lon range:
   cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "position(s).\n")
+  grid = TM$grid
   injectTM = foreach(i = 1:dim(grid_idx)[1],
                      .packages = c("FEISTY","pracma"),
                      .verbose = FALSE) %dopar% 
     {
       sim = simulatePosition(setupVertical2,
-                             TM$grid$yt[ grid_idx$i[i] ], 
-                             TM$grid$xt[ grid_idx$j[i] ],
+                             grid$yt[ grid_idx$i[i] ], 
+                             grid$xt[ grid_idx$j[i] ],
                              Fmax=Fmax, ixGroups=ixGroups)
       
       # Calculate carbon fluxes at the position of the fish:
@@ -543,8 +544,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
       
       # Calculate injection on TM grid:
       injectTM = project_injection_to_TM(inject, 
-                                         TM$grid$yt[ grid_idx$i[i] ], 
-                                         TM$grid$xt[ grid_idx$j[i] ], TM) 
+                                         grid$yt[ grid_idx$i[i] ], 
+                                         grid$xt[ grid_idx$j[i] ], TM) 
       injectTM$inject
     } 
   stopCluster(cl)
