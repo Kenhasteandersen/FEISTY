@@ -319,7 +319,7 @@ loadTransportMatrix = function(sFilename=NULL, bLUdecompose=FALSE) {
     cat("LU decomposing transport matrix.\nTakes time, but is only done once and then saved on disk for future use.\n")
     # Load the original transport matrix:
     if (is.null(sFilename)) {
-      data('CTL.Rdata')
+      data(CTL)
     } else {
       load(sFilename)
     }
