@@ -309,8 +309,8 @@ getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") 
 # }
 
 #' @export
-loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
-  sLUfilename = 'data/LU decomposed TM.Rdata'
+loadTransportMatrix = function(sFilename=NULL, bLUdecompose=FALSE) {
+  sLUfilename = 'LU factored TM.Rdata'
   
   # Always do LU decomposition if the LU-decomposed version does not exist:
   if (!file.exists(sLUfilename)) bLUdecompose=TRUE
@@ -318,7 +318,11 @@ loadTransportMatrix = function(sFilename="data/CTL.Rdata", bLUdecompose=FALSE) {
   if (bLUdecompose) {
     cat("LU decomposing transport matrix.\nTakes time, but is only done once and then saved on disk for future use.\n")
     # Load the original transport matrix:
-    load(sFilename)
+    if (is.null(sFilename)) {
+      data('CTL.Rdata')
+    } else {
+      load(sFilename)
+    }
     
     # Calculation of A = TR - Sink:
     m <- nrow(TM$TR)
