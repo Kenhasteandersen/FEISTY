@@ -561,6 +561,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Solve the transport matrix to get sequestration etc.:
   cat("Calculating carbon sequestration\n")
   sequestration = calcCarbonSequestration(TM, matrixInject)
+  sequestration$matrixInject = matrixInject
   
   # Calculate the per-area sequestration for the cells which are simulated:
   area = 0 # Area of all simulated cells
