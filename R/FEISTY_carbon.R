@@ -212,7 +212,9 @@ simulatePosition = function(setup,
 }
 
 getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") {
-  glob <- read.csv(sFile)
+  #glob <- read.csv(sFile)
+  data(Cobalt)
+  glob = Cobalt
   
   if (lon<0)
     lon = 360+lon
