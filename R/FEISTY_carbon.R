@@ -207,14 +207,14 @@ simulatePosition = function(setup,
     if (length(ixGroups)>0)
       p = setFishing(p,Fmax, groupidx=ixGroups)
   
-    sim = simulateFEISTY(p = p, tEnd = 10) 
+    sim = simulateFEISTY(p = p, tEnd=tEnd) 
   return(sim)
 }
 
 getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") {
-  #glob <- read.csv(sFile)
-  data(Cobalt)
-  glob = Cobalt
+  glob <- read.csv(sFile)
+  #data(Cobalt)
+  #glob = Cobalt
   
   if (lon<0)
     lon = 360+lon
@@ -552,24 +552,46 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
       injectTM = project_injection_to_TM(inject, 
                                          grid$yt[ grid_idx$i[i] ], 
                                          grid$xt[ grid_idx$j[i] ], grid) 
-      injectTM$inject
+      
+      ix = sim$t>0.5*max(sim$t) # Last half of the timeseries
+      
+      
+      #injectTM$inject
+      list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]) )
     } 
   stopCluster(cl)
   
   # Put into the injection matrix:
-  for (i in 1:dim(grid_idx)[1])
-    matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]
+  SSB = array(data=0, c(dim(matrixInject)[1:2], 5))
+  Yield = array(data=0, c(dim(matrixInject)[1:2], 5))
+  for (i in 1:dim(grid_idx)[1]) {
+    matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inject
+    SSB[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$SSB
+    Yield[grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$Y
+  }
   
   # Solve the transport matrix to get sequestration etc.:
   cat("Calculating carbon sequestration\n")
   sequestration = calcCarbonSequestration(TM, matrixInject)
+  #
+  # Add results from simulations:
+  #
   sequestration$matrixInject = matrixInject
-  
+  sequestration$SSB = SSB
+  sequestration$Yield = Yield
+
   # Calculate the per-area sequestration for the cells which are simulated:
   area = 0 # Area of all simulated cells
   for (i in 1:dim(grid_idx)[1])
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
   sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e12 # gC/m2
+  #
+  # Calc total biomass and yield:
+  #
+  for (i in 1:dim(sequestration$SSB)[3]) {
+    sequestration$TotSSB[i] = sum( TM$grid$Areat*sequestration$SSB[,,i], na.rm=TRUE ) / 1e15 # PgC
+    sequestration$TotYield[i] = sum( TM$grid$Areat*sequestration$Yield[,,i], na.rm=TRUE ) / 1e15 # PgC/yr
+  }
   
   sequestration$ix_lat = ix_lat
   sequestration$ix_lon = ix_lon
