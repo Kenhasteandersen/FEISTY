@@ -204,9 +204,18 @@ simulatePosition = function(setup,
               Tm     = pp$Tm,
               Tb     = pp$Tb,
               nStages = nStages)
-    if (length(ixGroups)>0)
+    #
+    # Set fishing to: Fmax with a Q10=1.8 at depths < 1000 m,
+    # and to 90% less at deeper than 1000 m.
+    #
+    if (length(ixGroups)>0) {
+      Fmax = Fmax * 1.8^((pp$Tp-15)/10) # Q10=1.8 correction
+      if (pp$depth>1000)
+        Fmax = 0.1*Fmax
+        
       p = setFishing(p,Fmax, groupidx=ixGroups)
-  
+    }
+    
     sim = simulateFEISTY(p = p, tEnd=tEnd) 
   return(sim)
 }
@@ -599,6 +608,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Print summary and make plots:
   #
   if (bPrintStatus) {
+    cat( c("Total fish biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgC \n") )
+    cat( c("Total fish yield: ", format(sum(sequestration$TotYield),digits=3), "PgC/yr \n") )
     cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pgC/yr \n"))
     cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pgC \n') )
     cat( c("Average sequestered per area: ", format(sequestration$TotSeq_per_area,digits=3), 'gC/m2 \n') )
