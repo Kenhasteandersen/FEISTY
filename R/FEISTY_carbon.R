@@ -477,8 +477,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   # Carbon injected below euphotic zone (gC/m2/yr):
   ixBelowEuphotic = TM$grid$zt > 200
   result$inject_below_euphotic = apply( result$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
-  
-
+  result$TotInject_below_euphotic = sum( result$inject_below_euphotic*grid$Areat ) / 1e15 #PgC/yr
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
   result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/yr/m2)
@@ -593,13 +592,13 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   area = 0 # Area of all simulated cells
   for (i in 1:dim(grid_idx)[1])
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
-  sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e12 # gC/m2
+  sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e15 # gC/m2
   #
   # Calc total biomass and yield:
   #
   for (i in 1:dim(sequestration$SSB)[3]) {
-    sequestration$TotSSB[i] = sum( TM$grid$Areat*sequestration$SSB[,,i], na.rm=TRUE ) / 1e15 # PgC
-    sequestration$TotYield[i] = sum( TM$grid$Areat*sequestration$Yield[,,i], na.rm=TRUE ) / 1e15 # PgC/yr
+    sequestration$TotSSB[i] = sum( TM$grid$Areat*sequestration$SSB[,,i], na.rm=TRUE ) / 1e15 # Pg_WW
+    sequestration$TotYield[i] = sum( TM$grid$Areat*sequestration$Yield[,,i], na.rm=TRUE ) / 1e15 # Pg_WW/yr
   }
   
   sequestration$ix_lat = ix_lat
@@ -608,9 +607,10 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Print summary and make plots:
   #
   if (bPrintStatus) {
-    cat( c("Total fish biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgC \n") )
-    cat( c("Total fish yield: ", format(sum(sequestration$TotYield),digits=3), "PgC/yr \n") )
+    cat( c("Total fish biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgWW \n") )
+    cat( c("Total fish yield: ", format(sum(sequestration$TotYield),digits=3), "PgWW/yr \n") )
     cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pgC/yr \n"))
+    cat( c("Total carbon injected below euphotic: ", format(sequestration$TotInject_below_euphotic,digits=3), "pgC/yr \n"))
     cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pgC \n') )
     cat( c("Average sequestered per area: ", format(sequestration$TotSeq_per_area,digits=3), 'gC/m2 \n') )
     cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
