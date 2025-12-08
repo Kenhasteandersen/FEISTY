@@ -40,6 +40,22 @@ instances:
       smbent_ini: 5                         # initial small benthos biomass [g m-2]
       # lgbent_ini: 0                       # initial large benthos biomass [g m-2] do not exist
       b_ini:      1e-5                      # initial fish biomass of each size class [g m-2]
+      gww_gc:     9                         # gram wet weight to gram carbon ratio [ ] (default: 9)
+      qnc:        0.1509433962264151        # Nitrogen to Carbon ratio [N/C] (default: 16/106)
+      qpc:        0.009433962264150943      # Phosphorus to Carbon ratio [P/C] (default: 1/106)
+      mol_targetunit: 0.001                 # mol to target unit ratio [ ] (default: 1/1000, i.e., mol m-3:mmol m-3)
+      nutrient_in_c: false                  # BGC has carbon (C) element for coupling [ ] (default: false)
+      nutrient_in_n: true                   # BGC has nitrogen (N) element for coupling [ ] (default: true)
+      nutrient_in_p: false                   # BGC has phosphorus (P) element for coupling [ ] (default: true)
+      detritus_in_c: false                  # BGC has carbon (C) element for detritus coupling [ ] (default: false)
+      detritus_in_n: true                   # BGC has nitrogen (N) element for detritus coupling [ ] (default: true)
+      detritus_in_p: false                   # BGC has phosphorus (P) element for detritus coupling [ ] (default: true)
+      small_zooplankton_in_c: false         # Small zooplankton has carbon (C) element [ ] (default: false)
+      small_zooplankton_in_n: true          # Small zooplankton has nitrogen (N) element [ ] (default: true)
+      small_zooplankton_in_p: false          # Small zooplankton has phosphorus (P) element [ ] (default: true)
+      large_zooplankton_in_c: false         # Large zooplankton has carbon (C) element [ ] (default: false)
+      large_zooplankton_in_n: true          # Large zooplankton has nitrogen (N) element [ ] (default: true)
+      large_zooplankton_in_p: false          # Large zooplankton has phosphorus (P) element [ ] (default: true)
 # input
       szprod:      100                     # small mesozooplankton production [g m-2 yr-1]
       lzprod:      100                     # large mesozooplankton production [g m-2 yr-1]
@@ -58,14 +74,35 @@ instances:
       #fft_long_name_: small pelagic
       #fft_short_name_1: smpel
     coupling:
-      small_zooplankton: zooplankton           # nutrient source (mmol m-3)
-      large_zooplankton: zooplankton
+      small_zooplankton_target: zooplankton           # nutrient source (mmol m-3)
+      #small_zooplankton_target_c: zooplankton           # small zooplankton carbon (mmol C m-3)
+      #small_zooplankton_target_n: zooplankton           # small zooplankton nitrogen (mmol N m-3)
+      #small_zooplankton_target_p: zooplankton           # small zooplankton phosphorus (mmol P m-3)
+      large_zooplankton_target: zooplankton
+      #large_zooplankton_target_c: zooplankton           # large zooplankton carbon (mmol C m-3)
+      #large_zooplankton_target_n: zooplankton           # large zooplankton nitrogen (mmol N m-3)
+      #large_zooplankton_target_p: zooplankton           # large zooplankton phosphorus (mmol P m-3)
       #excretion: nut
-      respiration: nut_chem
-      feces: detritus
-      carcasses: detritus
-      detritus: detritus/detritus
-      nutrient: nut_chem/no3
+      respiration_target: nut_chem
+      #respiration_target_c: nut_chem
+      #respiration_target_n: nut_chem
+      #respiration_target_p: nut_chem
+      feces_target: detritus
+      #feces_target_c: detritus
+      #feces_target_n: detritus
+      #feces_target_p: detritus
+      carcasses_target: detritus
+      #carcasses_target_c: detritus
+      #carcasses_target_n: detritus
+      #carcasses_target_p: detritus
+      #detritus: detritus/detritus
+      #detritus_c: detritus/detritus
+      detritus_n: detritus/detritus
+      #detritus_p: detritus/detritus
+      #nutrient: nut_chem/no3
+      #nutrient_c: nut_chem/dic
+      nutrient_n: nut_chem/no3
+      #nutrient_p: nut_chem/p
 
   sediment:
     model: uvic/sediment
@@ -166,7 +203,7 @@ instances:
       nitrogen: true
       nfix: true
       jdiar: 0.5
-      #extra_diags: true
+      extra_diags: true
       abio: 0.18
       no_temp_sens: false
       bbio: 1.066
