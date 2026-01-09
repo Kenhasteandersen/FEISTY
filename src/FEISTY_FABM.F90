@@ -42,42 +42,34 @@ module FEISTY_FABM
       type (type_bottom_state_variable_id),    allocatable      :: id_carcasses_fish_c(:), id_carcasses_fish_n(:), id_carcasses_fish_p(:)
       ! Coupling; pointer to which model contains the zooplankton state varaiable
       ! that we will integrater over the water column:
-      type (type_model_id)                                      :: id_smzoo_int, id_lgzoo_int
       type (type_model_id)                                      :: id_smzoo_int_c, id_smzoo_int_n, id_smzoo_int_p
       type (type_model_id)                                      :: id_lgzoo_int_c, id_lgzoo_int_n, id_lgzoo_int_p
       
       type (type_dependency_id)                                 :: id_temp, id_depth
       type (type_horizontal_dependency_id)                      :: id_temp_vertmean_100m,id_temp_vertmean_500to1500m,id_bottom_depth
+
       type (type_bottom_diagnostic_variable_id)                 :: id_temp_vertmean_100m_diag
       type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_total_biomass(:)
       
       real (rk)                              :: b_ini
-      real (rk) ,    allocatable             :: depth_array(:), theta_matrix(:,:,:) !(predator,prey,n_depth)
-      real (rk) ,    allocatable             :: vertical_distribution_matrix_centers(:,:,:) !(depth_center,nFGrid,n_depth) - contains center values
+      real (rk) ,    allocatable             :: depth_array(:) ! Array of depth values for pre-computed profiles
+      real (rk) ,    allocatable             :: theta_matrix(:,:,:) ! Pre-computed theta matrix (predator,prey,n_depth)
+      real (rk) ,    allocatable             :: vertical_distribution_matrix_centers(:,:,:) ! Pre-computed vertical distribution matrix (depth_center,nFGrid,n_depth) - contains center values
       
       real(rk)                               :: shelfdepth
       real(rk)                               :: max_depth
       real(rk)                               :: photic_depth
       integer                                :: n_depth
+      real(rk)                               :: bgmort    ! Fish background mortality (per year)
       real(rk)                               :: gww_gc    ! gram wet weight to gram carbon conversion factor
       real(rk)                               :: qnc, qpc  ! Nitrogen:Carbon and Phosphorus:Carbon ratios
       real(rk)                               :: mol_targetunit  ! mol to target unit conversion factor
-      real(rk)                               :: gww_targetc   ! gww to target C unit conversion factor
-      real(rk)                               :: gww_targetn   ! gww to target N unit conversion factor
-      real(rk)                               :: gww_targetp   ! gww to target P unit conversion factor
-      
-      logical                                :: nutrient_in_c  ! BGC has carbon (C) element for coupling
-      logical                                :: nutrient_in_n  ! BGC has nitrogen (N) element for coupling
-      logical                                :: nutrient_in_p  ! BGC has phosphorus (P) element for coupling
-      logical                                :: detritus_in_c  ! BGC has carbon (C) element for detritus coupling
-      logical                                :: detritus_in_n  ! BGC has nitrogen (N) element for detritus coupling
-      logical                                :: detritus_in_p  ! BGC has phosphorus (P) element for detritus coupling
-      logical                                :: small_zooplankton_in_c  ! Small zooplankton has carbon (C) element
-      logical                                :: small_zooplankton_in_n  ! Small zooplankton has nitrogen (N) element
-      logical                                :: small_zooplankton_in_p  ! Small zooplankton has phosphorus (P) element
-      logical                                :: large_zooplankton_in_c  ! Large zooplankton has carbon (C) element
-      logical                                :: large_zooplankton_in_n  ! Large zooplankton has nitrogen (N) element 
-      logical                                :: large_zooplankton_in_p  ! Large zooplankton has phosphorus (P) element
+      real(rk)                               :: gww_targetc, gww_targetn, gww_targetp   ! gww to target C/N/P unit conversion factors
+
+      logical                                :: nutrient_in_c, nutrient_in_n, nutrient_in_p           ! BGC has C/N/P elements for nutrient coupling
+      logical                                :: detritus_in_c, detritus_in_n, detritus_in_p           ! BGC has C/N/P elements for detritus coupling
+      logical                                :: small_zooplankton_in_c, small_zooplankton_in_n, small_zooplankton_in_p  ! Small zooplankton has C/N/P elements
+      logical                                :: large_zooplankton_in_c, large_zooplankton_in_n, large_zooplankton_in_p  ! Large zooplankton has C/N/P elements
       
    contains
       procedure :: initialize
@@ -97,11 +89,10 @@ contains
       
       real(rk)           :: smz_ini, lgz_ini, smbent_ini, lgbent_ini
       real(rk)           :: szprod, lzprod, bprodin, dfbot, depth, Tp, Tb
-      real(rk)           :: bgmort
       real(rk)           :: dfpho, Tm, etamature, visual, Fmax, etaF!, ssigma, tau, shelfdepth
       integer            :: nStages, bET_val
       integer            :: i,j
-      character(len=100) :: strindex, i_str, j_str, size_number_str, fft_long_name,fft_short_name
+      character(len=100) :: i_str, j_str, size_number_str, fft_long_name,fft_short_name
       
       class (type_vertical_depth_range), pointer :: depth_distribution
       class (type_feisty_vertical_distribution), pointer :: feisty_vertical_distribution
@@ -118,7 +109,7 @@ contains
       call self%get_parameter(p, 'p', '-', 'Metabolism exponent', default=-0.175_rk)  
       call self%get_parameter(epsAssim, 'epsAssim', '-', 'Assimilation efficiency', default=0.7_rk)  
       call self%get_parameter(epsRepro, 'epsRepro', '-', 'Reproduction & recruitment efficiency', default=0.01_rk)  
-      call self%get_parameter(bgmort, 'bgmort', 'yr-1', 'Fish background mortality', default=0.1_rk) 
+      call self%get_parameter(self%bgmort, 'bgmort', 'yr-1', 'Fish background mortality', default=0.1_rk) 
       
       call self%get_parameter(beta, 'beta', '-', 'Beta parameter for size-based predation preference', default=400._rk)  
       call self%get_parameter(sigma, 'sigma', '-', 'Sigma parameter for size-based predation preference', default=1.3_rk)  
@@ -216,39 +207,14 @@ contains
       
       !end select     
       
-      !assign fish background mortality to FEISTY
-      mort0(idxF:nGrid) = bgmort/seconds_per_year
-      mortF = mortF/seconds_per_year
-      
       ! Register state variables
-      !allocate(self%id_u(nGrid))
-      !call self%register_state_variable(self%id_u(1), 'u1', 'g m-2', 'biomass', initial_value=smz_ini, minimum=0.0_rk)
-      !call self%register_state_variable(self%id_u(2), 'u2', 'g m-2', 'biomass', initial_value=lgz_ini, minimum=0.0_rk)
-      !call self%register_state_variable(self%id_u(3), 'u3', 'g m-2', 'biomass', initial_value=smbent_ini, minimum=0.0_rk)
-      !call self%register_state_variable(self%id_u(4), 'u4', 'g m-2', 'biomass', initial_value=lgbent_ini, minimum=0.0_rk)      
-
       call self%register_model_dependency("small_zooplankton_target")
-      ! if (self%small_zooplankton_in_c) call self%register_model_dependency("small_zooplankton_target_c")
-      ! if (self%small_zooplankton_in_n) call self%register_model_dependency("small_zooplankton_target_n")
-      ! if (self%small_zooplankton_in_p) call self%register_model_dependency("small_zooplankton_target_p")
       call self%register_model_dependency("large_zooplankton_target")
-      ! if (self%large_zooplankton_in_c) call self%register_model_dependency("large_zooplankton_target_c")
-      ! if (self%large_zooplankton_in_n) call self%register_model_dependency("large_zooplankton_target_n")
-      ! if (self%large_zooplankton_in_p) call self%register_model_dependency("large_zooplankton_target_p")
       !call self%register_model_dependency("excretion")
       call self%register_model_dependency("respiration_target")
-      ! if (self%nutrient_in_c) call self%register_model_dependency("respiration_target_c")
-      ! if (self%nutrient_in_n) call self%register_model_dependency("respiration_target_n")
-      ! if (self%nutrient_in_p) call self%register_model_dependency("respiration_target_p")
       call self%register_model_dependency("feces_target")
-      ! if (self%detritus_in_c) call self%register_model_dependency("feces_target_c")
-      ! if (self%detritus_in_n) call self%register_model_dependency("feces_target_n")
-      ! if (self%detritus_in_p) call self%register_model_dependency("feces_target_p")
       call self%register_model_dependency("carcasses_target")
-      ! if (self%detritus_in_c) call self%register_model_dependency("carcasses_target_c")
-      ! if (self%detritus_in_n) call self%register_model_dependency("carcasses_target_n")
-      ! if (self%detritus_in_p) call self%register_model_dependency("carcasses_target_p")
-      
+
       allocate(self%id_fish(nGrid-nResources))
       allocate(self%id_fish_w(nGrid-nResources))! allpcate size of vertical distribution of small pelagics     
       allocate(self%id_excre_fish_n(nGrid-nResources), self%id_excre_fish_p(nGrid-nResources))
@@ -259,13 +225,14 @@ contains
       allocate(self%id_fish_total_biomass(nGroups))
       
 
+      ! Prepare pre-computed matrices for depth-dependent fish vertical distribution and predation preference (MUST be done before creating child models)
+      call initialize_theta_matrices(self, szprod, lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, etamature, visual, Fmax, etaF)  ! Read from file or compute theta/vertical distribution matrices
 
-      
-! theta_matrix and vertical_distribution_matrix preparation (MUST be done before creating child models)
-      call allocate_vertical_arrays(self)
-      call initialize_theta_matrices(self, szprod, lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, etamature, visual, Fmax, etaF)
+      !assign fish background mortality to FEISTY
+      mort0(idxF:nGrid) = self%bgmort/seconds_per_year
+      mortF(idxF:nGrid) = mortF/seconds_per_year
 
-      
+      ! registration of fish state variables and diagnostic variables
       do i = 1, nGroups
          write (i_str,'(i0)') i
          ! read functional type longnames from yaml
@@ -297,6 +264,7 @@ contains
             
       end do 
       
+      !sets up biogeochemical coupling and vertical distribution for each fish size class
       do i = 1, nGrid-nResources
          write (i_str,'(i0)') i
          if (self%nutrient_in_c) call self%add_to_aggregate_variable(standard_variables%total_carbon, self%id_fish(i), scale_factor = 1._rk/self%gww_targetc)
@@ -319,60 +287,60 @@ contains
          !call self%register_state_dependency(self%id_excre_fish_n(i),'excretion_n', 'mmol N m-2', 'excretion nitrogen')
          !call self%register_state_dependency(self%id_excre_fish_p(i),'excretion_p', 'mmol C m-2', 'excretion phosphorus')
          
-         if (self%nutrient_in_c) call self%register_state_dependency(self%id_respiration_fish_c(i),'respiration_c', 'mmol C m-2', 'respiration carbon')
-         if (self%nutrient_in_n) call self%register_state_dependency(self%id_respiration_fish_n(i),'respiration_n', 'mmol N m-2', 'respiration nitrogen')
-         if (self%nutrient_in_p) call self%register_state_dependency(self%id_respiration_fish_p(i),'respiration_p', 'mmol P m-2', 'respiration phosphorus')
-         
-         if (self%detritus_in_c) call self%register_state_dependency(self%id_feces_fish_c(i),'feces_c', 'mmol C m-2', 'feces carbon')
-         if (self%detritus_in_n) call self%register_state_dependency(self%id_feces_fish_n(i),'feces_n', 'mmol N m-2', 'feces nitrogen')
-         if (self%detritus_in_p) call self%register_state_dependency(self%id_feces_fish_p(i),'feces_p', 'mmol P m-2', 'feces phosphorus')
-         
-         if (self%detritus_in_c) call self%register_state_dependency(self%id_carcasses_fish_c(i),'carcasses_c', 'mmol C m-2', 'carcasses carbon')
-         if (self%detritus_in_n) call self%register_state_dependency(self%id_carcasses_fish_n(i),'carcasses_n', 'mmol N m-2', 'carcasses nitrogen')
-         if (self%detritus_in_p) call self%register_state_dependency(self%id_carcasses_fish_p(i),'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
-       
-        !call self%request_mapped_coupling_to_model(self%id_excre_fish_n(i), 'excretion_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
-         !call self%request_mapped_coupling_to_model(self%id_excre_fish_p(i), 'excretion_fish_'//trim(i_str),standard_variables%total_phosphorus, id_w=self%id_fish_w(i))  
-        ! call self%couplings%set('excretion_fish_'//trim(i_str), "excretion")
-         
+         ! Respiration - register state dependency and set up coupling
          if (self%nutrient_in_c) then
+            call self%register_state_dependency(self%id_respiration_fish_c(i),'respiration_c', 'mmol C m-2', 'respiration carbon')
             call self%request_mapped_coupling_to_model(self%id_respiration_fish_c(i),'respiration_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_c', "respiration_target")
          end if
          if (self%nutrient_in_n) then
+            call self%register_state_dependency(self%id_respiration_fish_n(i),'respiration_n', 'mmol N m-2', 'respiration nitrogen')
             call self%request_mapped_coupling_to_model(self%id_respiration_fish_n(i),'respiration_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_n', "respiration_target")
          end if
          if (self%nutrient_in_p) then
+            call self%register_state_dependency(self%id_respiration_fish_p(i),'respiration_p', 'mmol P m-2', 'respiration phosphorus')
             call self%request_mapped_coupling_to_model(self%id_respiration_fish_p(i),'respiration_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_p', "respiration_target")
          end if
-         
+
+         ! Feces - register state dependency and set up coupling
          if (self%detritus_in_c) then
+            call self%register_state_dependency(self%id_feces_fish_c(i),'feces_c', 'mmol C m-2', 'feces carbon')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_c(i), 'feces_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
             call self%couplings%set_string('feces_fish_'//trim(i_str)//'_c', "feces_target")
          end if
          if (self%detritus_in_n) then
+            call self%register_state_dependency(self%id_feces_fish_n(i),'feces_n', 'mmol N m-2', 'feces nitrogen')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_n(i), 'feces_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
             call self%couplings%set_string('feces_fish_'//trim(i_str)//'_n', "feces_target")
          end if
          if (self%detritus_in_p) then
+            call self%register_state_dependency(self%id_feces_fish_p(i),'feces_p', 'mmol P m-2', 'feces phosphorus')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_p(i), 'feces_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
             call self%couplings%set_string('feces_fish_'//trim(i_str)//'_p', "feces_target")
          end if
-         
+
+         ! Carcasses - register state dependency and set up coupling
          if (self%detritus_in_c) then
+            call self%register_state_dependency(self%id_carcasses_fish_c(i),'carcasses_c', 'mmol C m-2', 'carcasses carbon')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_c(i), 'carcasses_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
             call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_c', "carcasses_target")
          end if
          if (self%detritus_in_n) then
+            call self%register_state_dependency(self%id_carcasses_fish_n(i),'carcasses_n', 'mmol N m-2', 'carcasses nitrogen')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_n(i), 'carcasses_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
             call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_n', "carcasses_target")
          end if
          if (self%detritus_in_p) then
+            call self%register_state_dependency(self%id_carcasses_fish_p(i),'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_p(i), 'carcasses_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
             call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_p', "carcasses_target")
-         end if 
+         end if
+
+        !call self%request_mapped_coupling_to_model(self%id_excre_fish_n(i), 'excretion_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
+         !call self%request_mapped_coupling_to_model(self%id_excre_fish_p(i), 'excretion_fish_'//trim(i_str),standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
+        ! call self%couplings%set('excretion_fish_'//trim(i_str), "excretion") 
          
       end do
       
@@ -395,46 +363,54 @@ contains
       !if (self%nutrient_in_n) call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_large_benthos, scale_factor = 1._rk/self%gww_targetn)
       !if (self%nutrient_in_p) call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_large_benthos, scale_factor = 1._rk/self%gww_targetp)
       
-       ! Depth-integrated dependencies
-       if (self%small_zooplankton_in_c) call self%register_dependency(self%id_smzoo_c, 'small_zoo_c', 'mmol C m-2', 'depth-integrated small zooplankton carbon')
-       if (self%small_zooplankton_in_n) call self%register_dependency(self%id_smzoo_n, 'small_zoo_n', 'mmol N m-2', 'depth-integrated small zooplankton nitrogen')
-       if (self%small_zooplankton_in_p) call self%register_dependency(self%id_smzoo_p, 'small_zoo_p', 'mmol P m-2', 'depth-integrated small zooplankton phosphorus') 
-       if (self%large_zooplankton_in_c) call self%register_dependency(self%id_lgzoo_c, 'large_zoo_c', 'mmol C m-2', 'depth-integrated large zooplankton carbon')
-       if (self%large_zooplankton_in_n) call self%register_dependency(self%id_lgzoo_n, 'large_zoo_n', 'mmol N m-2', 'depth-integrated large zooplankton nitrogen')
-       if (self%large_zooplankton_in_p) call self%register_dependency(self%id_lgzoo_p, 'large_zoo_p', 'mmol P m-2', 'depth-integrated large zooplankton phosphorus') 
-       
+       ! Depth-integrated dependencies and coupling setup
        call self%register_vertical_distribution(self%dummy_w,'dummy')
        allocate(depth_distribution)
        call self%add_child(depth_distribution, 'dummy')
        call self%request_coupling(self%dummy_w, 'dummy'//'/'//'w')
        
+       ! Small zooplankton respiration
        if (self%small_zooplankton_in_c) then
-          call self%request_mapped_coupling_to_model(self%id_smzoo_c, 'small_zooplankton_c', standard_variables%total_carbon, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_smzoo_c, 'small_zoo_c', 'mmol C m-2', 'depth-integrated small zooplankton carbon')
+          call self%request_mapped_coupling_to_model(self%id_smzoo_c, 'small_zooplankton_c', standard_variables%total_carbon, id_w=self%dummy_w)
           call self%couplings%set_string('small_zooplankton_c', "small_zooplankton_target")
        end if
        if (self%small_zooplankton_in_n) then
-          call self%request_mapped_coupling_to_model(self%id_smzoo_n, 'small_zooplankton_n', standard_variables%total_nitrogen, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_smzoo_n, 'small_zoo_n', 'mmol N m-2', 'depth-integrated small zooplankton nitrogen')
+          call self%request_mapped_coupling_to_model(self%id_smzoo_n, 'small_zooplankton_n', standard_variables%total_nitrogen, id_w=self%dummy_w)
           call self%couplings%set_string('small_zooplankton_n', "small_zooplankton_target")
        end if
        if (self%small_zooplankton_in_p) then
-          call self%request_mapped_coupling_to_model(self%id_smzoo_p, 'small_zooplankton_p', standard_variables%total_phosphorus, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_smzoo_p, 'small_zoo_p', 'mmol P m-2', 'depth-integrated small zooplankton phosphorus')
+          call self%request_mapped_coupling_to_model(self%id_smzoo_p, 'small_zooplankton_p', standard_variables%total_phosphorus, id_w=self%dummy_w)
           call self%couplings%set_string('small_zooplankton_p', "small_zooplankton_target")
        end if
+       
+       ! Large zooplankton respiration
        if (self%large_zooplankton_in_c) then
-          call self%request_mapped_coupling_to_model(self%id_lgzoo_c, 'large_zooplankton_c', standard_variables%total_carbon, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_lgzoo_c, 'large_zoo_c', 'mmol C m-2', 'depth-integrated large zooplankton carbon')
+          call self%request_mapped_coupling_to_model(self%id_lgzoo_c, 'large_zooplankton_c', standard_variables%total_carbon, id_w=self%dummy_w)
           call self%couplings%set_string('large_zooplankton_c', "large_zooplankton_target")
        end if
        if (self%large_zooplankton_in_n) then
-          call self%request_mapped_coupling_to_model(self%id_lgzoo_n, 'large_zooplankton_n', standard_variables%total_nitrogen, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_lgzoo_n, 'large_zoo_n', 'mmol N m-2', 'depth-integrated large zooplankton nitrogen')
+          call self%request_mapped_coupling_to_model(self%id_lgzoo_n, 'large_zooplankton_n', standard_variables%total_nitrogen, id_w=self%dummy_w)
           call self%couplings%set_string('large_zooplankton_n', "large_zooplankton_target")
        end if
        if (self%large_zooplankton_in_p) then
-          call self%request_mapped_coupling_to_model(self%id_lgzoo_p, 'large_zooplankton_p', standard_variables%total_phosphorus, id_w=self%dummy_w)!, average=.true.)
+          call self%register_dependency(self%id_lgzoo_p, 'large_zoo_p', 'mmol P m-2', 'depth-integrated large zooplankton phosphorus')
+          call self%request_mapped_coupling_to_model(self%id_lgzoo_p, 'large_zooplankton_p', standard_variables%total_phosphorus, id_w=self%dummy_w)
           call self%couplings%set_string('large_zooplankton_p', "large_zooplankton_target")
        end if
+
+       if (self%small_zooplankton_in_c) call self%register_mapped_model_dependency(self%id_smzoo_int_c, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
+       if (self%small_zooplankton_in_n) call self%register_mapped_model_dependency(self%id_smzoo_int_n, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
+       if (self%small_zooplankton_in_p) call self%register_mapped_model_dependency(self%id_smzoo_int_p, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
+       if (self%large_zooplankton_in_c) call self%register_mapped_model_dependency(self%id_lgzoo_int_c, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
+       if (self%large_zooplankton_in_n) call self%register_mapped_model_dependency(self%id_lgzoo_int_n, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
+       if (self%large_zooplankton_in_p) call self%register_mapped_model_dependency(self%id_lgzoo_int_p, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
        
-       
-       
+       !temperature and depth
        call self%register_dependency(self%id_temp, standard_variables%temperature)
        call self%register_dependency(self%id_temp_vertmean_100m, vertical_mean(self%id_temp, maximum_depth=100._rk))
        call self%register_dependency(self%id_temp_vertmean_500to1500m, vertical_mean(self%id_temp, minimum_depth=500._rk, maximum_depth=1500._rk))
@@ -442,14 +418,6 @@ contains
        call self%register_dependency(self%id_bottom_depth, standard_variables%bottom_depth)
        call self%register_dependency(self%id_depth,     standard_variables%depth)
        
-       !call self%register_mapped_model_dependency(self%id_smzoo_int, 'small_zooplankton', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w) ! check default average
-       if (self%small_zooplankton_in_c) call self%register_mapped_model_dependency(self%id_smzoo_int_c, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       if (self%small_zooplankton_in_n) call self%register_mapped_model_dependency(self%id_smzoo_int_n, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       if (self%small_zooplankton_in_p) call self%register_mapped_model_dependency(self%id_smzoo_int_p, 'small_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       !call self%register_mapped_model_dependency(self%id_lgzoo_int, 'large_zooplankton', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       if (self%large_zooplankton_in_c) call self%register_mapped_model_dependency(self%id_lgzoo_int_c, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       if (self%large_zooplankton_in_n) call self%register_mapped_model_dependency(self%id_lgzoo_int_n, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
-       if (self%large_zooplankton_in_p) call self%register_mapped_model_dependency(self%id_lgzoo_int_p, 'large_zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
 !   -----declared in setup.f90-----
       allocate (excretion(nGrid))
       allocate (respiration(nGrid))
@@ -544,17 +512,17 @@ contains
          !mortF = mortF/365._rk/86400._rk
          !call setupbasic(100._rk, 100._rk, 100._rk, -1._rk, bottom_depth, temp_100m, temp_bottom)
 
-         !update theta and vertical distribution
+         !update predator-prey preference matrix theta and vertical distribution
          ! Find the closest pre-computed depth profile
          closest_bottom_depth_idx = minloc(abs(self%depth_array - bottom_depth), dim=1)
          theta= self%theta_matrix(:,:,closest_bottom_depth_idx)
          
-         dvm = photic_depth_local + 500._dp ! 650._dp
+         ! From FEISTY
+         dvm = photic_depth_local + 500._dp ! 650._dp 
          if (bottom_depth .lt. (photic_depth_local + 500._dp)) dvm = bottom_depth 
          if (bottom_depth .le. self%shelfdepth) dvm = 0._dp
 
          !update temperature effect
-      
          call updateTempV2(temp_100m, temp_500to1500m, temp_bottom, dvm, bottom_depth, photic_depth_local, ixmedium, ixlarge)
          do iGroup = 1, nGroups
              group(iGroup)%spec%V=group(iGroup)%spec%Vsave*fTempV(ixStart(iGroup):ixEnd(iGroup))
@@ -562,9 +530,9 @@ contains
              group(iGroup)%spec%metabolism=group(iGroup)%spec%metabolismsave*fTempmV(ixStart(iGroup):ixEnd(iGroup))
          end do
          call set2vec
-         call scale_mortality_rates()
+         call scale_mortality_rates(self)
 
-         
+         ! FEISTY derivatives
          uin= [zoo1,zoo2 ,benthos1,0._rk ,fish]
          !print*,uin
          !uin= [100._rk,100._rk,5._rk,0._rk,fish]
@@ -772,44 +740,6 @@ contains
       _BOTTOM_LOOP_END_
    end subroutine   
 
-   subroutine allocate_vertical_arrays(self)
-      class (type_feisty_fabm), intent(inout) :: self
-      logical :: changed
-      integer :: i_depth, j_depth
-      logical :: is_unique
-
-      allocate (self%depth_array(self%n_depth))
-      allocate (self%theta_matrix(nGrid,nGrid,self%n_depth))
-      allocate (self%vertical_distribution_matrix_centers(int(self%max_depth),nFGrid,self%n_depth))
-
-      self%depth_array = [(10._rk**(real(i_depth-1,rk)*(log10(self%max_depth))/real(self%n_depth-1,rk)), i_depth=1, self%n_depth)]
-      self%depth_array = floor(self%depth_array)
-      self%depth_array(size(self%depth_array)) = self%max_depth
-
-      do
-         changed = .false.
-         do i_depth = 1, self%n_depth - 1
-            if (self%depth_array(i_depth) >= self%depth_array(i_depth+1)) then
-               self%depth_array(i_depth+1) = min(self%depth_array(i_depth) + 1._rk, self%max_depth)
-               changed = .true.
-            end if
-         end do
-         if (.not. changed) exit
-      end do
-
-      is_unique = .true.
-      do i_depth = 1, self%n_depth - 1
-         do j_depth = i_depth + 1, self%n_depth
-            if (self%depth_array(i_depth) == self%depth_array(j_depth)) then
-               print*, "WARNING: depth_array still contains duplicates after removal loop!"
-               is_unique = .false.
-               exit
-            end if
-         end do
-         if (.not. is_unique) exit
-      end do
-   end subroutine allocate_vertical_arrays
-
    subroutine initialize_theta_matrices(self, szprod, lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, etamature, visual, Fmax, etaF)
       class (type_feisty_fabm), intent(inout) :: self
       real(rk), intent(in) :: szprod, lzprod, bprodin, dfbot, dfpho
@@ -818,6 +748,7 @@ contains
       logical :: file_exists
       integer :: dims(3)
 
+      call allocate_vertical_arrays(self) 
       self%theta_matrix = 0._rk
       self%vertical_distribution_matrix_centers = -999._rk
 
@@ -840,11 +771,56 @@ contains
       end if
 
       if (.not. file_exists) then
+
          call build_theta_matrices(self, szprod, lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, etamature, visual, Fmax, etaF)
       end if
 
       print *, "Matrices (theta, vertical_distribution) ready for computation."
    end subroutine initialize_theta_matrices
+
+   ! Allocate depth arrays for pre-computed matrices
+   subroutine allocate_vertical_arrays(self)
+      ! Creates a logarithmically-spaced depth grid for efficient lookup of depth-dependent fish behavior.
+      class (type_feisty_fabm), intent(inout) :: self
+      logical :: changed
+      integer :: i_depth, j_depth
+      logical :: is_unique
+
+      ! Allocate depth arrays for pre-computed matrices
+      allocate (self%depth_array(self%n_depth))  ! Depth sampling points (e.g., 50 depths from 1m to 5000m)
+      allocate (self%theta_matrix(nGrid,nGrid,self%n_depth))  ! Predation preference matrix (predator×prey×depth)
+      allocate (self%vertical_distribution_matrix_centers(int(self%max_depth),nFGrid,self%n_depth))  ! Vertical distributions (depth×fish_classes×depth_profile)
+
+      ! Create logarithmically-spaced depth array: more points near surface, fewer in deep ocean
+      self%depth_array = [(10._rk**(real(i_depth-1,rk)*(log10(self%max_depth))/real(self%n_depth-1,rk)), i_depth=1, self%n_depth)]
+      self%depth_array = floor(self%depth_array)  ! Round down to integer depths
+      self%depth_array(size(self%depth_array)) = self%max_depth  ! Ensure last value is exactly max_depth
+
+      ! Remove duplicate depths that may arise from flooring
+      do
+         changed = .false.
+         do i_depth = 1, self%n_depth - 1
+            if (self%depth_array(i_depth) >= self%depth_array(i_depth+1)) then
+               self%depth_array(i_depth+1) = min(self%depth_array(i_depth) + 1._rk, self%max_depth)  ! Increment by 1m
+               changed = .true.
+            end if
+         end do
+         if (.not. changed) exit  ! Stop when no more duplicates found
+      end do
+
+      ! Verify all depths are unique (quality check)
+      is_unique = .true.
+      do i_depth = 1, self%n_depth - 1
+         do j_depth = i_depth + 1, self%n_depth
+            if (self%depth_array(i_depth) == self%depth_array(j_depth)) then
+               print*, "WARNING: depth_array still contains duplicates after removal loop!"
+               is_unique = .false.
+               exit
+            end if
+         end do
+         if (.not. is_unique) exit
+      end do
+   end subroutine allocate_vertical_arrays
 
    subroutine build_theta_matrices(self, szprod, lzprod, bprodin, dfbot, dfpho, nStages, Tp, Tm, Tb, etamature, visual, Fmax, etaF)
       class (type_feisty_fabm), intent(inout) :: self
@@ -871,7 +847,6 @@ contains
          if(depth_local.le.self%shelfdepth) self%theta_matrix(ixStart(4):ixEnd(4),:,i_depth)=0._rk
       end do
 
-      call scale_mortality_rates()
       call save_theta_matrices(self)
       print *, "Matrices saved successfully."
    end subroutine build_theta_matrices
@@ -883,7 +858,6 @@ contains
       real(rk) :: column_sum(nFGrid)
       integer :: j, n_depth_bounds
 
-      if (.not. allocated(depthDay) .or. .not. allocated(depthNight)) return
       n_depth_bounds = size(depthDay,1)
       if (n_depth_bounds <= 1) return
 
@@ -915,9 +889,14 @@ contains
       close(10)
    end subroutine save_theta_matrices
 
-   subroutine scale_mortality_rates()
-      mort0 = mort0/seconds_per_year
-      mortF = mortF/seconds_per_year
+   subroutine scale_mortality_rates(self)
+      class (type_feisty_fabm), intent(in) :: self
+      if (self%bgmort .ne. mort0(nGrid)) then
+         mort0(idxF:nGrid) = self%bgmort/seconds_per_year
+      else
+         mort0(idxF:nGrid) = mort0(idxF:nGrid)/seconds_per_year
+      end if
+      mortF(idxF:nGrid) = mortF(idxF:nGrid)/seconds_per_year
    end subroutine scale_mortality_rates
 
    ! Add model subroutines here.
