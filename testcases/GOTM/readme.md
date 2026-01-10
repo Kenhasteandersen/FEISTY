@@ -6,8 +6,8 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 
 | File | Description |
 |------|-------------|
-| `fabm.yaml` | FABM configuration file defining biogeochemical models including FEISTY fish model, UVic components (sediment, nutrients, phytoplankton, zooplankton, detritus), and their couplings |
-| `gotm.yaml` | GOTM configuration file containing physical ocean model settings (grid, temperature, salinity, meteorology, turbulence) and simulation parameters |
+| `fabm.yaml` | FABM configuration file defining biogeochemical models including FEISTY fish model, UVic components, and their couplings |
+| `gotm.yaml` | GOTM configuration file containing physical ocean model settings and simulation parameters |
 | `setup.zip` | Input data files required for the GOTM simulation (temperature/salinity profiles, meteorological forcing, grid specification, etc.) |
 
 ## Prerequisites
@@ -18,24 +18,35 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 ## Installation
 
 1. **Download required components**:
-   - FABM with GOTM: https://github.com/fabm-model/fabm/wiki/GOTM
+   - FABM with GOTM: https://github.com/fabm-model/fabm/releases
    - UVic BGC: https://github.com/BoldingBruggeman/fabm-uvic
    - FEISTY: https://github.com/Kenhasteandersen/FEISTY
 
-2. **Register models in FABM**: Place UVic and FEISTY folders under:
+2. **Register models in FABM**:
+
+   Place UVic and FEISTY folders under:
    ```
    .../extern/fabm/src/models/
    ```
 
-3. **Compile GOTM** with FABM support enabled.
+   Then edit `.../extern/fabm/src/CMakeLists.txt` and add the folder names to:
+   ```cmake
+   set(DEFAULT_INSTITUTES
+      ...
+      feisty
+      uvic
+   )
+   ```
+
+3. **Compile GOTM**: Follow the instructions at https://github.com/fabm-model/fabm/wiki/Building-and-installing
 
 ## Running the Test Case
 
-4. **Extract input data**: Unzip `setup.zip` to your GOTM build directory.
+1. **Extract input data**: Unzip `setup.zip` to your GOTM build directory.
 
-5. **Copy configuration files**: Copy `fabm.yaml` and `gotm.yaml` to the build directory, replacing any existing files.
+2. **Copy configuration files**: Copy `fabm.yaml` and `gotm.yaml` to the build directory, replacing any existing files.
 
-6. **Run the simulation**:
+3. **Run the simulation**:
    ```
    ./gotm
    ```
