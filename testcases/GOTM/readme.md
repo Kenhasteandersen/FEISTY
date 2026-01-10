@@ -29,7 +29,7 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
    .../extern/fabm/src/models/
    ```
 
-   Then edit `.../extern/fabm/src/CMakeLists.txt` and add the folder names to:
+   Then edit `.../extern/fabm/src/CMakeLists.txt` and add the UVic and FEISTY folder names from the step above. For example:
    ```cmake
    set(DEFAULT_INSTITUTES
       ...
