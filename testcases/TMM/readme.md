@@ -16,7 +16,7 @@ Configuration files and instructions for running FEISTY coupled with the UVic bi
 - Anaconda/Miniconda
 - FABM-OS built from source with FEISTY and UVic models registered
 - TMM files
-- Ninja build system (`conda install ninja`)
+- Ninja build system (may be required; install in fabmos environment: `conda activate fabmos && conda install ninja`)
 
 ## Installation
 
