@@ -126,12 +126,12 @@ instances:
       dcaco3: 650000.0
       rstd: 1.176e-12
     initialization:
-      o2: 200.0
-      p: 2.5
+      o2: 0.2 #200.0
+      p: 1 #2.5
       dic: 2.3
       alkalinity: 2.4
       c14: 1e-12
-      no3: 30.0
+      no3: 10 #30.0
     coupling:
       dc14ccn: dc14ccn/data
       atco2: atco2/data
@@ -145,8 +145,8 @@ instances:
       no_temp_sens: false
       bbio: 1.066
       cbio: 1.0
-      nud0: 0.5
-      wd0: 6.0
+      nud0: 0.07 #0.5
+      wd0: 16.0 #6.0
     initialization:
       detritus: 0.001
     coupling:
@@ -165,15 +165,15 @@ instances:
   phytoplankton:
     model: uvic/phytoplankton
     parameters:
-      alpha: 0.1
+      alpha: 0.16 #0.1
       k1n: 0.7
-      nup: 0.025
-      nupt0: 0.02
-      capr: 0.018
+      nup: 0.03 #0.025
+      nupt0: 0.015 #0.02
+      capr: 0.03 #0.018
       nitrogen: true
       nfix: false
       extra_diags: true
-      abio: 0.18
+      abio: 0.6 #0.18
       no_temp_sens: false
       bbio: 1.066
       cbio: 1.0
@@ -195,16 +195,16 @@ instances:
   diazotrophs:
     model: uvic/phytoplankton
     parameters:
-      alpha: 0.1
+      alpha: 0.16 #0.1
       k1n: 0.7
-      nup: 0.025
-      nupt0: 0.02
+      nup: 0.03 #0.025
+      nupt0: 0.015 #0.02
       capr: 0.018
       nitrogen: true
       nfix: true
-      jdiar: 0.5
-      extra_diags: true
-      abio: 0.18
+      jdiar: 0.4 #0.5
+      #extra_diags: true
+      abio: 0.6 #0.18
       no_temp_sens: false
       bbio: 1.066
       cbio: 1.0
@@ -234,11 +234,11 @@ instances:
       cbio: 1.0
       graz_upper_temp_limit: true
       nitrogen: true
-      gbio: 0.18
+      gbio: 0.4 #0.18
       nprey: 4
-      nu: 0 #0.34
+      nu: 0.06 #0.34
       gamma1: 0.7
-      geZ: 0.5
+      geZ: 0.4 #0.5
       kzoo: 0.15
       capr: 0.018
       zpref1: 0.3
