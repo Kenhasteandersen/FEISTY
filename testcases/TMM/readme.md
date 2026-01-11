@@ -13,10 +13,10 @@ Configuration files and instructions for running FEISTY coupled with the UVic bi
 
 ## Prerequisites
 
-- Anaconda/Miniconda with Python environment
-- Ninja build system (install via `conda install ninja`)
-- gfortran compiler
-- MPI library for parallel execution
+- Anaconda/Miniconda
+- FABM-OS built from source with FEISTY and UVic models registered
+- TMM files
+- Ninja build system (`conda install ninja`)
 
 ## Installation
 
