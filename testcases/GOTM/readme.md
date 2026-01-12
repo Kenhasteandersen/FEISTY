@@ -18,18 +18,20 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 ## Installation
 
 1. **Download required components**:
-   - FABM with GOTM: https://github.com/fabm-model/fabm/releases
+   - GOTM: https://github.com/gotm-model/code/releases (Source code including submodules)
+   - FABM: https://github.com/fabm-model/fabm/releases (Source code including externally maintained biogeochemical models)
    - UVic BGC: https://github.com/BoldingBruggeman/fabm-uvic
    - FEISTY: https://github.com/Kenhasteandersen/FEISTY
 
 2. **Register models in FABM**:
 
-   Place the UVic and FEISTY folders in one of these locations within your FABM directory:
-   - `<FABM>/src/models/`
-   or
-   - `<FABM>/extern/` 
+   > **Note**: GOTM may contain an outdated version of FABM. Updating to the latest FABM is recommended.
 
-   Then edit `<FABM>/src/CMakeLists.txt` and add the UVic and FEISTY folder names above. For example:
+   a. Copy all files from the latest FABM release to `<GOTM>/extern/fabm/` (replace existing files).
+
+   b. Place the UVic and FEISTY folders in `<GOTM>/extern/fabm/src/models/`.
+
+   c. Edit `<GOTM>/extern/fabm/src/CMakeLists.txt` and add `feisty` and `uvic` to the `DEFAULT_INSTITUTES` list:
    ```cmake
    set(DEFAULT_INSTITUTES
       ...
@@ -38,7 +40,7 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
    )
    ```
 
-3. **Compile GOTM**: Follow the instructions at https://github.com/fabm-model/fabm/wiki/Building-and-installing
+3. **Compile GOTM**: Follow the instructions at https://github.com/fabm-model/fabm/wiki/GOTM#building-from-scratch
 
 ## Running the Test Case
 
@@ -47,9 +49,11 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 2. **Copy configuration files**: Copy `fabm.yaml` and `gotm.yaml` to the build directory, replacing any existing files.
 
 3. **Run the simulation**:
-   ```
+   ```bash
    ./gotm
    ```
+
+   > **Note**: Some commands may require administrator privileges (`sudo` on Linux/macOS).
 
 ## Simulation Details
 
