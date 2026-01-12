@@ -26,7 +26,7 @@ Configuration files and instructions for running FEISTY coupled with the UVic bi
 |-----------|--------|
 | FABM-OS (Download the Source code including submodules) | https://github.com/BoldingBruggeman/fabmos/releases |
 | UVic BGC | https://github.com/BoldingBruggeman/fabm-uvic |
-| FEISTY | https://github.com/Kenhasteandersen/FEISTY |
+| FEISTY | https://github.com/Kenhasteandersen/FEISTY/tree/fabm-feisty |
 | TMM Data | https://sites.google.com/view/samarkhatiwala-research-tmm |
 
 For TMM, download `MITgcm_2.8deg` for coarse resolution simulations.
@@ -35,10 +35,10 @@ For TMM, download `MITgcm_2.8deg` for coarse resolution simulations.
 
 Place the UVic and FEISTY model folders under:
 ```
-.../fabmos/extern/fabm/src/models/
+<fabmos>/extern/fabm/src/models/
 ```
 
-Edit `.../fabmos/extern/fabm/src/CMakeLists.txt` to include the new models:
+Edit `<fabmos>/extern/fabm/src/CMakeLists.txt` to include the new models:
 ```cmake
 set(DEFAULT_INSTITUTES
    ...
@@ -46,6 +46,15 @@ set(DEFAULT_INSTITUTES
    uvic
 )
 ```
+
+   In `<fabmos>/extern/fabm/src/models/uvic/src/nut_chem.F90`, replace:
+   ```fortran
+   call self%register_dependency(self%id_atco2, standard_variables%mole_fraction_of_carbon_dioxide_in_air)
+   ```
+   with:
+   ```fortran
+   call self%register_dependency(self%id_atco2, 'atco2', '-', 'atmospheric CO2 concentration')
+   ```
 
 ### 3. Build FABM-OS
 
