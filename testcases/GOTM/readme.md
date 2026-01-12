@@ -21,7 +21,7 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
    - GOTM: https://github.com/gotm-model/code/releases (Source code including submodules)
    - FABM: https://github.com/fabm-model/fabm/releases (Source code including externally maintained biogeochemical models)
    - UVic BGC: https://github.com/BoldingBruggeman/fabm-uvic
-   - FEISTY: https://github.com/Kenhasteandersen/FEISTY
+   - FEISTY: https://github.com/Kenhasteandersen/FEISTY/tree/fabm-feisty
 
 2. **Register models in FABM**:
 
@@ -38,6 +38,15 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
       feisty
       uvic
    )
+   ```
+
+   d. In `<GOTM>/extern/fabm/src/models/uvic/src/nut_chem.F90`, replace:
+   ```fortran
+   call self%register_dependency(self%id_atco2, standard_variables%mole_fraction_of_carbon_dioxide_in_air)
+   ```
+   with:
+   ```fortran
+   call self%register_dependency(self%id_atco2, 'atco2', '-', 'atmospheric CO2 concentration')
    ```
 
 3. **Compile GOTM**: Follow the instructions at https://github.com/fabm-model/fabm/wiki/GOTM#building-from-scratch
