@@ -31,7 +31,7 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 
    b. Place the UVic and FEISTY folders in `<GOTM>/extern/fabm/src/models/`.
 
-   c. Edit `<GOTM>/extern/fabm/src/CMakeLists.txt` and add `feisty` and `uvic` to the `DEFAULT_INSTITUTES` list:
+   c. Edit `<GOTM>/extern/fabm/src/CMakeLists.txt` and add the UVic and FEISTY folder names to the `DEFAULT_INSTITUTES` list. For example:
    ```cmake
    set(DEFAULT_INSTITUTES
       ...
