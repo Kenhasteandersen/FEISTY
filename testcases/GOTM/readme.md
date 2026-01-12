@@ -24,12 +24,12 @@ Example configuration files for running FEISTY coupled with UVic biogeochemistry
 
 2. **Register models in FABM**:
 
-   Place UVic and FEISTY folders under:
-   ```
-   .../extern/fabm/src/models/
-   ```
+   Place the UVic and FEISTY folders in one of these locations within your FABM directory:
+   - `<FABM>/src/models/`
+   or
+   - `<FABM>/extern/` 
 
-   Then edit `.../extern/fabm/src/CMakeLists.txt` and add the UVic and FEISTY folder names from the step above. For example:
+   Then edit `<FABM>/src/CMakeLists.txt` and add the UVic and FEISTY folder names above. For example:
    ```cmake
    set(DEFAULT_INSTITUTES
       ...

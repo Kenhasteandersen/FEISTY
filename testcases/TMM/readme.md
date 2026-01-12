@@ -24,7 +24,7 @@ Configuration files and instructions for running FEISTY coupled with the UVic bi
 
 | Component | Source |
 |-----------|--------|
-| FABM-OS | https://github.com/BoldingBruggeman/fabmos/releases |
+| FABM-OS (Download the Source code including submodules) | https://github.com/BoldingBruggeman/fabmos/releases |
 | UVic BGC | https://github.com/BoldingBruggeman/fabm-uvic |
 | FEISTY | https://github.com/Kenhasteandersen/FEISTY |
 | TMM Data | https://sites.google.com/view/samarkhatiwala-research-tmm |
