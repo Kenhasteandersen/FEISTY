@@ -220,6 +220,7 @@ simulatePosition = function(setup,
   return(sim)
 }
 
+#' @export
 getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") {
   glob <- read.csv(sFile)
   #data(Cobalt)
@@ -248,7 +249,7 @@ getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") 
       lzprod = 0        # large zooplankton production
       dfbot  = 0         # detrital flux reaching the bottom
       photic = 200        # photic zone depth
-      depth  = 10         # water column depth
+      depth  = 0         # water column depth
       Tp     = 10            # pelagic water temperature
       Tm     = 10            # mid-water temperature
       Tb     = 10            # bottom water temperature
