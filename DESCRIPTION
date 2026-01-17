@@ -1,5 +1,5 @@
 Package: FEISTY
-Version: 1.0.0
+Version: 1.1.1
 Title: FishErIes Size and functional TYpe model (FEISTY)
 Authors@R: c(
   person("Yixin", "Zhao", email = "yixzh@aqua.dtu.dk", role = c("aut", "cre")),
@@ -10,25 +10,25 @@ Authors@R: c(
   person("Rémy", "Denéchère", role = "ctb")
   )
 Maintainer: Yixin Zhao <yixzh@aqua.dtu.dk>
-Depends: R (>= 3.5.0)
-Imports: 
-    deSolve, 
-    ggplot2, 
-    pracma, 
-    scales, 
-    cowplot, 
-    shiny, 
-    shinyjs
-Suggests: 
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0),
-    MASS,
-    Matrix,
+Depends: R (>= 4.4.0)
+Imports:
+    deSolve,
+    ggplot2,
+    pracma,
+    scales,
+    cowplot,
+    shiny,
+    shinyjs,
+    Matrix (>= 1.7-3),
     parallel,
     doParallel,
     foreach,
     maps
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    MASS
 VignetteBuilder: knitr
 Description: A size- and trait-based model of higher trophic level dynamics.
 License: MIT + file LICENSE

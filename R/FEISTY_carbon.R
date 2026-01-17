@@ -15,6 +15,12 @@
 #library(patchwork) # To arrange two plots
 #library(maps)
 
+#' @import Matrix
+#' @import doParallel
+#' @import foreach
+#' @import parallel
+NULL
+
 #
 # Calculate the flux from carcasses, fecal pellets,  reproduction wastes, and respiration.
 # The fluxes are calculated at the position of each size class in units of
