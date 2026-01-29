@@ -60,12 +60,31 @@ set(DEFAULT_INSTITUTES
 
 Follow the build instructions at https://github.com/BoldingBruggeman/fabmos/wiki
 
-Customize `setup.cfg` for your system:
+Before compiling, customize `setup.cfg` for your system:
 ```ini
 [build_ext]
 build_temp=../../build/fabmos
 cmake_opts=-G Ninja -DFABM_BASE="<YOUR_PATH>/fabmos/extern/fabm" -DCMAKE_Fortran_COMPILER=gfortran
 compiler=gfortran
+
+[build_ext]
+build_temp=../../build/fabmos
+cmake_opts=-G "Ninja" -DFABM_BASE="<fabmos_PATH>/fabmos/extern/fabm" -DCMAKE_Fortran_COMPILER="<gfortran_PATH>/gfortran.exe" -DCMAKE_AR="<gcc-ar_PATH>/gcc-ar.exe" -DCMAKE_RANLIB="<gcc-ranlib_PATH>/gcc-ranlib.exe"
+```
+
+Possible solutions for compilation issues.
+If it cannot find `ninja.exe`, add the file path in the `setup.cfg`:
+```ini
+...
+cmake_opts=-G "Ninja" -DCMAKE_MAKE_PROGRAM="<YOUR_NINJA_PATH>/ninja.exe"
+...
+```
+
+If it cannot find `gcc-ar.exe` or `gcc-ranlib.exe`, find the file path by running `where gcc-ar` and `where gcc-ranlib`.
+
+If the compiling has dependency ordering issues, force a single-threaded build before running `pip install .`:
+```
+set CMAKE_BUILD_PARALLEL_LEVEL=1
 ```
 
 ## Running the Simulation

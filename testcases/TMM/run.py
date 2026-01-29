@@ -47,7 +47,7 @@ out = sim.output_manager.add_netcdf_file(
     "output.nc", interval=1, interval_units=fabmos.TimeUnit.MONTHS
 )
 #out.request('nut_chem_no3', 'detritus_detritus', 'phytoplankton_phytoplankton', 'diazotrophs_phytoplankton', 'zooplankton_zoop', 'fish_fft_1_totB', 'fish_fft_2_totB', 'fish_fft_3_totB', 'fish_fft_4_totB', 'fish_fft_5_totB', 'fish_benthos')
-out.request('fish_fft_1_totB', 'fish_fft_2_totB', 'fish_fft_3_totB', 'fish_fft_4_totB', 'fish_fft_5_totB', *sim.fabm.state_variables, time_average=True)
+out.request('fish_fft_1_totB', 'fish_fft_2_totB', 'fish_fft_3_totB', 'fish_fft_4_totB', 'fish_fft_5_totB', 'fish_small_zooplankton_target_integrator_zoop_integrator_result','fish_large_zooplankton_target_integrator_zoop_integrator_result', *sim.fabm.state_variables, time_average=True)
 #out.request(*sim.fabm.default_outputs, time_average=True)
 #print([v.name for v in sim.fabm.default_outputs])
 start = cftime.datetime(2000, 1, 1, calendar=calendar)
