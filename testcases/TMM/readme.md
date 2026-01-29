@@ -64,11 +64,6 @@ Before compiling, customize `setup.cfg` for your system:
 ```ini
 [build_ext]
 build_temp=../../build/fabmos
-cmake_opts=-G Ninja -DFABM_BASE="<YOUR_PATH>/fabmos/extern/fabm" -DCMAKE_Fortran_COMPILER=gfortran
-compiler=gfortran
-
-[build_ext]
-build_temp=../../build/fabmos
 cmake_opts=-G "Ninja" -DFABM_BASE="<fabmos_PATH>/fabmos/extern/fabm" -DCMAKE_Fortran_COMPILER="<gfortran_PATH>/gfortran.exe" -DCMAKE_AR="<gcc-ar_PATH>/gcc-ar.exe" -DCMAKE_RANLIB="<gcc-ranlib_PATH>/gcc-ranlib.exe"
 ```
 
