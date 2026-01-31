@@ -5,34 +5,45 @@ library(FEISTY)
 library(sf)
 # Some other libraries may be required for plotting.
 
-# Convert NetCDF Results to FEISTY Simulation Object
+# Convert NetCDF to FEISTY Simulation Object
 #
-# Converts NetCDF output to a FEISTY-compatible sim object that can be used
-# with standard FEISTY plotting functions like plotBiomasstime().
+# Reads NetCDF output and converts to a FEISTY-compatible sim object for plotting.
+# Uses setupVertical2() to get full parameters including theta matrix, enabling
+# use with both plotBiomasstime() and plotNetwork().
+#
+# For single-location files, lon/lat are ignored. For multi-location files,
+# extracts data at the grid cell closest to the specified coordinates.
 #
 # Parameters:
-#   ncFile - Path to the NetCDF file
-#   groupNames - Optional vector of display names for functional types.
-#     Default: c("Small pelagic", "Mesopelagic", "Large pelagic", "Bathypelagic", "Demersal")
-#   timeUnit - Unit of time in the NC file. Options: "year", "day", "hour", "second".
-#     Time will be converted to years for plotting. Default: "day"
+#   ncFile - Path to the NetCDF file. Default: "output.nc"
+#   lon - Target longitude in degrees (-180 to 180 or 0 to 360). Optional for single-location files.
+#   lat - Target latitude in degrees (-90 to 90). Optional for single-location files.
 #
 # Returns:
 #   A list (sim object) compatible with FEISTY plotting functions:
 #     t - Time vector (in years)
-#     p - Parameters list with groupnames, colors, etc.
+#     p - Parameters list from setupVertical2 (includes theta, groupnames, colors, etc.)
+#     u - Full state variable matrix (resources + fish by size class)
 #     R - Resource biomass matrix
 #     totBiomass - Total fish biomass matrix
 #     SSB - Spawning stock biomass (same as totBiomass)
 #     yield - Yield matrix (filled with zeros)
+#     nTime - Number of time steps
+#     location - List with actual lon/lat of extracted grid cell
 #
 # Example:
-#   sim <- convertNCtoSim("result.nc")
+#   # Single-location file (lon/lat optional)
+#   sim <- ncToSim("result.nc")
+#
+#   # Multi-location file (lon/lat required)
+#   sim <- ncToSim("global_output.nc", lon = -120, lat = 35)
+#
+#   # Use with plotting functions
 #   plotBiomasstime(sim)
-convertNCtoSim <- function(ncFile,
-                           groupNames = c("Small pelagic", "Mesopelagic",
-                                          "Large pelagic", "Bathypelagic", "Demersal"),
-                           timeUnit = "day") {
+#   plotNetwork(sim)
+ncToSim <- function(ncFile = "output.nc",
+                    lon = NULL,
+                    lat = NULL) {
 
   if (!file.exists(ncFile)) {
     stop("NetCDF file not found: ", ncFile)
@@ -45,17 +56,121 @@ convertNCtoSim <- function(ncFile,
   on.exit(ncdf4::nc_close(nc), add = TRUE)
 
   # =========================================================================
+  # Read grid coordinates - handle different dimension naming conventions
+  # =========================================================================
+  dim_names <- names(nc$dim)
+
+  # Determine dimension names for longitude and latitude
+  if ("x" %in% dim_names && "y" %in% dim_names) {
+    # Format 1: x/y dimensions (global grid, need to calculate lon/lat)
+    nx <- nc$dim$x$len
+    ny <- nc$dim$y$len
+    dlon <- 360.0 / nx
+    dlat <- 180.0 / ny
+    lon_grid <- seq(from = dlon/2, by = dlon, length.out = nx)
+    lat_grid <- seq(from = -90 + dlat/2, by = dlat, length.out = ny)
+  } else if ("lon" %in% dim_names && "lat" %in% dim_names) {
+    # Format 2: lon/lat dimensions (coordinates stored directly)
+    lon_grid <- nc$dim$lon$vals
+    lat_grid <- nc$dim$lat$vals
+    nx <- length(lon_grid)
+    ny <- length(lat_grid)
+  } else if ("longitude" %in% dim_names && "latitude" %in% dim_names) {
+    # Format 3: longitude/latitude dimensions
+    lon_grid <- nc$dim$longitude$vals
+    lat_grid <- nc$dim$latitude$vals
+    nx <- length(lon_grid)
+    ny <- length(lat_grid)
+  } else {
+    stop("Cannot find spatial dimensions. Expected 'x/y', 'lon/lat', or 'longitude/latitude'")
+  }
+
+  # Check if this is a single-point file
+  if (nx == 1 && ny == 1) {
+    # Single-location file: ignore lon/lat input
+    cat("Single-location file detected.\n")
+    cat("Location: lon =", round(lon_grid[1], 2), ", lat =", round(lat_grid[1], 2), "\n")
+    ix <- 1
+    iy <- 1
+    actual_lon <- lon_grid[1]
+    actual_lat <- lat_grid[1]
+    display_lon <- actual_lon
+  } else {
+    # Multi-location file: lon/lat required
+    if (is.null(lon) || is.null(lat)) {
+      stop("This is a multi-location file. Please provide 'lon' and 'lat' arguments.")
+    }
+
+    # =========================================================================
+    # Convert input longitude to match grid range if needed
+    # =========================================================================
+    target_lon <- lon
+    # If grid is 0-360 and input is negative, convert
+    if (min(lon_grid) >= 0 && target_lon < 0) {
+      target_lon <- target_lon + 360
+    }
+    # If grid is -180 to 180 and input is > 180, convert
+    if (min(lon_grid) < 0 && target_lon > 180) {
+      target_lon <- target_lon - 360
+    }
+
+    # =========================================================================
+    # Find closest grid cell
+    # =========================================================================
+    ix <- which.min(abs(lon_grid - target_lon))
+    iy <- which.min(abs(lat_grid - lat))
+
+    actual_lon <- lon_grid[ix]
+    actual_lat <- lat_grid[iy]
+
+    # Convert back to -180 to 180 for display if needed
+    display_lon <- ifelse(actual_lon > 180, actual_lon - 360, actual_lon)
+
+    cat("Target location: lon =", lon, ", lat =", lat, "\n")
+    cat("Closest grid cell: lon =", round(display_lon, 2), ", lat =", round(actual_lat, 2), "\n")
+    cat("Grid indices: ix =", ix, ", iy =", iy, "\n")
+  }
+
+  # =========================================================================
+  # Read depth from NC file
+  # =========================================================================
+  depth <- 500  # default
+
+  # Try zc variable first (layer center depths, 3D: x, y, z)
+  if ("zc" %in% names(nc$var)) {
+    zc <- ncdf4::ncvar_get(nc, "zc")
+    if (length(dim(zc)) == 3) {
+      zc_local <- zc[ix, iy, ]
+      # Get deepest non-NA layer
+      valid_zc <- zc_local[!is.na(zc_local)]
+      if (length(valid_zc) > 0) {
+        depth <- abs(min(valid_zc))  # deepest layer (most negative value)
+      }
+    }
+  } else if ("z" %in% dim_names) {
+    # Fallback to z dimension if values are actual depths (negative)
+    z_vals <- nc$dim$z$vals
+    if (min(z_vals) < 0) {
+      depth <- abs(min(z_vals))
+    }
+  }
+  cat("Depth:", round(depth, 1), "m\n")
+
+  # =========================================================================
+  # Initialize FEISTY setupVertical2 with depth from NC file
+  # =========================================================================
+  p <- setupVertical2(depth = depth)
+
+  # =========================================================================
   # Read time and convert to calendar years
   # =========================================================================
   time_raw <- nc$dim$time$vals
 
-  # Try to get time units attribute (e.g., "seconds since 1963-01-01 00:00:00")
   time_units <- tryCatch(
     ncdf4::ncatt_get(nc, "time", "units")$value,
     error = function(e) NULL
   )
 
-  # Parse time units to extract reference date and unit
   if (!is.null(time_units) && grepl("since", time_units)) {
     parts <- strsplit(time_units, " since ")[[1]]
     unit <- tolower(trimws(parts[1]))
@@ -77,18 +192,40 @@ convertNCtoSim <- function(ncFile,
     time <- as.numeric(format(time_posix, "%Y")) +
             (as.numeric(format(time_posix, "%j")) - 1) / 365
 
-    cat("  Time units from NC:", time_units, "\n")
+    cat("Time units from NC:", time_units, "\n")
   } else {
-    time <- switch(timeUnit,
-      "year" = time_raw, "day" = time_raw / 365,
-      "hour" = time_raw / (365 * 24), "second" = time_raw / (365 * 24 * 3600),
-      time_raw
-    )
-    cat("  Time units: manual conversion (", timeUnit, " -> year)\n", sep = "")
+    # Fallback: assume time is in days if no units attribute found
+    time <- time_raw / 365
+    cat("Time units: no attribute found, assuming days -> converting to years\n")
+  }
+
+  nTime <- length(time)
+  nResources <- p$nResources
+  nGroups <- p$nGroups
+
+  # =========================================================================
+  # Read resource data
+  # =========================================================================
+  R <- matrix(0, nrow = nTime, ncol = nResources)
+
+  # Try to read resource variables (small zoo, large zoo, benthos)
+  resource_vars <- c("fish_small_zooplankton_target_integrator_zoop_integrator_result",
+                     "fish_large_zooplankton_target_integrator_zoop_integrator_result",
+                     "fish_benthos")
+
+  for (i in seq_along(resource_vars)) {
+    if (i <= nResources && resource_vars[i] %in% names(nc$var)) {
+      res_data <- ncdf4::ncvar_get(nc, resource_vars[i])
+      if (length(dim(res_data)) == 3) {
+        R[, i] <- res_data[ix, iy, ]
+      } else if (length(dim(res_data)) == 1) {
+        R[, i] <- res_data
+      }
+    }
   }
 
   # =========================================================================
-  # Find and read total biomass variables
+  # Read total biomass variables at the specified location
   # =========================================================================
   totB_vars <- grep("^fish_fft_[0-9]+_totB$", names(nc$var), value = TRUE)
   totB_vars <- totB_vars[order(as.numeric(gsub("fish_fft_([0-9]+)_totB", "\\1", totB_vars)))]
@@ -97,77 +234,83 @@ convertNCtoSim <- function(ncFile,
     stop("No fish_fft_X_totB variables found in NetCDF file")
   }
 
-  nGroups <- length(totB_vars)
-  nTime <- length(time)
-
-  # Read biomass data into matrix (time x groups)
+  # Read biomass data at the specific location
   totBiomass <- matrix(NA, nrow = nTime, ncol = nGroups)
+
   for (i in seq_along(totB_vars)) {
-    totBiomass[, i] <- as.vector(ncdf4::ncvar_get(nc, totB_vars[i]))
+    if (i > nGroups) break
+    # Read 3D data: [x, y, time]
+    biomass_3d <- ncdf4::ncvar_get(nc, totB_vars[i])
+
+    # Extract time series at the specific grid cell
+    if (length(dim(biomass_3d)) == 3) {
+      biomass_ts <- biomass_3d[ix, iy, ]
+    } else if (length(dim(biomass_3d)) == 2) {
+      # If 2D, assume it's [location, time] or similar
+      biomass_ts <- biomass_3d[ix, ]
+    } else {
+      biomass_ts <- as.vector(biomass_3d)
+    }
+
+    # Replace fill values with NA
+    biomass_ts[biomass_ts < -1e+10] <- NA
+
+    totBiomass[, i] <- biomass_ts
   }
 
   # =========================================================================
-  # Create group names and identifiers
+  # Read fish biomass by size class
   # =========================================================================
-  fft_ids <- paste0("fft_", 1:nGroups)
+  fish_vars <- grep("^fish_fft_[0-9]+_size_[0-9]+$", names(nc$var), value = TRUE)
 
-  # Adjust groupNames length if needed
-  if (length(groupNames) < nGroups) {
-    groupNames <- c(groupNames, paste0("FFT_", (length(groupNames)+1):nGroups))
-  } else if (length(groupNames) > nGroups) {
-    groupNames <- groupNames[1:nGroups]
+  # Determine size classes per group from NC file
+  size_classes_nc <- list()
+  for (g in 1:nGroups) {
+    pattern <- paste0("^fish_fft_", g, "_size_[0-9]+$")
+    vars_g <- grep(pattern, fish_vars, value = TRUE)
+    size_classes_nc[[g]] <- length(vars_g)
   }
 
-  # =========================================================================
-  # Create color palette (matching FEISTY style)
-  # =========================================================================
-  default_colors <- c(
-    "fft_1" = "#33BBEE",
-    "fft_2" = "#009988",
-    "fft_3" = "#EE7733",
-    "fft_4" = "#CC3311",
-    "fft_5" = "#EE3377"
-  )
-  my_palette <- default_colors[1:nGroups]
-  names(my_palette) <- fft_ids
+  # Total fish state variables
+  nFishStates <- sum(unlist(size_classes_nc))
+  fish_matrix <- matrix(0, nrow = nTime, ncol = nFishStates)
 
-  my_names <- groupNames
-  names(my_names) <- fft_ids
+  col_idx <- 1
+  for (g in 1:nGroups) {
+    for (s in 1:size_classes_nc[[g]]) {
+      var_name <- paste0("fish_fft_", g, "_size_", s)
+      if (var_name %in% names(nc$var)) {
+        fish_data <- ncdf4::ncvar_get(nc, var_name)
+        if (length(dim(fish_data)) == 3) {
+          fish_matrix[, col_idx] <- fish_data[ix, iy, ]
+        } else if (length(dim(fish_data)) == 1) {
+          fish_matrix[, col_idx] <- fish_data
+        }
+      }
+      col_idx <- col_idx + 1
+    }
+  }
 
-  # =========================================================================
-  # Create dummy resource data (required by getTimeseries)
-  # =========================================================================
-  nResources <- 1
-  R <- matrix(0, nrow = nTime, ncol = nResources)
-
-  # =========================================================================
-  # Create u0 (initial values)
-  # =========================================================================
-  u0_resources <- 0
-  names(u0_resources) <- "dummy_resource"
-
-  u0_fish <- rep(1, nGroups)
-  names(u0_fish) <- paste0(fft_ids, "_1")
-
-  u0 <- c(u0_resources, u0_fish)
+  # Replace NA/negative with 0
+  fish_matrix[is.na(fish_matrix) | fish_matrix < 0] <- 0
+  R[is.na(R) | R < 0] <- 0
 
   # =========================================================================
-  # Build parameters list (p)
+  # Build state variable matrix u (resources + fish)
   # =========================================================================
-  all_groupnames <- c("dummy_resource", fft_ids)
+  u <- cbind(R, fish_matrix)
 
-  full_palette <- c("dummy_resource" = "#CCCCCC", my_palette)
-  full_names <- c("dummy_resource" = "Resource", my_names)
-
-  p <- list(
-    nResources = nResources,
-    nGroups = nGroups,
-    groupnames = all_groupnames,
-    my_palette = full_palette,
-    my_names = full_names,
-    ixR = 1,
-    u0 = u0
-  )
+  # =========================================================================
+  # Adjust p$ix to match NC file structure if needed
+  # =========================================================================
+  # Rebuild ix based on actual size classes in NC file
+  p$ix <- list()
+  start_idx <- nResources + 1
+  for (g in 1:nGroups) {
+    n_sizes <- size_classes_nc[[g]]
+    p$ix[[g]] <- start_idx:(start_idx + n_sizes - 1)
+    start_idx <- start_idx + n_sizes
+  }
 
   # =========================================================================
   # Build simulation object (sim)
@@ -175,21 +318,39 @@ convertNCtoSim <- function(ncFile,
   sim <- list(
     t = time,
     p = p,
+    u = u,
     R = R,
     totBiomass = totBiomass,
     SSB = totBiomass,
     yield = matrix(0, nrow = nTime, ncol = nGroups),
-    nTime = nTime
+    nTime = nTime,
+    location = list(
+      lon = display_lon,
+      lat = actual_lat,
+      ix = ix,
+      iy = iy
+    )
   )
 
-  # Add class for S3 method dispatch
   class(sim) <- c("FEISTY", "list")
 
-  cat("Converted NC file to FEISTY sim object:\n")
+  cat("\nExtracted time series from NC file:\n")
+  cat("  Location: (", round(display_lon, 2), ", ", round(actual_lat, 2), ")\n", sep = "")
   cat("  Time steps:", nTime, "\n")
   cat("  Time range:", round(min(time), 1), "-", round(max(time), 1), "(years)\n")
-  cat("  Functional types:", nGroups, "\n")
-  cat("  Groups:", paste(groupNames, collapse = ", "), "\n")
+  cat("  Resources:", nResources, "\n")
+  cat("  Fish groups:", nGroups, "\n")
+  cat("  Size classes per group:", paste(unlist(size_classes_nc), collapse = ", "), "\n")
+  cat("  Total state variables:", ncol(u), "\n")
+
+  # Report biomass statistics
+  valid_biomass <- totBiomass[!is.na(totBiomass) & totBiomass > 0]
+  if (length(valid_biomass) > 0) {
+    cat("  Biomass range:", round(min(valid_biomass), 4), "-",
+        round(max(valid_biomass), 2), "g/m2\n")
+  } else {
+    cat("  Warning: No valid biomass data at this location\n")
+  }
 
   return(sim)
 }

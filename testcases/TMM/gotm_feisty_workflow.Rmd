@@ -1,0 +1,82 @@
+---
+title: "GOTM-FEISTY Workflow"
+author: "Yixin Zhao"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+This vignette demonstrates how to run GOTM-FEISTY simulations and visualize results.
+
+# Prerequisites
+
+- GOTM compiled with FABM-FEISTY support
+- FEISTY R package
+
+```{r}
+library(FEISTY)
+```
+
+# 1. Run GOTM Simulation
+
+## Mac / Linux
+
+```{r}
+sim_dir <- "/path/to/simulation_folder"
+setwd(sim_dir)
+system("./gotm")
+```
+
+## Windows
+
+### Option A: Both GOTM and R in WSL (or both in Windows)
+
+If GOTM and R are in the same environment, run directly:
+
+```{r}
+sim_dir <- "/path/to/simulation_folder"
+setwd(sim_dir)
+system("./gotm")
+```
+
+### Option B: GOTM in WSL, R in Windows
+
+Run GOTM in WSL terminal first:
+
+```bash
+cd /path/to/simulation_folder
+./gotm
+```
+
+Then in R (Windows), access the output via WSL path:
+
+```{r}
+sim_dir <- "//wsl.localhost/Ubuntu/path/to/simulation_folder"
+setwd(sim_dir)
+```
+
+# 2. Extract Results
+
+```{r}
+sim <- ncToSim("output.nc")
+
+# For multi-location files, specify coordinates:
+# sim <- ncToSim("output.nc", lon = -120, lat = 35)
+```
+
+# 3. Visualize
+
+```{r}
+plotBiomasstime(sim)
+plotNetwork(sim)
+```
+
+# Simulation Object Fields
+
+- `sim$t` - Time vector (years)
+- `sim$totBiomass` - Total biomass per functional type
+- `sim$u` - Full state matrix (resources + fish by size class)
+- `sim$p` - Parameters from setupVertical2()
