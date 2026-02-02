@@ -64,7 +64,7 @@ setwd(sim_dir)
 sim <- ncToSim("output.nc")
 
 # For multi-location files, specify coordinates:
-# sim <- ncToSim("output.nc", lon = -120, lat = 35)
+# sim <- ncToSim("output.nc", lon = 2, lat = 55)
 ```
 
 # 3. Visualize

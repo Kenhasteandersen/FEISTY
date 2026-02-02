@@ -36,7 +36,7 @@ library(sf)
 #   sim <- ncToSim("result.nc")
 #
 #   # Multi-location file (lon/lat required)
-#   sim <- ncToSim("global_output.nc", lon = -120, lat = 35)
+#   sim <- ncToSim("global_output.nc", lon = 2, lat = 55)
 #
 #   # Use with plotting functions
 #   plotBiomasstime(sim)
@@ -321,7 +321,7 @@ ncToSim <- function(ncFile = "output.nc",
     u = u,
     R = R,
     totBiomass = totBiomass,
-    SSB = totBiomass,
+    SSB = matrix(0, nrow = nTime, ncol = nGroups),
     yield = matrix(0, nrow = nTime, ncol = nGroups),
     nTime = nTime,
     location = list(
