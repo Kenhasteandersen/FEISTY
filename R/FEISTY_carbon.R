@@ -195,13 +195,13 @@ calcCarbonInjection = function(sim) {
 ### PERHAPS MOVE TO MAIN FEISTY (including data file)
 #
 #' @export
-simulatePosition = function(setup, 
-                            lat, lon, 
+simulatePosition = function(setup,
+                            lat, lon,
                             Fmax=0, ixGroups=NULL, # Specification of fishing parameters sent to setFishing()
-                            nStages=9, tEnd=200) {
+                            nStages=9, tEnd=200, glob=NULL) {
   # Output from COBALT
-    
-    pp = getParametersPosition(lat,lon)
+
+    pp = getParametersPosition(lat, lon, glob=glob)
     p = setup(szprod = pp$szprod,
               lzprod = pp$lzprod,
               dfpho  = pp$dfbot,
@@ -227,49 +227,24 @@ simulatePosition = function(setup,
 }
 
 #' @export
-getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv") {
-  glob <- read.csv(sFile)
-  #data(Cobalt)
-  #glob = Cobalt
+getParametersPosition = function(lat, lon, sFile="data/Cobalt global data.csv", glob=NULL) {
+  if (is.null(glob))
+    glob <- read.csv(sFile)
   
   if (lon<0)
     lon = 360+lon
   
   ix = which.min( (glob$lat-lat)^2 + (glob$lon-lon)^2 ) # Find the best fitting location
-  
-  if ( min((glob$lat-lat)^2 + (glob$lon-lon)^2) < 10)
-  {
-      szprod = glob[ix, "szprod"]        # small zooplankton production
-      lzprod = glob[ix, "lzprod"]        # large zooplankton production
-      dfbot  = glob[ix, "dfbot"]         # detrital flux reaching the bottom
-      photic = glob[ix, "photic"]        # photic zone depth
-      depth  = glob[ix, "depth"]         # water column depth
-      Tp     = glob[ix, "Tp"]            # pelagic water temperature
-      Tm     = glob[ix, "Tm"]            # mid-water temperature
-      Tb     = glob[ix, "Tb"]            # bottom water temperature
-  }
-  else
-  {
-    # No need to simulate land points for long:
-      szprod = 0        # small zooplankton production
-      lzprod = 0        # large zooplankton production
-      dfbot  = 0         # detrital flux reaching the bottom
-      photic = 200        # photic zone depth
-      depth  = 0         # water column depth
-      Tp     = 10            # pelagic water temperature
-      Tm     = 10            # mid-water temperature
-      Tb     = 10            # bottom water temperature
-  }
-  
+
   return( list(
-    szprod = szprod,        # small zooplankton production
-    lzprod = lzprod,        # large zooplankton production
-    dfbot  = dfbot,         # detrital flux reaching the bottom
-    photic = photic,        # photic zone depth
-    depth  = depth,         # water column depth
-    Tp     = Tp,            # pelagic water temperature
-    Tm     = Tm,            # mid-water temperature
-    Tb     = Tb  
+    szprod = glob[ix, "szprod"],        # small zooplankton production
+    lzprod = glob[ix, "lzprod"],        # large zooplankton production
+    dfbot  = glob[ix, "dfbot"],         # detrital flux reaching the bottom
+    photic = glob[ix, "photic"],        # photic zone depth
+    depth  = glob[ix, "depth"],         # water column depth
+    Tp     = glob[ix, "Tp"],            # pelagic water temperature
+    Tm     = glob[ix, "Tm"],            # mid-water temperature
+    Tb     = glob[ix, "Tb"]
   ))
 }
 
@@ -521,6 +496,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
                                          Fmax=0, ixGroups=NULL,        # Specification of fishing (set to setFishing())
                                          bPrintStatus=TRUE) {
 
+  tTotal = proc.time()
+
   # Initialize a matrix with all injections
   matrixInject = array(dim=dim(TM$M3d), data=0)
   
@@ -539,43 +516,52 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
     ix_lat = which( TM$grid$yt>=lat[1] & TM$grid$yt<=lat[2] )
   }
   grid_idx <- expand.grid(i = ix_lat, j = ix_lon)
-  
+
+  # Filter out land points using the ocean mask (surface layer of M3d):
+  is_ocean <- sapply(1:nrow(grid_idx), function(k) TM$M3d[grid_idx$i[k], grid_idx$j[k], 1] == 1)
+  grid_idx <- grid_idx[is_ocean, ]
+
   # Setup parallel backend:
   cl <- makeCluster( detectCores()-1 )
   registerDoParallel(cl)
-  
-  # Loop over all grid points in the lat/lon range:
-  cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "position(s).\n")
+
+  # Loop over ocean grid points only:
+  cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "ocean position(s).\n")
+  tStart = proc.time()
   grid = TM$grid
+  glob = read.csv("data/Cobalt global data.csv")  # Read once, pass to all workers
   injectTM = foreach(i = 1:dim(grid_idx)[1],
                      .packages = c("FEISTY","pracma"),
-                     .verbose = FALSE) %dopar% 
+                     .verbose = FALSE) %dopar%
     {
       sim = simulatePosition(setupVertical2,
-                             grid$yt[ grid_idx$i[i] ], 
+                             grid$yt[ grid_idx$i[i] ],
                              grid$xt[ grid_idx$j[i] ],
-                             Fmax=Fmax, ixGroups=ixGroups)
-      
+                             Fmax=Fmax, ixGroups=ixGroups,
+                             glob=glob)
+
       # Calculate carbon fluxes at the position of the fish:
-      sim = calcCarbonFluxes(sim) 
+      sim = calcCarbonFluxes(sim)
       #totalFlux = sim$fluxCarcass + sim$fluxFecal + sim$fluxRepro + sim$fluxRespiration
-      
+
       # Calculate the injection
       inject = calcCarbonInjection(sim)
-      
+
       # Calculate injection on TM grid:
-      injectTM = project_injection_to_TM(inject, 
-                                         grid$yt[ grid_idx$i[i] ], 
-                                         grid$xt[ grid_idx$j[i] ], grid) 
-      
+      injectTM = project_injection_to_TM(inject,
+                                         grid$yt[ grid_idx$i[i] ],
+                                         grid$xt[ grid_idx$j[i] ], grid)
+
       ix = sim$t>0.5*max(sim$t) # Last half of the timeseries
-      
-      
+
+
       #injectTM$inject
       list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]) )
-    } 
+    }
   stopCluster(cl)
-  
+  tSim = (proc.time() - tStart)[3]
+  cat("FEISTY simulations completed in", round(tSim, 1), "seconds.\n")
+
   # Put into the injection matrix:
   SSB = array(data=0, c(dim(matrixInject)[1:2], 5))
   Yield = array(data=0, c(dim(matrixInject)[1:2], 5))
@@ -586,8 +572,11 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   }
   
   # Solve the transport matrix to get sequestration etc.:
-  cat("Calculating carbon sequestration\n")
+  cat("Calculating carbon sequestration...\n")
+  tStart = proc.time()
   sequestration = calcCarbonSequestration(TM, matrixInject)
+  tSeq = (proc.time() - tStart)[3]
+  cat("Carbon sequestration completed in", round(tSeq, 1), "seconds.\n")
   #
   # Add results from simulations:
   #
@@ -637,6 +626,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
     print(combined)
   }
   
+  cat("Total time:", round((proc.time() - tTotal)[3], 1), "seconds.\n")
   return( sequestration )
 }
 
