@@ -204,7 +204,7 @@ simulatePosition = function(setup,
     pp = getParametersPosition(lat, lon, glob=glob)
     p = setup(szprod = pp$szprod,
               lzprod = pp$lzprod,
-              dfpho  = pp$dfbot,
+              dfbot  = pp$dfbot,
               depth  = pp$depth,
               Tp     = pp$Tp,
               Tm     = pp$Tm,
@@ -491,10 +491,11 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
 # Calculate carbon sequestration at a range of positions:
 #
 #' @export
-calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(), 
+calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
                                          lon=c(0,360), lat=c(-90,90),  # Which latitudes to simulate over
                                          Fmax=0, ixGroups=NULL,        # Specification of fishing (set to setFishing())
-                                         bPrintStatus=TRUE) {
+                                         bPrintStatus=TRUE,
+                                         nCores=detectCores()-2) {
 
   tTotal = proc.time()
 
@@ -522,7 +523,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   grid_idx <- grid_idx[is_ocean, ]
 
   # Setup parallel backend:
-  cl <- makeCluster( detectCores()-1 )
+  cl <- makeCluster( nCores )
   registerDoParallel(cl)
 
   # Loop over ocean grid points only:
