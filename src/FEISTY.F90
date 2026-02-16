@@ -585,6 +585,12 @@ end if
 ! ----------------------------------------------
       dBdt = Fin - Fout + (eFish - mortFish)*B - Repro
 
+! Add Fout of last stage to Repro for output (does not affect dynamics above):
+      do i = 1, nGroups
+        istop = ixEnd(i) - nResources
+        Repro(istop) = Repro(istop) + Fout(istop)
+      end do
+
 ! ----------------------------------------------
 ! Derivative of resources
 ! ----------------------------------------------

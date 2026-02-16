@@ -42,20 +42,18 @@ calcCarbonFluxes <- function(sim) {
   # Fluxes from grazing
   grazrate = p$Cmax[p$ixFish] * sim$f # grazing rate [yr^-1]
   graz = sim$B * grazrate # grazing flux (before assimilation) [gWW.m^-2.yr^-1]
-  feces = graz * 0.15 # feces flux [gWW.m^-2.yr^-1] -> (1 - p$epsAssim)
+  feces = graz * 0.15 # feces flux [gWW.m^-2.yr^-1] -> (1 - p$epsAssim)/2 A half of unassimilated food is feces.
   
   # Reproduction waste goes to fecal pellets
+  # sim$Repro already includes Fout of last stage for each functional type
   rep2feces = sim$Repro
-  rep2feces[, sapply(p$ix, tail, n = 1) - p$nResources] =
-    sim$Repro[, sapply(p$ix, tail, n = 1) - p$nResources] +
-    sim$Fout[, sapply(p$ix, tail, n = 1) - p$nResources]
-  rep2feces = rep2feces * (1 - unique(p$epsRepro)) * unique(p$epsRepro / 0.22) # eps_egg = 0.22 from Andersen 2019 p47
+  rep2feces = rep2feces * unique(p$epsRepro / 0.22) * (1 - 0.22) # dead eggs sink as feces; eps_egg = 0.22 from Andersen 2019 p47
   
-  feces = feces + rep2feces # feces flux [gWW.m^-2.yr^-1]
+  feces = feces #+ rep2feces # feces flux [gWW.m^-2.yr^-1]
   
   # Flux from respiration
-  resprate = p$metabolism[p$ixFish] + 0.15 * grazrate # respiration rate [yr-1]
-  respiration = sim$B * resprate # respiration flux [gWW.m^-2.yr^-1]
+  resprate = p$metabolism[p$ixFish] + 0.15 * grazrate # respiration rate [yr-1] A half of unassimilated food is specific dynamic action.
+  respiration = sim$B * resprate + (1 - unique(p$epsRepro / 0.22))*sim$Repro # metabolic cost of egg production [gWW.m^-2.yr^-1]
   
   # Get last 40% of timeseries
   etaTime <- 0.4 
@@ -522,6 +520,9 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   is_ocean <- sapply(1:nrow(grid_idx), function(k) TM$M3d[grid_idx$i[k], grid_idx$j[k], 1] == 1)
   grid_idx <- grid_idx[is_ocean, ]
 
+  grid = TM$grid
+  glob = read.csv("data/Cobalt global data.csv")  # Read once, pass to all workers
+  
   # Setup parallel backend:
   cl <- makeCluster( nCores )
   registerDoParallel(cl)
@@ -529,8 +530,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Loop over ocean grid points only:
   cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "ocean position(s).\n")
   tStart = proc.time()
-  grid = TM$grid
-  glob = read.csv("data/Cobalt global data.csv")  # Read once, pass to all workers
+
   injectTM = foreach(i = 1:dim(grid_idx)[1],
                      .packages = c("FEISTY","pracma"),
                      .verbose = FALSE) %dopar%
