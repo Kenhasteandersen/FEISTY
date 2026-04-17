@@ -42,26 +42,28 @@ calcCarbonFluxes <- function(sim) {
   # Fluxes from grazing
   grazrate = p$Cmax[p$ixFish] * sim$f # grazing rate [yr^-1]
   graz = sim$B * grazrate # grazing flux (before assimilation) [gWW.m^-2.yr^-1]
-  feces = graz * 0.15 # feces flux [gWW.m^-2.yr^-1] -> (1 - p$epsAssim)/2 A half of unassimilated food is feces.
+  feces = graz * (1 - p$epsAssim)/2 # feces flux [gWW.m^-2.yr^-1] -> (1 - p$epsAssim)/2 A half of unassimilated food is feces.
   
-  # Reproduction waste goes to fecal pellets
+  # Waste energy from the total energy invested into reproduction to eggs goes to respiration. 
+  # Dead eggs from eggs to larvae becomes detritus, so goes to fecal pellets.
+  
   # sim$Repro already includes Fout of last stage for each functional type
-  rep2feces = sim$Repro
-  rep2feces = rep2feces * unique(p$epsRepro / 0.22) * (1 - 0.22) # dead eggs sink as feces; eps_egg = 0.22 from Andersen 2019 p47
-  
-  feces = feces #+ rep2feces # feces flux [gWW.m^-2.yr^-1]
+  eps_egg   = 0.22 # 1-eps_egg is The fraction of reproductive invested used for respiration
+  eps_R     = unique(p$epsRepro) / eps_egg # The fraction of eggs that survives
+  rep2resp  = sim$Repro * (1 - eps_egg) # metabolic cost of egg production [gWW.m^-2.yr^-1]
+  rep2feces = sim$Repro * eps_egg * (1 - eps_R) # dead eggs sink as feces; eps_egg = 0.22 from Andersen 2019 p47
   
   # Flux from respiration
-  resprate = p$metabolism[p$ixFish] + 0.15 * grazrate # respiration rate [yr-1] A half of unassimilated food is specific dynamic action.
-  respiration = sim$B * resprate + (1 - unique(p$epsRepro / 0.22))*sim$Repro # metabolic cost of egg production [gWW.m^-2.yr^-1]
+  resprate = p$metabolism[p$ixFish] + (1 - p$epsAssim)/2 * grazrate # respiration rate [yr-1] A half of unassimilated food is specific dynamic action.
+  respiration = sim$B * resprate + rep2resp # metabolic cost of egg production [gWW.m^-2.yr^-1]
   
   # Get last 40% of timeseries
   etaTime <- 0.4 
   ixTime  <- which(sim$t >= ((1 - etaTime) * sim$t[sim$nTime]))
   
-  sim$fluxCarcass   <- colMeans(sim$B[ixTime,] * p$mort0[-c(1:p$nResources)]) # deadfalls flux [gWW.m^-2.yr^-1]
-  sim$fluxFecal <- colMeans(feces[ixTime,]) # total feces flux [gWW.m^-2.yr^-1]
-  sim$fluxRepro  <- colMeans(rep2feces[ixTime,]) # feces flux from reproduction waste [gWW.m^-2.yr^-1]
+  sim$fluxCarcass     <- colMeans(sim$B[ixTime,] * p$mort0[-c(1:p$nResources)]) # deadfalls flux [gWW.m^-2.yr^-1]
+  sim$fluxFecal       <- colMeans(feces[ixTime,]) # total feces flux [gWW.m^-2.yr^-1]
+  sim$fluxRepro       <- colMeans(rep2feces[ixTime,]) # feces flux from reproduction waste [gWW.m^-2.yr^-1]
   sim$fluxRespiration <- colMeans(respiration[ixTime,]) # respiration flux [gWW.m^-2.yr^-1]
   
   return(sim)
@@ -100,7 +102,7 @@ calcCarbonInjection = function(sim) {
     # remineralization at each depth
     z <- 0:p$bottom
     alpha <- rep(NA, length(z)) # bacterial degradation
-    zeta_X <- rep(0, length(z)) # source = poc production at each depth
+    zeta_X <- rep(0, length(z)) # soa\q 1urce = poc production at each depth
     
     # set a depth-dependent bacterial degradation
     alpha[z <= 100] <- rp
@@ -383,7 +385,9 @@ calc_per_area_sum = function(grid, matrix, depthUpper=0) {
 #
 #' @export
 calcCarbonSequestration <- function(TM,  # Transport matrix
-                                    matrixInject  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
+                                    matrixInject,  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
+                                    photic = 200   # euphotic zone depth [m]: scalar (default 200m)
+                                                   # or 2D matrix (lat x lon) for spatially varying depth from Cobalt data
 ){
   
   project_to_TM = function(vector) {
@@ -455,8 +459,20 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   result$TotInject <- TotInject
   
   # Carbon injected below euphotic zone (gC/m2/yr):
-  ixBelowEuphotic = TM$grid$zt > 200
-  result$inject_below_euphotic = apply( result$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
+  zt <- TM$grid$zt
+  if (length(photic) == 1) {
+    ixBelowEuphotic = zt > photic
+    result$inject_below_euphotic = apply( result$inject_per_area[,,ixBelowEuphotic], c(1,2), sum)
+  } else {
+    nlat <- dim(matrixInject)[1]; nlon <- dim(matrixInject)[2]
+    result$inject_below_euphotic <- matrix(0, nrow = nlat, ncol = nlon)
+    for (i in 1:nlat)
+      for (j in 1:nlon) {
+        ix <- zt > photic[i, j]
+        if (any(ix))
+          result$inject_below_euphotic[i, j] <- sum(result$inject_per_area[i, j, ix])
+      }
+  }
   result$TotInject_below_euphotic = sum( result$inject_below_euphotic*grid$Areat ) / 1e15 #PgC/yr
   # Carbon sequestered on the grid and per area (gC/yr/m3):
   result$Cseq = project_to_TM( cseq )
@@ -557,7 +573,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
 
 
       #injectTM$inject
-      list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]) )
+      list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]),
+            photic=sim$p$photic )
     }
   stopCluster(cl)
   tSim = (proc.time() - tStart)[3]
@@ -566,16 +583,18 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Put into the injection matrix:
   SSB = array(data=0, c(dim(matrixInject)[1:2], 5))
   Yield = array(data=0, c(dim(matrixInject)[1:2], 5))
+  photic_map = matrix(200, nrow = length(TM$grid$yt), ncol = length(TM$grid$xt))
   for (i in 1:dim(grid_idx)[1]) {
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inject
     SSB[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$SSB
     Yield[grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$Y
+    photic_map[ grid_idx$i[i], grid_idx$j[i] ] = injectTM[[i]]$photic
   }
-  
+
   # Solve the transport matrix to get sequestration etc.:
   cat("Calculating carbon sequestration...\n")
   tStart = proc.time()
-  sequestration = calcCarbonSequestration(TM, matrixInject)
+  sequestration = calcCarbonSequestration(TM, matrixInject, photic = photic_map)
   tSeq = (proc.time() - tStart)[3]
   cat("Carbon sequestration completed in", round(tSeq, 1), "seconds.\n")
   #
@@ -614,7 +633,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
     
     p1= plotGlobal( sequestration$lon, sequestration$lat, 
                     sequestration$inject_below_euphotic,
-                    sTitle="Injection below 200 m", "gC/m2/yr")
+                    sTitle="Injection below euphotic zone", "gC/m2/yr")
 
     p2 = plotGlobal( sequestration$lon, sequestration$lat, sequestration$Cseq_per_area, 
                      sTitle="Carbon sequestered", "gC/m2")
