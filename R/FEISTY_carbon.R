@@ -19,6 +19,7 @@
 #' @import doParallel
 #' @import foreach
 #' @import parallel
+#' @importFrom pracma trapz
 NULL
 
 #
@@ -79,7 +80,7 @@ calcCarbonInjection = function(sim) {
   #
   # Calculate the injection from sinking POC with velocity v:
   #
-  calcPOCinject = function(J, v) {
+  calcPOCinject = function(J, v) { # v: sinking speed [m/day]
     
     Solve_Detritus_Euler <- function(z, alpha, zeta_X, v) {
       n <- length(z)
@@ -102,7 +103,7 @@ calcCarbonInjection = function(sim) {
     # remineralization at each depth
     z <- 0:p$bottom
     alpha <- rep(NA, length(z)) # bacterial degradation
-    zeta_X <- rep(0, length(z)) # soa\q 1urce = poc production at each depth
+    zeta_X <- rep(0, length(z)) # source = poc production at each depth
     
     # set a depth-dependent bacterial degradation
     alpha[z <= 100] <- rp
@@ -137,8 +138,6 @@ calcCarbonInjection = function(sim) {
   Q10r = 2 # Q10 remin [-]
   
   p = sim$p
-  functy = "all"
-  
   # adjust bacterial degradation rate with temperature
   Tr=p$Tp # pelagic water temperature
   rfac = Q10r^((Tr-10)/10)
@@ -152,29 +151,18 @@ calcCarbonInjection = function(sim) {
   rfac = Q10r^((Tr-10)/10)
   rb = rfac*alpha0
   
-  # depth indices
-  ix100 = ifelse(test = p$bottom >= 100, yes = 100 + 1, no = 0)
-  ixbottom = p$bottom + 1
-  
-  col_indices <- switch(functy,
-                        "smallPel" = 5:10,
-                        "mesoPel" = 11:16,
-                        "largePel" = 17:25,
-                        "mwpred" = 26:34,
-                        "dem" = 35:43,
-                        "all" = 5:43,
-                        stop("Unknown functy value : ", functy))
+  col_indices <- p$ixFish
   #
   # Calculation the injection from respiration:
   #
-  pDay = p$depthDay[, col_indices]  
-  pNight = p$depthNight[, col_indices]
+  pDay = p$depthDay[, col_indices, drop = FALSE]
+  pNight = p$depthNight[, col_indices, drop = FALSE]
   respiration = t(pDay+pNight) * sim$fluxRespiration/2 # For each size class
   
   # poc production
-  resFecal = calcPOCinject( as.vector(sim$fluxFecal), 500)
-  resCarcass = calcPOCinject( as.vector(sim$fluxCarcass), 700)
-  resRepro = calcPOCinject( as.vector(sim$fluxRepro), 500)
+  resFecal   = calcPOCinject( as.vector(sim$fluxFecal),   1000) # fecal pellet sinking speed [m/day]
+  resCarcass = calcPOCinject( as.vector(sim$fluxCarcass), 1500) # carcass sinking speed [m/day]
+  resRepro   = calcPOCinject( as.vector(sim$fluxRepro),   1000) # fecal pellet sinking speed [m/day]
   
   # Make list with injections as output and convert to carbon units:
   res = list()
@@ -202,24 +190,31 @@ simulatePosition = function(setup,
   # Output from COBALT
 
     pp = getParametersPosition(lat, lon, glob=glob)
-    p = setup(szprod = pp$szprod,
-              lzprod = pp$lzprod,
-              dfbot  = pp$dfbot,
-              depth  = pp$depth,
-              Tp     = pp$Tp,
-              Tm     = pp$Tm,
-              Tb     = pp$Tb,
+    p = setup(szprod  = pp$szprod,
+              lzprod  = pp$lzprod,
+              dfbot   = pp$dfbot,
+              depth   = pp$depth,
+              Tp      = pp$Tp,
+              Tm      = pp$Tm,
+              Tb      = pp$Tb,
+              photic  = pp$photic,
               nStages = nStages)
     #
     # Set fishing to: Fmax with a Q10=1.8 at depths < 1000 m,
     # and to 90% less at deeper than 1000 m.
     #
     if (length(ixGroups)>0) {
-      Fmax = Fmax * 1.8^((pp$Tp-15)/10) # Q10=1.8 correction
-      if (pp$depth>1000)
-        Fmax = 0.1*Fmax
-        
-      p = setFishing(p,Fmax, groupidx=ixGroups)
+      # Per-group temperature for Q10=1.8 correction:
+      #   1=smallPel(Tp) 2=mesoPel(Tm) 3=largePel(Tp) 4=mwpred(Tm) 5=dem(Tb)
+      Tgroup <- c(pp$Tp, pp$Tm, pp$Tp, pp$Tm, pp$Tb)
+      Fmax0  <- Fmax  # preserve input value across loop iterations
+
+      for (g in ixGroups) {
+        Fmax <- Fmax0 * 1.8^((Tgroup[g] - 15) / 10) # Q10=1.8 correction per group
+        if (pp$depth > 1000)
+          Fmax <- 0.1 * Fmax
+        p <- setFishing(p, Fmax, groupidx = g)
+      }
     }
     
     sim = simulateFEISTY(p = p, tEnd=tEnd) 
@@ -357,27 +352,39 @@ loadTransportMatrix = function(sFilename=NULL, bLUdecompose=FALSE) {
 #
 # gC/m2/yr for each cell
 #
-project_injection_to_TM <- function(inject, lat,lon, grid) {
+project_injection_to_TM <- function(inject, lat,lon, grid, M3d_col = NULL) {
   integral = 0*unique(grid$zt)
   # Find closest grid point:
   ix = list( 
     y = which.min( (lat-grid$yt)^2 ),
     x = which.min( (lon-grid$xt)^2 ))
-  # Integrate along the depth:
-  for (j in 1:length(grid$zt)) {
+  if (is.null(M3d_col))
+    M3d_col = rep(1, length(grid$zt))
+  wet_layers = which(M3d_col == 1)
+  if (length(wet_layers) == 0)
+    return(list(inject=integral, ix=ix))
+  deepest_wet = max(wet_layers)
+  ocim_bottom = grid$zw[deepest_wet] + grid$dzt[deepest_wet]
+  # Integrate only onto wet OCIM layers:
+  for (j in wet_layers) {
     idx = ( (inject$z > grid$zw[j]) 
             & (inject$z <= (grid$zw[j] + grid$dzt[j])))
-    integral[j] = trapz( inject$z[idx], inject$total[idx])
+    integral[j] = if (sum(idx) >= 2) trapz( inject$z[idx], inject$total[idx]) else 0
     
   }
+  # Preserve mass when the FEISTY/COBALT column extends below the OCIM
+  # seafloor by assigning deeper injection to the deepest wet OCIM layer.
+  below = inject$z > ocim_bottom
+  if (any(below))
+    integral[deepest_wet] = integral[deepest_wet] + sum(inject$total[below], na.rm=TRUE)
   return(list(inject=integral, ix=ix))
 }
 
 calc_per_area_sum = function(grid, matrix, depthUpper=0) {
   ix = grid$zt>depthUpper
   dz = grid$DZT3d
-  dz[!ix] = 0
-  return( apply(replace(matrix, is.na(matrix), 0) * grid$DZT3d, c(1,2), sum) )
+  dz[,,!ix] = 0
+  return( apply(replace(matrix, is.na(matrix), 0) * dz, c(1,2), sum) )
 }
 
 #
@@ -385,7 +392,7 @@ calc_per_area_sum = function(grid, matrix, depthUpper=0) {
 #
 #' @export
 calcCarbonSequestration <- function(TM,  # Transport matrix
-                                    matrixInject,  # injection matrix (lon, lat, depth) with same dimensions as TM$grid$M3d
+                                    matrixInject,  # injection matrix (lat, lon, depth) with same dimensions as TM$grid$M3d
                                     photic = 200   # euphotic zone depth [m]: scalar (default 200m)
                                                    # or 2D matrix (lat x lon) for spatially varying depth from Cobalt data
 ){
@@ -400,7 +407,7 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   #
   # Setup grid from TM:
   #
-  M3d <- TM$M3d                             # 3D array (lon x lat x depth) containing :
+  M3d <- TM$M3d                             # 3D array (lat x lon x depth) containing :
                                             #   1 = ocean
                                             #   0 = land
   grid <- TM$grid                           # grid metrics with coordinates and depth
@@ -474,9 +481,9 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
       }
   }
   result$TotInject_below_euphotic = sum( result$inject_below_euphotic*grid$Areat ) / 1e15 #PgC/yr
-  # Carbon sequestered on the grid and per area (gC/yr/m3):
-  result$Cseq = project_to_TM( cseq )
-  result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/yr/m2)
+  # Carbon sequestered (steady-state stock from solving A*c = -q):
+  result$Cseq          = project_to_TM( cseq )                     # (gC/m3, stock)
+  result$Cseq_per_area = calc_per_area_sum( TM$grid, result$Cseq ) # (gC/m2, depth-integrated stock)
   
   # Total carbon sequestered in the ocean [PgC]
   TotSeq <- crossprod(V, cseq) / 1e15
@@ -489,7 +496,13 @@ calcCarbonSequestration <- function(TM,  # Transport matrix
   result$SeqTime <- project_to_TM( SeqTime )
   
   # Total sequestration time [year]
-  TotSeqTime <- TotSeq / TotInject
+  # Defined as sequestered stock divided by below-euphotic injection,
+  # following Pinti et al. (2023, Biogeosciences). Using full-column
+  # TotInject would understate the timescale because carbon released
+  # within the euphotic zone is removed by the surface sink almost
+  # immediately and should not be counted in the denominator.
+  TotSeqTime <- if (result$TotInject_below_euphotic > 0)
+    TotSeq / result$TotInject_below_euphotic else NA
   result$TotSeqTime <- TotSeqTime
   
   #  df_long <- as.data.frame(cc) %>%
@@ -537,11 +550,14 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   grid_idx <- grid_idx[is_ocean, ]
 
   grid = TM$grid
+  m3d_cols <- lapply(seq_len(nrow(grid_idx)), function(k)
+    TM$M3d[grid_idx$i[k], grid_idx$j[k], ])
   glob = read.csv("data/Cobalt global data.csv")  # Read once, pass to all workers
   
   # Setup parallel backend:
   cl <- makeCluster( nCores )
   registerDoParallel(cl)
+  on.exit(stopCluster(cl), add = TRUE)
 
   # Loop over ocean grid points only:
   cat("Simulating FEISTY to calculate injections at",dim(grid_idx)[1], "ocean position(s).\n")
@@ -567,16 +583,16 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
       # Calculate injection on TM grid:
       injectTM = project_injection_to_TM(inject,
                                          grid$yt[ grid_idx$i[i] ],
-                                         grid$xt[ grid_idx$j[i] ], grid)
+                                         grid$xt[ grid_idx$j[i] ],
+                                         grid, m3d_cols[[i]])
 
-      ix = sim$t>0.5*max(sim$t) # Last half of the timeseries
+      ix = sim$t >= (1 - 0.4) * max(sim$t) # Last 40% of timeseries, consistent with calcCarbonFluxes
 
 
       #injectTM$inject
       list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]),
             photic=sim$p$photic )
     }
-  stopCluster(cl)
   tSim = (proc.time() - tStart)[3]
   cat("FEISTY simulations completed in", round(tSim, 1), "seconds.\n")
 
@@ -584,7 +600,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   SSB = array(data=0, c(dim(matrixInject)[1:2], 5))
   Yield = array(data=0, c(dim(matrixInject)[1:2], 5))
   photic_map = matrix(200, nrow = length(TM$grid$yt), ncol = length(TM$grid$xt))
-  for (i in 1:dim(grid_idx)[1]) {
+  for (i in seq_len(dim(grid_idx)[1])) {
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inject
     SSB[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$SSB
     Yield[grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$Y
@@ -606,7 +622,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
 
   # Calculate the per-area sequestration for the cells which are simulated:
   area = 0 # Area of all simulated cells
-  for (i in 1:dim(grid_idx)[1])
+  for (i in seq_len(dim(grid_idx)[1]))
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
   sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e15 # gC/m2
   #
@@ -625,9 +641,9 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   if (bPrintStatus) {
     cat( c("Total fish biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgWW \n") )
     cat( c("Total fish yield: ", format(sum(sequestration$TotYield),digits=3), "PgWW/yr \n") )
-    cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "pgC/yr \n"))
-    cat( c("Total carbon injected below euphotic: ", format(sequestration$TotInject_below_euphotic,digits=3), "pgC/yr \n"))
-    cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'pgC \n') )
+    cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "PgC/yr \n"))
+    cat( c("Total carbon injected below euphotic: ", format(sequestration$TotInject_below_euphotic,digits=3), "PgC/yr \n"))
+    cat( c("Total carbon sequestered: ", format(sequestration$TotSeq,digits=3), 'PgC \n') )
     cat( c("Average sequestered per area: ", format(sequestration$TotSeq_per_area,digits=3), 'gC/m2 \n') )
     cat( c("Average sequestration time: ", format(sequestration$TotSeqTime,digits=3), 'yr \n') )
     

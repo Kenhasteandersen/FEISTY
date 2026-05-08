@@ -85,7 +85,7 @@
 #' @import ggplot2
 #' @importFrom pracma erf size linspace isempty
 #' @importFrom deSolve ode DLLfunc
-#' @importFrom scales trans_breaks trans_format math_format
+#' @importFrom scales breaks_log label_math
 #' @importFrom cowplot get_legend align_plots plot_grid
 #' @useDynLib FEISTY, .registration = TRUE
 #' 
