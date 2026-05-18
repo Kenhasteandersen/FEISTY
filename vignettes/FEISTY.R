@@ -81,3 +81,148 @@ plotSimulation(sim1)
 sim2=simulateFEISTY(p=p2,tEnd=500)
 plotSimulation(sim2)
 
+## ----fig.width = 8, fig.height = 6, cache = TRUE------------------------------
+# load example data from package 
+data(tsinput_example_1850_2014)
+# setup time series based on setupBasic2
+# 10-year time-series simulation after 2-year spinning up (loop 4 times) 
+p = setupTimeseries(p = setupBasic2(depth = depth, nStages = 9),
+                    tStep_ts = 1/12,
+                    tSpin = 2,
+                    nSpinloop = 4, 
+                    Tp_ts = Tp[1:120],
+                    Tm_ts = Tm[1:120],
+                    Tb_ts = Tb[1:120],
+                    szbio = Zbio[1:120]/2,
+                    lzbio = Zbio[1:120]/2,
+                    szprod_ts = Zhploss[1:120]/2,
+                    lzprod_ts = Zhploss[1:120]/2,
+                    dfbot_ts  = dfbot[1:120],
+                    Fsmp_ts   = Fspel[1:120],
+                    Flgp_ts   = Flpel[1:120],
+                    Fdem_ts   = Fdem[1:120])
+# Run simulation by Fortran
+simF = simulateFEISTY(p = p, USEdll = T)
+
+# Set dateframe for plotting
+diagts <- data.frame(group = factor(rep(c("large zooplankton production",
+                                          "large zooplankton consumption",
+                                          "down-regulated large zooplankton consumption"),
+                                           each = length(simF$t)),
+                              levels = c("large zooplankton production",
+                                         "large zooplankton consumption",
+                                         "down-regulated large zooplankton consumption")), 
+                     val    = c(as.numeric(p$lzprod_ts),
+                                as.numeric(simF$lgzcsp),
+                                as.numeric(simF$lgzcsp_dr)),
+                     t      = rep(simF$t,3))
+# Plot
+ggplot(data = diagts, aes(x = t, y = val, color = group, group = group)) +
+    geom_line(linewidth = 1) +  # Plot lines
+    xlab("Time (yr)") +
+    ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")")) +
+    annotation_logticks(sides = "l", linewidth = 0.4, colour = "darkgrey") +
+    coord_cartesian(ylim = c(1E-2, max(1E-2 * 100, max(diagts$val) * 5))) +
+    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x))) +
+    theme_classic()+
+    theme(legend.key = element_blank())+
+    theme(legend.position = "inside",
+          legend.position.inside = c(0.8, 0.2))+
+    labs(color = NULL)
+
+
+## ----fig.width = 8, fig.height = 6, cache = TRUE------------------------------
+# load example data from package 
+data(tsinput_example_1850_2014)
+# setup time series based on setupVertical2 (9 stages)
+# 165-year time-series simulation after 16.5-year spinning up (loop 4 times)
+p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 9),
+                  tStep_ts = 1/12,
+                  tSpin = 16.5, 
+                  nSpinloop = 4,
+                  Tp_ts = Tp,
+                  Tm_ts = Tm,
+                  Tb_ts = Tb,
+                  szbio = Zbio/2,
+                  lzbio = Zbio/2,
+                  szprod_ts = Zhploss/2,
+                  lzprod_ts = Zhploss/2,
+                  dfbot_ts  = dfbot,
+                  Fsmp_ts   = Fspel,
+                  Fmesop_ts = Fmeso,
+                  Flgp_ts   = Flpel,
+                  Fmidwp_ts = FmidP,
+                  Fdem_ts   = Fdem)
+# Run simulation by Fortran
+simF = simulateFEISTY(p = p, USEdll = T)
+simR = simulateFEISTY(p = p, USEdll = F)
+
+# Plot
+plot(simR$t, rowSums(simR$totBiomass,2) ,type='l', xlab="year",ylab="tot biomass",
+      log="", ylim=c(0.1,40), xlim=c(0,165), col='red')
+lines(simF$t, rowSums(simF$totBiomass,2), type='l', col='black')
+
+# setup time series based on setupVertical2 (3 stages)
+# 165-year time-series simulation after 16.5-year spinning up (loop 4 times)
+p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 3),
+                  tStep_ts = 1/12,
+                  tSpin = 16.5, 
+                  nSpinloop = 4,
+                  Tp_ts = Tp,
+                  Tm_ts = Tm,
+                  Tb_ts = Tb,
+                  szbio = Zbio/2,
+                  lzbio = Zbio/2,
+                  szprod_ts = Zhploss/2,
+                  lzprod_ts = Zhploss/2,
+                  dfbot_ts  = dfbot,
+                  Fsmp_ts   = Fspel,
+                  Fmesop_ts = Fmeso,
+                  Flgp_ts   = Flpel,
+                  Fmidwp_ts = FmidP,
+                  Fdem_ts   = Fdem)
+# Run simulation by Fortran
+simF = simulateFEISTY(p = p, USEdll = T)
+simR = simulateFEISTY(p = p, USEdll = F)
+
+# Plot
+plot(simR$t, rowSums(simR$totBiomass,2) ,type='l', xlab="year",ylab="tot biomass",
+      log="", ylim=c(0.1,40), xlim=c(0,165), col='red')
+lines(simF$t, rowSums(simF$totBiomass,2), type='l', col='black')
+
+
+
+## ----fig.width = 8, fig.height = 6, cache = TRUE------------------------------
+# load example data from package 
+data(tsinput_example_1850_2014)
+# add a perturbation
+Zbio[100]
+Zbio[100]=Zbio[100]+1E-5
+# setup time series based on setupVertical2 (3 stages)
+# 165-year time-series simulation after 16.5-year spinning up (loop 4 times)
+p = setupTimeseries(p = setupVertical2(photic = photic, depth = depth, nStages = 3),
+                  tStep_ts = 1/12,
+                  tSpin = 16.5, 
+                  nSpinloop = 4,
+                  Tp_ts = Tp,
+                  Tm_ts = Tm,
+                  Tb_ts = Tb,
+                  szbio = Zbio/2,
+                  lzbio = Zbio/2,
+                  szprod_ts = Zhploss/2,
+                  lzprod_ts = Zhploss/2,
+                  dfbot_ts  = dfbot,
+                  Fsmp_ts   = Fspel,
+                  Fmesop_ts = Fmeso,
+                  Flgp_ts   = Flpel,
+                  Fmidwp_ts = FmidP,
+                  Fdem_ts   = Fdem)
+# Run simulation by Fortran
+simF2 = simulateFEISTY(p = p, USEdll = T)
+# Plot
+plot(simF$t, rowSums(simF$totBiomass,2) ,type='l', xlab="year",ylab="tot biomass",
+      log="", ylim=c(0.1,40), xlim=c(0,165), col='green')
+lines(simF2$t, rowSums(simF2$totBiomass,2), type='l', col='black')
+
+

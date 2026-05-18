@@ -43,7 +43,7 @@ Generally, \code{nStages} is multiples of 3 (e.g., \code{nStages = 3, 6, 9, or 1
 
 \item{Tp}{Pelagic water temperature, representing the top 100m average temperature [Celsius]. Default NA. Input NA means Tp = 10.}
 
-\item{Tm}{Mid-water temperature, representing the average temperature of 500m - up to 1500m. Default NA. Input NA means Tp = Tb.}
+\item{Tm}{Mid-water temperature, representing the average temperature of 500m - up to 1500m. Default NA. Input NA means Tm = Tb.}
 
 \item{Tb}{Bottom water (the bottom layer) temperature [Celsius]. Default NA. Input NA means Tb = 10.}
 
