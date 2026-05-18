@@ -582,7 +582,7 @@ $a_\mathrm{c}$ & Intercept for mass-specific maximum consumption rate & \multico
 $b_\mathrm{c}$ & Exponent for mass-specific maximum consumption rate & \multicolumn{4}{c}{-0.25} & / \\
 $a_\mathrm{e}$ & Intercept for mass-specific clearance rate & \multicolumn{4}{c}{70} & m$^2$g$^{-b_{\mathrm{e}}-1}$yr$^{-1}$ \\
 $b_\mathrm{e}$ & Exponent for mass-specific clearance rate & \multicolumn{4}{c}{-0.2} & / \\
-$a_\mathrm{m}$ & Intercept for mass-specific metabolism rate & \multicolumn{4}{c}{0.2*$a_{\mathrm{c}}$} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
+$a_\mathrm{m}$ & Intercept for mass-specific metabolism rate & \multicolumn{4}{c}{4} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
 $b_\mathrm{m}$ & Exponent for mass-specific metabolism rate & \multicolumn{4}{c}{-0.175} & / \\
 $\epsilon_{\mathrm{\alpha}}$ & Assimilation efficiency & \multicolumn{4}{c}{0.7} & / \\
 $\epsilon_{\mathrm{r}}$ & Reproduction efficiency & \multicolumn{4}{c}{0.01} & / \\
