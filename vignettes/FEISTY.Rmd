@@ -825,8 +825,11 @@ ggplot(data = diagts, aes(x = t, y = val, color = group, group = group)) +
     ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")")) +
     annotation_logticks(sides = "l", linewidth = 0.4, colour = "darkgrey") +
     coord_cartesian(ylim = c(1E-2, max(1E-2 * 100, max(diagts$val) * 5))) +
-    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                  labels = trans_format("log10", math_format(10^.x))) +
+    #scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+    #              labels = trans_format("log10", math_format(10^.x))) +
+    scale_y_log10(
+      breaks = scales::breaks_log(n = 5, base = 10),
+      labels = scales::label_log(base = 10)) +
     theme_classic()+
     theme(legend.key = element_blank())+
     theme(legend.position = "inside",
