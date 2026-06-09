@@ -578,11 +578,11 @@ Symbol & Description & \multicolumn{4}{c}{Value$^a$} & Unit \\
                          \cline{3-6}
        &             & \multicolumn{1}{c}{B1} & \multicolumn{1}{c}{B2} & \multicolumn{1}{c}{V1} & \multicolumn{1}{c}{V2} & \\
 \hline
-$a_\mathrm{c}$ & Intercept for mass-specific maximum consumption rate & \multicolumn{4}{c}{20} & g$^{-b_{\mathrm{c}}}$yr$^{-1}$ \\
+$a_\mathrm{c}$ & Factor for mass-specific maximum consumption rate & \multicolumn{4}{c}{20} & g$^{-b_{\mathrm{c}}}$yr$^{-1}$ \\
 $b_\mathrm{c}$ & Exponent for mass-specific maximum consumption rate & \multicolumn{4}{c}{-0.25} & / \\
-$a_\mathrm{e}$ & Intercept for mass-specific clearance rate & \multicolumn{4}{c}{70} & m$^2$g$^{-b_{\mathrm{e}}-1}$yr$^{-1}$ \\
+$a_\mathrm{e}$ & Factor for mass-specific clearance rate & \multicolumn{4}{c}{70} & m$^2$g$^{-b_{\mathrm{e}}-1}$yr$^{-1}$ \\
 $b_\mathrm{e}$ & Exponent for mass-specific clearance rate & \multicolumn{4}{c}{-0.2} & / \\
-$a_\mathrm{m}$ & Intercept for mass-specific metabolism rate & \multicolumn{4}{c}{0.2*$a_{\mathrm{c}}$} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
+$a_\mathrm{m}$ & Factor for mass-specific metabolism rate & \multicolumn{4}{c}{4} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
 $b_\mathrm{m}$ & Exponent for mass-specific metabolism rate & \multicolumn{4}{c}{-0.175} & / \\
 $\epsilon_{\mathrm{\alpha}}$ & Assimilation efficiency & \multicolumn{4}{c}{0.7} & / \\
 $\epsilon_{\mathrm{r}}$ & Reproduction efficiency & \multicolumn{4}{c}{0.01} & / \\
@@ -825,8 +825,9 @@ ggplot(data = diagts, aes(x = t, y = val, color = group, group = group)) +
     ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")")) +
     annotation_logticks(sides = "l", linewidth = 0.4, colour = "darkgrey") +
     coord_cartesian(ylim = c(1E-2, max(1E-2 * 100, max(diagts$val) * 5))) +
-    scale_y_log10(breaks = scales::breaks_log(),
-                  labels = scales::label_math(10^.x)) +
+    scale_y_log10(
+      breaks = scales::breaks_log(n = 5, base = 10),
+      labels = scales::label_log(base = 10)) +
     theme_classic()+
     theme(legend.key = element_blank())+
     theme(legend.position = "inside",

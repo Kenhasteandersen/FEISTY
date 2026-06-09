@@ -2,118 +2,165 @@
 
 The FEISTY model (FishErIes Size and functional TYpe model) is documented as an R package. The package includes four FEISTY model setups: two published FEISTY model setups ([Petrik et al., 2019](https://doi.org/10.1016/j.pocean.2019.102124); [van Denderen et al., 2021](https://doi.org/10.1111/geb.13348)) and their modified versions. Also, it allows researchers to customize and simulate new FEISTY model setups, for model development and other marine science research.  You can test FEISTY in the [online simulator](http://oceanlife.dtuaqua.dk/FEISTY). 
 
-![orange_day_night_combined](https://github.com/Kenhasteandersen/FEISTY/assets/13268353/1e481c48-3851-48a4-bc61-ec82657783d7)
-(Graphic design by Jan D. Heuschele)
-
+<img width="806" height="527" alt="image" src="https://github.com/user-attachments/assets/946884ec-cd9a-43a9-a7b4-54279c30ef99" />
 
 ---
 
 # FEISTY Installation Guide
 
-The following provides a comprehensive guide to installing and setting up FEISTY, a Fortran-based marine ecosystem model, on Linux, Windows, and macOS systems.
-
-Before installing FEISTY, ensure that the following tools are installed on your system:
-
-- **gfortran**: The GNU Fortran compiler.
-- **make**: A build automation tool.
-- **git**: A version control system.
-
-If these tools are not already installed, follow the instructions below for your operating system to install them.
+FEISTY is an R package with compiled Fortran code. Most users only need to install and load the package. Developers who modify the source code need additional tools for documentation, testing, and package checks.
 
 ---
 
-## Installation by Operating System
+## For Users
 
-### 1. Linux
+Use this route if you want to run FEISTY simulations but do not plan to edit the package source code.
 
-1. **Install Dependencies**  
-   Open a terminal and run the following commands to install the necessary tools:
-   ```bash
-   sudo apt update
-   sudo apt install gfortran make git
-   ```
+### Requirements
 
----
+- R, preferably R 4.3.x
+- R package `remotes`
+- A working package-compilation toolchain:
+  - Windows: Rtools matching your R version
+  - Linux: `gfortran` and `make`
+  - macOS: Xcode command line tools and `gfortran`
 
-### 2. Windows
+Install `remotes` in R:
 
-1. **Install Dependencies**  
-   - Download and install [MinGW-w64](https://sourceforge.net/projects/mingw/), which includes `gfortran` and `make`.
-   - Download and install [Git for Windows](https://git-scm.com/).
-
-   During the MinGW-w64 installation, ensure `gfortran` and `make` are selected.
-
-2. **Add to path**  
-Add the MinGW-w64 and make installation directory to your system's PATH environment variable. 
-To do so go to: Environenment variables > user variables > path > edit; then paste `C:\MinGW\bin`
-
-
----
-
-### 3. macOS
-
-1. **Install Dependencies**  
-   Use Homebrew to install the required tools. If you do not have Homebrew installed, visit [brew.sh](https://brew.sh/) to set it up. Then, run:
-   ```bash
-   brew install gcc make git
-   ```
-
-2. **Error compilation failed**  
-   If you get an error like:
-   ``make: /opt/gfortran/bin/gfortran: no such file or directory [...] compilation failed for package 'FEISTY' `` 
-   this is due to make trying to search for the fortran compiler in the wrong path. To solve the problem you need to 
-   add a Makevars file with the right directoy for the fortran compiler and the libraries, this directory depends on where 
-   Homebrew installed gfortran.
-    ```bash
-   cd ~/
-   mkdir .R
-   cd .R/
-
-   ```
-   Find gfortran location:
-   ```
-   which gfortran
-   <gfortran_location>/gfortran
-   ```
-   Then add the path to the Makevars file
-   ```
-   nano Makevars
-   ```
-   copy in Makevars the following by changing <gfortran_location> by the path you obtained from `which gfortran`
-   ```
-   FC=<gfortran_location>/gfortran
-   F77=<gfortran_location>/gfortran
-   FLIBS=-L<gfortran_location>/lib
-   ```
----
-
-## Download and build FEISTY
-
-Clone FEISTY from the Rstudio console and load the FEISTY library.
-
-The latest development version:
-```bash
-   remotes::install_github("Kenhasteandersen/FEISTY")
-   library(FEISTY)
+```r
+install.packages("remotes")
 ```
 
-The latest stable version:
-```bash
-   remotes::install_url("https://github.com/Kenhasteandersen/FEISTY/archive/refs/tags/v1.0.0.tar.gz")
-   library(FEISTY)
+Install the latest development version:
+
+```r
+remotes::install_github("Kenhasteandersen/FEISTY", upgrade = "never")
+library(FEISTY)
 ```
-You should get something like: 
+
+Install a stable release instead:
+
+```r
+remotes::install_url(
+  "https://github.com/Kenhasteandersen/FEISTY/archive/refs/tags/v1.1.1.tar.gz",
+  upgrade = "never"
+)
+library(FEISTY)
 ```
-   ==> Rcmd.exe INSTALL --preclean --no-multiarch --with-keep.source FEISTY
-   
-   * installing to library 'C:/Users/rdenechere/AppData/Local/R/win-library/4.3'
-   * installing *source* package 'FEISTY' ...
-   ...
-   * DONE (FEISTY)
-```
-Now you can try to run the FEISTY web app by typing in the console:
-```
+
+Test the installation:
+
+```r
 webFEISTY()
 ```
+
+---
+
+## For Developers
+
+Use this route if you want to modify FEISTY source code, rebuild documentation, run tests, or contribute changes.
+
+### Additional Requirements
+
+- Git
+- R packages `devtools`, `roxygen2`, `testthat`, `knitr`, and `rmarkdown`
+
+Install the recommended developer packages:
+
+```r
+install.packages(c(
+  "devtools",
+  "roxygen2",
+  "testthat",
+  "knitr",
+  "rmarkdown"
+))
+```
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Kenhasteandersen/FEISTY.git
+cd FEISTY
+```
+
+Install the local source package from R:
+
+```r
+remotes::install_local(".", upgrade = "never")
+library(FEISTY)
+```
+
+If you edit exported functions or roxygen comments, rebuild the documentation:
+
+```r
+devtools::document()
+```
+
+Run tests:
+
+```r
+devtools::test()
+```
+
+Run a package check:
+
+```r
+devtools::check()
+```
+
+---
+
+## Platform Notes
+
+### Windows
+
+Install Rtools matching your R version. For example, use Rtools43 with R 4.3.x. Rtools provides the `make` and Fortran tools needed to install FEISTY from source.
+
+### Linux
+
+On Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install gfortran make
+```
+
+### macOS
+
+Install Xcode command line tools:
+
+```bash
+xcode-select --install
+```
+
+Install `gfortran`, for example with Homebrew:
+
+```bash
+brew install gcc
+```
+
+If R cannot find `gfortran`, check its location:
+
+```bash
+which gfortran
+```
+
+and configure `~/.R/Makevars` if needed:
+
+```bash
+mkdir -p ~/.R
+nano ~/.R/Makevars
+```
+
+Add the compiler path returned by `which gfortran`. For example:
+
+```make
+FC=<gfortran_location>/gfortran
+F77=<gfortran_location>/gfortran
+FLIBS=-L<gfortran_location>/lib
+```
+
+Replace `<gfortran_location>` with the actual directory on your system. This step is only needed if R cannot locate the compiler automatically.
 
 ---
