@@ -1,10 +1,12 @@
 % Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
-%
 \documentclass[
 ]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -35,8 +37,6 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{xcolor}
-\usepackage[margin=1in]{geometry}
 \usepackage{color}
 \usepackage{fancyvrb}
 \newcommand{\VerbBar}{|}
@@ -78,6 +78,7 @@
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -89,21 +90,19 @@
 \makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
 % Set default figure placement to htbp
-\makeatletter
 \def\fps@figure{htbp}
 \makeatother
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 % definitions for citeproc citations
 \NewDocumentCommand\citeproctext{}{}
 \NewDocumentCommand\citeproc{mm}{%
@@ -137,10 +136,10 @@
 \newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \usepackage{float}
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -982,11 +981,11 @@ Symbol & Description & \multicolumn{4}{c}{Value$^a$} & Unit \\
                          \cline{3-6}
        &             & \multicolumn{1}{c}{B1} & \multicolumn{1}{c}{B2} & \multicolumn{1}{c}{V1} & \multicolumn{1}{c}{V2} & \\
 \hline
-$a_\mathrm{c}$ & Intercept for mass-specific maximum consumption rate & \multicolumn{4}{c}{20} & g$^{-b_{\mathrm{c}}}$yr$^{-1}$ \\
+$a_\mathrm{c}$ & Factor for mass-specific maximum consumption rate & \multicolumn{4}{c}{20} & g$^{-b_{\mathrm{c}}}$yr$^{-1}$ \\
 $b_\mathrm{c}$ & Exponent for mass-specific maximum consumption rate & \multicolumn{4}{c}{-0.25} & / \\
-$a_\mathrm{e}$ & Intercept for mass-specific clearance rate & \multicolumn{4}{c}{70} & m$^2$g$^{-b_{\mathrm{e}}-1}$yr$^{-1}$ \\
+$a_\mathrm{e}$ & Factor for mass-specific clearance rate & \multicolumn{4}{c}{70} & m$^2$g$^{-b_{\mathrm{e}}-1}$yr$^{-1}$ \\
 $b_\mathrm{e}$ & Exponent for mass-specific clearance rate & \multicolumn{4}{c}{-0.2} & / \\
-$a_\mathrm{m}$ & Intercept for mass-specific metabolism rate & \multicolumn{4}{c}{0.2*$a_{\mathrm{c}}$} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
+$a_\mathrm{m}$ & Factor for mass-specific metabolism rate & \multicolumn{4}{c}{4} & g$^{-b_{\mathrm{m}}}$yr$^{-1}$ \\
 $b_\mathrm{m}$ & Exponent for mass-specific metabolism rate & \multicolumn{4}{c}{-0.175} & / \\
 $\epsilon_{\mathrm{\alpha}}$ & Assimilation efficiency & \multicolumn{4}{c}{0.7} & / \\
 $\epsilon_{\mathrm{r}}$ & Reproduction efficiency & \multicolumn{4}{c}{0.01} & / \\
@@ -1091,7 +1090,7 @@ collection:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-3-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/e35ae15ab7eb4b96b82a6d6a1c9a091d002c6ca9.pdf}}
 
 This figure collection includes \texttt{plotSpectra()},
 \texttt{plotRates()}, \texttt{plotNetwork()}, and
@@ -1104,7 +1103,7 @@ For instance:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-4-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/aec9afd298a6b0ce8f201e53ca5e32b7e0a00586.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1112,7 +1111,7 @@ For instance:
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-5-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/f7042719a62452e24a6e214dfc0595f8d9e18da9.pdf}}
 
 \subsection{Fishing mortality
 assignment}\label{fishing-mortality-assignment}
@@ -1196,7 +1195,7 @@ demersals\_9 & 0 & 0.2991638 \\
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-6-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/7ae3724252ad65ae667cd5084132aba73e5d8f47.pdf}}
 
 Since fishing mortality was assigned manually to two of three fish
 functional types, which is not the ready-to-use function
@@ -1223,7 +1222,7 @@ stock biomass changes over time.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-8-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/e048471cad4444f81e21d3bcbbbf08104d456962.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1231,7 +1230,7 @@ stock biomass changes over time.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-9-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/0be8ee097e60112b4b686c4665140ffa51dacc82.pdf}}
 
 \subsection{Bottom-up control
 examples}\label{bottom-up-control-examples}
@@ -1260,7 +1259,7 @@ are low and do not provide enough food for them (panel d).
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-11-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/26f0c03ecc0c98379a693ebe24f043f7d903eef3.pdf}}
 
 On the contrary, in the eutrophic water, high resource productions
 support the existence of all five functional types (panel f). All fish
@@ -1274,7 +1273,7 @@ have feeding levels that are higher than their critical feeding levels
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-12-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/7209d530663af0e41c3fca52983366359c060c1e.pdf}}
 
 \section{Time-series simulation}\label{time-series-simulation}
 
@@ -1437,8 +1436,12 @@ derivative calculation in the specific time steps.
     \FunctionTok{ylab}\NormalTok{(}\FunctionTok{expression}\NormalTok{(}\StringTok{"production and consumption (g m"}\SpecialCharTok{\^{}}\StringTok{"{-}2"}\SpecialCharTok{*}\StringTok{" yr"}\SpecialCharTok{\^{}}\StringTok{"{-}1"}\SpecialCharTok{*}\StringTok{")"}\NormalTok{)) }\SpecialCharTok{+}
     \FunctionTok{annotation\_logticks}\NormalTok{(}\AttributeTok{sides =} \StringTok{"l"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.4}\NormalTok{, }\AttributeTok{colour =} \StringTok{"darkgrey"}\NormalTok{) }\SpecialCharTok{+}
     \FunctionTok{coord\_cartesian}\NormalTok{(}\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\FloatTok{1E{-}2}\NormalTok{, }\FunctionTok{max}\NormalTok{(}\FloatTok{1E{-}2} \SpecialCharTok{*} \DecValTok{100}\NormalTok{, }\FunctionTok{max}\NormalTok{(diagts}\SpecialCharTok{$}\NormalTok{val) }\SpecialCharTok{*} \DecValTok{5}\NormalTok{))) }\SpecialCharTok{+}
-    \FunctionTok{scale\_y\_log10}\NormalTok{(}\AttributeTok{breaks =} \FunctionTok{trans\_breaks}\NormalTok{(}\StringTok{"log10"}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) }\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{x),}
-                  \AttributeTok{labels =} \FunctionTok{trans\_format}\NormalTok{(}\StringTok{"log10"}\NormalTok{, }\FunctionTok{math\_format}\NormalTok{(}\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{.x))) }\SpecialCharTok{+}
+    \CommentTok{\#scale\_y\_log10(breaks = trans\_breaks("log10", function(x) 10\^{}x),}
+    \CommentTok{\#              labels = trans\_format("log10", math\_format(10\^{}.x))) +}
+    \FunctionTok{scale\_y\_log10}\NormalTok{(}
+    \AttributeTok{breaks =}\NormalTok{ scales}\SpecialCharTok{::}\FunctionTok{breaks\_log}\NormalTok{(}\AttributeTok{n =} \DecValTok{5}\NormalTok{, }\AttributeTok{base =} \DecValTok{10}\NormalTok{),}
+    \AttributeTok{labels =}\NormalTok{ scales}\SpecialCharTok{::}\FunctionTok{label\_log}\NormalTok{(}\AttributeTok{base =} \DecValTok{10}\NormalTok{)}
+\NormalTok{  ) }\SpecialCharTok{+}
     \FunctionTok{theme\_classic}\NormalTok{()}\SpecialCharTok{+}
     \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.key =} \FunctionTok{element\_blank}\NormalTok{())}\SpecialCharTok{+}
     \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"inside"}\NormalTok{,}
@@ -1447,7 +1450,7 @@ derivative calculation in the specific time steps.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-13-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/87aa661cf669105d8722c45d79e99e8d1e3b21a2.pdf}}
 
 \subsection{Discrepancies between the simulation results produced by R
 and
@@ -1538,7 +1541,7 @@ the accurate time trajectory of any of the species groups.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-14-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/49798554ff0301ca441004667f4e7736df390b38.pdf}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1608,7 +1611,7 @@ the accurate time trajectory of any of the species groups.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-14-2.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/2763f88cfe2d18c464d37ad06a6b158ce91fa79c.pdf}}
 
 Based on the second case (Fortran), an additional perturbation is
 introduced while other settings remain the same. Two simulation results
@@ -1683,7 +1686,7 @@ are visualized, demonstrating the discrepancies.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{C:/Users/yixzh/Desktop/feistyts/FEISTY/vignettes/FEISTY_files/figure-latex/unnamed-chunk-15-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{/Users/kenhasteandersen/Documents/Undervisning/FEISTY course/FEISTY/vignettes/FEISTY_files/74103ec9839fe84bf1ab4322d13fb1544a34b65a.pdf}}
 
 \newpage
 
@@ -1691,8 +1694,8 @@ are visualized, demonstrating the discrepancies.
 
 \bibliography{references.bib}
 
-\phantomsection\label{refs}
-\begin{CSLReferences}{1}{0}
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
 \bibitem[\citeproctext]{ref-andersen2019fish}
 Andersen, Ken H. 2019. \emph{Fish Ecology, Evolution, and Exploitation:
 A New Theoretical Synthesis}. Princeton University Press.
