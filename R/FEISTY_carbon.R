@@ -40,32 +40,43 @@ calcCarbonFluxes <- function(sim) {
   
   p = sim$p # parameters
   
-  # Fluxes from grazing
-  grazrate = p$Cmax[p$ixFish] * sim$f # grazing rate [yr^-1]
+  # Fluxes from grazing. sim$f and sim$B are time x fish-stage matrices, so
+  # stage-specific rates must be applied by column. Plain vector * matrix
+  # multiplication recycles column-wise in R and assigns rates to wrong stages.
+  grazrate = sweep(sim$f, 2, p$Cmax[p$ixFish], "*") # grazing rate [yr^-1]
   graz = sim$B * grazrate # grazing flux (before assimilation) [gWW.m^-2.yr^-1]
   feces = graz * (1 - p$epsAssim)/2 # feces flux [gWW.m^-2.yr^-1] -> (1 - p$epsAssim)/2 A half of unassimilated food is feces.
-  
-  # Waste energy from the total energy invested into reproduction to eggs goes to respiration. 
+
+  # Waste energy from the total energy invested into reproduction to eggs goes to respiration.
   # Dead eggs from eggs to larvae becomes detritus, so goes to fecal pellets.
-  
+
   # sim$Repro already includes Fout of last stage for each functional type
   eps_egg   = 0.22 # 1-eps_egg is The fraction of reproductive invested used for respiration
   eps_R     = unique(p$epsRepro) / eps_egg # The fraction of eggs that survives
   rep2resp  = sim$Repro * (1 - eps_egg) # metabolic cost of egg production [gWW.m^-2.yr^-1]
   rep2feces = sim$Repro * eps_egg * (1 - eps_R) # dead eggs sink as feces; eps_egg = 0.22 from Andersen 2019 p47
-  
-  # Flux from respiration
-  resprate = p$metabolism[p$ixFish] + (1 - p$epsAssim)/2 * grazrate # respiration rate [yr-1] A half of unassimilated food is specific dynamic action.
-  respiration = sim$B * resprate + rep2resp # metabolic cost of egg production [gWW.m^-2.yr^-1]
-  
+
+  # Respiration components, kept separate for diagnostics:
+  #   basal = allometric basal metabolism, p$metabolism[ixFish] * B (Petrik 2019: bM=-0.175, basal-only)
+  #   SDA   = specific dynamic action, half of unassimilated food, (1-epsAssim)/2 * grazrate * B
+  #   repro = metabolic cost of egg production, rep2resp = (1-eps_egg)*Repro
+  resp_basal = sweep(sim$B, 2, p$metabolism[p$ixFish], "*") # [time x nFish] gWW.m^-2.yr^-1
+  resp_sda   = graz * (1 - p$epsAssim)/2                   # [time x nFish] gWW.m^-2.yr^-1
+  resp_repro = rep2resp                                     # [time x nFish] gWW.m^-2.yr^-1
+  respiration = resp_basal + resp_sda + resp_repro
+
   # Get last 40% of timeseries
-  etaTime <- 0.4 
+  etaTime <- 0.4
   ixTime  <- which(sim$t >= ((1 - etaTime) * sim$t[sim$nTime]))
-  
-  sim$fluxCarcass     <- colMeans(sim$B[ixTime,] * p$mort0[-c(1:p$nResources)]) # deadfalls flux [gWW.m^-2.yr^-1]
+
+  sim$fluxCarcass     <- colMeans(sweep(sim$B[ixTime,, drop = FALSE], 2, p$mort0[p$ixFish], "*")) # deadfalls flux [gWW.m^-2.yr^-1]
   sim$fluxFecal       <- colMeans(feces[ixTime,]) # total feces flux [gWW.m^-2.yr^-1]
   sim$fluxRepro       <- colMeans(rep2feces[ixTime,]) # feces flux from reproduction waste [gWW.m^-2.yr^-1]
-  sim$fluxRespiration <- colMeans(respiration[ixTime,]) # respiration flux [gWW.m^-2.yr^-1]
+  sim$fluxRespiration <- colMeans(respiration[ixTime,]) # total respiration flux [gWW.m^-2.yr^-1]
+  # Decomposition of fluxRespiration into per-stage components (sum to fluxRespiration):
+  sim$fluxRespirationBasal <- colMeans(resp_basal[ixTime,]) # basal metabolism only [gWW.m^-2.yr^-1]
+  sim$fluxRespirationSDA   <- colMeans(resp_sda[ixTime,])   # SDA from grazing [gWW.m^-2.yr^-1]
+  sim$fluxRespirationRepro <- colMeans(resp_repro[ixTime,]) # cost of egg production [gWW.m^-2.yr^-1]
   
   return(sim)
 }
@@ -76,60 +87,107 @@ calcCarbonFluxes <- function(sim) {
 #
 #' @export
 calcCarbonInjection = function(sim) {
-  rho_gC_gWW = 9 # Gram carbon per gram wet weight
+  rho_gWW_gC = 9 # Gram wet weight per gram carbon
   #
   # Calculate the injection from sinking POC with velocity v:
   #
   calcPOCinject = function(J, v) { # v: sinking speed [m/day]
-    
+
     Solve_Detritus_Euler <- function(z, alpha, zeta_X, v) {
       n <- length(z)
       dz <- c(diff(z), tail(diff(z), 1))
-      
+
       DX <- numeric(n)
       DX[1] <- 0  # Boundary conditions at the surface -> no detritus
-      
+
       for (i in 1:(n - 1)) {
         DX[i + 1] <- (DX[i] + dz[i] * zeta_X[i] / v) / (1 + dz[i] * alpha[i] / v)
       }
-      
+
       return(DX)
     }
-    
+
     # Multiply with the vertical probability distributions
     Jday <-  t(pDay) * J * 0.5 # Units: gWW/m^3/year
     Jnight <- t(pNight) * J * 0.5
-    
+
     # remineralization at each depth
     z <- 0:p$bottom
     alpha <- rep(NA, length(z)) # bacterial degradation
     zeta_X <- rep(0, length(z)) # source = poc production at each depth
-    
+
     # set a depth-dependent bacterial degradation
     alpha[z <= 100] <- rp
     alpha[z > 100 & z <= 1500] <- rm
     alpha[z > 1500] <- rb
-    
+
     # sum total poc production
     Jtotal <- colSums(Jday + Jnight) # Units gWW/m3/year
-    
+
     zeta_X[1:length(Jtotal)] <- Jtotal
-    
+
     # calculate detritus production at each depth
     DX_Euler <- Solve_Detritus_Euler(z, alpha, zeta_X, v)
     # detritus remineralized
     Jinject = alpha * DX_Euler
-    
+
     res = list()
     res$depth <- z
     res$Jbottom <- sum(Jtotal) - sum(Jinject) # gWW/m2/yr
-    
+
     Jinject[length(Jinject)] <- Jinject[length(Jinject)] + res$Jbottom
     #Jinject_fecal[z < p$photic] <- 0 # carbon close to the surface is not sequestered
-    
+
     res$inject <- Jinject
-    
+
     return(res)
+  }
+
+  #
+  # Per-stage version of calcPOCinject: keeps each fish stage as a separate
+  # column so we can diagnose which stages contribute to below-euphotic flux.
+  # The Euler step is linear in the source, so we can vectorize across stages.
+  # Returns a matrix [nDepth x nFish] in gWW/m^3/yr.
+  #
+  calcPOCinject_perstage = function(J, v) {
+    Solve_Detritus_Euler_vec <- function(z, alpha, zeta_X_mat, v) {
+      n <- length(z)
+      ns <- ncol(zeta_X_mat)
+      dz <- c(diff(z), tail(diff(z), 1))
+      DX <- matrix(0, n, ns)
+      for (i in 1:(n - 1)) {
+        DX[i + 1, ] <- (DX[i, ] + dz[i] * zeta_X_mat[i, ] / v) /
+                       (1 + dz[i] * alpha[i] / v)
+      }
+      return(DX)
+    }
+
+    # Per-stage vertical source (do NOT sum across stages):
+    Jday_mat   <- sweep(pDay,   2, J, "*") * 0.5  # [nDepth_pDay x nFish] gWW/m^3/yr
+    Jnight_mat <- sweep(pNight, 2, J, "*") * 0.5
+    Jtotal_mat <- Jday_mat + Jnight_mat
+
+    z <- 0:p$bottom
+    nz <- length(z)
+    ns <- length(J)
+
+    alpha <- rep(NA, nz)
+    alpha[z <= 100] <- rp
+    alpha[z > 100 & z <= 1500] <- rm
+    alpha[z > 1500] <- rb
+
+    zeta_X_mat <- matrix(0, nz, ns)
+    src_len <- min(nrow(Jtotal_mat), nz)
+    zeta_X_mat[1:src_len, ] <- Jtotal_mat[1:src_len, ]
+
+    DX_mat <- Solve_Detritus_Euler_vec(z, alpha, zeta_X_mat, v)
+    inject_mat <- sweep(DX_mat, 1, alpha, "*")  # [nz x ns] gWW/m^3/yr
+
+    # Per-stage Jbottom spike: POC reaching seafloor unremineralized.
+    Jbottom_per_stage <- colSums(zeta_X_mat) - colSums(inject_mat)
+    inject_mat[nz, ] <- inject_mat[nz, ] + Jbottom_per_stage
+
+    return(list(z = z, inject = inject_mat))
   }
   
   
@@ -158,22 +216,46 @@ calcCarbonInjection = function(sim) {
   pDay = p$depthDay[, col_indices, drop = FALSE]
   pNight = p$depthNight[, col_indices, drop = FALSE]
   respiration = t(pDay+pNight) * sim$fluxRespiration/2 # For each size class
-  
+
+  # Per-stage respiration injection split by component [nDepth_pDay x nFish], gWW/m^3/yr.
+  # Respiration is released at the fish's depth (DVM-weighted), no POC sinking.
+  resp_basal_mat = sweep(pDay + pNight, 2, sim$fluxRespirationBasal, "*") / 2
+  resp_sda_mat   = sweep(pDay + pNight, 2, sim$fluxRespirationSDA,   "*") / 2
+  resp_repro_mat = sweep(pDay + pNight, 2, sim$fluxRespirationRepro, "*") / 2
+
   # poc production
-  resFecal   = calcPOCinject( as.vector(sim$fluxFecal),   1000) # fecal pellet sinking speed [m/day]
-  resCarcass = calcPOCinject( as.vector(sim$fluxCarcass), 1500) # carcass sinking speed [m/day]
-  resRepro   = calcPOCinject( as.vector(sim$fluxRepro),   1000) # fecal pellet sinking speed [m/day]
-  
+  resFecal   = calcPOCinject( as.vector(sim$fluxFecal),    1000) # fecal pellet sinking speed [m/day]
+  resCarcass = calcPOCinject( as.vector(sim$fluxCarcass),  2000) # carcass sinking speed [m/day]
+  resRepro   = calcPOCinject( as.vector(sim$fluxRepro),    1000) # reproductive detritus sinking speed [m/day]
+
+  # Per-stage POC injection profiles [nDepth x nFish], gWW/m^3/yr.
+  resFecal_stage   = calcPOCinject_perstage( as.vector(sim$fluxFecal),   1000)
+  resCarcass_stage = calcPOCinject_perstage( as.vector(sim$fluxCarcass), 2000)
+  resRepro_stage   = calcPOCinject_perstage( as.vector(sim$fluxRepro),   1000)
+
   # Make list with injections as output and convert to carbon units:
   res = list()
   res$z = resFecal$depth
-  res$Fecal = resFecal$inject / rho_gC_gWW
-  res$Carcass = resCarcass$inject / rho_gC_gWW
-  res$Repro = resRepro$inject / rho_gC_gWW
-  res$Respiration = colSums( respiration ) / rho_gC_gWW
-  
+  res$Fecal = resFecal$inject / rho_gWW_gC
+  res$Carcass = resCarcass$inject / rho_gWW_gC
+  res$Repro = resRepro$inject / rho_gWW_gC
+  res$Respiration = colSums( respiration ) / rho_gWW_gC
+
   res$total = res$Fecal + res$Carcass + res$Repro + res$Respiration
-  
+
+  # Per-stage injection profiles, gC/m^3/yr.  [nDepth x nFish]
+  # Sums across stages reproduce res$Fecal, res$Carcass, res$Repro, res$Respiration
+  # (modulo a tiny binning rounding for the bottom spike).
+  res$Fecal_stage            = resFecal_stage$inject   / rho_gWW_gC
+  res$Carcass_stage          = resCarcass_stage$inject / rho_gWW_gC
+  res$Repro_stage            = resRepro_stage$inject   / rho_gWW_gC
+  res$RespirationBasal_stage = resp_basal_mat          / rho_gWW_gC
+  res$RespirationSDA_stage   = resp_sda_mat            / rho_gWW_gC
+  res$RespirationRepro_stage = resp_repro_mat          / rho_gWW_gC
+  res$Respiration_stage      = res$RespirationBasal_stage +
+                               res$RespirationSDA_stage   +
+                               res$RespirationRepro_stage
+
   return(res)
 }
 
@@ -186,7 +268,7 @@ calcCarbonInjection = function(sim) {
 simulatePosition = function(setup,
                             lat, lon,
                             Fmax=0, ixGroups=NULL, # Specification of fishing parameters sent to setFishing()
-                            nStages=9, tEnd=200, glob=NULL) {
+                            nStages=9, tEnd=500, glob=NULL) {
   # Output from COBALT
 
     pp = getParametersPosition(lat, lon, glob=glob)
@@ -347,37 +429,61 @@ loadTransportMatrix = function(sFilename=NULL, bLUdecompose=FALSE) {
 # }
 
 #
-# Project the injection calculations onto the TM grid by integrating
-# over the entire vertical cell
+# Project the FEISTY/COBALT injection profile onto the OCIM TM grid.
 #
-# gC/m2/yr for each cell
+# Output: list(inject = numeric(nz), ix = list(y, x))
+#   inject[j] = column-integrated injection in OCIM layer j  (gC m^-2 yr^-1)
 #
-project_injection_to_TM <- function(inject, lat,lon, grid, M3d_col = NULL) {
-  integral = 0*unique(grid$zt)
-  # Find closest grid point:
-  ix = list( 
-    y = which.min( (lat-grid$yt)^2 ),
-    x = which.min( (lon-grid$xt)^2 ))
-  if (is.null(M3d_col))
-    M3d_col = rep(1, length(grid$zt))
-  wet_layers = which(M3d_col == 1)
-  if (length(wet_layers) == 0)
-    return(list(inject=integral, ix=ix))
-  deepest_wet = max(wet_layers)
-  ocim_bottom = grid$zw[deepest_wet] + grid$dzt[deepest_wet]
-  # Integrate only onto wet OCIM layers:
-  for (j in wet_layers) {
-    idx = ( (inject$z > grid$zw[j]) 
-            & (inject$z <= (grid$zw[j] + grid$dzt[j])))
-    integral[j] = if (sum(idx) >= 2) trapz( inject$z[idx], inject$total[idx]) else 0
-    
+# FEISTY's discrete mass conservation is SUM-based: inject$total[i] is the
+# mass injected within the 1 m bin ending at z[i], and the bottom bin
+# (i = length(z)) carries an additional spike Jbottom for POC that reaches
+# the seafloor without remineralizing in the water column. Trapezoidal
+# integration would weight the bottom bin by 0.5 and silently drop ~half of
+# Jbottom (a sizeable fraction of the total flux). We use right-closed
+# sum-based binning instead, so every FEISTY meter — including the
+# bottom-spike point at z = p$bottom — is counted exactly once.
+#
+# Bathymetry-mismatch repair: when M3d_col (the per-(i,j) OCIM wet/dry
+# column) is supplied, any FEISTY mass that lands in a dry OCIM layer
+# (below the OCIM seafloor at this lat/lon, or in a sandwiched dry layer)
+# is redirected to the deepest wet OCIM layer. Mass-conserving.
+#
+project_injection_to_TM <- function(inject, lat, lon, grid, M3d_col = NULL) {
+  nz <- length(grid$zt)
+  integral <- numeric(nz)
+  ix <- list(y = which.min((lat - grid$yt)^2),
+             x = which.min((lon - grid$xt)^2))
+
+  z <- inject$z
+  f <- inject$total
+  ok <- is.finite(z) & is.finite(f)
+  z <- z[ok]; f <- f[ok]
+  if (!length(z)) return(list(inject = integral, ix = ix))
+
+  # SUM-based binning (NOT trapz): FEISTY stores Jbottom — the POC that
+  # reached the seafloor without remineralizing — as a spike in the bottom
+  # bin of inject$total. Trapezoidal integration would weight that endpoint
+  # by 0.5 and drop ~half of it. Per-meter sum keeps every meter fully.
+  dz    <- if (length(z) > 1) c(diff(z), tail(diff(z), 1)) else 1
+  edges <- c(grid$zw, grid$zw[nz] + grid$dzt[nz])
+  bin   <- findInterval(z, edges, rightmost.closed = TRUE, left.open = TRUE)
+  bin   <- pmin(pmax(bin, 1L), nz)
+
+  s <- tapply(f * dz, bin, sum)
+  integral[as.integer(names(s))] <- as.numeric(s)
+
+  # Bathymetry-mismatch repair: redirect mass landing in dry OCIM layers
+  # (below the OCIM seafloor at this lat/lon, or any sandwiched dry layer)
+  # to the deepest wet OCIM layer. Mass-conserving.
+  if (!is.null(M3d_col)) {
+    wet <- which(M3d_col == 1)
+    if (!length(wet)) return(list(inject = numeric(nz), ix = ix))
+    dry <- setdiff(seq_len(nz), wet)
+    integral[max(wet)] <- integral[max(wet)] + sum(integral[dry])
+    integral[dry] <- 0
   }
-  # Preserve mass when the FEISTY/COBALT column extends below the OCIM
-  # seafloor by assigning deeper injection to the deepest wet OCIM layer.
-  below = inject$z > ocim_bottom
-  if (any(below))
-    integral[deepest_wet] = integral[deepest_wet] + sum(inject$total[below], na.rm=TRUE)
-  return(list(inject=integral, ix=ix))
+
+  list(inject = integral, ix = ix)
 }
 
 calc_per_area_sum = function(grid, matrix, depthUpper=0) {
@@ -522,7 +628,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
                                          lon=c(0,360), lat=c(-90,90),  # Which latitudes to simulate over
                                          Fmax=0, ixGroups=NULL,        # Specification of fishing (set to setFishing())
                                          bPrintStatus=TRUE,
-                                         nCores=detectCores()-2) {
+                                         nCores=detectCores()-2,
+                                         tEnd=500) {
 
   tTotal = proc.time()
 
@@ -550,10 +657,13 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   grid_idx <- grid_idx[is_ocean, ]
 
   grid = TM$grid
-  m3d_cols <- lapply(seq_len(nrow(grid_idx)), function(k)
-    TM$M3d[grid_idx$i[k], grid_idx$j[k], ])
   glob = read.csv("data/Cobalt global data.csv")  # Read once, pass to all workers
-  
+
+  # Per-(i,j) M3d column for bathymetry-mismatch repair in project_injection_to_TM.
+  m3d_cols <- vector("list", nrow(grid_idx))
+  for (k in seq_len(nrow(grid_idx)))
+    m3d_cols[[k]] <- TM$M3d[ grid_idx$i[k], grid_idx$j[k], ]
+
   # Setup parallel backend:
   cl <- makeCluster( nCores )
   registerDoParallel(cl)
@@ -571,7 +681,7 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
                              grid$yt[ grid_idx$i[i] ],
                              grid$xt[ grid_idx$j[i] ],
                              Fmax=Fmax, ixGroups=ixGroups,
-                             glob=glob)
+                             tEnd=tEnd, glob=glob)
 
       # Calculate carbon fluxes at the position of the fish:
       sim = calcCarbonFluxes(sim)
@@ -583,27 +693,92 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
       # Calculate injection on TM grid:
       injectTM = project_injection_to_TM(inject,
                                          grid$yt[ grid_idx$i[i] ],
-                                         grid$xt[ grid_idx$j[i] ],
-                                         grid, m3d_cols[[i]])
+                                         grid$xt[ grid_idx$j[i] ], grid,
+                                         M3d_col = m3d_cols[[i]])
 
       ix = sim$t >= (1 - 0.4) * max(sim$t) # Last 40% of timeseries, consistent with calcCarbonFluxes
 
+      # Per-stage, per-pathway injection below the local euphotic zone.
+      # Units: gC/m^2/yr per stage (integrated over depth on FEISTY's 1 m grid).
+      ix_below <- which(inject$z > sim$p$photic)
+      colsum_below <- function(M) {
+        if (length(ix_below)) colSums(M[ix_below, , drop = FALSE])
+        else rep(0, ncol(M))
+      }
+      inj_be_Fecal_stage         <- colsum_below(inject$Fecal_stage)
+      inj_be_Carcass_stage       <- colsum_below(inject$Carcass_stage)
+      inj_be_Repro_stage         <- colsum_below(inject$Repro_stage)
+      inj_be_RespBasal_stage     <- colsum_below(inject$RespirationBasal_stage)
+      inj_be_RespSDA_stage       <- colsum_below(inject$RespirationSDA_stage)
+      inj_be_RespRepro_stage     <- colsum_below(inject$RespirationRepro_stage)
 
       #injectTM$inject
-      list( inject=injectTM$inject, SSB=colMeans(sim$SSB[ix,]), Y=colMeans(sim$yield[ix,]),
+      list( inject=injectTM$inject,
+            Biomass=colMeans(sim$totBiomass[ix,]),
+            SSB=colMeans(sim$SSB[ix,]),
+            Y=colMeans(sim$yield[ix,]),
+            B_per_stage=colMeans(sim$B[ix,]),
+            fluxFecal_stage              = sim$fluxFecal,
+            fluxCarcass_stage            = sim$fluxCarcass,
+            fluxRepro_stage              = sim$fluxRepro,
+            fluxRespiration_stage        = sim$fluxRespiration,
+            # Per-stage source-flux respiration components (gWW/m^2/yr)
+            fluxRespirationBasal_stage   = sim$fluxRespirationBasal,
+            fluxRespirationSDA_stage     = sim$fluxRespirationSDA,
+            fluxRespirationRepro_stage   = sim$fluxRespirationRepro,
+            # Per-stage below-euphotic injection per pathway (gC/m^2/yr)
+            inj_be_Fecal_stage           = inj_be_Fecal_stage,
+            inj_be_Carcass_stage         = inj_be_Carcass_stage,
+            inj_be_Repro_stage           = inj_be_Repro_stage,
+            inj_be_RespBasal_stage       = inj_be_RespBasal_stage,
+            inj_be_RespSDA_stage         = inj_be_RespSDA_stage,
+            inj_be_RespRepro_stage       = inj_be_RespRepro_stage,
             photic=sim$p$photic )
     }
   tSim = (proc.time() - tStart)[3]
   cat("FEISTY simulations completed in", round(tSim, 1), "seconds.\n")
 
   # Put into the injection matrix:
+  Biomass = array(data=0, c(dim(matrixInject)[1:2], 5))
   SSB = array(data=0, c(dim(matrixInject)[1:2], 5))
   Yield = array(data=0, c(dim(matrixInject)[1:2], 5))
+  nStages_fish = length(injectTM[[1]]$B_per_stage)
+  B_per_stage = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  # Per-stage carbon fluxes per pathway [lat × lon × stage], units gWW/m^2/yr
+  fluxFecal_stage              = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxCarcass_stage            = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxRepro_stage              = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxRespiration_stage        = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxRespirationBasal_stage   = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxRespirationSDA_stage     = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  fluxRespirationRepro_stage   = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  # Per-stage below-euphotic injection per pathway [lat × lon × stage], units gC/m^2/yr
+  inj_be_Fecal_stage           = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  inj_be_Carcass_stage         = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  inj_be_Repro_stage           = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  inj_be_RespBasal_stage       = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  inj_be_RespSDA_stage         = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
+  inj_be_RespRepro_stage       = array(data=0, c(dim(matrixInject)[1:2], nStages_fish))
   photic_map = matrix(200, nrow = length(TM$grid$yt), ncol = length(TM$grid$xt))
   for (i in seq_len(dim(grid_idx)[1])) {
     matrixInject[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inject
+    Biomass[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$Biomass
     SSB[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$SSB
     Yield[grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$Y
+    B_per_stage[ grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$B_per_stage
+    fluxFecal_stage[             grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxFecal_stage
+    fluxCarcass_stage[           grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxCarcass_stage
+    fluxRepro_stage[             grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxRepro_stage
+    fluxRespiration_stage[       grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxRespiration_stage
+    fluxRespirationBasal_stage[  grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxRespirationBasal_stage
+    fluxRespirationSDA_stage[    grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxRespirationSDA_stage
+    fluxRespirationRepro_stage[  grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$fluxRespirationRepro_stage
+    inj_be_Fecal_stage[          grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_Fecal_stage
+    inj_be_Carcass_stage[        grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_Carcass_stage
+    inj_be_Repro_stage[          grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_Repro_stage
+    inj_be_RespBasal_stage[      grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_RespBasal_stage
+    inj_be_RespSDA_stage[        grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_RespSDA_stage
+    inj_be_RespRepro_stage[      grid_idx$i[i], grid_idx$j[i],] = injectTM[[i]]$inj_be_RespRepro_stage
     photic_map[ grid_idx$i[i], grid_idx$j[i] ] = injectTM[[i]]$photic
   }
 
@@ -617,8 +792,23 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Add results from simulations:
   #
   sequestration$matrixInject = matrixInject
+  sequestration$Biomass = Biomass
   sequestration$SSB = SSB
   sequestration$Yield = Yield
+  sequestration$B_per_stage = B_per_stage
+  sequestration$fluxFecal_stage              = fluxFecal_stage
+  sequestration$fluxCarcass_stage            = fluxCarcass_stage
+  sequestration$fluxRepro_stage              = fluxRepro_stage
+  sequestration$fluxRespiration_stage        = fluxRespiration_stage
+  sequestration$fluxRespirationBasal_stage   = fluxRespirationBasal_stage
+  sequestration$fluxRespirationSDA_stage     = fluxRespirationSDA_stage
+  sequestration$fluxRespirationRepro_stage   = fluxRespirationRepro_stage
+  sequestration$inj_be_Fecal_stage           = inj_be_Fecal_stage
+  sequestration$inj_be_Carcass_stage         = inj_be_Carcass_stage
+  sequestration$inj_be_Repro_stage           = inj_be_Repro_stage
+  sequestration$inj_be_RespBasal_stage       = inj_be_RespBasal_stage
+  sequestration$inj_be_RespSDA_stage         = inj_be_RespSDA_stage
+  sequestration$inj_be_RespRepro_stage       = inj_be_RespRepro_stage
 
   # Calculate the per-area sequestration for the cells which are simulated:
   area = 0 # Area of all simulated cells
@@ -626,12 +816,44 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
     area = area + TM$grid$Areat[grid_idx$i[i], grid_idx$j[i]]
   sequestration$TotSeq_per_area = sequestration$TotSeq / area * 1e15 # gC/m2
   #
-  # Calc total biomass and yield:
+  # Calc total biomass, spawning stock biomass, and yield:
   #
   for (i in 1:dim(sequestration$SSB)[3]) {
+    sequestration$TotBiomass[i] = sum( TM$grid$Areat*sequestration$Biomass[,,i], na.rm=TRUE ) / 1e15 # Pg_WW
     sequestration$TotSSB[i] = sum( TM$grid$Areat*sequestration$SSB[,,i], na.rm=TRUE ) / 1e15 # Pg_WW
     sequestration$TotYield[i] = sum( TM$grid$Areat*sequestration$Yield[,,i], na.rm=TRUE ) / 1e15 # Pg_WW/yr
   }
+  # Per-stage total biomass [Pg_WW] — one entry per fish size class
+  sequestration$TotB_per_stage = sapply(seq_len(dim(sequestration$B_per_stage)[3]), function(s)
+    sum( TM$grid$Areat*sequestration$B_per_stage[,,s], na.rm=TRUE ) / 1e15)
+  # Per-stage global carbon fluxes per pathway [PgWW/yr]
+  sequestration$TotFluxFecal_stage              = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxFecal_stage[,,s],              na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxCarcass_stage            = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxCarcass_stage[,,s],            na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxRepro_stage              = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxRepro_stage[,,s],              na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxRespiration_stage        = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxRespiration_stage[,,s],        na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxRespirationBasal_stage   = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxRespirationBasal_stage[,,s],   na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxRespirationSDA_stage     = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxRespirationSDA_stage[,,s],     na.rm=TRUE ) / 1e15)
+  sequestration$TotFluxRespirationRepro_stage   = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$fluxRespirationRepro_stage[,,s],   na.rm=TRUE ) / 1e15)
+  # Per-stage global below-euphotic injection per pathway [PgC/yr]
+  sequestration$TotInjBE_Fecal_stage            = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_Fecal_stage[,,s],           na.rm=TRUE ) / 1e15)
+  sequestration$TotInjBE_Carcass_stage          = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_Carcass_stage[,,s],         na.rm=TRUE ) / 1e15)
+  sequestration$TotInjBE_Repro_stage            = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_Repro_stage[,,s],           na.rm=TRUE ) / 1e15)
+  sequestration$TotInjBE_RespBasal_stage        = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_RespBasal_stage[,,s],       na.rm=TRUE ) / 1e15)
+  sequestration$TotInjBE_RespSDA_stage          = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_RespSDA_stage[,,s],         na.rm=TRUE ) / 1e15)
+  sequestration$TotInjBE_RespRepro_stage        = sapply(seq_len(nStages_fish), function(s)
+    sum( TM$grid$Areat*sequestration$inj_be_RespRepro_stage[,,s],       na.rm=TRUE ) / 1e15)
   
   sequestration$ix_lat = ix_lat
   sequestration$ix_lon = ix_lon
@@ -639,7 +861,8 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
   # Print summary and make plots:
   #
   if (bPrintStatus) {
-    cat( c("Total fish biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgWW \n") )
+    cat( c("Total fish biomass: ", format(sum(sequestration$TotBiomass),digits=3), "PgWW \n") )
+    cat( c("Total spawning stock biomass: ", format(sum(sequestration$TotSSB),digits=3), "PgWW \n") )
     cat( c("Total fish yield: ", format(sum(sequestration$TotYield),digits=3), "PgWW/yr \n") )
     cat( c("Total carbon injected: ", format(sequestration$TotInject,digits=3), "PgC/yr \n"))
     cat( c("Total carbon injected below euphotic: ", format(sequestration$TotInject_below_euphotic,digits=3), "PgC/yr \n"))
