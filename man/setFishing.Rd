@@ -4,22 +4,28 @@
 \alias{setFishing}
 \title{Set Fishing Mortality}
 \usage{
-setFishing(p, Fmax = 0, etaF = 0.05, groupidx = c(1:p$nGroups))
+setFishing(p, Fmax = 0, etaF = 0.05, groupidx = seq_len(p$nGroups))
 }
 \arguments{
 \item{p}{The model parameter list, as created with e.g. \link{setupBasic2}.}
 
-\item{Fmax}{The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.}
+\item{Fmax}{The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.
+May be a single value applied to every group in \code{groupidx}, or a vector
+of the same length as \code{groupidx} giving a group-specific rate per element
+(\code{Fmax[i]} is applied to group \code{groupidx[i]}).}
 
-\item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.}
+\item{etaF}{A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.
+May be a single value applied to every group in \code{groupidx}, or a vector
+of the same length as \code{groupidx} giving a group-specific value per element
+(\code{etaF[i]} is applied to group \code{groupidx[i]}).}
 
 \item{groupidx}{An integer vector containing indices of functional types that fishing mortality will be assigned to. Default is all functional types.}
 }
 \value{
 It returns an updated parameter list:
 \itemize{
-\item Fmax, maximum fishing mortality, from parameter input.
-\item etaF, from parameter input.
+\item Fmax, group-level maximum fishing mortality.
+\item etaF, group-level selectivity coefficient.
 \item mortF, a vector containing fishing mortality of all state variables, including resources (always 0) and fish.
 }
 }
@@ -27,13 +33,22 @@ It returns an updated parameter list:
 This function sets fishing mortality for specific functional types based on maximum fishing mortality and size-based trawl selectivity.
 }
 \details{
-The function sets fishing mortality for all fish.
-For each specified group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
+The function sets fishing mortality for the functional groups specified by \code{groupidx}.
+For each specified group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}.
 The fishing mortality \code{mortF} for specified groups is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{Fmax}.
+\code{Fmax} and \code{etaF} may each be a single value (applied to every group in
+\code{groupidx}) or a vector of the same length as \code{groupidx}, in which case
+element \code{i} is applied to group \code{groupidx[i]}, allowing group-specific
+fishing mortality and selectivity in a single call. Full group-level vectors
+of length \code{p$nGroups} are also accepted and subset by \code{groupidx}.
+A length other than 1, \code{length(groupidx)}, or \code{p$nGroups} raises
+an error.
 }
 \examples{
-p = setupBasic2(Fmax=0) # No fishing mortality
-p = setFishing(p, Fmax = 1, etaF = 0.05, groupidx=c(3)) # add fishing mortality to demersals only.
+p = setupVertical2(Fmax=0) # No fishing mortality
+p = setFishing(p, Fmax = 1, etaF = 0.05, groupidx=c(5)) # add fishing mortality to demersals only.
+# group-specific fishing: different Fmax and etaF per group
+p = setFishing(p, Fmax = c(0, 1, 0.2), etaF = c(0.05, 0.01, 0.1), groupidx = c(1, 2, 5))
 
 }
 \references{

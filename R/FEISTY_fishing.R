@@ -4,23 +4,38 @@
 #'
 #' @param p The model parameter list, as created with e.g. \link{setupBasic2}.
 #' @param Fmax The baseline fishing mortality rate [1/year]. Default 0, indicating no fishing.
+#'   May be a single value applied to every group in \code{groupidx}, or a vector
+#'   of the same length as \code{groupidx} giving a group-specific rate per element
+#'   (\code{Fmax[i]} is applied to group \code{groupidx[i]}).
 #' @param etaF A coefficient determining the fish size with 50\% fishing selectivity. The value represents the fraction of the maximum size of a fish functional type. The default value is 0.05.
+#'   May be a single value applied to every group in \code{groupidx}, or a vector
+#'   of the same length as \code{groupidx} giving a group-specific value per element
+#'   (\code{etaF[i]} is applied to group \code{groupidx[i]}).
 #' @param groupidx An integer vector containing indices of functional types that fishing mortality will be assigned to. Default is all functional types.
-#' 
+#'
 #' @return It returns an updated parameter list:
 #' \itemize{
-#' \item Fmax, maximum fishing mortality, from parameter input.
-#' \item etaF, from parameter input.
+#' \item Fmax, group-level maximum fishing mortality.
+#' \item etaF, group-level selectivity coefficient.
 #' \item mortF, a vector containing fishing mortality of all state variables, including resources (always 0) and fish.
 #' }
-#' 
-#' @details The function sets fishing mortality for all fish.
-#' For each specified group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}. 
+#'
+#' @details The function sets fishing mortality for the functional groups specified by \code{groupidx}.
+#' For each specified group, it calculates the selectivity \code{psi} using the standard trawl selectivity formula from Andersen (2019) \bold{Fig 5.2}.
 #' The fishing mortality \code{mortF} for specified groups is then updated based on the calculated selectivity \code{psi} and the baseline fishing mortality rate \code{Fmax}.
+#' \code{Fmax} and \code{etaF} may each be a single value (applied to every group in
+#' \code{groupidx}) or a vector of the same length as \code{groupidx}, in which case
+#' element \code{i} is applied to group \code{groupidx[i]}, allowing group-specific
+#' fishing mortality and selectivity in a single call. Full group-level vectors
+#' of length \code{p$nGroups} are also accepted and subset by \code{groupidx}.
+#' A length other than 1, \code{length(groupidx)}, or \code{p$nGroups} raises
+#' an error.
 #'
 #' @examples
-#' p = setupBasic2(Fmax=0) # No fishing mortality
-#' p = setFishing(p, Fmax = 1, etaF = 0.05, groupidx=c(3)) # add fishing mortality to demersals only.
+#' p = setupVertical2(Fmax=0) # No fishing mortality
+#' p = setFishing(p, Fmax = 1, etaF = 0.05, groupidx=c(5)) # add fishing mortality to demersals only.
+#' # group-specific fishing: different Fmax and etaF per group
+#' p = setFishing(p, Fmax = c(0, 1, 0.2), etaF = c(0.05, 0.01, 0.1), groupidx = c(1, 2, 5))
 #'
 #' @references
 #' Andersen, K. H. (2019). Fish ecology, evolution, and exploitation: a new theoretical synthesis. Princeton University Press.
@@ -33,14 +48,46 @@
 #' \code{\link{calcYield}} Yield calculation
 #' 
 #' @export
-setFishing = function(p, Fmax=0, etaF=0.05, groupidx=c(1:p$nGroups)) {
-  p$Fmax=Fmax
-  p$etaF=etaF
-  for (iGroup in 1:length(groupidx)) {
+setFishing = function(p, Fmax=0, etaF=0.05, groupidx=seq_len(p$nGroups)) {
+  groupidx = as.integer(groupidx)
+  if (any(is.na(groupidx)) || any(groupidx < 1) || any(groupidx > p$nGroups))
+    stop("groupidx must contain valid functional-group indices.")
+
+  nSel = length(groupidx)
+  if (nSel == 0) return(p)
+
+  # Accept full group-level vectors and subset them for this call.
+  if (length(Fmax) == p$nGroups && nSel < p$nGroups) Fmax = Fmax[groupidx]
+  if (length(etaF) == p$nGroups && nSel < p$nGroups) etaF = etaF[groupidx]
+
+  # Recycle scalars to match groupidx (backwards compatible); validate vector lengths.
+  if (length(Fmax) == 1) Fmax = rep(Fmax, nSel)
+  if (length(etaF) == 1) etaF = rep(etaF, nSel)
+  if (length(Fmax) != nSel)
+    stop(sprintf("Fmax must be length 1, length(groupidx) (%d), or p$nGroups (%d); got %d",
+                 nSel, p$nGroups, length(Fmax)))
+  if (length(etaF) != nSel)
+    stop(sprintf("etaF must be length 1, length(groupidx) (%d), or p$nGroups (%d); got %d",
+                 nSel, p$nGroups, length(etaF)))
+
+  # Store full group-level vectors so sequential group-specific calls do not
+  # leave p$Fmax/p$etaF representing only the last group that was updated.
+  oldFmax = p$Fmax
+  oldEtaF = p$etaF
+  if (is.null(oldFmax) || length(oldFmax) != p$nGroups)
+    oldFmax = rep(if (length(oldFmax) == 1) oldFmax else 0, p$nGroups)
+  if (is.null(oldEtaF) || length(oldEtaF) != p$nGroups)
+    oldEtaF = rep(if (length(oldEtaF) == 1) oldEtaF else 0.05, p$nGroups)
+
+  p$Fmax = oldFmax
+  p$etaF = oldEtaF
+  p$Fmax[groupidx] = Fmax
+  p$etaF[groupidx] = etaF
+  for (iGroup in 1:nSel) {
     ix = p$ix[[groupidx[iGroup]]]
-    mFishing = etaF*max(p$mUpper[ix]) # selectivity at 0.05 of maximum size
+    mFishing = p$etaF[groupidx[iGroup]]*max(p$mUpper[ix]) # selectivity at etaF of maximum size
     psi = ( 1 + (p$mc[ix]/mFishing)^(-3) )^(-1) # Standard trawl selectivity from Andersen (2019) Fig 5.2
-    p$mortF[ix] = psi*Fmax
+    p$mortF[ix] = psi*p$Fmax[groupidx[iGroup]]
   }
   return(p)
 }

@@ -765,20 +765,29 @@ simulateFEISTY = function(p      = setupBasic(),
       # Call the Fortran subroutine to pass input file path
       passresult <- passpath()
       
+      # The fixed Fortran setup path encodes Fmax and etaF as single scalars, so it
+      # can only represent fishing that is uniform across all functional groups.
+      # setFishing() now stores p$Fmax/p$etaF as group-level vectors; a non-uniform
+      # vector (e.g. from setFishing(..., groupidx=...) with group-specific values)
+      # cannot be passed here. Use USEdll = FALSE or bCust = TRUE for per-group F.
+      if (length(unique(p$Fmax)) > 1 || length(unique(p$etaF)) > 1)
+        stop("Group-specific Fmax/etaF are not supported by the fixed Fortran setup path. ",
+             "Use simulateFEISTY(..., bCust = TRUE) or USEdll = FALSE for per-group fishing.")
+
       # Choose the setup:
       if (p$setup=="setupBasic"){
         initfunc <- "initfeistysetupbasic"
         setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$depth,p$Tp,p$Tb)
       }else if(p$setup=="setupBasic2"){
         initfunc <- "initfeistysetupbasic2"
-        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,p$Fmax,p$etaF,as.integer(p$bET))
+        setupinput=c(p$szprod,p$lzprod,p$bprodin,p$dfbot,length(p$ix[[p$nGroups]]),p$depth,p$Tp,p$Tb,p$etaMature,unique(p$Fmax),unique(p$etaF),as.integer(p$bET))
       }else if(p$setup=="setupVertical"){
         initfunc <- "initfeistysetupvertical"
         setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,p$region, p$bottom, p$photic)
       }else if(p$setup=="setupVertical2"){
         initfunc <- "initfeistysetupvertical2"
         setupinput = c(p$szprod,p$lzprod,p$bprodin,p$dfbot,p$dfpho,length(p$ix[[p$nGroups]]), p$Tp, p$Tm, p$Tb, p$bottom,p$photic,p$etaMature,
-                       p$shelfdepth,p$visual,p$Fmax,p$etaF)
+                       p$shelfdepth,p$visual,unique(p$Fmax),unique(p$etaF))
       }
       
       if (any(is.na(times)))  # one call and return
