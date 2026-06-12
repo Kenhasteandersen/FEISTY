@@ -59,7 +59,7 @@ plotSSBtime = function(sim) {
     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
     coord_cartesian(ylim = c(min_bio,max(min_bio*100,max(series$SSB)*5))) + 
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     xlab("Time (yr)") + ylab(expression("SSB (g m"^"-2"*")"))+
     theme(legend.key = element_blank())
     
@@ -115,7 +115,7 @@ plotYieldtime = function(sim) {
     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
     coord_cartesian(ylim = c(min_bio,max(min_bio*100,max(series$yield)*5))) + 
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     xlab("Time (yr)") + ylab(expression("Yield (g m"^"-2"*" yr"^"-1"*")"))+
     theme(legend.key = element_blank())
 
@@ -176,7 +176,7 @@ plotBiomasstime = function(sim) {
     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
     coord_cartesian(ylim = c(min_bio,max(min_bio*100,max(series$bio)*5))) + 
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     xlab("Time (yr)") + ylab(expression("Biomass (g m"^"-2"*")"))+
     theme(legend.key = element_blank())
   
@@ -266,9 +266,9 @@ plotSpectra = function(sim, norm=T) {
     annotation_logticks(sides = "bl",linewidth = 0.4,colour = "darkgrey") +
     coord_cartesian(ylim = c(min_bspec,max(min_bspec*100,max(spec$bio)*10))) + 
     scale_x_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     xlab("Weight (g)") +
     theme(legend.key = element_blank())
   
@@ -430,7 +430,7 @@ plotNetwork <- function(sim, manual_scale_b=TRUE, ref_b = 50) {
                        labels = p$my_names[attr(p$my_palette, "names") %in% df$SpId]) +
     scale_radius(limits = c(0, NA), range = c(0, (8* Max_size))) +
     scale_x_log10(breaks = scales::breaks_log(),
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     scale_y_continuous(breaks = seq(0, round(-p$bottom - 1), by = -p$bottom), labels = yaxis) +
     annotation_logticks(sides = "b",linewidth = 0.4,colour = "darkgrey") +
     labs(x ="Weight (g)", y = "", color = "Groups") +
@@ -763,7 +763,7 @@ plotSimulation = function(sim) {
                theme(legend.position="none",
                     plot.background = element_rect(color = NA)) #+
                # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x,n=3), 
-               #    labels = scales::label_math(10^.x))
+               #    labels = scales::label_log())
               
   # create left and right and bottom 
   left  <- align_plots(p_spectra,p_rates[[1]],p_rates[[2]],p_rates[[3]],align="v")
@@ -837,7 +837,7 @@ plotSimulationShiny = function(sim) {
     theme(legend.position="none",
           plot.background = element_rect(color = NA)) #+
     # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x,n=3), 
-    #               labels = scales::label_math(10^.x))
+    #               labels = scales::label_log())
   
   # create left and right and bottom 
   plots  <- align_plots(p_biomasstime,p_spectra,p_rates[[1]],p_rates[[2]],p_rates[[3]],align="v")
@@ -957,9 +957,9 @@ getRates = function(sim) {
     coord_cartesian(ylim = c(min_g,max(min_g*100,max(rates$g)*5)),xlim=x_lim) + 
     annotation_logticks(sides = "bl",linewidth = 0.4,colour = "darkgrey") +
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     scale_x_log10(breaks = scales::breaks_log(),
-                  labels = scales::label_math(10^.x))+
+                  labels = scales::label_log())+
     xlab("") + ylab(expression("Growth rate (yr"^"-1"*")")) + 
     theme(axis.text.x=element_blank())
   
@@ -988,9 +988,9 @@ getRates = function(sim) {
                        labels = p$my_names[p$groupnames[fish]]) +
     coord_cartesian(ylim = c(min_mort,max(min_mort*100,max(rates$mortpred)*5)),xlim=x_lim) + 
     scale_y_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     scale_x_log10(breaks = scales::breaks_log(),
-                  labels = scales::label_math(10^.x))+
+                  labels = scales::label_log())+
     annotation_logticks(sides = "bl",linewidth = 0.4,colour = "darkgrey") + 
     xlab("") + ylab(expression("Mortality (yr"^"-1"*")")) +
     geom_line(data = mort0_line,
@@ -1022,7 +1022,7 @@ getRates = function(sim) {
                        labels = p$my_names[p$groupnames[fish]]) +
     coord_cartesian(ylim = c(0,1),xlim=x_lim) + 
     scale_x_log10(breaks = scales::breaks_log(), 
-                  labels = scales::label_math(10^.x)) +
+                  labels = scales::label_log()) +
     annotation_logticks(sides = "b",linewidth = 0.4,colour = "darkgrey") + 
     xlab("Weight (g)") + ylab("Feeding level, f") +
     geom_line(data = fcrit,
@@ -1128,7 +1128,7 @@ plot.FEISTY = function(sim) {
 #     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
 #     coord_cartesian(ylim = c(1E-2,max(1E-2*100,max(diagts$val)*5))) + 
 #     scale_y_log10(breaks = scales::breaks_log(), 
-#                   labels = scales::label_math(10^.x))+
+#                   labels = scales::label_log())+
 #     theme(legend.key = element_blank())
 #   series <- getTimeseries(sim)
 #   series <- subset(series, series$group %in% allexistname)
@@ -1147,7 +1147,7 @@ plot.FEISTY = function(sim) {
 #     annotation_logticks(sides = "l",linewidth = 0.4,colour = "darkgrey") +
 #     coord_cartesian(ylim = c(min_bio,max(min_bio*100,max(series$bio)*5))) + 
 #     scale_y_log10(breaks = scales::breaks_log(), 
-#                   labels = scales::label_math(10^.x)) +
+#                   labels = scales::label_log()) +
 #     xlab("Time (yr)") + ylab(expression("production and consumption (g m"^"-2"*" yr"^"-1"*")"))+
 #     theme(legend.key = element_blank())
 #   
