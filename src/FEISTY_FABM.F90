@@ -25,6 +25,7 @@ module FEISTY_FABM
       type (type_vertical_distribution_id)                      :: dummy_w
       ! The benthos state variable:
       type (type_bottom_state_variable_id)                      :: id_benthos
+      type (type_bottom_state_variable_id),         allocatable :: id_ben_c(:), id_ben_n(:), id_ben_p(:)
       !type (type_bottom_state_variable_id)                      :: id_large_benthos
       type (type_state_variable_id)                             :: id_det_c, id_det_n, id_det_p
       type (type_state_variable_id)                             :: id_nut_c, id_nut_n, id_nut_p
@@ -42,9 +43,9 @@ module FEISTY_FABM
       ! Carcasses, allocatable to the number of fish (nGrid-nResources):
       type (type_bottom_state_variable_id),    allocatable      :: id_carcasses_fish_c(:), id_carcasses_fish_n(:), id_carcasses_fish_p(:)
       ! Coupling; pointer to which model contains the zooplankton state variable that we will integrater over the water column:
-      type (type_model_id),    allocatable                      :: id_smzoo_int(:), id_smzoo_int_n(:), id_smzoo_int_p(:) ! NIAZ: these should also be allocatable to the number of zooplankton models in each instance
-      type (type_model_id),    allocatable                      :: id_lgzoo_int(:), id_lgzoo_int_n(:), id_lgzoo_int_p(:) ! NIAZ: these should also be allocatable to the number of zooplankton models in each instance
-      type (type_model_id)                                      :: id_zoo_int, id_zoo_int_n, id_zoo_int_p
+      type (type_model_id),    allocatable                      :: id_smzoo_int(:), id_benprey(:) ! NIAZ: these should also be allocatable to the number of zooplankton models in each instance
+      type (type_model_id),    allocatable                      :: id_lgzoo_int(:) ! NIAZ: these should also be allocatable to the number of zooplankton models in each instance
+      type (type_model_id)                                      :: id_zoo_int
       
       type (type_dependency_id)                                 :: id_temp, id_depth
       type (type_horizontal_dependency_id)                      :: id_temp_vertmean_100m,id_temp_vertmean_500to1500m,id_bottom_depth
@@ -53,22 +54,23 @@ module FEISTY_FABM
       type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_total_biomass(:)
       
       real (rk)                              :: b_ini
-      real (rk) ,    allocatable             :: depth_array(:) ! Array of depth values for pre-computed profiles
+      real (rk) ,    allocatable             :: ben_availability(:), depth_array(:) ! Array of depth values for pre-computed profiles
       real (rk) ,    allocatable             :: theta_matrix(:,:,:) ! Pre-computed theta matrix (predator,prey,n_depth)
       real (rk) ,    allocatable             :: vertical_distribution_matrix_centers(:,:,:) ! Pre-computed vertical distribution matrix (depth_center,nFGrid,n_depth) - contains center values
       
       real(rk)                               :: shelfdepth
       real(rk)                               :: max_depth
       real(rk)                               :: photic_depth
-      integer                                :: n_depth, n_zoo, n_s, n_l
+      integer                                :: n_depth, n_zoo, n_s, n_l, n_ben
       character,    allocatable              :: zoo_size(:)
+      character                              :: respiration_elements, feces_elements, carcass_elements
       real(rk)                               :: bgmort    ! Fish background mortality (per year)
       real(rk)                               :: gww_gc    ! gram wet weight to gram carbon conversion factor
       real(rk)                               :: qnc, qpc  ! Nitrogen:Carbon and Phosphorus:Carbon ratios
       !real(rk)                               :: mol_targetunit  ! mol to target unit conversion factor NIAZ: always the same when we couple through standard_variables, so we use a hardcoded conversion
       real(rk)                               :: gww_mmolc, gww_FISHn, gww_FISHp   ! gww to target C/N/P unit conversion factors
 
-      logical                                :: nutrient_in_c, nutrient_in_n, nutrient_in_p           ! BGC has C/N/P elements for nutrient coupling
+      logical                                :: internal_benthos, nutrient_in_c, nutrient_in_n, nutrient_in_p           ! BGC has C/N/P elements for nutrient coupling
       logical                                :: detritus_in_c, detritus_in_n, detritus_in_p           ! BGC has C/N/P elements for detritus coupling
       logical                                :: small_zooplankton_in_c, small_zooplankton_in_n, small_zooplankton_in_p  ! Small zooplankton has C/N/P elements
       logical                                :: large_zooplankton_in_c, large_zooplankton_in_n, large_zooplankton_in_p  ! Large zooplankton has C/N/P elements
@@ -165,6 +167,10 @@ contains
       call self%get_parameter(self%qpc, 'qpc', 'P/C', 'Phosphorus to Carbon ratio', default=1.0_rk/106.0_rk)
       !call self%get_parameter(self%mol_targetunit, 'mol_targetunit', '-', 'mol to target unit (in LTL model) ratio', default=1._rk/1000._rk)! default is mol m-3:mmol m-3 (used in LTL model)
       
+      call self%get_parameter(self%feces_elements, 'feces_elements', '', 'elemental composition of feces e.g. "cnp"')
+      call self%get_parameter(self%carcass_elements, 'carcass_elements', '', 'elemental composition of carcass e.g. "cnp"')
+      call self%get_parameter(self%respiration_elements, 'respiration_elements', '', 'elemental composition of respiration e.g. "cnp"')
+      
       ! Element switches indicating which BGC elements are available for coupling (C, N, P) !NIAZ: These should probably go.
       call self%get_parameter(self%nutrient_in_c, 'nutrient_in_c', '-', 'BGC has carbon (C) element for coupling', default=.false.)
       call self%get_parameter(self%nutrient_in_n, 'nutrient_in_n', '-', 'BGC has nitrogen (N) element for coupling', default=.true.)
@@ -255,9 +261,9 @@ contains
               call self%request_mapped_coupling_to_model(self%id_smzoo_c(i), 'small_zooplankton_c'//trim(i_str), standard_variables%total_carbon, id_w=self%dummy_w)
               call self%request_mapped_coupling_to_model(self%id_smzoo_n(i), 'small_zooplankton_n'//trim(i_str), standard_variables%total_nitrogen, id_w=self%dummy_w)
               call self%request_mapped_coupling_to_model(self%id_smzoo_p(i), 'small_zooplankton_p'//trim(i_str), standard_variables%total_phosphorus, id_w=self%dummy_w)
-              call self%couplings%set_string('small_zooplankton_c'//trim(i_str), "small_zooplankton_target"//trim(i_str))
-              call self%couplings%set_string('small_zooplankton_n'//trim(i_str), "small_zooplankton_target"//trim(i_str))
-              call self%couplings%set_string('small_zooplankton_p'//trim(i_str), "small_zooplankton_target"//trim(i_str))
+              call self%couplings%set_string('small_zooplankton_c'//trim(i_str), "small_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+              call self%couplings%set_string('small_zooplankton_n'//trim(i_str), "small_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+              call self%couplings%set_string('small_zooplankton_p'//trim(i_str), "small_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
               
               call self%register_mapped_model_dependency(self%id_smzoo_int(i), 'small_zooplankton_target'//trim(i_str), proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w) ! NIAZ: is this acutally neccesary?
           enddo      
@@ -275,11 +281,11 @@ contains
               call self%request_mapped_coupling_to_model(self%id_lgzoo_c(i), 'large_zooplankton_c'//trim(i_str), standard_variables%total_carbon, id_w=self%dummy_w)
               call self%request_mapped_coupling_to_model(self%id_lgzoo_n(i), 'large_zooplankton_n'//trim(i_str), standard_variables%total_nitrogen, id_w=self%dummy_w)
               call self%request_mapped_coupling_to_model(self%id_lgzoo_p(i), 'large_zooplankton_p'//trim(i_str), standard_variables%total_phosphorus, id_w=self%dummy_w)
-              call self%couplings%set_string('large_zooplankton_c'//trim(i_str), "large_zooplankton_target"//trim(i_str))
-              call self%couplings%set_string('large_zooplankton_n'//trim(i_str), "large_zooplankton_target"//trim(i_str))
-              call self%couplings%set_string('large_zooplankton_p'//trim(i_str), "large_zooplankton_target"//trim(i_str))
+              call self%couplings%set_string('large_zooplankton_c'//trim(i_str), "large_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+              call self%couplings%set_string('large_zooplankton_n'//trim(i_str), "large_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+              call self%couplings%set_string('large_zooplankton_p'//trim(i_str), "large_zooplankton_target"//trim(i_str)) ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
               
-              call self%register_mapped_model_dependency(self%id_lgzoo_int(i), 'large_zooplankton_target'//trim(i_str), proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w) ! NIAZ: is this acutally neccesary?
+              call self%register_mapped_model_dependency(self%id_lgzoo_int(i), 'large_zooplankton_target'//trim(i_str), proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
           enddo
       
           ! if only one zooplankton, set up couplings to that one.
@@ -290,19 +296,75 @@ contains
           call self%request_mapped_coupling_to_model(self%id_zoo_c, 'zooplankton_c', standard_variables%total_carbon, id_w=self%dummy_w)
           call self%request_mapped_coupling_to_model(self%id_zoo_n, 'zooplankton_n', standard_variables%total_nitrogen, id_w=self%dummy_w)
           call self%request_mapped_coupling_to_model(self%id_zoo_p, 'zooplankton_p', standard_variables%total_phosphorus, id_w=self%dummy_w)
-          call self%couplings%set_string('zooplankton_c', "zooplankton_target")
-          call self%couplings%set_string('zooplankton_n', "zooplankton_target")
-          call self%couplings%set_string('zooplankton_p', "zooplankton_target")
+          call self%couplings%set_string('zooplankton_c', "zooplankton_target") ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+          call self%couplings%set_string('zooplankton_n', "zooplankton_target") ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
+          call self%couplings%set_string('zooplankton_p', "zooplankton_target") ! links every constituent dependency to the same prey model pointer, so you only need to point to it once in the yaml
           
           call self%register_mapped_model_dependency(self%id_zoo_int, 'zooplankton_target', proportional_change=.true., domain=domain_bottom,id_w=self%dummy_w)
       endif
       
-      !call self%register_model_dependency("small_zooplankton_target") NIAZ
-      !call self%register_model_dependency("large_zooplankton_target") NIAZ
-      !call self%register_model_dependency("excretion")
-      call self%register_model_dependency("respiration_target")
-      call self%register_model_dependency("feces_target")
-      call self%register_model_dependency("carcasses_target")
+      ! Determine whether benthos will be modelled internally or externally
+      call self%get_parameter(self%internal_benthos, 'internal_benthos', '', 'benthos modelled internally (True) or from external zoobenthos model (False)')
+      if (self%internal_benthos) then ! if no coupling to external zoobenthos prey, setup internal zoobenthos variables, and couple to detrital fluxes instead.
+          !Register fake deposition pools, for POM/detritus to dump their sedimentation in, and register a dependency on its ROC, to extract the flux
+          call self%register_dependency(self%id_det_flux_c,  'det_flux_c',   'mmol m-3 s-1',  'bottom flux '//trim(index))
+          
+          
+          call self%register_diagnostic_variable(self%id_pool(i), 'pool'//trim(index),'kmol m-2', 'target bottom pool for pelagic tracer '//trim(index),source=source_constant, output=output_none, act_as_state_variable=.true.)
+          
+          call self%register_diagnostic_variable(self%id_flux_out(i), 'pool'//trim(index)//'flux','kmol m-2', 'flux to target bottom pool for pelagic tracer '//trim(index),source=source_do, output=output_instantaneous)
+          
+          call self%request_coupling(self%id_flux(i),'./pool'//trim(index)//'_sms_tot')
+          
+               
+               
+          call self%register_state_variable(self%id_benthos, 'benthos', 'g m-2', 'benthos biomass', initial_value=smbent_ini, minimum=0.0_rk)
+          if (self%detritus_in_c) call self%register_state_dependency(self%id_det_c, 'detritus_c', 'mmol C m-3', 'detritus carbon reaching the bottom for driving benthos')
+          if (self%detritus_in_n) call self%register_state_dependency(self%id_det_n, 'detritus_n', 'mmol N m-3', 'detritus nitrogen reaching the bottom for driving benthos')
+          if (self%detritus_in_p) call self%register_state_dependency(self%id_det_p, 'detritus_p', 'mmol P m-3', 'detritus phosphorus reaching the bottom for driving benthos')
+          if (self%nutrient_in_c) call self%register_state_dependency(self%id_nut_c, 'nutrient_c', 'mmol C m-3', 'nutrient carbon in the bottom layer')
+          if (self%nutrient_in_n) call self%register_state_dependency(self%id_nut_n, 'nutrient_n', 'mmol N m-3', 'nutrient nitrogen in the bottom layer')
+          if (self%nutrient_in_p) call self%register_state_dependency(self%id_nut_p, 'nutrient_p', 'mmol P m-3', 'nutrient phosphorus in the bottom layer')
+          
+          ! Add benthos to elemental aggregates, conditional on which BGC elements are used
+          call self%add_to_aggregate_variable(standard_variables%total_carbon, self%id_benthos, scale_factor = 1._rk/self%gww_mmolc)     !if (self%nutrient_in_c) 
+          call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_benthos, scale_factor = 1._rk/self%gww_FISHn)   !if (self%nutrient_in_n) 
+          call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_benthos, scale_factor = 1._rk/self%gww_FISHp) !if (self%nutrient_in_p)
+          
+      else ! if external zoobenthos models are available, set up couplings to zoobenthos prey.
+          call self%get_parameter(self%n_ben, 'n_ben', '', 'number of zoobenthos prey')
+          
+          allocate(self%ben_availability(self%n_ben))
+          allocate(self%id_benprey(self%n_ben))
+          allocate(self%id_ben_c(self%n_ben))
+          allocate(self%id_ben_n(self%n_ben))
+          allocate(self%id_ben_p(self%n_ben))
+          do i = 1, self%n_ben ! find the number of zoobenthos models, register their individual availability, and set up automatic couplings to their c, n, and p constituents 
+              write (i_str,'(i0)') i
+              call self%get_parameter(self%ben_availability(i), 'ben_'//TRIM(i_str)//'_availability', '', 'availability of zoobenthos prey'//TRIM(i_str)//' (between 0 and 1)')
+              call self%register_model_dependency(self%id_benprey(i), 'zoobenthos_target'//TRIM(i_str)) ! register model dependency
+        
+              ! register dependencies on zoobenthos C,N,P
+              call self%register_state_dependency(self%id_ben_c(i), 'zoobenthos_c_'//trim(i_str), 'mmol m-3', 'zoobenthos '//trim(i_str)//' c biomass')
+              call self%register_state_dependency(self%id_ben_n(i), 'zoobenthos_n_'//trim(i_str), 'mmol m-3', 'zoobenthos '//trim(i_str)//' n biomass')
+              call self%register_state_dependency(self%id_ben_p(i), 'zoobenthos_p_'//trim(i_str), 'mmol m-3', 'zoobenthos '//trim(i_str)//' p biomass')
+              
+              call self%request_coupling_to_model(self%id_ben_c(i), self%id_benprey(i), standard_variables%total_carbon)
+              call self%request_coupling_to_model(self%id_ben_n(i), self%id_benprey(i), standard_variables%total_nitrogen)
+              call self%request_coupling_to_model(self%id_ben_p(i), self%id_benprey(i), standard_variables%total_phosphorus)
+          enddo
+      endif
+      
+      ! register model dependencies for recipient nutrient and POM/detritus pools
+      if (index(self%respiration_elements, 'c') /= 0) call self%register_model_dependency("respiration_c_target")
+      if (index(self%respiration_elements, 'n') /= 0) call self%register_model_dependency("respiration_n_target")
+      if (index(self%respiration_elements, 'p') /= 0) call self%register_model_dependency("respiration_p_target")
+      if (index(self%feces_elements, 'c') /= 0) call self%register_model_dependency("feces_c_target")
+      if (index(self%feces_elements, 'n') /= 0) call self%register_model_dependency("feces_n_target")
+      if (index(self%feces_elements, 'p') /= 0) call self%register_model_dependency("feces_p_target")
+      if (index(self%carcass_elements, 'c') /= 0) call self%register_model_dependency("carcasses_c_target")
+      if (index(self%carcass_elements, 'n') /= 0) call self%register_model_dependency("carcasses_n_target")
+      if (index(self%carcass_elements, 'p') /= 0) call self%register_model_dependency("carcasses_p_target")
 
       allocate(self%id_fish(nGrid-nResources))
       allocate(self%id_fish_w(nGrid-nResources))! allocate size of vertical distribution of small pelagics     
@@ -360,59 +422,58 @@ contains
          feisty_vertical_distribution%vertical_distribution_matrix_centers => self%vertical_distribution_matrix_centers
          feisty_vertical_distribution%depth_array => self%depth_array
          feisty_vertical_distribution%fish_index = i
-         
-         !call self%register_state_dependency(self%id_excre_fish_n(i),'excretion_n', 'mmol N m-2', 'excretion nitrogen')
-         !call self%register_state_dependency(self%id_excre_fish_p(i),'excretion_p', 'mmol C m-2', 'excretion phosphorus')
-         
+                  
          ! Respiration - register state dependency and set up coupling
-         if (self%nutrient_in_c) then
-            call self%register_state_dependency(self%id_respiration_fish_c(i),'respiration_c', 'mmol C m-2', 'respiration carbon')
-            call self%request_mapped_coupling_to_model(self%id_respiration_fish_c(i),'respiration_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_c', "respiration_target")
-         end if
-         if (self%nutrient_in_n) then
-            call self%register_state_dependency(self%id_respiration_fish_n(i),'respiration_n', 'mmol N m-2', 'respiration nitrogen')
-            call self%request_mapped_coupling_to_model(self%id_respiration_fish_n(i),'respiration_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_n', "respiration_target")
-         end if
-         if (self%nutrient_in_p) then
-            call self%register_state_dependency(self%id_respiration_fish_p(i),'respiration_p', 'mmol P m-2', 'respiration phosphorus')
-            call self%request_mapped_coupling_to_model(self%id_respiration_fish_p(i),'respiration_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_p', "respiration_target")
+         if (index(self%respiration_elements, 'c') /= 0) then
+             call self%register_state_dependency(self%id_respiration_fish_c(i),'respiration_c', 'mmol C m-2', 'respiration carbon')
+             call self%request_mapped_coupling_to_model(self%id_respiration_fish_c(i),'respiration_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
+             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_c', "respiration_c_target") ! links the respiration of every fish to the same pool, so you only need to point to it once in the yaml
+         endif
+         
+         if (index(self%respiration_elements, 'n') /= 0) then
+             call self%register_state_dependency(self%id_respiration_fish_n(i),'respiration_n', 'mmol N m-2', 'respiration nitrogen')
+             call self%request_mapped_coupling_to_model(self%id_respiration_fish_n(i),'respiration_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
+             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_n', "respiration_n_target") ! links the respiration of every fish to the same pool, so you only need to point to it once in the yaml
+         endif
+         
+         if (index(self%respiration_elements, 'p') /= 0) then
+             call self%register_state_dependency(self%id_respiration_fish_p(i),'respiration_p', 'mmol P m-2', 'respiration phosphorus')
+             call self%request_mapped_coupling_to_model(self%id_respiration_fish_p(i),'respiration_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
+             call self%couplings%set_string('respiration_fish_'//trim(i_str)//'_p', "respiration_p_target") ! links the respiration of every fish to the same pool, so you only need to point to it once in the yaml
          end if
 
          ! Feces - register state dependency and set up coupling
-         if (self%detritus_in_c) then
+         if (index(self%feces_elements, 'c') /= 0) then
             call self%register_state_dependency(self%id_feces_fish_c(i),'feces_c', 'mmol C m-2', 'feces carbon')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_c(i), 'feces_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_c', "feces_target")
+            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_c', "feces_c_target")
          end if
-         if (self%detritus_in_n) then
+         if (index(self%feces_elements, 'n') /= 0) then
             call self%register_state_dependency(self%id_feces_fish_n(i),'feces_n', 'mmol N m-2', 'feces nitrogen')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_n(i), 'feces_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_n', "feces_target")
+            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_n', "feces_n_target")
          end if
-         if (self%detritus_in_p) then
+         if (index(self%feces_elements, 'p') /= 0) then
             call self%register_state_dependency(self%id_feces_fish_p(i),'feces_p', 'mmol P m-2', 'feces phosphorus')
             call self%request_mapped_coupling_to_model(self%id_feces_fish_p(i), 'feces_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_p', "feces_target")
+            call self%couplings%set_string('feces_fish_'//trim(i_str)//'_p', "feces_p_target")
          end if
 
          ! Carcasses - register state dependency and set up coupling
-         if (self%detritus_in_c) then
+         if (index(self%carcass_elements, 'c') /= 0) then
             call self%register_state_dependency(self%id_carcasses_fish_c(i),'carcasses_c', 'mmol C m-2', 'carcasses carbon')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_c(i), 'carcasses_fish_'//trim(i_str)//'_c',standard_variables%total_carbon, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_c', "carcasses_target")
+            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_c', "carcasses_c_target")
          end if
-         if (self%detritus_in_n) then
+         if (index(self%carcass_elements, 'n') /= 0) then
             call self%register_state_dependency(self%id_carcasses_fish_n(i),'carcasses_n', 'mmol N m-2', 'carcasses nitrogen')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_n(i), 'carcasses_fish_'//trim(i_str)//'_n',standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_n', "carcasses_target")
+            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_n', "carcasses_n_target")
          end if
-         if (self%detritus_in_p) then
+         if (index(self%carcass_elements, 'p') /= 0) then
             call self%register_state_dependency(self%id_carcasses_fish_p(i),'carcasses_p', 'mmol P m-2', 'carcasses phosphorus')
             call self%request_mapped_coupling_to_model(self%id_carcasses_fish_p(i), 'carcasses_fish_'//trim(i_str)//'_p',standard_variables%total_phosphorus, id_w=self%id_fish_w(i))
-            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_p', "carcasses_target")
+            call self%couplings%set_string('carcasses_fish_'//trim(i_str)//'_p', "carcasses_p_target")
          end if
 
         !call self%request_mapped_coupling_to_model(self%id_excre_fish_n(i), 'excretion_fish_'//trim(i_str),standard_variables%total_nitrogen, id_w=self%id_fish_w(i))
@@ -420,26 +481,6 @@ contains
         ! call self%couplings%set('excretion_fish_'//trim(i_str), "excretion") 
          
       end do
-      
-      !benthos register NIAZ: Hide behind switch when coupling to a benthos model is implemented
-      call self%register_state_variable(self%id_benthos, 'benthos', 'g m-2', 'benthos biomass', initial_value=smbent_ini, minimum=0.0_rk)
-      if (self%detritus_in_c) call self%register_state_dependency(self%id_det_c, 'detritus_c', 'mmol C m-3', 'detritus carbon reaching the bottom for driving benthos')
-      if (self%detritus_in_n) call self%register_state_dependency(self%id_det_n, 'detritus_n', 'mmol N m-3', 'detritus nitrogen reaching the bottom for driving benthos')
-      if (self%detritus_in_p) call self%register_state_dependency(self%id_det_p, 'detritus_p', 'mmol P m-3', 'detritus phosphorus reaching the bottom for driving benthos')
-      if (self%nutrient_in_c) call self%register_state_dependency(self%id_nut_c, 'nutrient_c', 'mmol C m-3', 'nutrient carbon in the bottom layer')
-      if (self%nutrient_in_n) call self%register_state_dependency(self%id_nut_n, 'nutrient_n', 'mmol N m-3', 'nutrient nitrogen in the bottom layer')
-      if (self%nutrient_in_p) call self%register_state_dependency(self%id_nut_p, 'nutrient_p', 'mmol P m-3', 'nutrient phosphorus in the bottom layer')
-      
-      ! Add benthos to elemental aggregates, conditional on which BGC elements are used
-      call self%add_to_aggregate_variable(standard_variables%total_carbon, self%id_benthos, scale_factor = 1._rk/self%gww_mmolc)     !if (self%nutrient_in_c) 
-      call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_benthos, scale_factor = 1._rk/self%gww_FISHn)   !if (self%nutrient_in_n) 
-      call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_benthos, scale_factor = 1._rk/self%gww_FISHp) !if (self%nutrient_in_p) 
-      
-      ! Example for a potential separate large benthos pool:
-      !if (self%nutrient_in_c) call self%add_to_aggregate_variable(standard_variables%total_carbon, self%id_large_benthos, scale_factor = 1._rk/self%gww_targetc)
-      !if (self%nutrient_in_n) call self%add_to_aggregate_variable(standard_variables%total_nitrogen, self%id_large_benthos, scale_factor = 1._rk/self%gww_targetn)
-      !if (self%nutrient_in_p) call self%add_to_aggregate_variable(standard_variables%total_phosphorus, self%id_large_benthos, scale_factor = 1._rk/self%gww_targetp)
-      
        
        !temperature and depth
        call self%register_dependency(self%id_temp, standard_variables%temperature)
@@ -467,7 +508,7 @@ contains
       real(rk),dimension(ixEnd(1)-ixStart(1)+1)  :: smpel
       real(rk),dimension(ixEnd(2)-ixStart(2)+1)  :: lgpel
       real(rk),dimension(ixEnd(3)-ixStart(3)+1)  :: dem
-      real(rk),dimension(nGrid-nResources)       :: fish
+      real(rk),dimension(nGrid-nResources)       :: fish, rel_fish_cons, pred_morts
       !real(rk)                                   :: smzoo_c, smzoo_n, smzoo_p, lgzoo_c, lgzoo_n, lgzoo_p
       real(rk)                                   :: excess_c,excess_n,excess_p
       real(rk)                                   :: excess_c_smzoo,excess_n_smzoo, excess_p_smzoo
@@ -481,8 +522,9 @@ contains
       real(rk),dimension(self%n_s)               :: smzoo_c, smzoo_n, smzoo_p, smzoo_cn, smzoo_cp, smzoo_c_rd, smzoo_n_rd, smzoo_p_rd, smzoo_ww_rf
       real(rk),dimension(self%n_l)               :: lgzoo_c, lgzoo_n, lgzoo_p, lgzoo_cn, lgzoo_cp, lgzoo_c_rd, lgzoo_n_rd, lgzoo_p_rd, lgzoo_ww_rf
       real(rk),dimension(1)                      :: zoo_c, zoo_n, zoo_p 
+      real(rk),dimension(self%n_ben)             :: benthos_c, benthos_n, benthos_p, ben_ww_rf
       real(rk)                                   :: smzoo_c_tot, smzoo_n_tot, smzoo_p_tot, lgzoo_c_tot, lgzoo_n_tot, lgzoo_p_tot, smzoo_ww_tot, lgzoo_ww_tot, smzoo_mort_ww, lgzoo_mort_ww
-      real(rk)                                   :: excess_c_zoo, excess_n_zoo, excess_p_zoo
+      real(rk)                                   :: excess_c_zoo, excess_n_zoo, excess_p_zoo, ben_ww_tot, excess_c_ben, excess_n_ben, excess_p_ben, ben_mort_ww
       
       _BOTTOM_LOOP_BEGIN_
 
@@ -503,44 +545,23 @@ contains
              smzoo_c_tot = sum(smzoo_c)
              smzoo_n_tot = sum(smzoo_n)
              smzoo_p_tot = sum(smzoo_p)
-             
-             ! calculate relative densities
-             smzoo_c_rd = smzoo_c/smzoo_c_tot
-             smzoo_n_rd = smzoo_n/smzoo_n_tot
-             smzoo_p_rd = smzoo_p/smzoo_p_tot
-             
+                          
              ! calculate WW of limiting nutrient for each small zooplankton
              smzoo_ww_rf = min(merge(smzoo_c*self%gww_mmolc, huge(0._rk), smzoo_c /= 0._rk), &
                                merge(smzoo_n*self%gww_FISHn, huge(0._rk), smzoo_n /= 0._rk), &
                                merge(smzoo_p*self%gww_FISHp, huge(0._rk), smzoo_p /= 0._rk))
-             
-             ! calculate small zoop. nutrient ratios
-             smzoo_cn = smzoo_c/smzoo_n
-             smzoo_cp = smzoo_c/smzoo_p
-             
+                          
              do i = 1, self%n_l
                 _GET_BOTTOM_(self%id_lgzoo_c(i), lgzoo_c(i)) ! NIAZ: These are in mmol m-3
                 _GET_BOTTOM_(self%id_lgzoo_n(i), lgzoo_n(i)) ! NIAZ: These are in mmol m-3
                 _GET_BOTTOM_(self%id_lgzoo_p(i), lgzoo_p(i)) ! NIAZ: These are in mmol m-3
              enddo
-             ! calculate total large zoop. biomasss
-             lgzoo_c_tot = sum(lgzoo_c)
-             lgzoo_n_tot = sum(lgzoo_n)
-             lgzoo_p_tot = sum(lgzoo_p)
-             
-             ! calculate relative densities
-             lgzoo_c_rd = lgzoo_c/lgzoo_c_tot
-             lgzoo_n_rd = lgzoo_n/lgzoo_n_tot
-             lgzoo_p_rd = lgzoo_p/lgzoo_p_tot
-             
+                          
              ! calculate WW of limiting nutrient for each large zooplankton
              lgzoo_ww_rf = min(merge(lgzoo_c*self%gww_mmolc, huge(0._rk), lgzoo_c /= 0._rk), &
                                merge(lgzoo_n*self%gww_FISHn, huge(0._rk), lgzoo_n /= 0._rk), &
                                merge(lgzoo_p*self%gww_FISHp, huge(0._rk), lgzoo_p /= 0._rk))
              
-             ! calculate large zoop. nutrient ratios
-             lgzoo_cn = lgzoo_c/lgzoo_n
-             lgzoo_cp = lgzoo_c/lgzoo_p
          else ! if theres only one registered zooplankton prey, get its biomass, and then split evenly between small and large. NIAZ: Ask Ken about this!!!!
              _GET_BOTTOM_(self%id_zoo_c, zoo_c(1)) ! NIAZ: These are in mmol m-3
              _GET_BOTTOM_(self%id_zoo_n, zoo_n(1)) ! NIAZ: These are in mmol m-3
@@ -553,58 +574,27 @@ contains
              lgzoo_ww_rf = min(merge(zoo_c*self%gww_mmolc, huge(0._rk), zoo_c /= 0._rk), &
                                merge(zoo_n*self%gww_FISHn, huge(0._rk), zoo_n /= 0._rk), &
                                merge(zoo_p*self%gww_FISHp, huge(0._rk), zoo_p /= 0._rk)) / 2._rk
-             
-             ! calculate zoop. nutrient ratios
-             lgzoo_cn = zoo_c/zoo_n
-             lgzoo_cp = zoo_c/zoo_p
-             smzoo_cn = zoo_c/zoo_n
-             smzoo_cp = zoo_c/zoo_p
          endif
          smzoo_ww_tot = sum(smzoo_ww_rf)
          lgzoo_ww_tot = sum(lgzoo_ww_rf)
-         !!!!!!!!!!!!!!!!!!!!!!!!! NIAZ: think about how to deal with variable zoop. stochiometry vis-a-vis multiple zoop. prey. Remember to convert zoop. to WW before passing to calcderivatives()
-         !NIAZ: FROM ABOVE: call self%get_parameter(self%gww_gc, 'gww_gc', '-', 'gram wet weight to gram carbon ratio', default=9._rk)
-         !NIAZ: FROM ABOVE: call self%get_parameter(self%qnc, 'qnc', 'N/C', 'Nitrogen to Carbon ratio', default=16.0_rk/106.0_rk)
-         !NIAZ: FROM ABOVE: call self%get_parameter(self%qpc, 'qpc', 'P/C', 'Phosphorus to Carbon ratio', default=1.0_rk/106.0_rk)
-         
-         !PSEUDOCODE:
-         !convert everything to feisty-corresponding WW using FEISTY n/c, p/c, and c/ww relationships; i.e. the WW that would be the result of the prey having FEISTY stochiometry.
-         !then pick the smallest WW of those resulting from all elements (except if one is nearzero?) to give to FEISTY for calculating derivatives, so that none are overdrawn.
-         !AFTER: convert the consumption back into constituent (c,n,p) biomass, using PREY stochiometry, to remove from their pools, and calculate any excess 
-         !  (derivative in constituent units, calculated using prey stochiometry - derivative in constituent units, calculated using FEISTY stochiometry), which will be excreted.
-         
-         
-         
-         
-         !smzoo_c = 0._rk
-         !smzoo_n = 0._rk
-         !smzoo_p = 0._rk
-         !if (self%small_zooplankton_in_c) _GET_BOTTOM_(self%id_smzoo_c, smzoo_c) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !if (self%small_zooplankton_in_n) _GET_BOTTOM_(self%id_smzoo_n, smzoo_n) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !if (self%small_zooplankton_in_p) _GET_BOTTOM_(self%id_smzoo_p, smzoo_p) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !! get depth-integrated large zooplankton
-         !lgzoo_c = 0._rk
-         !lgzoo_n = 0._rk
-         !lgzoo_p = 0._rk
-         !if (self%large_zooplankton_in_c) _GET_BOTTOM_(self%id_lgzoo_c, lgzoo_c) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !if (self%large_zooplankton_in_n) _GET_BOTTOM_(self%id_lgzoo_n, lgzoo_n) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !if (self%large_zooplankton_in_p) _GET_BOTTOM_(self%id_lgzoo_p, lgzoo_p) ! NIAZ: remove the Constituent logic; extend to more than one zoopl. type.
-         !!print*,smzoo_c/smzoo_n
-         !!print*,smzoo_c/smzoo_p
-         !
-         !zoo1=0._rk
-         !zoo2=0._rk
-         ! mmol N/m2 to gww/m2 NIAZ: Check this logic
-         !zoo1 = minval([smzoo_c*self%gww_targetc, smzoo_n*self%gww_targetn, smzoo_p*self%gww_targetp], mask=[self%small_zooplankton_in_c .and. smzoo_c*self%gww_targetc .ne. 0._rk, self%small_zooplankton_in_n .and. smzoo_n*self%gww_targetn .ne. 0._rk, self%small_zooplankton_in_p .and. smzoo_p*self%gww_targetp .ne. 0._rk])
-         !zoo2 = minval([lgzoo_c*self%gww_targetc, lgzoo_n*self%gww_targetn, lgzoo_p*self%gww_targetp], mask=[self%large_zooplankton_in_c .and. lgzoo_c*self%gww_targetc .ne. 0._rk, self%large_zooplankton_in_n .and. lgzoo_n*self%gww_targetn .ne. 0._rk, self%large_zooplankton_in_p .and. lgzoo_p*self%gww_targetp .ne. 0._rk])
-         !print*,smzoo_c*self%gww_targetc,smzoo_n*self%gww_targetn,smzoo_p*self%gww_targetp
-         
-         ! split two size classes
-         !zoo1 = zoo1/2._rk ! NIAZ: Check this logic, remove after adding logic to deal with only one zoop type.
-         !zoo2 = zoo2/2._rk ! NIAZ: Check this logic, remove after adding logic to deal with only one zoop type.
+
          
          !get benthos (gww m-2)
-         _GET_BOTTOM_(self%id_benthos,benthos)
+         if (self%internal_benthos) then
+             _GET_BOTTOM_(self%id_benthos,ben_ww_tot)
+         else
+             do i = 1,self%n_ben
+                 _GET_BOTTOM_(self%id_ben_c(i),benthos_c(i))
+                 _GET_BOTTOM_(self%id_ben_n(i),benthos_n(i))
+                 _GET_BOTTOM_(self%id_ben_p(i),benthos_p(i))
+             enddo
+             ben_ww_rf = min(merge(benthos_c*self%ben_availability*self%gww_mmolc, huge(0._rk), benthos_c /= 0._rk), &
+                             merge(benthos_n*self%ben_availability*self%gww_FISHn, huge(0._rk), benthos_n /= 0._rk), &
+                             merge(benthos_p*self%ben_availability*self%gww_FISHp, huge(0._rk), benthos_p /= 0._rk))
+             ben_ww_tot = sum(ben_ww_rf)
+             !NIAZ: remember to check that we multiply by availability where appropriate
+         endif
+         
          
          ! Depth-averaged environmental dependencies
          _GET_BOTTOM_(self%id_bottom_depth, bottom_depth) 
@@ -644,9 +634,10 @@ contains
          call scale_mortality_rates(self)
 
          ! FEISTY derivatives
-         uin= [smzoo_ww_tot,lgzoo_ww_tot ,benthos,0._rk ,fish] ! NIAZ: at this point, zooplankton and benthos biomasses (in WW) must be calculated and aggregated.
+         uin= [smzoo_ww_tot,lgzoo_ww_tot ,ben_ww_tot,0._rk ,fish] ! NIAZ: at this point, zooplankton and benthos biomasses (in WW) must be calculated and aggregated.
          call calcderivatives(uin, dudt)
          !print*,dudt
+         !NIAZ: revive the following to inject excess_nutrients? 
          !do i = 1, nGrid
          ! uin(i) = max(0._rk , uin(i))
          !end do
@@ -657,6 +648,14 @@ contains
          !mortpred_contri_zoo2= theta(:,2) * Cmax*V/(Enc + Cmax)*uin* uin(2)
          !call checknan(mortpred_contri_zoo2, nGrid)
          !!print*,SUM(mortpred_contri_zoo1)/0.01201_rk/9_rk *16._rk/106._rk  
+
+         !do i = 1, nGrid
+         uin = max(0._rk , uin)
+         !end do
+         !! recalculate mortality contribution from each predator, in order to distribute excess nutrient excresion. NIAZ: nGrid-nResources
+         pred_morts = Cmax(nResources+1:nGrid) * V(nResources+1:nGrid) / (Enc(nResources+1:nGrid) + Cmax(nResources+1:nGrid)) * uin(nResources+1:nGrid)
+         rel_fish_cons = (theta(nResources+1:nGrid,1) + theta(nResources+1:nGrid,2) + theta(nResources+1:nGrid,3)) * pred_morts
+         rel_fish_cons = rel_fish_cons/sum(rel_fish_cons)
          
          ! NIAZ: Zooplankton removal should be scaled to the relative WW of the most and least limiting prey nutrients - the difference is then excreted.
          smzoo_mort_ww = dudt(1)/smzoo_ww_tot
@@ -680,13 +679,13 @@ contains
              end do
              
              ! calculate excretion/respiration due to stochiometry
-             excess_c_zoo = sum(smzoo_c*self%gww_mmolc * smzoo_mort_ww - dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
-             excess_n_zoo = sum(smzoo_n*self%gww_FISHn * smzoo_mort_ww - dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
-             excess_p_zoo = sum(smzoo_p*self%gww_FISHp * smzoo_mort_ww - dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
+             excess_c_zoo = sum(smzoo_c*self%gww_mmolc * smzoo_mort_ww + dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
+             excess_n_zoo = sum(smzoo_n*self%gww_FISHn * smzoo_mort_ww + dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
+             excess_p_zoo = sum(smzoo_p*self%gww_FISHp * smzoo_mort_ww + dudt(1)*smzoo_ww_rf/smzoo_ww_tot) ! gww biomass * specific loss rate - loss
              
-             excess_c_zoo = sum(excess_c_zoo + lgzoo_c*self%gww_mmolc * lgzoo_mort_ww - dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) ! gww biomass * specific loss rate - loss
-             excess_n_zoo = sum(excess_n_zoo + lgzoo_n*self%gww_FISHn * lgzoo_mort_ww - dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) ! gww biomass * specific loss rate - loss
-             excess_p_zoo = sum(excess_p_zoo + lgzoo_p*self%gww_FISHp * lgzoo_mort_ww - dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) ! gww biomass * specific loss rate - loss
+             excess_c_zoo = sum(excess_c_zoo + lgzoo_c*self%gww_mmolc * lgzoo_mort_ww + dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) / self%gww_mmolc ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+             excess_n_zoo = sum(excess_n_zoo + lgzoo_n*self%gww_FISHn * lgzoo_mort_ww + dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) / self%gww_FISHn ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+             excess_p_zoo = sum(excess_p_zoo + lgzoo_p*self%gww_FISHp * lgzoo_mort_ww + dudt(1)*lgzoo_ww_rf/lgzoo_ww_tot) / self%gww_FISHp ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
          else ! if only one zooplankton prey type
              ! Apply mortality to prey state variables
              do istate = 1, size(self%id_zoo_int%bottom_state)
@@ -695,140 +694,102 @@ contains
              end do
              
              ! calculate excretion/respiration due to stochiometry
-             excess_c_zoo = sum(zoo_c*self%gww_mmolc * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk - (dudt(1)+dudt(2))) ! gww biomass * specific loss rate - loss
-             excess_n_zoo = sum(zoo_n*self%gww_FISHn * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk - (dudt(1)+dudt(2))) ! gww biomass * specific loss rate - loss
-             excess_p_zoo = sum(zoo_p*self%gww_FISHp * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk - (dudt(1)+dudt(2))) ! gww biomass * specific loss rate - loss
+             excess_c_zoo = sum(zoo_c*self%gww_mmolc * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk + (dudt(1)+dudt(2))) / self%gww_mmolc ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+             excess_n_zoo = sum(zoo_n*self%gww_FISHn * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk + (dudt(1)+dudt(2))) / self%gww_FISHn ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+             excess_p_zoo = sum(zoo_p*self%gww_FISHp * (lgzoo_mort_ww + smzoo_mort_ww)/2._rk + (dudt(1)+dudt(2))) / self%gww_FISHp ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
          endif
-         
-         ! NIAZ: now calculate excreted nutrients or respired carbon. - WW removal scaled to relative density of prey and calculated using RF
-         !excess_c_smzoo = smzoo_c*self%gww_mmolc * smzoo_mort_ww - dudt(1)*smzoo_ww_rf/smzoo_ww_tot ! gww biomass * specific loss rate - loss
-         !excess_c_smzoo = smzoo_c*self%gww_targetc/2._rk * dudt(1)/zoo1 - dudt(1) ! gww biomass * specific loss rate - loss
-         
-         !!small zooplankton NIAZ: this logic should be checked over. NIAZ: I THINK this should only be done once - each id_smzoo_int_x points to the same model.
-         !if (self%small_zooplankton_in_c) then
-         !   do istate = 1, size(self%id_smzoo_int_c%bottom_state)
-         !      _GET_BOTTOM_(self%id_smzoo_int_c%bottom_state(istate), p1)
-         !      _ADD_BOTTOM_SOURCE_(self%id_smzoo_int_c%bottom_state(istate), dudt(1)/zoo1 * p1/2._rk)
-         !   end do
-         !end if
-         !if (self%small_zooplankton_in_n) then
-         !   do istate = 1, size(self%id_smzoo_int_n%bottom_state)
-         !      _GET_BOTTOM_(self%id_smzoo_int_n%bottom_state(istate), p1)
-         !      _ADD_BOTTOM_SOURCE_(self%id_smzoo_int_n%bottom_state(istate), dudt(1)/zoo1 * p1/2._rk)
-         !   end do
-         !end if
-         !if (self%small_zooplankton_in_p) then
-         !   do istate = 1, size(self%id_smzoo_int_p%bottom_state)
-         !      _GET_BOTTOM_(self%id_smzoo_int_p%bottom_state(istate), p1)
-         !      _ADD_BOTTOM_SOURCE_(self%id_smzoo_int_p%bottom_state(istate), dudt(1)/zoo1 * p1/2._rk)
-         !   end do
-         !end if
-         !!large zooplankton NIAZ: this logic should be checked over. NIAZ: I THINK this should only be done once - each id_smzoo_int_x points to the same model.
-         !if (self%large_zooplankton_in_c) then
-         !   do istate = 1, size(self%id_lgzoo_int_c%bottom_state)
-         !      _GET_BOTTOM_(self%id_lgzoo_int_c%bottom_state(istate), p2)
-         !      _ADD_BOTTOM_SOURCE_(self%id_lgzoo_int_c%bottom_state(istate), dudt(2)/zoo2 * p2/2._rk)
-         !   end do
-         !end if
-         !if (self%large_zooplankton_in_n) then
-         !   do istate = 1, size(self%id_lgzoo_int_n%bottom_state)
-         !      _GET_BOTTOM_(self%id_lgzoo_int_n%bottom_state(istate), p2)
-         !      _ADD_BOTTOM_SOURCE_(self%id_lgzoo_int_n%bottom_state(istate), dudt(2)/zoo2 * p2/2._rk)
-         !   end do
-         !end if
-         !if (self%large_zooplankton_in_p) then
-         !   do istate = 1, size(self%id_lgzoo_int_p%bottom_state)
-         !      _GET_BOTTOM_(self%id_lgzoo_int_p%bottom_state(istate), p2)
-         !      _ADD_BOTTOM_SOURCE_(self%id_lgzoo_int_p%bottom_state(istate), dudt(2)/zoo2 * p2/2._rk)
-         !   end do
-         !end if 
-            !print*,dudt(1)/zoo1 * p1/2._rk + dudt(2)/zoo2 * p2/2._rk
-            !print*,dudt(1)* self%gww_targetn+dudt(2)* self%gww_targetn
-                
-         !!temperatory put here  NIAZ: this logic should be checked over.
-         !if (self%small_zooplankton_in_c) then
-         !   excess_c_smzoo = smzoo_c*self%gww_targetc/2._rk * dudt(1)/zoo1 - dudt(1) ! gww biomass * specific loss rate - loss
-         !   excess_c = MAX(excess_c_smzoo,0._rk)
-         !else
-         !   excess_c = 0._rk
-         !end if
-         !if (self%small_zooplankton_in_n) then
-         !   excess_n_smzoo = smzoo_n*self%gww_targetn/2._rk * dudt(1)/zoo1 - dudt(1) 
-         !   excess_n = MAX(excess_n_smzoo,0._rk)
-         !else
-         !   excess_n = 0._rk
-         !end if
-         !if (self%small_zooplankton_in_p) then
-         !   excess_p_smzoo = smzoo_p*self%gww_targetp/2._rk * dudt(1)/zoo1 - dudt(1)
-         !   excess_p = MAX(excess_p_smzoo,0._rk)
-         !else
-         !   excess_p = 0._rk
-         !end if
-         !if (self%large_zooplankton_in_c) then
-         !   excess_c_lgzoo = lgzoo_c*self%gww_targetc/2._rk * dudt(2)/zoo2 - dudt(2)
-         !   excess_c = excess_c + MAX(excess_c_lgzoo,0._rk)
-         !end if
-         !if (self%large_zooplankton_in_n) then
-         !   excess_n_lgzoo = lgzoo_n*self%gww_targetn/2._rk * dudt(2)/zoo2 - dudt(2)
-         !   excess_n = excess_n + MAX(excess_n_lgzoo,0._rk)
-         !end if
-         !if (self%large_zooplankton_in_p) then
-         !   excess_p_lgzoo = lgzoo_p*self%gww_targetp/2._rk * dudt(2)/zoo2 - dudt(2)
-         !   excess_p = excess_p + MAX(excess_p_lgzoo,0._rk)
-         !end if
-        !print*,excess_c,excess_n,excess_p
-         
+      
+         !calculate total zoobenthos mortality as dudt(1)/smzoo_ww_tot, then apply mortality to state variables of prey
+         ben_mort_ww = dudt(3)/ben_ww_tot
+         if (self%internal_benthos) then ! if coupling to detritus fluxes, running an internal benthos model.
+!NIAZ
+             ! benthos dynamics NIAZ: This need to be generalized and rewritten
+             det_bot_c = 0._rk
+             det_bot_n = 0._rk
+             det_bot_p = 0._rk
+             if (self%detritus_in_c) _GET_(self%id_det_c, det_bot_c)! mmol C m-3
+             if (self%detritus_in_n) _GET_(self%id_det_n, det_bot_n)! mmol N m-3
+             if (self%detritus_in_p) _GET_(self%id_det_p, det_bot_p)! mmol P m-3
+             ! Use the most limiting element (smallest in gww m-3) for benthos growth calculation
+             det_bot = minval([det_bot_c*self%gww_mmolc, det_bot_n*self%gww_FISHn, det_bot_p*self%gww_FISHp], &
+                              mask=[self%detritus_in_c .and. det_bot_c*self%gww_mmolc .ne. 0._rk, &
+                                    self%detritus_in_n .and. det_bot_n*self%gww_FISHn .ne. 0._rk, &
+                                    self%detritus_in_p .and. det_bot_p*self%gww_FISHp .ne. 0._rk])
+             if (det_bot .eq. 0._rk) det_bot = minval([det_bot_c*self%gww_mmolc, det_bot_n*self%gww_FISHn, det_bot_p*self%gww_FISHp], &
+                                                       mask=[self%detritus_in_c, self%detritus_in_n, self%detritus_in_p])
+             _GET_(self%id_depth,depth)
+             dflag = 0.5_rk + sign(0.5_rk,det_bot - trcmin*self%gww_FISHn)
+             wd = (6.0_rk+6.0e-2_rk*bottom_depth)*d_per_s*dflag
+             det_bot_flux_gww=det_bot*wd*dflag !det_bot*w_d   gww m-3 to gww m-3 * m s-1 to gww/m2 s-1
+             i = 3!,3!, 4
+             benthos_g_gww = 0.1_rk*det_bot_flux_gww*(1-benthos/80)!gww/m2/s
+             _ADD_BOTTOM_SOURCE_(self%id_benthos, benthos_g_gww + dudt(i) )!gww/m2  dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3) K is 80
+             if (self%detritus_in_c) _ADD_BOTTOM_FLUX_(self%id_det_c, -det_bot_flux_gww/self%gww_mmolc) ! gww/m2 s-1 to mmol C/m2 s-1
+             if (self%detritus_in_n) _ADD_BOTTOM_FLUX_(self%id_det_n, -det_bot_flux_gww/self%gww_FISHn) ! gww/m2 s-1 to mmol N/m2 s-1
+             if (self%detritus_in_p) _ADD_BOTTOM_FLUX_(self%id_det_p, -det_bot_flux_gww/self%gww_FISHp) ! gww/m2 s-1 to mmol P/m2 s-1
+             
+             benthos_loss_gww = 0.1_rk*det_bot_flux_gww*(1-(1-benthos/80)) !gww, convert below
+             if (self%nutrient_in_c) _ADD_BOTTOM_FLUX_(self%id_nut_c, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_mmolc) ! gww/m2 s-1 to mmol C/m2 s-1
+             if (self%nutrient_in_n) _ADD_BOTTOM_FLUX_(self%id_nut_n, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_FISHn) ! gww/m2 s-1 to mmol N/m2 s-1
+             if (self%nutrient_in_p) _ADD_BOTTOM_FLUX_(self%id_nut_p, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_FISHp) ! gww/m2 s-1 to mmol P/m2 s-1
+!NIAZ
+         else ! if using external benthos model(s)
+             do iprey = 1, self%n_ben
+                 do istate = 1, size(self%id_benprey(iprey)%bottom_state)
+                     _GET_BOTTOM_(self%id_benprey(iprey)%bottom_state(istate), p1)
+                     _ADD_BOTTOM_SOURCE_(self%id_benprey(iprey)%bottom_state(istate), ben_mort_ww * p1) ! NIAZ: this assumes dudt(3) is already negative.
+                 end do
+                 
+                 ! calculate excretion/respiration due to stochiometry
+                 excess_c_ben = sum(benthos_c*self%ben_availability*self%gww_mmolc * ben_mort_ww + dudt(3)) / self%gww_mmolc ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+                 excess_n_ben = sum(benthos_n*self%ben_availability*self%gww_FISHn * ben_mort_ww + dudt(3)) / self%gww_FISHn ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+                 excess_p_ben = sum(benthos_p*self%ben_availability*self%gww_FISHp * ben_mort_ww + dudt(3)) / self%gww_FISHp ! gww biomass * specific loss rate - loss. NIAZ: in mmol m-3
+             end do
+         endif
+         excess_c = excess_c_ben + excess_c_zoo
+         excess_n = excess_n_ben + excess_n_zoo
+         excess_p = excess_p_ben + excess_p_zoo
+         !NIAZ: remember to add excess_ nutrients to their target pools:
+         !  - calculate relative excess nutrient contributions from each fish, and add them to respiration fluxes.
+         !      excess_x*rel_fish_cons
          
          do i = 1, nGrid-nResources
-         ! fish dynamics
-         _ADD_BOTTOM_SOURCE_(self%id_fish(i), dudt(i+nResources) )!gww/m2
-         
-         ! excretion
-         !_ADD_BOTTOM_SOURCE_(self%id_excre_fish_n(i), respiration(i+nResources) / self%gww_targetn)!* self%qnc /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
-         !_ADD_BOTTOM_SOURCE_(self%id_excre_fish_p(i), respiration(i+nResources) / self%gww_targetp)!gww/m2 to mmol P/m2
-         ! respiration NIAZ: this also need a go-over
-         if (self%nutrient_in_c) _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_c(i), respiration(i+nResources) / self%gww_mmolc)!* gwwC /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to target C/m2
-         if (self%nutrient_in_n) _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_n(i), respiration(i+nResources) / self%gww_FISHn)
-         if (self%nutrient_in_p) _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_p(i), respiration(i+nResources) / self%gww_FISHp)
-         ! feces
-         if (self%detritus_in_c) _ADD_BOTTOM_SOURCE_(self%id_feces_fish_c(i), feces(i+nResources) / self%gww_mmolc)!gww/m2 to target C/m2
-         if (self%detritus_in_n) _ADD_BOTTOM_SOURCE_(self%id_feces_fish_n(i), feces(i+nResources) / self%gww_FISHn)!* self%qnc /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
-         if (self%detritus_in_p) _ADD_BOTTOM_SOURCE_(self%id_feces_fish_p(i), feces(i+nResources) / self%gww_FISHp)!gww/m2 to mmol P/m2
-         ! carcasses
-         if (self%detritus_in_c) _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_c(i), carcasses(i+nResources) / self%gww_mmolc)!gww/m2 to target C/m2
-         if (self%detritus_in_n) _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_n(i), carcasses(i+nResources) / self%gww_FISHn)!* self%qnc /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
-         if (self%detritus_in_p) _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_p(i), carcasses(i+nResources) / self%gww_FISHp)!gww/m2 to mmol P/m2
+             ! fish dynamics
+             _ADD_BOTTOM_SOURCE_(self%id_fish(i), dudt(i+nResources) )!gww/m2
+             
+             ! excretion/respiration
+             if (index(self%respiration_elements, 'c') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_c(i), respiration(i+nResources) / self%gww_mmolc + excess_c*rel_fish_cons(i))!* gwwC /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to target C/m2
+             endif
+             if (index(self%respiration_elements, 'n') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_n(i), respiration(i+nResources) / self%gww_FISHn + excess_n*rel_fish_cons(i))
+             endif
+             if (index(self%respiration_elements, 'p') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_respiration_fish_p(i), respiration(i+nResources) / self%gww_FISHp + excess_p*rel_fish_cons(i))
+             endif
+             
+             ! feces
+             if (index(self%feces_elements, 'c') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_feces_fish_c(i), feces(i+nResources) / self%gww_mmolc)!gww/m2 to target C/m2
+             endif
+             if (index(self%feces_elements, 'n') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_feces_fish_n(i), feces(i+nResources) / self%gww_FISHn)!* self%qnc /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+             endif
+             if (index(self%feces_elements, 'p') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_feces_fish_p(i), feces(i+nResources) / self%gww_FISHp)!gww/m2 to mmol P/m2
+             endif
+             
+             ! carcasses
+             if (index(self%carcass_elements, 'c') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_c(i), carcasses(i+nResources) / self%gww_mmolc)!gww/m2 to target C/m2
+             endif
+             if (index(self%carcass_elements, 'n') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_n(i), carcasses(i+nResources) / self%gww_FISHn)!* self%qnc /0.01201_rk/9_rk *16._rk/106._rk)!gww/m2 to mmol N/m2
+             endif
+             if (index(self%carcass_elements, 'p') /= 0) then
+                 _ADD_BOTTOM_SOURCE_(self%id_carcasses_fish_p(i), carcasses(i+nResources) / self%gww_FISHp)!gww/m2 to mmol P/m2
+             endif
          end do
-         
-         ! benthos dynamics NIAZ: This need to be generalized and rewritten; also an option to couple to an external zoobenthos model needs to be added.
-         det_bot_c = 0._rk
-         det_bot_n = 0._rk
-         det_bot_p = 0._rk
-         if (self%detritus_in_c) _GET_(self%id_det_c, det_bot_c)! mmol C m-3
-         if (self%detritus_in_n) _GET_(self%id_det_n, det_bot_n)! mmol N m-3
-         if (self%detritus_in_p) _GET_(self%id_det_p, det_bot_p)! mmol P m-3
-         ! Use the most limiting element (smallest in gww m-3) for benthos growth calculation
-         det_bot = minval([det_bot_c*self%gww_mmolc, det_bot_n*self%gww_FISHn, det_bot_p*self%gww_FISHp], &
-                          mask=[self%detritus_in_c .and. det_bot_c*self%gww_mmolc .ne. 0._rk, &
-                                self%detritus_in_n .and. det_bot_n*self%gww_FISHn .ne. 0._rk, &
-                                self%detritus_in_p .and. det_bot_p*self%gww_FISHp .ne. 0._rk])
-         if (det_bot .eq. 0._rk) det_bot = minval([det_bot_c*self%gww_mmolc, det_bot_n*self%gww_FISHn, det_bot_p*self%gww_FISHp], &
-                                                   mask=[self%detritus_in_c, self%detritus_in_n, self%detritus_in_p])
-         _GET_(self%id_depth,depth)
-         dflag = 0.5_rk + sign(0.5_rk,det_bot - trcmin*self%gww_FISHn)
-         wd = (6.0_rk+6.0e-2_rk*bottom_depth)*d_per_s*dflag
-         det_bot_flux_gww=det_bot*wd*dflag !det_bot*w_d   gww m-3 to gww m-3 * m s-1 to gww/m2 s-1
-         i = 3!,3!, 4
-         benthos_g_gww = 0.1_rk*det_bot_flux_gww*(1-benthos/80)!gww/m2/s
-         _ADD_BOTTOM_SOURCE_(self%id_benthos, benthos_g_gww + dudt(i) )!gww/m2  dRdt(3) = rr(3)*(1-R(3)/K(3)) - mortRes(3)*R(3) K is 80
-         if (self%detritus_in_c) _ADD_BOTTOM_FLUX_(self%id_det_c, -det_bot_flux_gww/self%gww_mmolc) ! gww/m2 s-1 to mmol C/m2 s-1
-         if (self%detritus_in_n) _ADD_BOTTOM_FLUX_(self%id_det_n, -det_bot_flux_gww/self%gww_FISHn) ! gww/m2 s-1 to mmol N/m2 s-1
-         if (self%detritus_in_p) _ADD_BOTTOM_FLUX_(self%id_det_p, -det_bot_flux_gww/self%gww_FISHp) ! gww/m2 s-1 to mmol P/m2 s-1
-
-         benthos_loss_gww = 0.1_rk*det_bot_flux_gww*(1-(1-benthos/80)) !gww, convert below
-         if (self%nutrient_in_c) _ADD_BOTTOM_FLUX_(self%id_nut_c, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_mmolc) ! gww/m2 s-1 to mmol C/m2 s-1
-         if (self%nutrient_in_n) _ADD_BOTTOM_FLUX_(self%id_nut_n, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_FISHn) ! gww/m2 s-1 to mmol N/m2 s-1
-         if (self%nutrient_in_p) _ADD_BOTTOM_FLUX_(self%id_nut_p, (0.9_rk *det_bot_flux_gww + benthos_loss_gww) / self%gww_FISHp) ! gww/m2 s-1 to mmol P/m2 s-1
          
          do i=1,nGroups            
             _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_total_biomass(i), totBiomass(i))
