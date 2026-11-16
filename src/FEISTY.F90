@@ -407,6 +407,7 @@
       real(dp):: u(nGrid)
 
       integer :: i, j, ii, istart, istop!, iGroup
+      real(dp) :: mortpred_tmp(nGrid)
 
 ! ----------------------------------------------------------------------
 dudt=0._dp
@@ -434,7 +435,12 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
       mortpred = Cmax*V/(Enc + Cmax)*u
       call checknan(mortpred, nGrid)
 
-      mortpred = matmul(transpose(theta), mortpred)      ! Predation mortality [/yr]
+      ! NIAZ: this version should be more efficient
+      do j = 1, nGrid
+          mortpred_tmp(j) = dot_product(theta(:,j), mortpred)
+      end do
+      mortpred = mortpred_tmp
+      !mortpred = matmul(transpose(theta), mortpred)      ! Predation mortality [/yr]
 
 ! down-regulation in time-series input
 if(bTS .eqv. .TRUE.)then
@@ -486,14 +492,12 @@ end if
       mort = mortpred + mort0 + mortF                    ! Total mortality     [/yr]
       
 #ifdef _FABM_   
-     excretion   = 0._dp
      respiration = 0._dp
      carcasses   = 0._dp
      feces       = 0._dp
      
      carcasses = mort0*u
      feces = (1._dp-epsAssim_vec)/2 * grazing ! update below
-     excretion =  0._dp ! update below
      respiration = metabolism*u + (1._dp-epsAssim_vec)/2* grazing
      
 #endif

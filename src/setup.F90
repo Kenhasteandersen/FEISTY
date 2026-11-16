@@ -127,7 +127,7 @@ Module setup
 !===================================
 !for FABM-FEISTY (Aug 2025)
 !       -----allocated in FEISTY_FABM.f90 subroutine initialize-----
-         real(dp), allocatable :: excretion(:)
+         !real(dp), allocatable :: excretion(:)
          real(dp), allocatable :: respiration(:)
          real(dp), allocatable :: carcasses(:)
          real(dp), allocatable :: feces(:)
