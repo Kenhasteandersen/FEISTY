@@ -2001,9 +2001,11 @@ contains
 
    end subroutine parametersAddGroup
 
-   subroutine setFishing(Fmax,etaF)
+   subroutine setFishing(Fmax,etaF,groupidx)
      real(dp), intent(in) :: Fmax, etaF
-     integer :: iGroup
+     integer,  intent(in), optional :: groupidx(:) ! groups to apply fishing to (as in R setFishing); default: all groups
+     integer :: i, iGroup
+     integer, allocatable :: ix(:)
      real(dp),allocatable :: psiF(:)
      real(dp) :: mFishing
 
@@ -2011,7 +2013,14 @@ contains
 !       RETURN
 !     end if
 
-     do iGroup = 1,nGroups
+     if (present(groupidx)) then
+        ix = groupidx
+     else
+        ix = [(iGroup, iGroup = 1, nGroups)]
+     end if
+
+     do i = 1,size(ix)
+        iGroup = ix(i)
         allocate(psiF(group(iGroup)%spec%n))
 
       mFishing = etaF*maxval(group(iGroup)%spec%mUpper)

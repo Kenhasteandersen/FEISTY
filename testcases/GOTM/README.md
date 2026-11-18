@@ -10,7 +10,7 @@ This folder holds the GOTM test cases: `setup.zip` contains the forcing for a No
 
 **State variables**
 
-- Fish biomass per functional type and size class, `g m-2` (wet weight), depth-integrated, named `<fft_short_name>_size_<k>`. There are five functional types (default names `fft_1`..`fft_5`; the test cases call them `smpel`, `mesopel`, `lgpel`, `bathypel`, `dem`), with `nStages` size classes for the large types. Each type also has a diagnostic `<fft_short_name>_totB` (total biomass).
+- Fish biomass per functional type and size class, `g m-2` (wet weight), depth-integrated, named `<fft_short_name>_size_<k>`. There are five functional types (default names `fft_1`..`fft_5`; the test cases call them `smpel`, `mesopel`, `lgpel`, `bathypel`, `dem`), with `nStages` size classes for the large types. Each type also has a diagnostic `<fft_short_name>_totB` (total biomass) and `<fft_short_name>_catch` (fishery catch, `g m-2 yr-1`).
 - Optional internal benthos `benthos` (`g m-2`), used when `internal_benthos: true`.
 
 All fish and benthos biomass is added to the host's total carbon, nitrogen and phosphorus, so conservation checks include it (`gww_gc`, `qnc` and `qpc` define the conversion).
@@ -95,8 +95,8 @@ Parameters without a default are required.
 | `mMin` | g | 0.001 | Minimum fish mass (boundary of the grid) |
 | `etamature` | - | 0.25 | Determines the size with 50% maturity |
 | `visual` | - | 1.5 | Visual ability (1.5 visual, 1 non-visual predator) |
-| `Fmax` | yr-1 | 0 | Maximum fishing mortality |
-| `etaF` | - | 0.05 | Determines the size with 50% fishing selectivity |
+| `Fmax` | yr-1 | 0 | Maximum fishing mortality; default for every `Fmax_<i>` (section 3.4) |
+| `etaF` | - | 0.05 | Determines the size with 50% fishing selectivity; default for every `etaF_<i>` (section 3.4) |
 | `nStages` | - | 9 | Number of size classes of the large functional types |
 | `b_ini` | g m-2 | 1e-5 | Initial biomass of each fish size class |
 
@@ -129,9 +129,18 @@ At run time the temperatures come from the host's temperature field; `Tp`, `Tb` 
 
 Prey stoichiometry is variable: prey are converted to wet weight by their limiting element, and fish excrete the excess of the other elements through the respiration targets.
 
-### 3.4 Functional-type names
+### 3.4 Functional-type names and fishing
 
 `fft_short_name_<i>` for `i` = 1..5 (default `fft_<i>`), unit-less. They name the state variables and the flux diagnostics, e.g. `smpel_size_1`.
+
+Fishing is set per functional type, as in R `setFishing(p, Fmax, etaF, groupidx)`:
+
+| Parameter | Unit | Default | Description |
+|---|---|---|---|
+| `Fmax_<i>` | yr-1 | `Fmax` | Maximum fishing mortality of functional type `i` |
+| `etaF_<i>` | - | `etaF` | Fraction of the maximum size of type `i` with 50% fishing selectivity |
+
+The fishing mortality of size class `m` is `Fmax_<i> / (1 + (m / (etaF_<i> * m_max))^-3)`, the trawl selectivity of the FEISTY library (`setFishing` in `src/setup.F90`). The test cases set all `Fmax_<i>` to 0 (no fishing). Each type has a catch diagnostic `<fft_short_name>_catch` in `g m-2 yr-1` (wet weight): fishing mortality times biomass, summed over the size classes of the type, as R `calcYield`. The catch is removed from the system, so it is not returned to the BGC model.
 
 ### 3.5 Zooplankton prey
 

@@ -922,6 +922,16 @@ instances:
          fft_short_name_3: lgpel                             # fish functional type short name [default=fft_3]
          fft_short_name_4: bathypel                          # fish functional type short name [default=fft_4]
          fft_short_name_5: dem                               # fish functional type short name [default=fft_5]
+         Fmax_1: 0.0                                         # Maximum fishing mortality of smpel [yr-1; default=Fmax]
+         etaF_1: 0.05                                        # fraction of smpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_2: 0.0                                         # Maximum fishing mortality of mesopel [yr-1; default=Fmax]
+         etaF_2: 0.05                                        # fraction of mesopel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_3: 0.0                                         # Maximum fishing mortality of lgpel [yr-1; default=Fmax]
+         etaF_3: 0.05                                        # fraction of lgpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_4: 0.0                                         # Maximum fishing mortality of bathypel [yr-1; default=Fmax]
+         etaF_4: 0.05                                        # fraction of bathypel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_5: 0.0                                         # Maximum fishing mortality of dem [yr-1; default=Fmax]
+         etaF_5: 0.05                                        # fraction of dem maximum size with 50% fishing selectivity [dimensionless; default=etaF]
       coupling:
          small_zooplankton_target1: Z5                       # model eaten as small zooplankton prey 1 (FEISTY reads its total C, N and P)
          large_zooplankton_target1: Z4                       # model eaten as large zooplankton prey 1 (FEISTY reads its total C, N and P)

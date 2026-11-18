@@ -58,7 +58,8 @@ module FEISTY_FABM
 
       type (type_bottom_diagnostic_variable_id)                 :: id_temp_vertmean_100m_diag, id_det_pool_c, id_det_pool_n, id_det_pool_p, id_det_pool_s
       type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_total_biomass(:)
-      
+      type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_catch(:)
+
       real (rk)                              :: b_ini
       real (rk) ,    allocatable             :: ben_availability(:), depth_array(:) ! Array of depth values for pre-computed profiles
       real (rk) ,    allocatable             :: zoo_availability(:), smzoo_availability(:), lgzoo_availability(:) ! availability of each zooplankton prey (n_zoo > 1): all, small, large
@@ -99,6 +100,7 @@ contains
       
       real(rk)           :: szprod, lzprod, bprodin, dfbot, depth, Tp, Tb, bent_ini
       real(rk)           :: dfpho, Tm, etamature, visual, Fmax, etaF!, ssigma, tau, shelfdepth
+      real(rk)           :: Fmax_i, etaF_i   ! per functional type fishing parameters
       integer            :: nStages
       integer            :: i,j,k, n_names
       character(len=100) :: i_str, j_str, size_number_str, fft_short_name
@@ -449,6 +451,7 @@ contains
       allocate(self%id_flux(nGrid-nResources, n_flux), self%id_flux_in(nGrid-nResources, n_flux))
 
       allocate(self%id_fish_total_biomass(nGroups))
+      allocate(self%id_fish_catch(nGroups))
       allocate(self%fft_short_names(nGrid-nResources))
       allocate(self%size_numstr(nGrid-nResources))
 
@@ -467,6 +470,11 @@ contains
          !call self%get_parameter(fft_long_name,  'fft_long_name'//trim(i_str),  units='', long_name='fish functional type long name',  default="fish_functional_type_"//trim(i_str)) !NIAZ: not used
          ! read functional type shortnames from yaml
          call self%get_parameter(fft_short_name, 'fft_short_name_'//trim(i_str), units='', long_name='fish functional type short name', default="fft_"//trim(i_str))
+         ! per functional type fishing; defaults to the global Fmax/etaF. Must come after initialize_theta_matrices,
+         ! since setupVertical2 (called there) resets fishing mortality of all groups to the global values.
+         call self%get_parameter(Fmax_i, 'Fmax_'//trim(i_str), 'yr-1', 'maximum fishing mortality of '//trim(fft_short_name), default=Fmax)
+         call self%get_parameter(etaF_i, 'etaF_'//trim(i_str), '-', 'fraction of maximum size with 50% fishing selectivity for '//trim(fft_short_name), default=etaF)
+         call setFishing(Fmax_i, etaF_i, [i])
          ! read the initial value of each functional type from yaml
          !call self%get_parameter(self%b_ini, 'b_ini_'//trim(i_str), 'g m-2', 'initial fish biomass of each size class', default=1.e-5_rk)  
 
@@ -481,7 +489,8 @@ contains
                n_names = n_names + 1
          end do
             
-         call self%register_diagnostic_variable(self%id_fish_total_biomass(i), trim(fft_short_name)//'_totB', 'g m-2', trim(fft_short_name)//'_total_biomass')   
+         call self%register_diagnostic_variable(self%id_fish_total_biomass(i), trim(fft_short_name)//'_totB', 'g m-2', trim(fft_short_name)//'_total_biomass')
+         call self%register_diagnostic_variable(self%id_fish_catch(i), trim(fft_short_name)//'_catch', 'g m-2 yr-1', trim(fft_short_name)//'_catch (wet weight)')
       end do 
       
       !sets up biogeochemical coupling and vertical distribution for each fish size class
@@ -808,6 +817,8 @@ contains
          
          do i=1,nGroups
             _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_total_biomass(i), totBiomass(i))
+            ! catch = fishing mortality x biomass (as in R calcYield); uin is clamped >= 0 above, mortF is in s-1
+            _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_catch(i), sum(mortF(ixStart(i):ixEnd(i))*uin(ixStart(i):ixEnd(i)))*seconds_per_year)
          end do
       _BOTTOM_LOOP_END_
    end subroutine
