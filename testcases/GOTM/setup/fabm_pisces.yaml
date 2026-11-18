@@ -1,0 +1,553 @@
+# GOTM-PISCES-FEISTY test case (setup/fabm_pisces.yaml, run with gotm gotm_pisces.yaml): PISCES from fabm-pisces/testcases/fabm.yaml (commit d006734) with FEISTY's
+# internal benthos. North Sea station 56.43N 6.55E (41 m). See testcases/GOTM/README.md for FABM-FEISTY and how its fabm.yaml section is set up.
+# gotm_pisces.yaml relaxes nitrate, phosphate and silicate in the bottom 15 m to observed profiles (nutrient inflow).
+#
+# FEISTY coupling (instance "fish"), without source changes:
+#  - zooplankton prey: microzooplankton zoo = small (zoo_size1: s), mesozooplankton mes = large (zoo_size2: l)
+#  - PISCES has fixed C:N:P = 122:16:1 and carries N and P implicitly in carbon units, so FEISTY uses the same
+#    ratios (qnc = 16/122, qpc = 1/122); carbon-only feces, carcasses and deposition then carry the right N and P
+#  - feces and carcasses to small POM (pom); gom is not used because its total carbon includes calcite
+#  - respiration to DIC (carbonate), ammonium (nh4) and phosphate (po4)
+#  - internal benthos: pom and gom deposit carbon (already mmol C m-2) into fish/det_pool_c (coupling "bc" below);
+#    det_flux_n and det_flux_p are coupled to the same carbon flux and scaled by 16/122 and 1/122;
+#    the deposition not used by the benthos goes back to the PISCES sediment (det_bot_c: sed/c)
+#
+# Every line below was written by FABM (pyfabm save_settings) and carries the registered long name,
+# [units; bounds; default]. Settings without "default" in their comment have no default and must be given.
+check_conservation: true                                          # add diagnostics for the rate of change of conserved quantities [default=false]
+require_initialization: false                                     # allow state variables without an explicit initial value to start from their default [default=true]
+instances:
+   optics:
+      model: pisces/optics                                        # model type [default=optics]
+      parameters:
+         ln_varpar: false                                         # use variable PAR : SWR ratio [default=true]
+         #parlux: 0.43                                             # PAR : SWR ratio [dimensionless; default=0.43]
+         #rn_si0: 0.35                                             # extinction depth for non-visible radiation (SWR - PAR) [m; default=0.35]
+   no3:
+      model: pisces/tracer                                        # model type [default=no3]
+      long_name: nitrate                                          # descriptive name for model instance [default=no3]
+      parameters:
+         #has_carbon: false                                        # tracer contains carbon [default=false]
+         has_nitrogen: true                                       # tracer contains nitrogen [default=false]
+         #has_phosphorus: false                                    # tracer contains phosphorus [default=false]
+         #has_silicon: false                                       # tracer contains silicon [default=false]
+         #has_iron: false                                          # tracer contains iron [default=false]
+      initialization:
+         c: 0.0002356125                                          # concentration in carbon units [mol C L-1; min=0.0; default=0.0]
+   nh4:
+      model: pisces/tracer                                        # model type [default=nh4]
+      long_name: ammonium                                         # descriptive name for model instance [default=nh4]
+      parameters:
+         #has_carbon: false                                        # tracer contains carbon [default=false]
+         has_nitrogen: true                                       # tracer contains nitrogen [default=false]
+         #has_phosphorus: false                                    # tracer contains phosphorus [default=false]
+         #has_silicon: false                                       # tracer contains silicon [default=false]
+         #has_iron: false                                          # tracer contains iron [default=false]
+      initialization:
+         c: 1.e-8                                                 # concentration in carbon units [mol C L-1; min=0.0; default=0.0]
+   po4:
+      model: pisces/tracer                                        # model type [default=po4]
+      long_name: phosphate                                        # descriptive name for model instance [default=po4]
+      parameters:
+         #has_carbon: false                                        # tracer contains carbon [default=false]
+         #has_nitrogen: false                                      # tracer contains nitrogen [default=false]
+         has_phosphorus: true                                     # tracer contains phosphorus [default=false]
+         #has_silicon: false                                       # tracer contains silicon [default=false]
+         #has_iron: false                                          # tracer contains iron [default=false]
+      initialization:
+         c: 0.00026413                                            # concentration in carbon units [mol C L-1; min=0.0; default=0.0]
+   sil:
+      model: pisces/tracer                                        # model type [default=sil]
+      long_name: silicate                                         # descriptive name for model instance [default=sil]
+      parameters:
+         #has_carbon: false                                        # tracer contains carbon [default=false]
+         #has_nitrogen: false                                      # tracer contains nitrogen [default=false]
+         #has_phosphorus: false                                    # tracer contains phosphorus [default=false]
+         has_silicon: true                                        # tracer contains silicon [default=false]
+         #has_iron: false                                          # tracer contains iron [default=false]
+      initialization:
+         si: 91.51e-6                                             # concentration in silicon units [mol Si L-1; min=0.0; default=0.0]
+   fer:
+      model: pisces/tracer                                        # model type [default=fer]
+      long_name: iron                                             # descriptive name for model instance [default=fer]
+      parameters:
+         #has_carbon: false                                        # tracer contains carbon [default=false]
+         #has_nitrogen: false                                      # tracer contains nitrogen [default=false]
+         #has_phosphorus: false                                    # tracer contains phosphorus [default=false]
+         #has_silicon: false                                       # tracer contains silicon [default=false]
+         has_iron: true                                           # tracer contains iron [default=false]
+      initialization:
+         fe: 6.e-10                                               # concentration in iron units [mol Fe L-1; min=0.0; default=0.0]
+   dom:
+      model: pisces/tracer                                        # model type [default=dom]
+      long_name: dissolved organic matter                         # descriptive name for model instance [default=dom]
+      parameters:
+         has_carbon: true                                         # tracer contains carbon [default=false]
+         has_nitrogen: true                                       # tracer contains nitrogen [default=false]
+         has_phosphorus: true                                     # tracer contains phosphorus [default=false]
+         #has_silicon: false                                       # tracer contains silicon [default=false]
+         #has_iron: false                                          # tracer contains iron [default=false]
+      initialization:
+         c: 1.e-8                                                 # concentration in carbon units [mol C L-1; min=0.0; default=0.0]
+   pom:
+      model: pisces/pom                                           # model type [default=pom]
+      long_name: small particulate organic matter                 # descriptive name for model instance [default=pom]
+      parameters:
+         #has_silicon: false                                       # particulate tracer contains silica [default=false]
+         #has_calcite: false                                       # particulate tracer contains calcite [default=false]
+         ws: 2                                                    # minimum sinking velocity [m d-1; default=50.0]
+         #wsmax: 2.0                                               # maximum sinking velocity [m d-1; default=2.0]
+         #wsscale: 5000.0                                          # length scale of sinking [m; default=5000.0]
+         solgoc: 0                                                # fraction broken down to smaller POM [dimensionless; default=1.07868603E-01]
+         mlvar: true                                              # lability varies in mixing layer [default=false]
+         #xremip: 0.035                                            # remineralisation rate [dimensionless; default=0.035]
+         #jcpoc: 15                                                # number of lability classes [default=15]
+         #rshape: 1.0                                              # shape of the gamma function [dimensionless; default=1.0]
+      initialization:
+         c: 1.e-8                                                 # carbon concentration [mol C L-1; min=0.0; default=5.23000000E-08]
+         fe: 5.e-14                                               # iron concentration [mol Fe L-1; min=0.0; default=9.84000000E-13]
+      coupling:
+         bc: fish/det_pool_c                                      # target pool for organic carbon depositon [mmol C m-2; default=]
+         fer: fer/fe                                              # iron [mol C L-1; default=]
+         sed: sed                                                 # sed
+         dom: dom                                                 # dom
+   gom:
+      model: pisces/pom                                           # model type [default=gom]
+      long_name: large particulate organic matter                 # descriptive name for model instance [default=gom]
+      parameters:
+         has_silicon: true                                        # particulate tracer contains silica [default=false]
+         has_calcite: true                                        # particulate tracer contains calcite [default=false]
+         ws: 50                                                   # minimum sinking velocity [m d-1; default=50.0]
+         #wsmax: 50.0                                              # maximum sinking velocity [m d-1; default=50.0]
+         #wsscale: 5000.0                                          # length scale of sinking [m; default=5000.0]
+         #solgoc: 1.07868603E-01                                   # fraction broken down to smaller POM [dimensionless; default=1.07868603E-01]
+         #mlvar: false                                             # lability varies in mixing layer [default=false]
+         #xremip: 0.035                                            # remineralisation rate [dimensionless; default=0.035]
+         #jcpoc: 15                                                # number of lability classes [default=15]
+         #rshape: 1.0                                              # shape of the gamma function [dimensionless; default=1.0]
+      initialization:
+         c: 1.e-8                                                 # carbon concentration [mol C L-1; min=0.0; default=5.23000000E-08]
+         fe: 5.e-14                                               # iron concentration [mol Fe L-1; min=0.0; default=9.84000000E-13]
+         cal: 1.e-8                                               # calcite concentration [mol C L-1; min=0.0; default=1.04000000E-08]
+         si: 5.e-14                                               # silicon concentration [mol Si L-1; min=0.0; default=1.53000000E-08]
+      coupling:
+         bc: fish/det_pool_c                                      # target pool for organic carbon depositon [mmol C m-2; default=]
+         fer: fer/fe                                              # iron [mol C L-1; default=]
+         sed: sed                                                 # sed
+         dom: dom                                                 # dom
+         spom: pom                                                # spom
+   phy:
+      model: pisces/phytoplankton                                 # model type [default=phy]
+      long_name: nanophytoplankton                                # descriptive name for model instance [default=phy]
+      parameters:
+         #diatom: false                                            # use silicate [default=false]
+         calcify: true                                            # calcify [default=false]
+         #mumax0: 0.8                                              # maximum growth rate at 0 degrees Celsius [d-1; default=0.8]
+         #bp: 1.066                                                # Temperature sensitivity of growth [dimensionless; default=1.066]
+         #logbp: 6.39133257E-02                                    # Temperature sensitivity of growth (log rate, overwrites bp if given explicitely) [dimensionless; default=6.39133257E-02]
+         #fpday: 1.5                                               # day-length factor for growth [dimensionless; default=1.5]
+         #bresp: 0.033                                             # basal respiration [d-1; default=0.033]
+         #pislope_s: 2.0                                           # P-I slope for small cells [g C (g Chl)-1 (W m-2)-1 d-1; default=2.0]
+         #pislope_l: 2.0                                           # P-I slope for large cells [g C (g Chl)-1 (W m-2)-1 d-1; default=2.0]
+         #xadap: 0.0                                               # acclimation factor to low light [dimensionless; default=0.0]
+         #excret: 0.05                                             # fraction of production that is excreted [fraction; default=0.05]
+         beta1: 1.85                                              # absorption in blue part of the light [fraction]
+         beta2: 0.69                                              # absorption in green part of the light [fraction]
+         beta3: 0.46                                              # absorption in red part of the light [fraction]
+         concnh4: 1.e-7                                           # minimum half-saturation constant for ammonium (nitrogen units multiplied with C:N ratio of biomass) [mol C L-1]
+         concno3: 1.e-6                                           # minimum half-saturation constant for nitrate (nitrogen units multiplied with C:N ratio of biomass) [mol C L-1]
+         concfer: 1.e-9                                           # minimum half-saturation constant for iron uptake [mol Fe L-1]
+         #xsizer: 3.0                                              # size ratio [dimensionless; default=3.0]
+         #qfelim: 7.00000000E-06                                   # optimal iron quota [mol Fe (mol C)-1; default=7.00000000E-06]
+         #fecm: 4.00000000E-05                                     # maximum iron quota [mol Fe (mol C)-1; default=4.00000000E-05]
+         chlcm: 0.033                                             # maximum Chl / C ratio [g Chl (g C)-1]
+         #chlcmin: 3.30000000E-03                                  # minimum Chl / C ratio [g Chl (g C)-1; default=3.30000000E-03]
+         #xsize: 1.00000000E-06                                    # threshold concentration for size dependency (biomass above this threshold consists of large cells) [mol C L-1; default=1.00000000E-06]
+         xmort: 1e-8                                              # threshold concentration for mortality [mol C L-1]
+         #wchl: 0.01                                               # quadratic mortality [d-1 (umol C L-1)-1; default=0.01]
+         #wchlm: 0.0                                               # maximum additional quadratic mortality due to nutrient limitation [d-1 (umol C L-1)-1; default=0.0]
+         #mprat: 0.01                                              # mortality [d-1; default=0.01]
+         #xkmort: 2.00000000E-07                                   # half saturation constant for mortality [mol C L-1; default=2.00000000E-07]
+         #caco3r: 0.3                                              # mean rain ratio [fraction; default=0.3]
+      initialization:
+         c: 1.e-8                                                 # carbon [mol C L-1; min=0.0; default=0.0]
+         ch: 2.1818e-9                                            # chlorophyll [g Chl L-1; min=0.0; default=0.0]
+         fe: 5.e-14                                               # iron [mol Fe L-1; min=0.0; default=0.0]
+      coupling:
+         zstrn: daylength/zstrn                                   # day length [h; default=]
+         heup_01: optics/heup_01                                  # euphotic layer depth (PAR > 0.5 W m-2) [m; default=]
+         pe1: optics/pe1                                          # daily mean PAR in blue waveband [W m-2; default=]
+         pe2: optics/pe2                                          # daily mean PAR in green waveband [W m-2; default=]
+         pe3: optics/pe3                                          # daily mean PAR in red waveband [W m-2; default=]
+         etot_ndcy: optics/etot_ndcy                              # daily mean PAR [W m-2; default=]
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         biron: fer/fe                                            # bioavailable iron [mol Fe L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   dia:
+      model: pisces/phytoplankton                                 # model type [default=dia]
+      long_name: diatoms                                          # descriptive name for model instance [default=dia]
+      parameters:
+         diatom: true                                             # use silicate [default=false]
+         #calcify: false                                           # calcify [default=false]
+         #mumax0: 0.8                                              # maximum growth rate at 0 degrees Celsius [d-1; default=0.8]
+         #bp: 1.066                                                # Temperature sensitivity of growth [dimensionless; default=1.066]
+         #logbp: 6.39133257E-02                                    # Temperature sensitivity of growth (log rate, overwrites bp if given explicitely) [dimensionless; default=6.39133257E-02]
+         #fpday: 1.5                                               # day-length factor for growth [dimensionless; default=1.5]
+         #bresp: 0.033                                             # basal respiration [d-1; default=0.033]
+         #pislope_s: 2.0                                           # P-I slope for small cells [g C (g Chl)-1 (W m-2)-1 d-1; default=2.0]
+         #pislope_l: 2.0                                           # P-I slope for large cells [g C (g Chl)-1 (W m-2)-1 d-1; default=2.0]
+         #xadap: 0.0                                               # acclimation factor to low light [dimensionless; default=0.0]
+         #excret: 0.05                                             # fraction of production that is excreted [fraction; default=0.05]
+         beta1: 1.62                                              # absorption in blue part of the light [fraction]
+         beta2: 0.74                                              # absorption in green part of the light [fraction]
+         beta3: 0.63                                              # absorption in red part of the light [fraction]
+         concnh4: 3.e-7                                           # minimum half-saturation constant for ammonium (nitrogen units multiplied with C:N ratio of biomass) [mol C L-1]
+         concno3: 3.e-6                                           # minimum half-saturation constant for nitrate (nitrogen units multiplied with C:N ratio of biomass) [mol C L-1]
+         #concsil: 1.00000000E-06                                  # minimum half-saturation constant for silicate uptake [mol Si L-1; default=1.00000000E-06]
+         #xksilim: 1.65000000E-05                                  # parameter for the half-saturation constant for silicate uptake [mol Si L-1; default=1.65000000E-05]
+         #xksi1: 2.00000000E-06                                    # parameter 1 for Si / C [mol Si L-1; default=2.00000000E-06]
+         #xksi2: 2.00000000E-05                                    # parameter 2 for Si / C [mol Si L-1; default=2.00000000E-05]
+         concfer: 3.e-9                                           # minimum half-saturation constant for iron uptake [mol Fe L-1]
+         #xsizer: 3.0                                              # size ratio [dimensionless; default=3.0]
+         #grosip: 0.159                                            # optimal Si / C uptake ratio [mol Si/mol C; default=0.159]
+         #qfelim: 7.00000000E-06                                   # optimal iron quota [mol Fe (mol C)-1; default=7.00000000E-06]
+         #fecm: 4.00000000E-05                                     # maximum iron quota [mol Fe (mol C)-1; default=4.00000000E-05]
+         chlcm: 0.05                                              # maximum Chl / C ratio [g Chl (g C)-1]
+         #chlcmin: 3.30000000E-03                                  # minimum Chl / C ratio [g Chl (g C)-1; default=3.30000000E-03]
+         #xsize: 1.00000000E-06                                    # threshold concentration for size dependency (biomass above this threshold consists of large cells) [mol C L-1; default=1.00000000E-06]
+         xmort: 1e-9                                              # threshold concentration for mortality [mol C L-1]
+         #wchl: 0.01                                               # quadratic mortality [d-1 (umol C L-1)-1; default=0.01]
+         wchlm: 0.03                                              # maximum additional quadratic mortality due to nutrient limitation [d-1 (umol C L-1)-1; default=0.0]
+         #mprat: 0.01                                              # mortality [d-1; default=0.01]
+         #xkmort: 2.00000000E-07                                   # half saturation constant for mortality [mol C L-1; default=2.00000000E-07]
+      initialization:
+         c: 1.e-8                                                 # carbon [mol C L-1; min=0.0; default=0.0]
+         ch: 2.1818e-9                                            # chlorophyll [g Chl L-1; min=0.0; default=0.0]
+         fe: 5.e-14                                               # iron [mol Fe L-1; min=0.0; default=0.0]
+         si: 0.15e-8                                              # silicon [mol Si L-1; min=0.0; default=0.0]
+      coupling:
+         zstrn: daylength/zstrn                                   # day length [h; default=]
+         heup_01: optics/heup_01                                  # euphotic layer depth (PAR > 0.5 W m-2) [m; default=]
+         pe1: optics/pe1                                          # daily mean PAR in blue waveband [W m-2; default=]
+         pe2: optics/pe2                                          # daily mean PAR in green waveband [W m-2; default=]
+         pe3: optics/pe3                                          # daily mean PAR in red waveband [W m-2; default=]
+         etot_ndcy: optics/etot_ndcy                              # daily mean PAR [W m-2; default=]
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         biron: fer/fe                                            # bioavailable iron [mol Fe L-1; default=]
+         sil: sil/si                                              # silicate [mol Si L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   carbonate:
+      model: pisces/carbonate_chemistry                           # model type [default=carbonate]
+      coupling:
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         sil: sil/si                                              # silicate [mol Si L-1; default=]
+   oxy:
+      model: pisces/oxygen                                        # model type [default=oxy]
+      long_name: oxygen                                           # descriptive name for model instance [default=oxy]
+      #parameters:
+         #oxymin: 1.00000000E-06                                   # half-saturation constant for anoxia [mol O2 L-1; default=1.00000000E-06]
+   daylength:
+      model: pisces/daylength                                     # model type [default=daylength]
+   turbocline:
+      model: pisces/turbocline                                    # model type [default=turbocline]
+      #parameters:
+         #avt_c: 5.00000000E-04                                    # critical vertical diffusivity [m2 s-1; default=5.00000000E-04]
+         #minh: 10.0                                               # minimum thickness [m; default=10.0]
+   shear:
+      model: pisces/shear                                         # model type [default=shear]
+   zoo:
+      model: pisces/zooplankton                                   # model type [default=zoo]
+      long_name: microzooplankton                                 # descriptive name for model instance [default=zoo]
+      parameters:
+         epsher: 0.3                                              # maximum growth efficiency [fraction; min=0.0; max=1.0]
+         epshermin: 0.3                                           # minimum growth efficiency [fraction; min=0.0; max=1.0]
+         #unass: 0.3                                               # non-assimilated fraction [fraction; min=0.0; max=1.0; default=0.3]
+         #sigma: 0.6                                               # excretion as dissolved organic matter [fraction; min=0.0; max=1.0; default=0.6]
+         grazrat: 3                                               # maximum grazing rate [d-1; min=0.0]
+         #bz: 1.079                                                # Temperature sensitivity of grazing rate [dimensionless; default=1.079]
+         #logbz: 7.60346863E-02                                    # Temperature sensitivity of grazing rate (log rate, overwrites bz if given explicitely) [dimensionless; default=7.60346863E-02]
+         grazflux: 0                                              # flux-feeding rate [(m mol C L-1)-1; min=0.0]
+         #xkgraz: 2.00000000E-05                                   # half-saturation constant for grazing [mol C L-1; min=0.0; default=2.00000000E-05]
+         xprefn: 1.                                               # preference for nanophytoplankton [dimensionless; min=0.0]
+         xprefd: 0.5                                              # preference for diatoms [dimensionless; min=0.0]
+         xprefz: 0                                                # preference for microzooplankton [dimensionless; min=0.0]
+         xprefc: 0.1                                              # preference for particulate organic carbon [dimensionless; min=0.0]
+         #xthresh: 3.00000000E-07                                  # food threshold [mol C L-1; min=0.0; default=3.00000000E-07]
+         #xthreshdia: 1.00000000E-08                               # food threshold for diatoms [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshphy: 1.00000000E-08                               # food threshold for nanophytoplankton [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshzoo: 1.00000000E-08                               # food threshold for microzooplankton [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshpoc: 1.00000000E-08                               # food threshold for particulate organic carbon [mol C L-1; min=0.0; default=1.00000000E-08]
+         mzrat: 0.004                                             # quadratic mortality [(umol C L-1)-1 d-1; min=0.0]
+         resrat: 0.03                                             # linear mortality [d-1; min=0.0]
+         #xkmort: 2.00000000E-07                                   # half saturation constant for mortality [mol C L-1; min=0.0; default=2.00000000E-07]
+         part: 0.5                                                # fraction of calcite that does not dissolve in guts [fraction; min=0.0; max=1.0]
+         #ferat: 1.00000000E-05                                    # Fe / C ratio [mol Fe mol C-1; min=0.0; default=1.00000000E-05]
+         #xsizedia: 1.00000000E-06                                 # maximum accessible diatom biomass (above this threshold cells are too large) [mol C L-1; min=0.0; default=1.00000000E-06]
+         xdismort: 0                                              # fraction of quadratic mortality directed to nutrient pools [fraction; min=0.0; max=1.0; default=5.71428571E-01]
+         phlim: 1                                                 # relative grazing on nanophytoplankton if cells are small [fraction; min=0.0; max=1.0]
+      initialization:
+         c: 1.0e-8                                                # carbon [mol C L-1; min=0.0; default=0.0]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         pos_waste: gom/si                                        # particulate silicon waste [mol Si L-1; default=]
+         zoo: zoo/c                                               # microzooplankton [mol C L-1; default=]
+         nitrfac: oxy/nitrfac                                     # denitrification factor computed from O2 levels [fraction; default=]
+         waste: pom                                               # waste
+         dia: dia                                                 # dia
+         phy: phy                                                 # phy
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   mes:
+      model: pisces/zooplankton                                   # model type [default=mes]
+      long_name: mesozooplankton                                  # descriptive name for model instance [default=mes]
+      parameters:
+         epsher: 0.35                                             # maximum growth efficiency [fraction; min=0.0; max=1.0]
+         epshermin: 0.35                                          # minimum growth efficiency [fraction; min=0.0; max=1.0]
+         #unass: 0.3                                               # non-assimilated fraction [fraction; min=0.0; max=1.0; default=0.3]
+         #sigma: 0.6                                               # excretion as dissolved organic matter [fraction; min=0.0; max=1.0; default=0.6]
+         grazrat: 0.75                                            # maximum grazing rate [d-1; min=0.0]
+         #bz: 1.079                                                # Temperature sensitivity of grazing rate [dimensionless; default=1.079]
+         #logbz: 7.60346863E-02                                    # Temperature sensitivity of grazing rate (log rate, overwrites bz if given explicitely) [dimensionless; default=7.60346863E-02]
+         grazflux: 3e3                                            # flux-feeding rate [(m mol C L-1)-1; min=0.0]
+         #xkgraz: 2.00000000E-05                                   # half-saturation constant for grazing [mol C L-1; min=0.0; default=2.00000000E-05]
+         xprefn: 0.3                                              # preference for nanophytoplankton [dimensionless; min=0.0]
+         xprefd: 1.                                               # preference for diatoms [dimensionless; min=0.0]
+         xprefz: 1                                                # preference for microzooplankton [dimensionless; min=0.0]
+         xprefc: 0.3                                              # preference for particulate organic carbon [dimensionless; min=0.0]
+         #xthresh: 3.00000000E-07                                  # food threshold [mol C L-1; min=0.0; default=3.00000000E-07]
+         #xthreshdia: 1.00000000E-08                               # food threshold for diatoms [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshphy: 1.00000000E-08                               # food threshold for nanophytoplankton [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshzoo: 1.00000000E-08                               # food threshold for microzooplankton [mol C L-1; min=0.0; default=1.00000000E-08]
+         #xthreshpoc: 1.00000000E-08                               # food threshold for particulate organic carbon [mol C L-1; min=0.0; default=1.00000000E-08]
+         mzrat: 0.03                                              # quadratic mortality [(umol C L-1)-1 d-1; min=0.0]
+         resrat: 0.005                                            # linear mortality [d-1; min=0.0]
+         #xkmort: 2.00000000E-07                                   # half saturation constant for mortality [mol C L-1; min=0.0; default=2.00000000E-07]
+         part: 0.75                                               # fraction of calcite that does not dissolve in guts [fraction; min=0.0; max=1.0]
+         #ferat: 1.00000000E-05                                    # Fe / C ratio [mol Fe mol C-1; min=0.0; default=1.00000000E-05]
+         xsizedia: 1                                              # maximum accessible diatom biomass (above this threshold cells are too large) [mol C L-1; min=0.0; default=1.00000000E-06]
+         #xdismort: 5.38461538E-01                                 # fraction of quadratic mortality directed to nutrient pools [fraction; min=0.0; max=1.0; default=5.38461538E-01]
+         phlim: 0                                                 # relative grazing on nanophytoplankton if cells are small [fraction; min=0.0; max=1.0]
+      initialization:
+         c: 1.0e-8                                                # carbon [mol C L-1; min=0.0; default=0.0]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         zoo: zoo/c                                               # microzooplankton [mol C L-1; default=]
+         nitrfac: oxy/nitrfac                                     # denitrification factor computed from O2 levels [fraction; default=]
+         waste: gom                                               # waste
+         dia: dia                                                 # dia
+         phy: phy                                                 # phy
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   iron_availability:
+      model: pisces/iron                                          # model type [default=iron_availability]
+      #parameters:
+         #ligand: 7.00000000E-10                                   # total concentration of iron ligands [mol L-1; default=7.00000000E-10]
+         #xlam1: 0.005                                             # scavenging rate [d-1 umol-1 L; default=0.005]
+         #xlamdust: 150.0                                          # scavenging rate of dust [d-1 mg-1 L; default=150.0]
+         #kfep: 0.01                                               # nanoparticle formation rate constant [d-1; default=0.01]
+         #light: 50.0                                              # light limitation parameter for photolysis [W m-2; default=50.0]
+      coupling:
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         hi: carbonate/hi                                         # hydrogen ion concentration [mol L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         etot: optics/etot                                        # instantaneous PAR [W m-2; default=]
+         zdust: dust/zdust                                        # dust concentration [g m-2; default=]
+         etot_ndcy: optics/etot_ndcy                              # daily mean PAR [W m-2; default=]
+         dom: dom                                                 # dom
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   nitrification:
+      model: pisces/nitrification                                 # model type [default=nitrification]
+      #parameters:
+         #nitrif: 0.05                                             # NH4 nitrification rate [d-1; default=0.05]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         nitrfac: oxy/nitrfac                                     # denitrification factor [fraction; default=]
+         etot: optics/etot                                        # instantaneous PAR averaged [W m-2; default=]
+         emoy: optics/emoy                                        # instantaneous PAR averaged over mixing layer [W m-2; default=]
+   nitrogen_fixation:
+      model: pisces/nitrogen_fixation                             # model type [default=nitrogen_fixation]
+      #parameters:
+         #nitrfix: 1.00000000E-07                                  # maximum nitrogen fixation rate [mol C L-1 d-1; default=1.00000000E-07]
+         #diazolight: 50.0                                         # diazotroph photosynthetic parameter [W m-2; default=50.0]
+         #concfediaz: 1.00000000E-10                               # diazotroph half-saturation constant for iron [mol Fe L-1; default=1.00000000E-10]
+         #concnnh4: 1.00000000E-07                                 # ammonium half-saturation constant for phytoplankton [mol C L-1; default=1.00000000E-07]
+         #concnno3: 1.00000000E-06                                 # nitrate half-saturation constant for phytoplankton [mol C L-1; default=1.00000000E-06]
+         #concdnh4: 3.00000000E-07                                 # ammonium half-saturation constant for diatoms [mol C L-1; default=3.00000000E-07]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phopshate [mol C L-1; default=]
+         biron: fer/fe                                            # bioavailable iron [mol Fe L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         etot_ndcy: optics/etot_ndcy                              # daily mean PAR [W m-2; default=]
+         dom: dom                                                 # dom
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   dom_rem:
+      model: pisces/dom_remineralization                          # model type [default=dom_rem]
+      #parameters:
+         #xremik: 0.3                                              # remineralization rate [d-1; default=0.3]
+         #xkdoc: 4.17000000E-04                                    # DOC half-saturation constant [mol C L-1; default=4.17000000E-04]
+         #concno3: 2.00000000E-07                                  # nitrate half-saturation constant [mol C L-1; default=2.00000000E-07]
+         #concnh4: 2.00000000E-08                                  # ammonium/phosphate half-saturation constant [mol C L-1; default=2.00000000E-08]
+         #concfe: 1.00000000E-11                                   # iron half-saturation constant [mol Fe L-1; default=1.00000000E-11]
+         #mumax0: 0.6                                              # maximum iron uptake rate of bacteria at 0 degrees Celsius [d-1; default=0.6]
+         #feratb: 1.00000000E-05                                   # Fe/C quota in bacteria [mol Fe (mol C)-1; default=1.00000000E-05]
+         #xkferb: 3.00000000E-10                                   # half-saturation constant for bacteria Fe/C [mol Fe L-1; default=3.00000000E-10]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         sfe: pom/fe                                              # small particulate organic iron [mol Fe L-1; default=]
+         bfe: gom/fe                                              # large particulate organic iron [mol Fe L-1; default=]
+         heup: optics/heup                                        # euphotic depth [m; default=]
+         zoo: zoo/c                                               # microzooplankton [mol C L-1; default=]
+         mes: mes/c                                               # mesozooplankton [mol C L-1; default=]
+         nitrfac: oxy/nitrfac                                     # denitrification factor computed from O2 levels [fraction; default=]
+   agg:
+      model: pisces/aggregation                                   # model type [default=agg]
+      coupling:
+         dom: dom                                                 # dom
+         pom: pom                                                 # pom
+         gom: gom                                                 # gom
+   sed:
+      model: pisces/sediment                                      # model type [default=sed]
+      long_name: sediment                                         # descriptive name for model instance [default=sed]
+      #parameters:
+         #sedfeinput: 2.00000000E-09                               # iron flux from the sediments [mol Fe L-1 d-1 m; default=2.00000000E-09]
+      coupling:
+         no3: no3/c                                               # nitrate [mol C L-1; default=]
+         nh4: nh4/c                                               # ammonium [mol C L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         sil: sil/si                                              # silicate [mol Si L-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         oxy: oxy/O2                                              # oxygen [mol O2 L-1; default=]
+         doc: dom/c                                               # dissolved organic carbon [mol C L-1; default=]
+         nitrfac: oxy/nitrfac                                     # denitrification factor computed from O2 levels [fraction; default=]
+   dust:
+      model: pisces/dust                                          # model type [default=dust]
+      parameters:
+         ln_solub: false                                          # variable solubility of iron in dust [default=true]
+         #solub: 0.02                                              # solubility of iron in dust [fraction; default=0.02]
+         #mfrac: 0.035                                             # Fe mineral fraction of dust [fraction; default=0.035]
+         #wdust: 2.0                                               # sinking speed of dust [m d-1; default=2.0]
+      coupling:
+         dustdep: zero_hz                                         # dust deposition [kg m-2 s-1; default=]
+         fer: fer/fe                                              # iron [mol Fe L-1; default=]
+         po4: po4/c                                               # phosphate [mol C L-1; default=]
+         sil: sil/si                                              # silicate [mol Si L-1; default=]
+   pco2:
+      model: surface_constant                                     # model type [default=pco2]
+      parameters:
+         standard_name: mole_fraction_of_carbon_dioxide_in_air    # standard name [default=]
+         value: 350.                                              # value
+   ice:
+      model: surface_constant                                     # model type [default=ice]
+      parameters:
+         standard_name: ice_area_fraction                         # standard name [default=]
+         value: 0                                                 # value
+   fish:
+      model: feisty/FEISTY_FABM                                   # model type [default=fish]
+      long_name: FEISTY fish community                            # descriptive name for model instance [default=fish]
+      parameters:
+         h: 20.0                                                  # Max. consumption coefficient [g^nn yr-1; default=20.0]
+         nn: -0.25                                                # Metabolic exponent [dimensionless; default=-0.25]
+         gamma: 70.0                                              # Coef. for clearance rate [m2 g^q yr-1; default=70.0]
+         q: -0.2                                                  # Clearance rate exponent [dimensionless; default=-0.2]
+         p: -0.175                                                # Metabolism exponent [dimensionless; default=-0.175]
+         epsAssim: 0.7                                            # Assimilation efficiency [dimensionless; default=0.7]
+         epsRepro: 0.01                                           # Reproduction & recruitment efficiency [dimensionless; default=0.01]
+         bgmort: 0.1                                              # Fish background mortality [yr-1; default=0.1]
+         beta: 400.0                                              # Beta parameter for size-based predation preference [dimensionless; default=400.0]
+         sigma: 1.3                                               # Sigma parameter for size-based predation preference [dimensionless; default=1.3]
+         mMin: 0.001                                              # Minimum fish mass (boundary of the grid) [g; default=0.001]
+         bent_ini: 5.0                                            # initial benthos biomass [g m-2; default=5.0]
+         b_ini: 1.0e-5                                            # initial fish biomass of each size class [g m-2; default=1.00000000E-05]
+         depth: 41.0                                              # water column depth [m; default=100.0]
+         Tp: 10.0                                                 # pelagic layer averaged temperature [Celsius; default=10.0]
+         Tb: 8.0                                                  # bottom layer depth temperature (500m - up to 1500m) [Celsius; default=8.0]
+         nStages: 9                                               # size number of large fish functional types [dimensionless; default=9]
+         #Tm: 8.0                                                  # mid-water temperature [Celsius; default=8.0]
+         photic_depth: 100.0                                      # photic zone depth [m; default=100.0]
+         etamature: 0.25                                          # the coefficient determines the fish size with a 50% maturity level [dimensionless; default=0.25]
+         shelfdepth: 250.0                                        # continental shelf depth [m; default=250.0]
+         visual: 1.5                                              # the coefficient determines the visual ability of fish [dimensionless; default=1.5]
+         Fmax: 0.0                                                # Maximum fishing mortality [yr-1; default=0.0]
+         etaF: 0.05                                               # the coefficient determines the fish size with 50% fishing selectivity [dimensionless; default=0.05]
+         ssigma: 10.0                                             # width of initial vertical distribution [dimensionless; default=10.0]
+         tau: 10.0                                                # increase in width [dimensionless; default=10.0]
+         max_depth: 5000.0                                        # maximum depth of the model domain [m; default=5000.0]
+         n_depth: 50                                              # number of depth levels for vertical distribution matrices [dimensionless; default=50]
+         gww_gc: 9.0                                              # gram wet weight to gram carbon ratio [dimensionless; default=9.0]
+         qnc: 0.13114754098360656                                 # Nitrogen to Carbon ratio [N/C; default=1.50943396E-01]
+         qpc: 0.00819672131147541                                 # Phosphorus to Carbon ratio [P/C; default=9.43396226E-03]
+         feces_elements: c                                        # elemental composition of feces e.g. "cnp"
+         carcass_elements: c                                      # elemental composition of carcass e.g. "cnp"
+         respiration_elements: cnp                                # elemental composition of respiration e.g. "cnp"
+         n_zoo: 2                                                 # number of zooplankton prey
+         zoo_size1: s                                             # small or large zooplankton? "s" for small, "l" for large
+         zoo_1_availability: 1.0                                  # availability of zooplankton prey 1 (between 0 and 1) [min=0.0; max=1.0; default=1.0]
+         zoo_size2: l                                             # small or large zooplankton? "s" for small, "l" for large
+         zoo_2_availability: 1.0                                  # availability of zooplankton prey 2 (between 0 and 1) [min=0.0; max=1.0; default=1.0]
+         internal_benthos: true                                   # benthos modelled internally (True) or from external zoobenthos model (False)
+         benk: 80.0                                               # benthos carrying capacity [g m-2]
+         ben_eff: 0.1                                             # detrital fraction going to benthos  [dimensionless]
+         det_c_scale: 1.0                                         # factor converting deposited carbon to mmol C [mmol C (deposited unit)-1; default=1.0]
+         det_n_scale: 0.13114754098360656                         # factor converting deposited nitrogen to mmol N [mmol N (deposited unit)-1; default=1.0]
+         det_p_scale: 0.00819672131147541                         # factor converting deposited phosphorus to mmol P [mmol P (deposited unit)-1; default=1.0]
+         #det_s_scale: 1.0                                         # factor converting deposited silicon to mmol Si [mmol Si (deposited unit)-1; default=1.0]
+         bottom_detritus_elements: c                              # elemental composition of bottom detritus e.g. "cnps"
+         fft_short_name_1: smpel                                  # fish functional type short name [default=fft_1]
+         fft_short_name_2: mesopel                                # fish functional type short name [default=fft_2]
+         fft_short_name_3: lgpel                                  # fish functional type short name [default=fft_3]
+         fft_short_name_4: bathypel                               # fish functional type short name [default=fft_4]
+         fft_short_name_5: dem                                    # fish functional type short name [default=fft_5]
+         Fmax_1: 0.0                                              # Maximum fishing mortality of smpel [yr-1; default=Fmax]
+         etaF_1: 0.05                                             # fraction of smpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_2: 0.0                                              # Maximum fishing mortality of mesopel [yr-1; default=Fmax]
+         etaF_2: 0.05                                             # fraction of mesopel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_3: 0.0                                              # Maximum fishing mortality of lgpel [yr-1; default=Fmax]
+         etaF_3: 0.05                                             # fraction of lgpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_4: 0.0                                              # Maximum fishing mortality of bathypel [yr-1; default=Fmax]
+         etaF_4: 0.05                                             # fraction of bathypel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_5: 0.0                                              # Maximum fishing mortality of dem [yr-1; default=Fmax]
+         etaF_5: 0.05                                             # fraction of dem maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+      coupling:
+         small_zooplankton_target1: zoo                           # model eaten as small zooplankton prey 1 (FEISTY reads its total C, N and P)
+         large_zooplankton_target1: mes                           # model eaten as large zooplankton prey 1 (FEISTY reads its total C, N and P)
+         det_bot_c_target_real: sed                               # model receiving deposited matter (carbon) not used by the internal benthos
+         det_flux_n: fish/det_pool_c_sms_tot                      # total bottom n deposition flux [mmol m-2 s-1; default=]
+         det_flux_p: fish/det_pool_c_sms_tot                      # total bottom p deposition flux [mmol m-2 s-1; default=]
+         det_bot_c: sed/c                                         # real benthic c pool [mmol m-2; default=]
+         respiration_c_target: carbonate                          # model receiving fish respiration (carbon)
+         respiration_n_target: nh4                                # model receiving fish respiration (nitrogen)
+         respiration_p_target: po4                                # model receiving fish respiration (phosphorus)
+         feces_c_target: pom                                      # model receiving fish feces (carbon)
+         carcasses_c_target: pom                                  # model receiving fish carcasses (carbon)

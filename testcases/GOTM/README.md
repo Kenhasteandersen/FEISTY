@@ -4,7 +4,7 @@ FEISTY (Fisheries Size and Functional Type model) as a [FABM](https://fabm.net) 
 
 Model type in `fabm.yaml`: `feisty/FEISTY_FABM`.
 
-This folder holds the GOTM test cases: `setup.zip` contains the forcing for a North Sea station and three FABM-FEISTY configurations, one with ERSEM and its internal benthos, one with ERSEM's benthic fauna as prey, and one with PISCES. The same three configurations for the transport-matrix model (FABM-OS) are in [`../TMM`](../TMM/readme.md). Earlier example configurations (FEISTY with UVic and with FABM's NPZD example) used an older FEISTY interface and have been retired.
+This folder holds the GOTM test cases: the folder `setup` contains the forcing for a North Sea station and three FABM-FEISTY configurations, one with ERSEM and its internal benthos, one with ERSEM's benthic fauna as prey, and one with PISCES. The same three configurations for the transport-matrix model (FABM-OS) are in [`../TMM`](../TMM/readme.md). Earlier example configurations (FEISTY with UVic and with FABM's NPZD example) used an older FEISTY interface and have been retired.
 
 ## 1. What it is
 
@@ -47,7 +47,7 @@ In FABM versions that look for models in `src/models/<institute>`, you can inste
 
 **FABM version.** FABM commits from b5704dbc (fabm-model/fabm PR 179, July 2026) onwards crash while creating any model that uses FABM's depth mapping, FEISTY included (`access violation` right after `Initializing fish...`). The test cases were run with FABM f85de87a (May 2026). With a newer FABM, check out f85de87a in `extern/fabm` or apply the two-line fix described in [`../TMM/readme.md`](../TMM/readme.md#2-fix-the-fabm-version-bundled-with-fabm-os).
 
-**Running the GOTM test cases.** Unzip `setup.zip` into a folder `setup` and run, from inside that folder:
+**Running the GOTM test cases.** Run from inside the folder `setup` (or a copy of it, since GOTM writes its output to the working directory):
 
 ```bash
 gotm gotm_ersem_noben.yaml   # ERSEM, internal benthos fed by deposition
@@ -55,7 +55,7 @@ gotm gotm_ersem_ben.yaml     # ERSEM with its benthic fauna Y2-Y4 as prey
 gotm gotm_pisces.yaml        # PISCES, internal benthos
 ```
 
-| File in `setup.zip` | Contents |
+| File in `setup` | Contents |
 |---|---|
 | `gotm_<case>.yaml` | GOTM settings for each case; points to `fabm_<case>.yaml` (`fabm: yaml_file:`), writes `result_<case>.nc` (monthly means of all variables) |
 | `fabm_<case>.yaml` | FABM configuration for each case; every line carries the registered long name, units and default, and the header explains the coupling |
@@ -215,7 +215,7 @@ Respiration is normally returned to the inorganic pools (DIC, ammonium, phosphat
 
 ### 3.10 Examples
 
-All three are in `setup.zip`. Every line there is annotated with units and defaults, and the file headers explain the choices.
+All three are in the folder `setup`. Every line there is annotated with units and defaults, and the file headers explain the choices.
 
 **ERSEM, internal benthos** (`fabm_ersem_noben.yaml`). Z5 (micro) is small and Z4 (meso) is large prey. `det_c_scale` is 1/12.011 because ERSEM deposits carbon in mg C. The deposition not used by the benthos is returned to Q6.
 

@@ -1,0 +1,939 @@
+# GOTM-ERSEM-FEISTY test case (setup/fabm_ersem_noben.yaml, run with gotm gotm_ersem_noben.yaml): ERSEM 15.06 L4 with simple benthic pools (fabm-ersem-15.06-L4-noben-docdyn-iop.yaml)
+# and FEISTY's internal benthos. North Sea station 56.43N 6.55E (41 m).
+# See testcases/GOTM/README.md for FABM-FEISTY and how its fabm.yaml section is set up.
+#
+# Changes to the ERSEM configuration: basal mortality sd of Z4 and Z5 = 1e-4 d-1 (ERSEM default 0.05); the labile
+# deposition (deposition_target1) of R4, R6, R8 and P1-P4 goes to FEISTY's deposition pools fish/det_pool_{c,n,p,s}
+# instead of Q6. The refractory deposition (Q7, Q1) is unchanged.
+#
+# FEISTY coupling (instance "fish"):
+#  - zooplankton prey: microzooplankton Z5 = small (zoo_size1: s), mesozooplankton Z4 = large (zoo_size2: l)
+#  - internal benthos fed by the deposition; det_c_scale = 1/12.011 because ERSEM deposits carbon in mg C
+#    (FABM converts units only for couplings requested through standard variables, not for this direct coupling);
+#    the deposition not used by the benthos is returned to Q6 through FABM's total_* standard variables
+#  - respiration to DIC (O3), ammonium (N4) and phosphate (N1); feces and carcasses to large POM (R8), as c, n and p
+#
+# Every line below was written by FABM (pyfabm save_settings) and carries the registered long name,
+# [units; bounds; default]. Settings without "default" in their comment have no default and must be given.
+check_conservation: true                                     # add diagnostics for the rate of change of conserved quantities [default=false]
+require_initialization: false                                # allow state variables without an explicit initial value to start from their default [default=true]
+instances:
+   zenithAngle:
+      model: ersem/zenith_angle                              # model type [default=zenithAngle]
+   light:
+      model: ersem/light_iop                                 # model type [default=light]
+      parameters:
+         a0w: 0.03                                           # absorption coefficient of clear water [1/m; default=0.036]
+         b0w: 0.0015                                         # backscatter coefficient of clear water [1/m; default=1.60000000E-03]
+         pEIR_eow: 0.5                                       # photosynthetically active fraction of shortwave radiation [dimensionless; default=0.5]
+   N1:
+      model: ersem/pelagic_base                              # model type [default=N1]
+      long_name: phosphate                                   # descriptive name for model instance [default=N1]
+      parameters:
+         composition: p                                      # elemental composition
+         c0: 0.001                                           # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         p: 0.4                                              # phosphorus [mmol P/m^3; min=0.0; default=0.0]
+   N3:
+      model: ersem/pelagic_base                              # model type [default=N3]
+      long_name: nitrate                                     # descriptive name for model instance [default=N3]
+      parameters:
+         composition: n                                      # elemental composition
+         c0: 0.001                                           # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         n: 8.0                                              # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+   N4:
+      model: ersem/pelagic_base                              # model type [default=N4]
+      long_name: ammonium                                    # descriptive name for model instance [default=N4]
+      parameters:
+         composition: n                                      # elemental composition
+         c0: 0.001                                           # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         n: 0.1                                              # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+   N5:
+      model: ersem/pelagic_base                              # model type [default=N5]
+      long_name: silicate                                    # descriptive name for model instance [default=N5]
+      parameters:
+         composition: s                                      # elemental composition
+         #c0: 0.0                                             # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         s0: 0.0003                                          # background silicon concentration [mmol Si/m^3; default=0.0]
+      initialization:
+         s: 4.5                                              # silicate [mmol Si/m^3; min=0.0; default=0.0]
+   O2:
+      model: ersem/oxygen                                    # model type [default=O2]
+      long_name: oxygen                                      # descriptive name for model instance [default=O2]
+      parameters:
+         iswO2: 2                                            # saturation formulation (1: legacy ERSEM, 2: Weiss 1970) [min=1; max=2]
+         #iswASFLUX: 6                                        # air-sea O2 exchange (0: none, 1: Nightingale et al. 2000, 2: Wanninkhof 1992 without chemical enhancement, 3: Wanninkhof 1992 with chemical enhancement, 4: Wanninkhof and McGillis 1999, 5: Wanninkhof 1992 switching to Wanninkhof and McGillis 1999, 6: Wanninkhof 2014) [default=6]
+   O3:
+      model: ersem/carbonate                                 # model type [default=O3]
+      long_name: carbonate                                   # descriptive name for model instance [default=O3]
+      parameters:
+         iswCO2: 1                                           # carbonate system diagnostics (0: off, 1: on) [min=0; max=1; default=1]
+         iswASFLUX: 1                                        # air-sea CO2 exchange (0: none, 1: Nightingale et al. 2000, 2: Wanninkhof 1992 without chemical enhancement, 3: Wanninkhof 1992 with chemical enhancement, 4: Wanninkhof and McGillis 1999, 5: Wanninkhof 1992 switching to Wanninkhof and McGillis 1999, 6: Wanninkhof 2014) [min=0; max=6; default=6]
+         iswtalk: 2                                          # alkalinity formulation (1-4: from salinity and temperature, 5: dynamic alkalinity) [min=1; max=5; default=5]
+         pHscale: 1                                          # pH scale (1: total, 0: SWS, -1: SWS backward compatible) [min=-1; max=1; default=1]
+         iswbioalk: 1                                        # use bioalkalinity (0: off, 1: on) [min=0; max=1; default=1]
+      initialization:
+         c: 2130.0                                           # total dissolved inorganic carbon [mmol C/m^3; min=0.0; default=2200.0]
+   R1:
+      model: ersem/pelagic_base                              # model type [default=R1]
+      long_name: labile dissolved organic matter             # descriptive name for model instance [default=R1]
+      parameters:
+         composition: cnp                                    # elemental composition
+         c0: 0.0034                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         #iopABS: 0.0                                         # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         #iopBBS: 0.0                                         # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         c: 10.0                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+         n: 0.14                                             # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+         p: 0.01                                             # phosphorus [mmol P/m^3; min=0.0; default=0.0]
+   R2:
+      model: ersem/pelagic_base                              # model type [default=R2]
+      long_name: semi-labile dissolved organic matter        # descriptive name for model instance [default=R2]
+      parameters:
+         composition: c                                      # elemental composition
+         c0: 0.0033                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         #iopABS: 0.0                                         # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         #iopBBS: 0.0                                         # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         #qn: 0.0                                             # nitrogen : carbon ratio [mmol N/mg C; min=0.0; default=0.0]
+         #qp: 0.0                                             # phosphorus : carbon ratio [mmol P/mg C; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         c: 12.0                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+   R3:
+      model: ersem/pelagic_base                              # model type [default=R3]
+      long_name: semi-refractory dissolved organic matter    # descriptive name for model instance [default=R3]
+      parameters:
+         composition: c                                      # elemental composition
+         c0: 0.0033                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         #iopABS: 0.0                                         # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         #iopBBS: 0.0                                         # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         #qn: 0.0                                             # nitrogen : carbon ratio [mmol N/mg C; min=0.0; default=0.0]
+         #qp: 0.0                                             # phosphorus : carbon ratio [mmol P/mg C; min=0.0; default=0.0]
+         #rm: 0.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+      initialization:
+         c: 12.0                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+   R4:
+      model: ersem/pelagic_base                              # model type [default=R4]
+      long_name: small-size pom                              # descriptive name for model instance [default=R4]
+      parameters:
+         composition: cnpf                                   # elemental composition
+         c0: 0.0033                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         iopABS: 1e-05                                       # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         iopBBS: 1.6e-05                                     # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         rm: 1.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 2                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.1                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxn2: 0.1                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxp2: 0.06                                          # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+      initialization:
+         c: 7.2                                              # carbon [mg C/m^3; min=0.0; default=0.0]
+         n: 0.1                                              # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+         p: 0.007                                            # phosphorus [mmol P/m^3; min=0.0; default=0.0]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         deposition_target2: Q7                              # deposition_target2
+   R6:
+      model: ersem/pelagic_base                              # model type [default=R6]
+      long_name: medium-size pom                             # descriptive name for model instance [default=R6]
+      parameters:
+         composition: cnpsf                                  # elemental composition
+         c0: 0.0033                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         iopABS: 1e-05                                       # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         iopBBS: 1.6e-05                                     # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         rm: 5.0                                             # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 2                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.1                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxn2: 0.1                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxp2: 0.06                                          # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         #s0: 3.88794548E-05                                  # background silicon concentration [mmol Si/m^3; default=3.88794548E-05]
+         qxs2: 0.0                                           # fraction of silicate sinking into deposition target 2 [dimensionless]
+      initialization:
+         c: 17.0                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+         n: 0.24                                             # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+         p: 0.02                                             # phosphorus [mmol P/m^3; min=0.0; default=0.0]
+         s: 0.1                                              # silicate [mmol Si/m^3; min=0.0; default=0.0]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         deposition_target1s: fish/det_pool_s                # target pool 1 for silicate deposition [mmol Si/m^2; default=]
+         deposition_target2: Q7                              # deposition_target2
+   R8:
+      model: ersem/pelagic_base                              # model type [default=R8]
+      long_name: large-size pom                              # descriptive name for model instance [default=R8]
+      parameters:
+         composition: cnps                                   # elemental composition
+         c0: 0.0033                                          # background carbon concentration [mg C/m^3; min=0.0; default=0.0]
+         #EPS: 0.0                                            # specific shortwave attenuation [m^2/mg C; min=0.0; default=0.0]
+         iopABS: 1e-05                                       # specific shortwave absorption [m^2/mg C; min=0.0; default=0.0]
+         iopBBS: 1.6e-05                                     # specific shortwave backscatter [m^2/mg C; min=0.0; default=0.0]
+         rm: 10.0                                            # sinking velocity [m/d; default=0.0]
+         #k1: 0.0                                             # 1st order kinetic rate [1/d; min=0.0; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient for the 1st order kinetic [dimensionless; min=1.0; default=1.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 2                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.1                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxn2: 0.1                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxp2: 0.06                                          # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         #s0: 3.88794548E-05                                  # background silicon concentration [mmol Si/m^3; default=3.88794548E-05]
+         qxs2: 0.0                                           # fraction of silicate sinking into deposition target 2 [dimensionless]
+      initialization:
+         c: 0.17                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+         n: 0.0024                                           # nitrogen [mmol N/m^3; min=0.0; default=0.0]
+         p: 0.0002                                           # phosphorus [mmol P/m^3; min=0.0; default=0.0]
+         s: 0.001                                            # silicate [mmol Si/m^3; min=0.0; default=0.0]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         deposition_target1s: fish/det_pool_s                # target pool 1 for silicate deposition [mmol Si/m^2; default=]
+         deposition_target2: Q7                              # deposition_target2
+   Q1:
+      model: ersem/benthic_base                              # model type [default=Q1]
+      long_name: benthic dissolved organic matter            # descriptive name for model instance [default=Q1]
+      parameters:
+         composition: cnp                                    # elemental composition
+         remin: 0.1                                          # remineralisation rate at 10 degrees Celsius [1/d; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient [dimensionless; min=1.0; default=1.0]
+         pN3: 0.9                                            # nitrate fraction of remineralised nitrogen (remainder is ammonium) [dimensionless; default=0.0]
+         #resuspension: false                                 # enable resuspension [default=false]
+         c0: 0.001                                           # background carbon concentration [mg C/m^2; default=0.0]
+      initialization:
+         c: 18.9                                             # carbon [mg C/m^2; min=0.0; default=0.0]
+         p: 0.0035                                           # phosphorus [mmol P/m^2; min=0.0; default=0.0]
+         n: 0.6                                              # nitrogen [mmol N/m^2; min=0.0; default=0.0]
+      coupling:
+         O3c: O3/c                                           # dissolved inorganic carbon [mmol/m^3; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+   Q6:
+      model: ersem/benthic_base                              # model type [default=Q6]
+      long_name: benthic particulate organic matter          # descriptive name for model instance [default=Q6]
+      parameters:
+         composition: cnpsf                                  # elemental composition
+         remin: 0.05                                         # remineralisation rate at 10 degrees Celsius [1/d; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient [dimensionless; min=1.0; default=1.0]
+         pN3: 0.9                                            # nitrate fraction of remineralised nitrogen (remainder is ammonium) [dimensionless; default=0.0]
+         resuspension: true                                  # enable resuspension [default=false]
+         #er: 0.225                                           # erosion rate [1/d; default=0.225]
+         vel_crit: 0.02                                      # critical shear velocity for resuspension [m/s; default=0.02]
+         c0: 0.001                                           # background carbon concentration [mg C/m^2; default=0.0]
+      initialization:
+         c: 3052.0                                           # carbon [mg C/m^2; min=0.0; default=0.0]
+         p: 0.5                                              # phosphorus [mmol P/m^2; min=0.0; default=0.0]
+         n: 3.5                                              # nitrogen [mmol N/m^2; min=0.0; default=0.0]
+         s: 149.0                                            # silicate [mmol Si/m^2; min=0.0; default=0.0]
+      coupling:
+         O3c: O3/c                                           # dissolved inorganic carbon [mmol/m^3; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         N5s: N5/s                                           # silicate [mmol Si/m^3; default=]
+         RP: R6                                              # RP
+   Q7:
+      model: ersem/benthic_base                              # model type [default=Q7]
+      long_name: benthic refractory matter                   # descriptive name for model instance [default=Q7]
+      parameters:
+         composition: cnp                                    # elemental composition
+         remin: 0.01                                         # remineralisation rate at 10 degrees Celsius [1/d; default=0.0]
+         #q10: 1.0                                            # Q_10 temperature coefficient [dimensionless; min=1.0; default=1.0]
+         pN3: 0.9                                            # nitrate fraction of remineralised nitrogen (remainder is ammonium) [dimensionless; default=0.0]
+         #resuspension: false                                 # enable resuspension [default=false]
+         c0: 0.001                                           # background carbon concentration [mg C/m^2; default=0.0]
+      initialization:
+         c: 30520.0                                          # carbon [mg C/m^2; min=0.0; default=0.0]
+         p: 8.0                                              # phosphorus [mmol P/m^2; min=0.0; default=0.0]
+         n: 80.0                                             # nitrogen [mmol N/m^2; min=0.0; default=0.0]
+      coupling:
+         O3c: O3/c                                           # dissolved inorganic carbon [mmol/m^3; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+   B1:
+      model: ersem/bacteria_docdyn                           # model type [default=B1]
+      long_name: bacteria                                    # descriptive name for model instance [default=B1]
+      parameters:
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         chdo: 0.31                                          # Michaelis-Menten constant for oxygen limitation [dimensionless]
+         chn: 0.5                                            # Michaelis-Menten constant for nitrate limitation [mmol N/m^3]
+         chp: 0.1                                            # Michaelis-Menten constant for phosphate limitation [mmol P/m^3]
+         sd: 0.05                                            # specific mortality at reference temperature [1/d]
+         sum: 2.2                                            # maximum specific uptake at reference temperature [1/d]
+         pu: 0.6                                             # efficiency at high oxygen levels [dimensionless]
+         puo: 0.2                                            # efficiency at low oxygen levels [dimensionless]
+         srs: 0.1                                            # specific rest respiration at reference temperature [1/d]
+         sR1: 1.0                                            # maximum turn-over rate of DOM [1/d; default=1.0]
+         qpc: 0.0019                                         # maximum phosphorus to carbon ratio [mmol P/mg C]
+         qnc: 0.0167                                         # maximum nitrogen to carbon ratio [mmol N/mg C]
+         ur_O2: 0.1                                          # oxygen consumed per carbon respired [mmol O_2/mg C]
+         #denit: 0                                            # denitrification switch (0: off, 1: on) [dimensionless; min=0; max=1; default=0]
+         sR1N1: 0.0                                          # mineralisation rate of labile dissolved organic phosphorus [1/d]
+         sR1N4: 0.0                                          # mineralisation rate of labile dissolved organic nitrogen [1/d]
+         fsink: 7e-05                                        # scavenging rate for iron [1/d]
+         c0: 0.01                                            # background carbon concentration [mg C/m^3]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         nRP: 3                                              # number of substrates [default=0]
+         sRP1R1: 0.01                                        # remineralisation of substrate 1 to DOM [1/d]
+         sRP2R1: 0.0025                                      # remineralisation of substrate 2 to DOM [1/d]
+         sRP3R1: 0.001                                       # remineralisation of substrate 3 to DOM [1/d]
+         rR2: 0.0075                                         # fraction of semi-labile DOC available to bacteria [dimensionless]
+         rR3: 0.0025                                         # fraction of semi-refractory DOC available to bacteria [dimensionless]
+         frR3: 0.3                                           # fraction of activity respiration converted to semi-refractory DOC [dimensionless]
+      initialization:
+         c: 15.7                                             # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.26                                             # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.029                                            # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+      coupling:
+         RP1: R4                                             # RP1
+         RP2: R6                                             # RP2
+         RP3: R8                                             # RP3
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # labile dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # labile dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # labile dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         R3c: R3/c                                           # semi-refractory DOC [mg C/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide [mmol C/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+   pel_nit:
+      model: ersem/nitrification                             # model type [default=pel_nit]
+      long_name: pelagic nitrification                       # descriptive name for model instance [default=pel_nit]
+      parameters:
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         ISWph: 1                                            # pH impact on nitrification (0: off, 1: on) [min=0; max=1]
+         sN4N3: 0.5                                          # specific nitrification rate [1/d]
+         chN3o: 2700.0                                       # Michaelis-Menten constant for cubic oxygen dependence of nitrification [(mmol O_2/m^3)^3]
+         #ISWn2o: false                                       # activate n2o production [default=false]
+         chN4n: 0.5                                          # Michaelis-Menten constant for cubic ammonium dependence of nitrification [(mmol N/m^3)^3; default=0.0]
+      coupling:
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+   P1:
+      model: ersem/primary_producer                          # model type [default=P1]
+      long_name: diatoms                                     # descriptive name for model instance [default=P1]
+      parameters:
+         sum: 1.375                                          # maximum specific productivity at reference temperature [1/d]
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         srs: 0.04                                           # specific rest respiration at reference temperature [1/d]
+         pu_ea: 0.2                                          # excreted fraction of primary production [dimensionless]
+         exulim: 0.8                                         # excreted fraction of primary production due to nutrient stress [dimensionless; max=0.8]
+         pu_ra: 0.2                                          # respired fraction of primary production [dimensionless]
+         qnlc: 0.0042                                        # minimum nitrogen to carbon ratio [mmol N/mg C]
+         qplc: 0.0001                                        # minimum phosphorus to carbon ratio [mmol P/mg C]
+         xqcp: 1.0                                           # threshold for phosphorus limitation (relative to Redfield ratio) [dimensionless]
+         xqcn: 1.0                                           # threshold for nitrogen limitation (relative to Redfield ratio) [dimensionless]
+         #xqcpx: 2.0                                          # threshold for phosphorus limitation, relative to minimum ratio [dimensionless; default=2.0]
+         #xqcnx: 2.0                                          # threshold for nitrogen limitation, relative to minimum ratio [dimensionless; default=2.0]
+         xqp: 2.0                                            # maximum phosphorus to carbon ratio (relative to Redfield ratio) [dimensionless]
+         xqn: 1.075                                          # maximum nitrogen to carbon ratio (relative to Redfield ratio) [dimensionless]
+         qun3: 0.0025                                        # nitrate affinity [m^3/mg C/d]
+         qun4: 0.0025                                        # ammonium affinity [m^3/mg C/d]
+         qurp: 0.003                                         # phosphate affinity [m^3/mg C/d]
+         snplux: 1.0                                         # specific tendency of luxury uptake of nutrients towards maximum quota [1/d; default=1.0]
+         use_Si: true                                        # use silicate [default=false]
+         qsc: 0.0118                                         # maximum silicate to carbon ratio [mmol Si/mg C]
+         chs: 0.2                                            # Michaelis-Menten constant for silicate limitation [mmol/m^3]
+         sdo: 0.05                                           # 1.1 of minimal specific lysis rate [1/d]
+         alpha: 4.0                                          # initial slope of PI-curve [mg C m^2/mg Chl/W/d]
+         beta: 0.07                                          # photoinhibition parameter [mg C m^2/mg Chl/W/d]
+         phim: 0.06                                          # maximum effective chlorophyll to carbon photosynthesis ratio [mg Chl/mg C]
+         Limnut: 1                                           # nitrogen-phosphorus colimitation formulation (0: geometric mean, 1: minimum, 2: harmonic mean) [min=0; max=2]
+         docdyn: true                                        # use dynamic ratio of labile to semi-labile DOM production [default=false]
+         uB1c_O2: 0.11                                       # oxygen produced per unit of carbon fixed [mmol O_2/mg C]
+         urB1_O2: 0.1                                        # oxygen consumed per unit of carbon respired [mmol O_2/mg C]
+         #EPS: 4.00000000E-04                                 # specific shortwave attenuation [m^2/mg C; default=4.00000000E-04]
+         iopABS: 0.007                                       # specific shortwave absorption [m^2/mg Chl; default=0.008]
+         iopBBS: 0.00048                                     # specific shortwave backscatter [m^2/mg Chl; default=0.003]
+         c0: 0.0001                                          # background carbon concentration [mg C/m^3; default=0.0]
+         #calcify: false                                      # calcify [default=false]
+         #rm: 0.0                                             # background sinking velocity [m/d; default=0.0]
+         resm: 5.0                                           # maximum nutrient-limitation-induced sinking velocity [m/d; default=0.0]
+         esni: 0.7                                           # level of nutrient limitation below which sinking commences [dimensionless]
+         cenh: false                                         # enable atmospheric CO2 influence on photosynthesis [default=false]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 3                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.2                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxc3: 0.005                                         # fraction of carbon sinking into deposition target 3 [dimensionless]
+         qxn2: 0.2                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxn3: 0.005                                         # fraction of nitrogen sinking into deposition target 3 [dimensionless]
+         qxp2: 0.24                                          # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         qxp3: 0.003                                         # fraction of phosphorus sinking into deposition target 3 [dimensionless]
+         qxs2: 0.0                                           # fraction of silicate sinking into deposition target 2 [dimensionless]
+         qxs3: 0.0                                           # fraction of silicate sinking into deposition target 3 [dimensionless]
+      initialization:
+         c: 8.0                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.1114                                           # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.009                                            # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+         Chl: 0.4                                            # chlorophyll a [mg/m^3; min=0.0; default=3.00000000E-06]
+         s: 0.128                                            # silicate [mmol Si/m^3; min=0.0; default=1.00000000E-06]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         deposition_target1s: fish/det_pool_s                # target pool 1 for silicate deposition [mmol Si/m^2; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         N5s: N5/s                                           # silicate [mmol Si/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide [mmol C/m^3; default=]
+         deposition_target2: Q1                              # deposition_target2
+         deposition_target3: Q7                              # deposition_target3
+         RP: R6                                              # RP
+   P2:
+      model: ersem/primary_producer                          # model type [default=P2]
+      long_name: nanophytoplankton                           # descriptive name for model instance [default=P2]
+      parameters:
+         sum: 1.625                                          # maximum specific productivity at reference temperature [1/d]
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         srs: 0.04                                           # specific rest respiration at reference temperature [1/d]
+         pu_ea: 0.2                                          # excreted fraction of primary production [dimensionless]
+         exulim: 0.8                                         # excreted fraction of primary production due to nutrient stress [dimensionless; max=0.8]
+         pu_ra: 0.2                                          # respired fraction of primary production [dimensionless]
+         qnlc: 0.005                                         # minimum nitrogen to carbon ratio [mmol N/mg C]
+         qplc: 0.000225                                      # minimum phosphorus to carbon ratio [mmol P/mg C]
+         xqcp: 1.0                                           # threshold for phosphorus limitation (relative to Redfield ratio) [dimensionless]
+         xqcn: 1.0                                           # threshold for nitrogen limitation (relative to Redfield ratio) [dimensionless]
+         #xqcpx: 2.0                                          # threshold for phosphorus limitation, relative to minimum ratio [dimensionless; default=2.0]
+         #xqcnx: 2.0                                          # threshold for nitrogen limitation, relative to minimum ratio [dimensionless; default=2.0]
+         xqp: 2.0                                            # maximum phosphorus to carbon ratio (relative to Redfield ratio) [dimensionless]
+         xqn: 1.075                                          # maximum nitrogen to carbon ratio (relative to Redfield ratio) [dimensionless]
+         qun3: 0.004                                         # nitrate affinity [m^3/mg C/d]
+         qun4: 0.004                                         # ammonium affinity [m^3/mg C/d]
+         qurp: 0.004                                         # phosphate affinity [m^3/mg C/d]
+         snplux: 1.0                                         # specific tendency of luxury uptake of nutrients towards maximum quota [1/d; default=1.0]
+         use_Si: false                                       # use silicate [default=false]
+         sdo: 0.05                                           # 1.1 of minimal specific lysis rate [1/d]
+         alpha: 5.0                                          # initial slope of PI-curve [mg C m^2/mg Chl/W/d]
+         beta: 0.1                                           # photoinhibition parameter [mg C m^2/mg Chl/W/d]
+         phim: 0.025                                         # maximum effective chlorophyll to carbon photosynthesis ratio [mg Chl/mg C]
+         Limnut: 1                                           # nitrogen-phosphorus colimitation formulation (0: geometric mean, 1: minimum, 2: harmonic mean) [min=0; max=2]
+         docdyn: true                                        # use dynamic ratio of labile to semi-labile DOM production [default=false]
+         uB1c_O2: 0.11                                       # oxygen produced per unit of carbon fixed [mmol O_2/mg C]
+         urB1_O2: 0.1                                        # oxygen consumed per unit of carbon respired [mmol O_2/mg C]
+         #EPS: 4.00000000E-04                                 # specific shortwave attenuation [m^2/mg C; default=4.00000000E-04]
+         iopABS: 0.0041                                      # specific shortwave absorption [m^2/mg Chl; default=0.008]
+         iopBBS: 0.003                                       # specific shortwave backscatter [m^2/mg Chl; default=0.003]
+         c0: 0.001                                           # background carbon concentration [mg C/m^3; default=0.0]
+         calcify: true                                       # calcify [default=false]
+         #rm: 0.0                                             # background sinking velocity [m/d; default=0.0]
+         resm: 0.0                                           # maximum nutrient-limitation-induced sinking velocity [m/d; default=0.0]
+         esni: 0.7                                           # level of nutrient limitation below which sinking commences [dimensionless]
+         cenh: false                                         # enable atmospheric CO2 influence on photosynthesis [default=false]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 3                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.5                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxc3: 0.05                                          # fraction of carbon sinking into deposition target 3 [dimensionless]
+         qxn2: 0.5                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxn3: 0.05                                          # fraction of nitrogen sinking into deposition target 3 [dimensionless]
+         qxp2: 0.6                                           # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         qxp3: 0.03                                          # fraction of phosphorus sinking into deposition target 3 [dimensionless]
+      initialization:
+         c: 5.9                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.0926                                           # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.0036                                           # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+         Chl: 0.3                                            # chlorophyll a [mg/m^3; min=0.0; default=3.00000000E-06]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide [mmol C/m^3; default=]
+         RainR: L2/RainR                                     # rain ratio (PIC : POC) [dimensionless; default=]
+         L2c: L2/c                                           # free calcite [mg C/m^3; default=]
+         deposition_target2: Q1                              # deposition_target2
+         deposition_target3: Q7                              # deposition_target3
+         RP: R4                                              # RP
+   P3:
+      model: ersem/primary_producer                          # model type [default=P3]
+      long_name: picophytoplankton                           # descriptive name for model instance [default=P3]
+      parameters:
+         sum: 2.0                                            # maximum specific productivity at reference temperature [1/d]
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         srs: 0.045                                          # specific rest respiration at reference temperature [1/d]
+         pu_ea: 0.2                                          # excreted fraction of primary production [dimensionless]
+         exulim: 0.8                                         # excreted fraction of primary production due to nutrient stress [dimensionless; max=0.8]
+         pu_ra: 0.2                                          # respired fraction of primary production [dimensionless]
+         qnlc: 0.006                                         # minimum nitrogen to carbon ratio [mmol N/mg C]
+         qplc: 0.00035                                       # minimum phosphorus to carbon ratio [mmol P/mg C]
+         xqcp: 1.0                                           # threshold for phosphorus limitation (relative to Redfield ratio) [dimensionless]
+         xqcn: 1.0                                           # threshold for nitrogen limitation (relative to Redfield ratio) [dimensionless]
+         #xqcpx: 2.0                                          # threshold for phosphorus limitation, relative to minimum ratio [dimensionless; default=2.0]
+         #xqcnx: 2.0                                          # threshold for nitrogen limitation, relative to minimum ratio [dimensionless; default=2.0]
+         xqp: 1.5                                            # maximum phosphorus to carbon ratio (relative to Redfield ratio) [dimensionless]
+         xqn: 1.05                                           # maximum nitrogen to carbon ratio (relative to Redfield ratio) [dimensionless]
+         qun3: 0.006                                         # nitrate affinity [m^3/mg C/d]
+         qun4: 0.007                                         # ammonium affinity [m^3/mg C/d]
+         qurp: 0.006                                         # phosphate affinity [m^3/mg C/d]
+         snplux: 1.0                                         # specific tendency of luxury uptake of nutrients towards maximum quota [1/d; default=1.0]
+         use_Si: false                                       # use silicate [default=false]
+         sdo: 0.055                                          # 1.1 of minimal specific lysis rate [1/d]
+         alpha: 6.0                                          # initial slope of PI-curve [mg C m^2/mg Chl/W/d]
+         beta: 0.12                                          # photoinhibition parameter [mg C m^2/mg Chl/W/d]
+         phim: 0.015                                         # maximum effective chlorophyll to carbon photosynthesis ratio [mg Chl/mg C]
+         Limnut: 1                                           # nitrogen-phosphorus colimitation formulation (0: geometric mean, 1: minimum, 2: harmonic mean) [min=0; max=2]
+         docdyn: true                                        # use dynamic ratio of labile to semi-labile DOM production [default=false]
+         uB1c_O2: 0.11                                       # oxygen produced per unit of carbon fixed [mmol O_2/mg C]
+         urB1_O2: 0.1                                        # oxygen consumed per unit of carbon respired [mmol O_2/mg C]
+         #EPS: 4.00000000E-04                                 # specific shortwave attenuation [m^2/mg C; default=4.00000000E-04]
+         iopABS: 0.023                                       # specific shortwave absorption [m^2/mg Chl; default=0.008]
+         iopBBS: 0.003                                       # specific shortwave backscatter [m^2/mg Chl; default=0.003]
+         c0: 0.0088                                          # background carbon concentration [mg C/m^3; default=0.0]
+         #calcify: false                                      # calcify [default=false]
+         #rm: 0.0                                             # background sinking velocity [m/d; default=0.0]
+         resm: 0.0                                           # maximum nutrient-limitation-induced sinking velocity [m/d; default=0.0]
+         esni: 0.7                                           # level of nutrient limitation below which sinking commences [dimensionless]
+         cenh: false                                         # enable atmospheric CO2 influence on photosynthesis [default=false]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 3                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.5                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxc3: 0.05                                          # fraction of carbon sinking into deposition target 3 [dimensionless]
+         qxn2: 0.5                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxn3: 0.05                                          # fraction of nitrogen sinking into deposition target 3 [dimensionless]
+         qxp2: 0.6                                           # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         qxp3: 0.03                                          # fraction of phosphorus sinking into deposition target 3 [dimensionless]
+      initialization:
+         c: 5.9                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.0926                                           # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.0036                                           # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+         Chl: 0.3                                            # chlorophyll a [mg/m^3; min=0.0; default=3.00000000E-06]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide [mmol C/m^3; default=]
+         deposition_target2: Q1                              # deposition_target2
+         deposition_target3: Q7                              # deposition_target3
+         RP: R4                                              # RP
+   P4:
+      model: ersem/primary_producer                          # model type [default=P4]
+      long_name: microphytoplankton                          # descriptive name for model instance [default=P4]
+      parameters:
+         sum: 1.125                                          # maximum specific productivity at reference temperature [1/d]
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         srs: 0.035                                          # specific rest respiration at reference temperature [1/d]
+         pu_ea: 0.2                                          # excreted fraction of primary production [dimensionless]
+         exulim: 0.8                                         # excreted fraction of primary production due to nutrient stress [dimensionless; max=0.8]
+         pu_ra: 0.2                                          # respired fraction of primary production [dimensionless]
+         qnlc: 0.0042                                        # minimum nitrogen to carbon ratio [mmol N/mg C]
+         qplc: 0.0001                                        # minimum phosphorus to carbon ratio [mmol P/mg C]
+         xqcp: 1.0                                           # threshold for phosphorus limitation (relative to Redfield ratio) [dimensionless]
+         xqcn: 1.0                                           # threshold for nitrogen limitation (relative to Redfield ratio) [dimensionless]
+         #xqcpx: 2.0                                          # threshold for phosphorus limitation, relative to minimum ratio [dimensionless; default=2.0]
+         #xqcnx: 2.0                                          # threshold for nitrogen limitation, relative to minimum ratio [dimensionless; default=2.0]
+         xqp: 2.7                                            # maximum phosphorus to carbon ratio (relative to Redfield ratio) [dimensionless]
+         xqn: 1.1                                            # maximum nitrogen to carbon ratio (relative to Redfield ratio) [dimensionless]
+         qun3: 0.002                                         # nitrate affinity [m^3/mg C/d]
+         qun4: 0.002                                         # ammonium affinity [m^3/mg C/d]
+         qurp: 0.002                                         # phosphate affinity [m^3/mg C/d]
+         snplux: 1.0                                         # specific tendency of luxury uptake of nutrients towards maximum quota [1/d; default=1.0]
+         use_Si: false                                       # use silicate [default=false]
+         sdo: 0.045                                          # 1.1 of minimal specific lysis rate [1/d]
+         alpha: 3.0                                          # initial slope of PI-curve [mg C m^2/mg Chl/W/d]
+         beta: 0.06                                          # photoinhibition parameter [mg C m^2/mg Chl/W/d]
+         phim: 0.045                                         # maximum effective chlorophyll to carbon photosynthesis ratio [mg Chl/mg C]
+         Limnut: 1                                           # nitrogen-phosphorus colimitation formulation (0: geometric mean, 1: minimum, 2: harmonic mean) [min=0; max=2]
+         docdyn: true                                        # use dynamic ratio of labile to semi-labile DOM production [default=false]
+         uB1c_O2: 0.11                                       # oxygen produced per unit of carbon fixed [mmol O_2/mg C]
+         urB1_O2: 0.1                                        # oxygen consumed per unit of carbon respired [mmol O_2/mg C]
+         #EPS: 4.00000000E-04                                 # specific shortwave attenuation [m^2/mg C; default=4.00000000E-04]
+         iopABS: 0.008                                       # specific shortwave absorption [m^2/mg Chl; default=0.008]
+         iopBBS: 0.00048                                     # specific shortwave backscatter [m^2/mg Chl; default=0.003]
+         c0: 0.0001                                          # background carbon concentration [mg C/m^3; default=0.0]
+         #calcify: false                                      # calcify [default=false]
+         #rm: 0.0                                             # background sinking velocity [m/d; default=0.0]
+         resm: 5.0                                           # maximum nutrient-limitation-induced sinking velocity [m/d; default=0.0]
+         esni: 0.7                                           # level of nutrient limitation below which sinking commences [dimensionless]
+         cenh: false                                         # enable atmospheric CO2 influence on photosynthesis [default=false]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 3                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+         qxc2: 0.5                                           # fraction of carbon sinking into deposition target 2 [dimensionless]
+         qxc3: 0.05                                          # fraction of carbon sinking into deposition target 3 [dimensionless]
+         qxn2: 0.5                                           # fraction of nitrogen sinking into deposition target 2 [dimensionless]
+         qxn3: 0.05                                          # fraction of nitrogen sinking into deposition target 3 [dimensionless]
+         qxp2: 0.6                                           # fraction of phosphorus sinking into deposition target 2 [dimensionless]
+         qxp3: 0.03                                          # fraction of phosphorus sinking into deposition target 3 [dimensionless]
+      initialization:
+         c: 5.9                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.0926                                           # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.0036                                           # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+         Chl: 0.3                                            # chlorophyll a [mg/m^3; min=0.0; default=3.00000000E-06]
+      coupling:
+         deposition_target1c: fish/det_pool_c                # target pool 1 for carbon deposition [mg C/m^2; default=]
+         deposition_target1n: fish/det_pool_n                # target pool 1 for nitrogen deposition [mmol N/m^2; default=]
+         deposition_target1p: fish/det_pool_p                # target pool 1 for phosphorus deposition [mmol P/m^2; default=]
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N3n: N3/n                                           # nitrate [mmol N/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide [mmol C/m^3; default=]
+         deposition_target2: Q1                              # deposition_target2
+         deposition_target3: Q7                              # deposition_target3
+         RP: R6                                              # RP
+   Z4:
+      model: ersem/mesozooplankton                           # model type [default=Z4]
+      long_name: mesozooplankton                             # descriptive name for model instance [default=Z4]
+      parameters:
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         minfood: 12.0                                       # Michaelis-Menten constant to perceive food [mg C/m^3]
+         chuc: 36.0                                          # Michaelis-Menten constant for food uptake [mg C/m^3]
+         sum: 1.0                                            # maximum specific uptake at reference temperature [1/d]
+         pu: 0.6                                             # assimilation efficiency [dimensionless]
+         pu_ea: 0.5                                          # fraction of unassimilated prey that is excreted (not respired) [dimensionless]
+         pu_eaR: 0.9                                         # fraction of unassimilated detritus that is excreted (not respired) [dimensionless]
+         pe_R1: 0.5                                          # dissolved fraction of excreted/dying matter [dimensionless]
+         srs: 0.015                                          # specific rest respiration at reference temperature [1/d]
+         sd: 0.0001                                          # basal mortality [1/d]
+         sdo: 0.2                                            # maximum mortality due to oxygen limitation [1/d]
+         chro: 7.81                                          # Michaelis-Menten constant for oxygen limitation [dimensionless]
+         qpc: 0.000786                                       # phosphorus to carbon ratio [mmol P/mg C]
+         qnc: 0.0126                                         # nitrogen to carbon ratio [mmol N/mg C]
+         Minprey: 300.0                                      # food threshold for overwintering state [mg C/m^2]
+         repw: 0.0025                                        # specific overwintering respiration [1/d]
+         mort: 0.0025                                        # specific overwintering mortality [1/d]
+         R1R2: 1.0                                           # labile fraction of produced dissolved organic carbon [dimensionless]
+         xR1p: 1.2                                           # transfer of phosphorus to DOM, relative to POM [dimensionless; default=0.0]
+         xR1n: 1.0                                           # transfer of nitrogen to DOM, relative to POM [dimensionless; default=0.0]
+         urB1_O2: 0.1                                        # oxygen consumed per carbon respired [mmol O_2/mg C]
+         gutdiss: 0.5                                        # fraction of prey calcite that dissolves after ingestion [dimensionless]
+         c0: 0.0033                                          # background concentration [mg C/m^3]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         nprey: 9                                            # number of prey types [default=0]
+         suprey1: 0.15                                       # relative affinity for prey type 1 [dimensionless]
+         suprey2: 0.05                                       # relative affinity for prey type 2 [dimensionless]
+         suprey3: 0.0                                        # relative affinity for prey type 3 [dimensionless]
+         suprey4: 0.15                                       # relative affinity for prey type 4 [dimensionless]
+         suprey5: 0.25                                       # relative affinity for prey type 5 [dimensionless]
+         suprey6: 0.25                                       # relative affinity for prey type 6 [dimensionless]
+         suprey7: 0.05                                       # relative affinity for prey type 7 [dimensionless]
+         suprey8: 0.0                                        # relative affinity for prey type 8 [dimensionless]
+         suprey9: 0.1                                        # relative affinity for prey type 9 [dimensionless]
+         #prey1ispom: false                                   # prey type 1 is detritus [default=false]
+         #prey2ispom: false                                   # prey type 2 is detritus [default=false]
+         #prey3ispom: false                                   # prey type 3 is detritus [default=false]
+         #prey4ispom: false                                   # prey type 4 is detritus [default=false]
+         #prey5ispom: false                                   # prey type 5 is detritus [default=false]
+         #prey6ispom: false                                   # prey type 6 is detritus [default=false]
+         #prey7ispom: false                                   # prey type 7 is detritus [default=false]
+         #prey8ispom: false                                   # prey type 8 is detritus [default=false]
+         prey9ispom: true                                    # prey type 9 is detritus [default=false]
+      initialization:
+         c: 1.2                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+      coupling:
+         prey1: P1                                           # prey1
+         prey2: P2                                           # prey2
+         prey3: P3                                           # prey3
+         prey4: P4                                           # prey4
+         prey5: Z4                                           # prey5
+         prey6: Z5                                           # prey6
+         prey7: Z6                                           # prey7
+         prey8: B1                                           # prey8
+         prey9: R6                                           # prey9
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen source [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide sink [mmol C/m^3; default=]
+         L2c: L2/c                                           # calcite [mg C/m^3; default=]
+         RP: R8                                              # RP
+   Z5:
+      model: ersem/microzooplankton                          # model type [default=Z5]
+      long_name: microzooplankton                            # descriptive name for model instance [default=Z5]
+      parameters:
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         minfood: 12.0                                       # Michaelis-Menten constant to perceive food [mg C/m^3]
+         chuc: 32.0                                          # Michaelis-Menten constant for food uptake [mg C/m^3]
+         sum: 1.25                                           # maximum specific uptake at reference temperature [1/d]
+         pu: 0.5                                             # assimilation efficiency [dimensionless]
+         pu_ea: 0.5                                          # fraction of unassimilated prey that is excreted (not respired) [dimensionless]
+         pe_R1: 0.5                                          # dissolved fraction of excreted/dying matter [dimensionless]
+         srs: 0.02                                           # specific rest respiration at reference temperature [1/d]
+         sd: 0.0001                                          # basal mortality [1/d]
+         sdo: 0.25                                           # maximum mortality due to oxygen limitation [1/d]
+         chro: 7.81                                          # Michaelis-Menten constant for oxygen limitation [dimensionless]
+         qpc: 0.001                                          # maximum phosphorus to carbon ratio [mmol P/mg C]
+         qnc: 0.0167                                         # maximum nitrogen to carbon ratio [mmol N/mg C]
+         stempp: 0.5                                         # specific excretion rate of excess phosphorus [1/d]
+         stempn: 0.5                                         # specific excretion rate of excess nitrogen [1/d]
+         R1R2: 1.0                                           # labile fraction of produced dissolved organic carbon [dimensionless]
+         xR1p: 1.2                                           # transfer of phosphorus to DOM, relative to POM [dimensionless; default=1.0]
+         xR1n: 1.0                                           # transfer of nitrogen to DOM, relative to POM [dimensionless; default=1.0]
+         urB1_O2: 0.1                                        # oxygen consumed per carbon respired [mmol O_2/mg C]
+         gutdiss: 0.5                                        # fraction of prey calcite that dissolves after ingestion [dimensionless]
+         c0: 0.0033                                          # background concentration [mg C/m^3]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         nprey: 7                                            # number of prey types [default=0]
+         suprey1: 0.1                                        # relative affinity for prey type 1 [dimensionless]
+         suprey2: 0.15                                       # relative affinity for prey type 2 [dimensionless]
+         suprey3: 0.15                                       # relative affinity for prey type 3 [dimensionless]
+         suprey4: 0.15                                       # relative affinity for prey type 4 [dimensionless]
+         suprey5: 0.1                                        # relative affinity for prey type 5 [dimensionless]
+         suprey6: 0.15                                       # relative affinity for prey type 6 [dimensionless]
+         suprey7: 0.2                                        # relative affinity for prey type 7 [dimensionless]
+      initialization:
+         c: 7.2                                              # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.12                                             # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.0113                                           # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+      coupling:
+         prey1: B1                                           # prey1
+         prey2: P1                                           # prey2
+         prey3: P2                                           # prey3
+         prey4: P3                                           # prey4
+         prey5: P4                                           # prey5
+         prey6: Z5                                           # prey6
+         prey7: Z6                                           # prey7
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         O2o: O2/o                                           # oxygen source [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide sink [mmol C/m^3; default=]
+         L2c: L2/c                                           # calcite [mg C/m^3; default=]
+         RP: R6                                              # RP
+   Z6:
+      model: ersem/microzooplankton                          # model type [default=Z6]
+      long_name: nanoflagellates                             # descriptive name for model instance [default=Z6]
+      parameters:
+         q10: 2.0                                            # Q_10 temperature coefficient [dimensionless]
+         minfood: 12.0                                       # Michaelis-Menten constant to perceive food [mg C/m^3]
+         chuc: 28.0                                          # Michaelis-Menten constant for food uptake [mg C/m^3]
+         sum: 1.5                                            # maximum specific uptake at reference temperature [1/d]
+         pu: 0.4                                             # assimilation efficiency [dimensionless]
+         pu_ea: 0.5                                          # fraction of unassimilated prey that is excreted (not respired) [dimensionless]
+         pe_R1: 0.5                                          # dissolved fraction of excreted/dying matter [dimensionless]
+         srs: 0.025                                          # specific rest respiration at reference temperature [1/d]
+         sd: 0.05                                            # basal mortality [1/d]
+         sdo: 0.3                                            # maximum mortality due to oxygen limitation [1/d]
+         chro: 7.81                                          # Michaelis-Menten constant for oxygen limitation [dimensionless]
+         qpc: 0.001                                          # maximum phosphorus to carbon ratio [mmol P/mg C]
+         qnc: 0.0167                                         # maximum nitrogen to carbon ratio [mmol N/mg C]
+         stempp: 0.5                                         # specific excretion rate of excess phosphorus [1/d]
+         stempn: 0.5                                         # specific excretion rate of excess nitrogen [1/d]
+         R1R2: 1.0                                           # labile fraction of produced dissolved organic carbon [dimensionless]
+         xR1p: 1.2                                           # transfer of phosphorus to DOM, relative to POM [dimensionless; default=1.0]
+         xR1n: 1.0                                           # transfer of nitrogen to DOM, relative to POM [dimensionless; default=1.0]
+         urB1_O2: 0.1                                        # oxygen consumed per carbon respired [mmol O_2/mg C]
+         gutdiss: 0.5                                        # fraction of prey calcite that dissolves after ingestion [dimensionless]
+         c0: 0.0033                                          # background concentration [mg C/m^3]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         nprey: 4                                            # number of prey types [default=0]
+         suprey1: 0.45                                       # relative affinity for prey type 1 [dimensionless]
+         suprey2: 0.15                                       # relative affinity for prey type 2 [dimensionless]
+         suprey3: 0.25                                       # relative affinity for prey type 3 [dimensionless]
+         suprey4: 0.15                                       # relative affinity for prey type 4 [dimensionless]
+      initialization:
+         c: 2.421                                            # carbon [mg C/m^3; min=0.0; default=1.00000000E-04]
+         n: 0.0505                                           # nitrogen [mmol N/m^3; min=0.0; default=1.26000000E-06]
+         p: 0.047                                            # phosphorus [mmol P/m^3; min=0.0; default=4.28800000E-08]
+      coupling:
+         prey1: B1                                           # prey1
+         prey2: P2                                           # prey2
+         prey3: P3                                           # prey3
+         prey4: Z6                                           # prey4
+         N1p: N1/p                                           # phosphate [mmol P/m^3; default=]
+         N4n: N4/n                                           # ammonium [mmol N/m^3; default=]
+         R1c: R1/c                                           # dissolved organic carbon [mg C/m^3; default=]
+         R1p: R1/p                                           # dissolved organic phosphorus [mmol P/m^3; default=]
+         R1n: R1/n                                           # dissolved organic nitrogen [mmol N/m^3; default=]
+         R2c: R2/c                                           # semi-labile dissolved organic carbon [mg C/m^3; default=]
+         RPs: R6/s                                           # particulate organic silicate [mmol Si/m^3; default=]
+         O2o: O2/o                                           # oxygen source [mmol O_2/m^3; default=]
+         O3c: O3/c                                           # carbon dioxide sink [mmol C/m^3; default=]
+         L2c: L2/c                                           # calcite [mg C/m^3; default=]
+         RP: R4                                              # RP
+   L2:
+      model: ersem/calcification                             # model type [default=L2]
+      long_name: calcite                                     # descriptive name for model instance [default=L2]
+      parameters:
+         iswcal: 1                                           # calcification/dissolution dependence on calcite saturation (1: power law, 2: hyperbolic) [min=1; max=2]
+         ncalc: 0.81                                         # power of the calcification law (Ridgwell et al. 2007, mineral calcite) [dimensionless]
+         ndiss: 2.22                                         # power of the dissolution law (Keir 1980) [dimensionless]
+         Rain0: 0.6                                          # maximum rain ratio from PISCES [dimensionless]
+         sedL2: 10.0                                         # sinking velocity [m/d]
+         sL2O3: 0.03                                         # maximum specific dissolution rate [1/d; default=1.0]
+         c0: 1e-05                                           # background concentration [mg C/m^3; default=0.0]
+         #no_river_dilution: false                            # disable river dilution by setting riverine concentrations equal to those in the receiving grid cell [default=false]
+         ndeposition: 1                                      # number of target pools for sedimentation [default=1]
+         #vel_crit: 0.01                                      # critical bed shear velocity for deposition [m/s; default=0.01]
+      initialization:
+         c: 0.05                                             # carbon [mg C/m^3; min=0.0; default=0.0]
+      coupling:
+         om_cal: O3/Om_cal                                   # calcite saturation [dimensionless; default=]
+         O3c: O3/c                                           # total dissolved inorganic carbon [mmol C/m^3; default=]
+         deposition_target1: bL2                             # deposition_target1
+   bL2:
+      model: ersem/benthic_calcite                           # model type [default=bL2]
+      long_name: benthic calcite                             # descriptive name for model instance [default=bL2]
+      parameters:
+         iswcal: 1                                           # dissolution dependence on calcite saturation (0: none, 1: power law, 2: hyperbolic) [min=0; max=2]
+         ndiss: 2.22                                         # power of the dissolution law (Keir 1980) [dimensionless]
+         fdissmax: 30.0                                      # maximum specific dissolution rate [1/d; min=0.0; default=0.0]
+         fdissmin: 0.05                                      # minimum specific dissolution rate [1/d; min=0.0; default=0.03]
+         c0: 1e-05                                           # background calcite concentration [mg C/m^2; default=0.0]
+      initialization:
+         c: 0.05                                             # carbon [mg C/m^2; min=0.0; default=0.0]
+      coupling:
+         Om_Cal: O3/Om_cal                                   # calcite saturation [dimensionless; default=]
+         O3c: O3/c                                           # dissolved inorganic carbon [mmol/m^3; default=]
+   fish:
+      model: feisty/FEISTY_FABM                              # model type [default=fish]
+      long_name: FEISTY fish community                       # descriptive name for model instance [default=fish]
+      parameters:
+         h: 20.0                                             # Max. consumption coefficient [g^nn yr-1; default=20.0]
+         nn: -0.25                                           # Metabolic exponent [dimensionless; default=-0.25]
+         gamma: 70.0                                         # Coef. for clearance rate [m2 g^q yr-1; default=70.0]
+         q: -0.2                                             # Clearance rate exponent [dimensionless; default=-0.2]
+         p: -0.175                                           # Metabolism exponent [dimensionless; default=-0.175]
+         epsAssim: 0.7                                       # Assimilation efficiency [dimensionless; default=0.7]
+         epsRepro: 0.01                                      # Reproduction & recruitment efficiency [dimensionless; default=0.01]
+         bgmort: 0.1                                         # Fish background mortality [yr-1; default=0.1]
+         beta: 400.0                                         # Beta parameter for size-based predation preference [dimensionless; default=400.0]
+         sigma: 1.3                                          # Sigma parameter for size-based predation preference [dimensionless; default=1.3]
+         mMin: 0.001                                         # Minimum fish mass (boundary of the grid) [g; default=0.001]
+         bent_ini: 5.0                                       # initial benthos biomass [g m-2; default=5.0]
+         b_ini: 1.0e-5                                       # initial fish biomass of each size class [g m-2; default=1.00000000E-05]
+         depth: 41.0                                         # water column depth [m; default=100.0]
+         Tp: 10.0                                            # pelagic layer averaged temperature [Celsius; default=10.0]
+         Tb: 8.0                                             # bottom layer depth temperature (500m - up to 1500m) [Celsius; default=8.0]
+         nStages: 9                                          # size number of large fish functional types [dimensionless; default=9]
+         #Tm: 8.0                                             # mid-water temperature [Celsius; default=8.0]
+         photic_depth: 100.0                                 # photic zone depth [m; default=100.0]
+         etamature: 0.25                                     # the coefficient determines the fish size with a 50% maturity level [dimensionless; default=0.25]
+         shelfdepth: 250.0                                   # continental shelf depth [m; default=250.0]
+         visual: 1.5                                         # the coefficient determines the visual ability of fish [dimensionless; default=1.5]
+         Fmax: 0.0                                           # Maximum fishing mortality [yr-1; default=0.0]
+         etaF: 0.05                                          # the coefficient determines the fish size with 50% fishing selectivity [dimensionless; default=0.05]
+         ssigma: 10.0                                        # width of initial vertical distribution [dimensionless; default=10.0]
+         tau: 10.0                                           # increase in width [dimensionless; default=10.0]
+         max_depth: 5000.0                                   # maximum depth of the model domain [m; default=5000.0]
+         n_depth: 50                                         # number of depth levels for vertical distribution matrices [dimensionless; default=50]
+         gww_gc: 9.0                                         # gram wet weight to gram carbon ratio [dimensionless; default=9.0]
+         qnc: 0.1509433962264151                             # Nitrogen to Carbon ratio [N/C; default=1.50943396E-01]
+         qpc: 0.009433962264150943                           # Phosphorus to Carbon ratio [P/C; default=9.43396226E-03]
+         feces_elements: cnp                                 # elemental composition of feces e.g. "cnp"
+         carcass_elements: cnp                               # elemental composition of carcass e.g. "cnp"
+         respiration_elements: cnp                           # elemental composition of respiration e.g. "cnp"
+         n_zoo: 2                                            # number of zooplankton prey
+         zoo_size1: s                                        # small or large zooplankton? "s" for small, "l" for large
+         zoo_1_availability: 1.0                             # availability of zooplankton prey 1 (between 0 and 1) [min=0.0; max=1.0; default=1.0]
+         zoo_size2: l                                        # small or large zooplankton? "s" for small, "l" for large
+         zoo_2_availability: 1.0                             # availability of zooplankton prey 2 (between 0 and 1) [min=0.0; max=1.0; default=1.0]
+         internal_benthos: true                              # benthos modelled internally (True) or from external zoobenthos model (False)
+         benk: 80.0                                          # benthos carrying capacity [g m-2]
+         ben_eff: 0.1                                        # detrital fraction going to benthos  [dimensionless]
+         det_c_scale: 0.0832570                              # factor converting deposited carbon to mmol C [mmol C (deposited unit)-1; default=1.0]
+         #det_n_scale: 1.0                                    # factor converting deposited nitrogen to mmol N [mmol N (deposited unit)-1; default=1.0]
+         #det_p_scale: 1.0                                    # factor converting deposited phosphorus to mmol P [mmol P (deposited unit)-1; default=1.0]
+         #det_s_scale: 1.0                                    # factor converting deposited silicon to mmol Si [mmol Si (deposited unit)-1; default=1.0]
+         bottom_detritus_elements: cnps                      # elemental composition of bottom detritus e.g. "cnps"
+         fft_short_name_1: smpel                             # fish functional type short name [default=fft_1]
+         fft_short_name_2: mesopel                           # fish functional type short name [default=fft_2]
+         fft_short_name_3: lgpel                             # fish functional type short name [default=fft_3]
+         fft_short_name_4: bathypel                          # fish functional type short name [default=fft_4]
+         fft_short_name_5: dem                               # fish functional type short name [default=fft_5]
+         Fmax_1: 0.0                                         # Maximum fishing mortality of smpel [yr-1; default=Fmax]
+         etaF_1: 0.05                                        # fraction of smpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_2: 0.0                                         # Maximum fishing mortality of mesopel [yr-1; default=Fmax]
+         etaF_2: 0.05                                        # fraction of mesopel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_3: 0.0                                         # Maximum fishing mortality of lgpel [yr-1; default=Fmax]
+         etaF_3: 0.05                                        # fraction of lgpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_4: 0.0                                         # Maximum fishing mortality of bathypel [yr-1; default=Fmax]
+         etaF_4: 0.05                                        # fraction of bathypel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fmax_5: 0.0                                         # Maximum fishing mortality of dem [yr-1; default=Fmax]
+         etaF_5: 0.05                                        # fraction of dem maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+      coupling:
+         small_zooplankton_target1: Z5                       # model eaten as small zooplankton prey 1 (FEISTY reads its total C, N and P)
+         large_zooplankton_target1: Z4                       # model eaten as large zooplankton prey 1 (FEISTY reads its total C, N and P)
+         det_bot_c_target_real: Q6                           # model receiving deposited matter (carbon) not used by the internal benthos
+         det_bot_n_target_real: Q6                           # model receiving deposited matter (nitrogen) not used by the internal benthos
+         det_bot_p_target_real: Q6                           # model receiving deposited matter (phosphorus) not used by the internal benthos
+         det_bot_s_target_real: Q6                           # model receiving deposited matter (silicate) not used by the internal benthos
+         respiration_c_target: O3                            # model receiving fish respiration (carbon)
+         respiration_n_target: N4                            # model receiving fish respiration (nitrogen)
+         respiration_p_target: N1                            # model receiving fish respiration (phosphorus)
+         feces_c_target: R8                                  # model receiving fish feces (carbon)
+         feces_n_target: R8                                  # model receiving fish feces (nitrogen)
+         feces_p_target: R8                                  # model receiving fish feces (phosphorus)
+         carcasses_c_target: R8                              # model receiving fish carcasses (carbon)
+         carcasses_n_target: R8                              # model receiving fish carcasses (nitrogen)
+         carcasses_p_target: R8                              # model receiving fish carcasses (phosphorus)

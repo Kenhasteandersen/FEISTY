@@ -10,6 +10,3 @@ README.html
 *.mod
 *.dll
 *.DLL
-
-# unpacked copy of testcases/GOTM/setup.zip
-testcases/GOTM/setup/
