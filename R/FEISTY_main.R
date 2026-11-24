@@ -693,15 +693,16 @@ simulateFEISTY = function(p      = setupBasic(),
 
       # time-series simulation
       if (p$bTS == TRUE){
-        # initialize forcing dimension
-        dummy=.Fortran("passnforc", nforcsin = as.integer(nFGrid*4+5) )
-        #dummy=.C("passnforc", nforcsin = as.integer(nFGrid*4+5))
+        # All forcings are passed to Fortran once by passforcings. deSolve only
+        # handles one forcing: the index to the current time.
         
         if(all(!is.na(p$szbio_ts))){yini[1] = p$szbio_ts[1]}
         if(all(!is.na(p$lzbio_ts))){yini[2] = p$lzbio_ts[1]}
         
         if(is.na(p$tSpin) == F){
           pspin=buildforcings(timesspin,p=pspin)
+          dummy=.Fortran("passforcings", nforcsin = nrow(pspin$forcings), ntimes = ncol(pspin$forcings),
+                         forcin = pspin$forcings)
           for (i in 1:p$nSpinloop) {
             u <- ode(y		= yini,
                      times		= timesspin,
@@ -711,7 +712,7 @@ simulateFEISTY = function(p      = setupBasic(),
                      initfunc	= initfunc,
                      func		= runfunc,
                      initforc	= "initfeistyforc",
-                     forcings	= pspin$forcings,
+                     forcings	= list(cbind(timesspin, seq_along(timesspin))),
                      fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
                      method = "adams", rtol = rtolTS, atol = atolTS,
                      outnames = outnames, nout = length(outnames))
@@ -723,6 +724,8 @@ simulateFEISTY = function(p      = setupBasic(),
         }
         
         p=buildforcings(times,p)
+        dummy=.Fortran("passforcings", nforcsin = nrow(p$forcings), ntimes = ncol(p$forcings),
+                       forcin = p$forcings)
         
         u <- ode(y		= yini,
                  times		= times,
@@ -732,7 +735,7 @@ simulateFEISTY = function(p      = setupBasic(),
                  initfunc	= initfunc,
                  func		= runfunc,
                  initforc	= "initfeistyforc",
-                 forcings	= p$forcings,
+                 forcings	= list(cbind(times, seq_along(times))),
                  fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
                  method = "adams", rtol = rtolTS, atol = atolTS,
                  outnames = outnames, nout = length(outnames))

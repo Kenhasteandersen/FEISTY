@@ -928,12 +928,10 @@ paramTeffect_vet = function (p){
 }
 
 # Build forcings for time series simulations. 
-# A large matrix for the built-in deSolve function used coupeld with Fortran.
+# Returns p with p$forcings: a (forcing x time) matrix, which is passed to Fortran by passforcings.
 buildforcings = function (times,p) {
   
-  # Collect the rates in one (time x fish stage) matrix per variable, and only
-  # convert to the list of two-column matrices needed by deSolve at the end.
-  # (Modifying the list elements inside the time loop copies every matrix in each time step.)
+  # Collect the rates in one (time x fish stage) matrix per variable.
   fishstages = p$stagenames[-p$ixR]
   varnames = c("Cmax", "V", "metabolism", "mortF")
   rates = lapply(setNames(varnames, varnames), function(x){
@@ -970,29 +968,13 @@ buildforcings = function (times,p) {
   rates$mortF[t, ] = p$mortF[-p$ixR][ixStages]
   }
   
-  # one two-column matrix (time, value) per variable and fish stage
-  forcings = unlist(lapply(varnames, function(x){
-    forc = lapply(seq_along(fishstages), function(i) matrix(c(times, rates[[x]][, i]), ncol = 2))
-    setNames(forc, paste(x, fishstages, sep = "_"))
-  }), recursive = FALSE)
+  # benthos production
+  bprod = if (all(!is.na(p$bprod_ts))) p$bprod_ts else rep(p$bprod, length.out=length(times))
   
-  # ts_names = c("szbio_ts", "lzbio_ts",
-  #               "szprod_ts", "lzprod_ts", "bprod_ts")
-  
-  ts_names = c("szbio_ts", "lzbio_ts", "szprod_ts", "lzprod_ts")
-  forc = lapply(ts_names, function(name) {
-    matrix(c(times, p[[name]]), ncol = 2)
-  })
-  names(forc) = ts_names
-  forcings = c(forcings,forc)
-  
-  if (all(!is.na(p$bprod_ts))) {
-    forc = list(matrix(c(times, p[["bprod_ts"]]), ncol = 2))
-  }else{
-    forc = list(matrix(c(times, rep(p$bprod,length.out=length(times))), ncol = 2))
-    }
-  names(forc) = "bprod_ts"
-  p$forcings = c(forcings,forc)
+  # Matrix (forcing x time). The order must match allocfeisty_ts in Fortran.
+  p$forcings = unname(rbind(t(do.call(cbind, rates)),
+                            p$szbio_ts, p$lzbio_ts, p$szprod_ts, p$lzprod_ts, bprod))
+  storage.mode(p$forcings) = "double"
   
   return(p)
 }

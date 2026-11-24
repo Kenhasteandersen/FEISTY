@@ -339,14 +339,21 @@
       !real(dp), intent(in):: tsinput(*)
       real(dp), intent(inout):: u(nGrid) !state variable vector
 
-      integer:: i, ir
+      integer:: ir
 
+      ! Only update the rates when the forcings have changed
+      if (nint(forcidx(1)) .ne. kforc) then
+      kforc = nint(forcidx(1))
+      forcs = forcmat(:,kforc)
       ir=1
 
       call getVec(Cmax(idxF:nGrid),        forcs, ir, nFgrid)
       call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
       call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
       call getVec(mortF(idxF:nGrid),       forcs, ir, nFgrid)
+      end if
+
+      ir = 4*nFGrid + 1
 
 !      do i = idxF, nGrid
 !        Cmax(i) = forcs(ir)
@@ -792,16 +799,30 @@ end if
 
    end subroutine initfeistysetupVertical2
 
-   subroutine passnforc(nforcsin)
+!--------------------------------------
+! Receive all forcings for a time-series simulation from R.
+! Must be called before ode() whenever the forcings have changed.
+!
+! input:
+! nforcsin: number of forcings (4*nFGrid+5)
+! ntimes:   number of times
+! forcin:   forcings (forcing, time)
+!--------------------------------------
+   subroutine passforcings(nforcsin, ntimes, forcin)
     use setup
-    integer, intent(in):: nforcsin
+    implicit none
+    integer, intent(in)  :: nforcsin, ntimes
+    real(dp), intent(in) :: forcin(nforcsin, ntimes)
 
-    nforcs = nforcsin
-
+      nforcs = nforcsin
       if (allocated (forcs))       deallocate (forcs)
       allocate (forcs(nforcs))
+      if (allocated (forcmat))     deallocate (forcmat)
+      allocate (forcmat(nforcs, ntimes))
+      forcmat = forcin
+      kforc = 0
 
-   end subroutine passnforc
+   end subroutine passforcings
 
 !subroutine passnforc(nforcsin) bind(C, name="passnforc")
 !  use iso_c_binding, only: c_int
@@ -824,9 +845,11 @@ end if
     external odeforcs  ! Declare external procedure
     integer :: N
 
-    N = nforcs !4*nFGrid+5
+    ! The only forcing seen by deSolve is the index to the current time in forcmat
+    N = 1
+    kforc = 0
 
-    call odeforcs(N, forcs)
+    call odeforcs(N, forcidx)
 
 !    return
    end subroutine initfeistyforc
@@ -852,6 +875,7 @@ end if
       if (.NOT. feistyinitialised) then
          call allocfeisty(ip, yout)
          feistyinitialised = .TRUE.
+         kforc = 0    ! the rates have been reset
       end if
 
       call calcderivatives(conc, dconc)
