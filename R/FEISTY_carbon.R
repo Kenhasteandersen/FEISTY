@@ -288,7 +288,9 @@ simulatePosition = function(setup,
     if (length(ixGroups)>0) {
       # Per-group temperature for Q10=1.8 correction:
       #   1=smallPel(Tp) 2=mesoPel(Tm) 3=largePel(Tp) 4=mwpred(Tm) 5=dem(Tb)
-      Tgroup <- c(pp$Tp, pp$Tm, pp$Tp, pp$Tm, pp$Tb)
+      # Tm is missing where the depth is < 500 m; then use Tb as in setupVertical2()
+      Tm     <- if (is.na(pp$Tm)) pp$Tb else pp$Tm
+      Tgroup <- c(pp$Tp, Tm, pp$Tp, Tm, pp$Tb)
       Fmax0  <- Fmax  # preserve input value across loop iterations
 
       for (g in ixGroups) {
@@ -737,6 +739,12 @@ calcGlobalCarbonSequestration = function(TM=loadTransportMatrix(),
     }
   tSim = (proc.time() - tStart)[3]
   cat("FEISTY simulations completed in", round(tSim, 1), "seconds.\n")
+
+  # Failed simulations are ignored in the totals below (na.rm=TRUE), so warn about them:
+  bFailed = sapply(injectTM, function(x) any(!is.finite(x$Biomass)))
+  if (any(bFailed))
+    warning(sum(bFailed), " of ", length(bFailed), " simulations gave non-finite biomasses. ",
+            "They are ignored in the global totals and in the carbon injection.")
 
   # Put into the injection matrix:
   Biomass = array(data=0, c(dim(matrixInject)[1:2], 5))
