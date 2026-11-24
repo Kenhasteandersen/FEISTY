@@ -1,0 +1,24 @@
+#
+# Update the reference values used by the tests. Only do this after an intended change of the model;
+# check the differences with "git diff" before committing. Run from the root of the repository, with the 
+# new version of FEISTY installed:
+#
+#   Rscript tests/update_reference.R
+#
+library(FEISTY)
+library(testthat)
+source(test_path("helper-FEISTY.R"))
+
+cases <- referenceCases()
+ref <- do.call(rbind, lapply(names(cases), function(k) cbind(case = k, simSummary(cases[[k]]()))))
+cells <- readCells()
+global <- do.call(rbind, lapply(seq_len(nrow(cells)), function(i)
+  do.call(rbind, lapply(c(0, 0.3), function(Fmax)
+    cbind(id = cells$id[i], Fmax = Fmax, simSummary(simulateCell(cells[i, ], Fmax, if (Fmax > 0) c(1, 3, 5))))))))
+
+write <- function(x, file) {
+  x[c("biomass", "yield")] <- signif(x[c("biomass", "yield")], 8)
+  write.csv(x, test_path("fixtures", file), row.names = FALSE)
+}
+write(ref, "reference.csv")
+write(global, "reference_global.csv")
