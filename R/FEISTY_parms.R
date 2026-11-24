@@ -931,22 +931,14 @@ paramTeffect_vet = function (p){
 # A large matrix for the built-in deSolve function used coupeld with Fortran.
 buildforcings = function (times,p) {
   
-  forc = lapply(p$stagenames[-p$ixR], function(x){
-    matrix(c(times, rep(0,length.out=length(times))), ncol = 2)
+  # Collect the rates in one (time x fish stage) matrix per variable, and only
+  # convert to the list of two-column matrices needed by deSolve at the end.
+  # (Modifying the list elements inside the time loop copies every matrix in each time step.)
+  fishstages = p$stagenames[-p$ixR]
+  varnames = c("Cmax", "V", "metabolism", "mortF")
+  rates = lapply(setNames(varnames, varnames), function(x){
+    matrix(0, nrow = length(times), ncol = length(fishstages))
   })
-  forc=setNames(forc,paste("Cmax_", p$stagenames[-p$ixR], sep = ""))
-  forcings=forc
-  forc=setNames(forc,paste("V_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-  forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-  forc=setNames(forc,paste("mortF_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-
-  indices_Cmax <- grep("Cmax_", names(forcings))
-  indices_V <- grep("V_", names(forcings))
-  indices_metabolism <- grep("metabolism_", names(forcings))
-  indices_mortF <- grep("mortF_", names(forcings))
 
   for (t in 1:length(times)) {
   if (all(!is.na(p$Tp_ts))) p$Tp=p$Tp_ts[t]
@@ -971,27 +963,18 @@ buildforcings = function (times,p) {
     if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=3)
   }
 
-  forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){
-    mat = forcings[[indices_Cmax[i]]]
-    mat[t, 2] = p$Cmax[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_V]=lapply(1:length(indices_V), function(i){
-    mat = forcings[[indices_V[i]]]
-    mat[t, 2] = p$V[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_metabolism]=lapply(1:length(indices_metabolism), function(i){
-    mat = forcings[[indices_metabolism[i]]]
-    mat[t, 2] = p$metabolism[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_mortF]=lapply(1:length(indices_mortF), function(i){
-    mat = forcings[[indices_mortF[i]]]
-    mat[t, 2] = p$mortF[-p$ixR][i]
-    return(mat)
-  })
+  ixStages = seq_along(fishstages)
+  rates$Cmax[t, ] = p$Cmax[-p$ixR][ixStages]
+  rates$V[t, ] = p$V[-p$ixR][ixStages]
+  rates$metabolism[t, ] = p$metabolism[-p$ixR][ixStages]
+  rates$mortF[t, ] = p$mortF[-p$ixR][ixStages]
   }
+  
+  # one two-column matrix (time, value) per variable and fish stage
+  forcings = unlist(lapply(varnames, function(x){
+    forc = lapply(seq_along(fishstages), function(i) matrix(c(times, rates[[x]][, i]), ncol = 2))
+    setNames(forc, paste(x, fishstages, sep = "_"))
+  }), recursive = FALSE)
   
   # ts_names = c("szbio_ts", "lzbio_ts",
   #               "szprod_ts", "lzprod_ts", "bprod_ts")
