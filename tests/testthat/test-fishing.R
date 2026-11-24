@@ -72,5 +72,7 @@ test_that("setFishing checks its input", {
   expect_error(setFishing(p, 0.1, groupidx = 0), "groupidx")
   expect_error(setFishing(p, c(0.1, 0.2)), "Fmax")
   expect_error(setFishing(p, 0.1, etaF = c(0.1, 0.2)), "etaF")
+  expect_error(setFishing(p, NA), "NA")
+  expect_error(setFishing(p, 0.1, etaF = NA), "NA")
   expect_identical(setFishing(p, 0.1, groupidx = integer(0)), p)
 })

@@ -63,9 +63,14 @@ test_that("global: fishing is corrected for temperature and depth", {
 test_that("global: cells without Tm can have fishing on all groups", {
   noTm <- cells[is.na(cells$Tm), ]
   skip_if(nrow(noTm) == 0)
-  sim <- try(suppressWarnings(simulateCell(noTm[1, ], 0.3, 1:5, tEnd = 5)), silent = TRUE)
-  known_issue(is.list(sim) && all(is.finite(sim$u)),
-              "simulatePosition() gives NaN when groups 2 or 4 are fished in cells where Tm is NA")
+  for (i in seq_len(nrow(noTm))) {
+    cell <- noTm[i, ]
+    sim <- simulateCell(cell, 0.3, 1:5, tEnd = 50)
+    expect_true(all(is.finite(sim$u)), label = paste("cell", cell$id))
+    # Tb is used where Tm is missing, as in setupVertical2
+    Temp <- c(cell$Tp, cell$Tb, cell$Tp, cell$Tb, cell$Tb)
+    expect_equal(sim$p$Fmax, 0.3*1.8^((Temp - 15)/10))
+  }
 })
 
 test_that("global: calcGlobalCarbonSequestration on a small area", {
