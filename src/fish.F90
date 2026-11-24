@@ -57,6 +57,16 @@ module fish
 !   real(dp), parameter ::     lzoog = 1._dp              ! large zooplankton growth rate
 !   real(dp), parameter ::     sbeng = 1._dp              ! small benthos growth rate
 !   real(dp), parameter ::     lbeng = 0._dp              ! large benthos growth rate
+   
+! for vertical distribution
+   real(dp) :: ssigma
+   real(dp) :: tau
+   real(dp) :: shelfdepth
+   real(dp) :: visual
+!   real(dp), parameter ::     ssigma = 10._dp              ! width of initial distribution
+!   real(dp), parameter ::     tau    = 10._dp              ! increase in width
+!   real(dp), parameter ::     shelfdepth = 250._dp         ! continental shelf depth
+!   real(dp), parameter ::     visual = 1.5_dp              !visual=1.5: visual predator. visual=1: non-visual predator.
 
    type, extends(typeSpectrum) :: spectrumFish
 
@@ -68,7 +78,8 @@ module fish
    public h, hCepha , nn, q, gamma, kk, p, epsAssim, epsRepro, epst, beta, betaCepha, sigma, mMin, mMedium, mLarge,  &
           spectrumFish, &
           initFish,&! calcfluxfish, &
-          lbenk, szoog, lzoog, sbeng, lbeng
+          lbenk, szoog, lzoog, sbeng, lbeng, &
+          ssigma, tau, shelfdepth, visual
 
 contains
 

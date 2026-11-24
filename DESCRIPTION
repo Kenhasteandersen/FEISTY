@@ -10,15 +10,20 @@ Authors@R: c(
   person("Rémy", "Denéchère", role = "ctb")
   )
 Maintainer: Yixin Zhao <yixzh@aqua.dtu.dk>
-Depends: R (>= 3.5.0)
-Imports: 
-    deSolve, 
-    ggplot2, 
-    pracma, 
-    scales, 
-    cowplot, 
-    shiny, 
-    shinyjs
+Depends: R (>= 4.4.0)
+Imports:
+    deSolve,
+    ggplot2,
+    pracma,
+    scales,
+    cowplot,
+    shiny,
+    shinyjs,
+    Matrix (>= 1.7-3),
+    parallel,
+    doParallel,
+    foreach,
+    maps
 Suggests: 
     knitr,
     rmarkdown,

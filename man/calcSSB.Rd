@@ -29,7 +29,9 @@ type based on a FEISTY simulation result in units of g/m2.
 This function calculates the spawning stock biomass for each function type based on the FEISTY simulation results within the specified time fraction (default is the last 40\% of the simulation period). \cr
 Spawning stock biomass is the product of biomass \code{u} [g/m2] and maturity level \code{psiMature} [dimensionless]. Negative values in \code{u} are corrected to 0. \cr
 Note the SSB data only represents how much biomass (energy) could be used for reproduction, rather than the amount of offspring. \cr
-This function has been integrated into \code{\link{simulateFEISTY}}. It cannot be called independently.
+This function is called automatically inside \code{\link{simulateFEISTY}} (with \code{etaTime = 0.4}),
+so its outputs are already present in a standard simulation result. It can also be called directly on a
+simulation result, for example to recompute the SSB over a different time fraction \code{etaTime}.
 }
 \seealso{
 \code{\link{paramAddGroup}} 	Add parameters of one functional type

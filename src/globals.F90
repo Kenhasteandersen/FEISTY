@@ -19,7 +19,7 @@ module globals
    real(dp),save :: fTempdem_shallowold=1._dp, fTempmdem_shallowold=1._dp
    real(dp), parameter:: Tref = 10._dp ! Reference temperature
 
-   real(dp), allocatable :: fTempV(:), fTempmV(:)
+   real(dp), allocatable :: fTempV(:), fTempmV(:),Teff (:)
 
 contains
 
