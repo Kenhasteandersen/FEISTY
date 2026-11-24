@@ -34,7 +34,7 @@ Description: A size- and trait-based model of higher trophic level dynamics.
 License: MIT + file LICENSE
 LazyData: yes
 NeedsCompilation: yes
-RoxygenNote: 7.3.3
 Encoding: UTF-8
 Config/testthat/edition: 3
 Config/testthat/parallel: true
+Config/roxygen2/version: 8.0.0
