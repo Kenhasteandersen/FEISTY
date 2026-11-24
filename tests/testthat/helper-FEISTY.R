@@ -153,3 +153,13 @@ simulateCell <- function(cell, Fmax = 0, ixGroups = NULL, tEnd = 100) {
   simulatePosition(setupVertical2, cell$lat, cell$lon, Fmax = Fmax, ixGroups = ixGroups,
                    tEnd = tEnd, glob = cell)
 }
+
+# ---- Carbon ------------------------------------------------------------------------------------
+
+# Injections in gC/m2/yr and the mean depth of injection (m)
+carbonSummary <- function(sim, inject) {
+  data.frame(Fecal = sum(inject$Fecal), Carcass = sum(inject$Carcass), Repro = sum(inject$Repro),
+             Respiration = sum(inject$Respiration),
+             belowEuphotic = sum(inject$total[inject$z > sim$p$photic]),
+             meanDepth = sum(inject$z*inject$total)/sum(inject$total))
+}

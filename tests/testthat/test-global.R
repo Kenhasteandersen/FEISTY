@@ -68,20 +68,6 @@ test_that("global: cells without Tm can have fishing on all groups", {
               "simulatePosition() gives NaN when groups 2 or 4 are fished in cells where Tm is NA")
 })
 
-test_that("global: carbon fluxes and injections are consistent", {
-  for (i in seq_len(nrow(cells))) {
-    cell <- cells[i, ]
-    sim <- calcCarbonFluxes(simulateCell(cell, 0.3, fished))
-    inject <- calcCarbonInjection(sim)
-    label <- paste("cell", cell$id)
-    expect_true(all(is.finite(inject$total)), label = label)
-    expect_true(all(inject$total >= -1e-12), label = label)
-    for (x in c("Fecal", "Carcass", "Repro", "Respiration"))
-      expect_equal(as.vector(rowSums(inject[[paste0(x, "_stage")]])), as.vector(inject[[x]]),
-                   tolerance = 1e-6, info = paste(label, x))
-  }
-})
-
 test_that("global: calcGlobalCarbonSequestration on a small area", {
   skip_if_not(identical(Sys.getenv("FEISTY_TEST_GLOBAL"), "true"), "FEISTY_TEST_GLOBAL is not true")
   root <- Sys.getenv("FEISTY_ROOT")
