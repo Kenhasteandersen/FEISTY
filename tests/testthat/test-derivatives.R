@@ -52,11 +52,15 @@ for (n in c("setupBasic2", "setupVertical2")) local({
 
 for (n in c("setupBasic", "setupVertical")) local({
   setup <- setups[[n]]
-  test_that(paste(n, "the built-in Fortran setup is identical to R with fishing"), {
+  test_that(paste(n, "the built-in Fortran setup warns that fishing is ignored"), {
     p <- setFishing(setup(), 0.5)
-    u <- testStates(p)$random
-    known_issue(relDiff(derivsFortran(p, u, bCust = FALSE)$deriv, derivsR(p, u)$deriv) < 1e-12,
-                paste(n, "with bCust=FALSE silently ignores fishing set by setFishing()"))
+    expect_warning(simulateFEISTY(p = p, tEnd = 2, bCust = FALSE), "Fishing is ignored")
+    expect_warning(simulateFEISTY(p = p, times = NA, bCust = FALSE), "Fishing is ignored")
+    # No warning if fishing is included, or if there is no fishing:
+    expect_no_warning(simulateFEISTY(p = p, tEnd = 2, bCust = TRUE))
+    expect_no_warning(simulateFEISTY(p = p, tEnd = 2, USEdll = FALSE))
+    expect_no_warning(simulateFEISTY(p = setup(), tEnd = 2, bCust = FALSE))
+    expect_no_warning(simulateFEISTY(p = setFishing(p, 0), tEnd = 2, bCust = FALSE))
   })
 })
 

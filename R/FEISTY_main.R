@@ -774,6 +774,12 @@ simulateFEISTY = function(p      = setupBasic(),
         stop("Group-specific Fmax/etaF are not supported by the fixed Fortran setup path. ",
              "Use simulateFEISTY(..., bCust = TRUE) or USEdll = FALSE for per-group fishing.")
 
+      # The fixed Fortran versions of setupBasic and setupVertical have no fishing.
+      if (p$setup %in% c("setupBasic", "setupVertical") && any(p$mortF[p$ixFish] != 0))
+        warning("Fishing is ignored by the fixed Fortran version of ", p$setup, " (bCust = FALSE), ",
+                "and the calculated yield is not valid. ",
+                "Use simulateFEISTY(..., bCust = TRUE) or USEdll = FALSE.")
+
       # Choose the setup:
       if (p$setup=="setupBasic"){
         initfunc <- "initfeistysetupbasic"
