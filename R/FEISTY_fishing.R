@@ -56,6 +56,9 @@ setFishing = function(p, Fmax=0, etaF=0.05, groupidx=seq_len(p$nGroups)) {
   nSel = length(groupidx)
   if (nSel == 0) return(p)
 
+  if (any(is.na(Fmax)) || any(is.na(etaF)))
+    stop("Fmax and etaF must not be NA.")
+
   # Accept full group-level vectors and subset them for this call.
   if (length(Fmax) == p$nGroups && nSel < p$nGroups) Fmax = Fmax[groupidx]
   if (length(etaF) == p$nGroups && nSel < p$nGroups) etaF = etaF[groupidx]
