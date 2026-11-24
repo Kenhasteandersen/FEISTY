@@ -542,6 +542,9 @@ simulateFEISTY = function(p      = setupBasic(),
   if (max(sapply(p$ix, length))>=21){    
     rtol = 1E-10
     atol = 1E-10}
+  # Tolerances for time-series simulations with Fortran (solved with "adams")
+  rtolTS = 1E-7
+  atolTS = 1E-7
   if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
   
   # prepare output variable names
@@ -710,7 +713,7 @@ simulateFEISTY = function(p      = setupBasic(),
                      initforc	= "initfeistyforc",
                      forcings	= pspin$forcings,
                      fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                     #method = "ode45", rtol = rtol, atol = atol,
+                     method = "adams", rtol = rtolTS, atol = atolTS,
                      outnames = outnames, nout = length(outnames))
             yini = u[length(timesspin),c(p$ixR,p$ixFish)+1]
             cat(sprintf("spin-up progress: %.2f%%\n", 100*i/p$nSpinloop))
@@ -731,7 +734,7 @@ simulateFEISTY = function(p      = setupBasic(),
                  initforc	= "initfeistyforc",
                  forcings	= p$forcings,
                  fcontrol	= list(method="constant", rule = 2, f = 0, ties = "ordered"),
-                 #method = "ode45", rtol = rtol, atol = atol,
+                 method = "adams", rtol = rtolTS, atol = atolTS,
                  outnames = outnames, nout = length(outnames))
       }
       
