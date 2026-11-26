@@ -4,13 +4,13 @@ FEISTY (Fisheries Size and Functional Type model) as a [FABM](https://fabm.net) 
 
 Model type in `fabm.yaml`: `feisty/FEISTY_FABM`.
 
-This folder holds the GOTM test cases: the folder `setup` contains the forcing for a North Sea station and three FABM-FEISTY configurations, one with ERSEM and its internal benthos, one with ERSEM's benthic fauna as prey, and one with PISCES. The same three configurations for the transport-matrix model (FABM-OS) are in [`../TMM`](../TMM/readme.md). Earlier example configurations (FEISTY with UVic and with FABM's NPZD example) used an older FEISTY interface and have been retired.
+This folder holds the FABM-FEISTY test case. The folder [`GOTM`](GOTM/README.md) contains the forcing for a North Sea station and three FABM-FEISTY configurations: one with ERSEM and its internal benthos, one with ERSEM's benthic fauna as prey, and one with PISCES. Earlier example configurations (FEISTY with UVic and with FABM's NPZD example) used an older FEISTY interface and have been retired.
 
 ## 1. What it is
 
 **State variables**
 
-- Fish biomass per functional type and size class, `g m-2` (wet weight), depth-integrated, named `<fft_short_name>_size_<k>`. There are five functional types (default names `fft_1`..`fft_5`; the test cases call them `smpel`, `mesopel`, `lgpel`, `bathypel`, `dem`), with `nStages` size classes for the large types. Each type also has a diagnostic `<fft_short_name>_totB` (total biomass) and `<fft_short_name>_catch` (fishery catch, `g m-2 yr-1`).
+- Fish biomass per functional type and size class, `g m-2` (wet weight), depth-integrated, named `<fft_short_name>_size_<k>`. There are five functional types (default names `fft_1`..`fft_5`; the test cases call them `smpel`, `mesopel`, `lgpel`, `bathypel`, `dem`), with `nStages` size classes for the large types. Each type also has the diagnostics `<fft_short_name>_totB` (total biomass), `<fft_short_name>_catch` (fishery catch, `g m-2 yr-1`) and `<fft_short_name>_F` (fishing mortality of the largest size class, `yr-1`).
 - Optional internal benthos `benthos` (`g m-2`), used when `internal_benthos: true`.
 
 All fish and benthos biomass is added to the host's total carbon, nitrogen and phosphorus, so conservation checks include it (`gww_gc`, `qnc` and `qpc` define the conversion).
@@ -45,24 +45,16 @@ Other biogeochemical models are added to the same list, each with a `FABM_<INSTI
 
 In FABM versions that look for models in `src/models/<institute>`, you can instead copy the `feisty` folder into `<fabm>/src/models/` and add `feisty` to `DEFAULT_INSTITUTES` in `<fabm>/src/CMakeLists.txt`. Setting `FABM_FEISTY_BASE` is simpler and leaves FABM untouched.
 
-**FABM version.** FABM commits from b5704dbc (fabm-model/fabm PR 179, July 2026) onwards crash while creating any model that uses FABM's depth mapping, FEISTY included (`access violation` right after `Initializing fish...`). The test cases were run with FABM f85de87a (May 2026). With a newer FABM, check out f85de87a in `extern/fabm` or apply the two-line fix described in [`../TMM/readme.md`](../TMM/readme.md#2-fix-the-fabm-version-bundled-with-fabm-os).
+**FABM version.** FABM commits from b5704dbc (fabm-model/fabm PR 179, July 2026) onwards crash while creating any model that uses FABM's depth mapping, FEISTY included (`access violation` right after `Initializing fish...`). The test cases were run with FABM f85de87a (May 2026). With a newer FABM, either check out f85de87a in `extern/fabm`, or patch FABM: in `src/fabm_types.F90`, inside the block `if (variable%initial_value /= default_missing_value) then ... end if`, delete these two lines (the `state_index` append is already done, with a presence check, just before that block):
 
-**Running the GOTM test cases.** Run from inside the folder `setup` (or a copy of it, since GOTM writes its output to the working directory):
-
-```bash
-gotm gotm_ersem_noben.yaml   # ERSEM, internal benthos fed by deposition
-gotm gotm_ersem_ben.yaml     # ERSEM with its benthic fauna Y2-Y4 as prey
-gotm gotm_pisces.yaml        # PISCES, internal benthos
+```fortran
+! Store a pointer to the variable that should hold the state variable index.
+call variable%state_indices%append(state_index)
 ```
 
-| File in `setup` | Contents |
-|---|---|
-| `gotm_<case>.yaml` | GOTM settings for each case; points to `fabm_<case>.yaml` (`fabm: yaml_file:`), writes `result_<case>.nc` (monthly means of all variables) |
-| `fabm_<case>.yaml` | FABM configuration for each case; every line carries the registered long name, units and default, and the header explains the coupling |
-| `*.dat` | Forcing: grid, temperature and salinity profiles, meteorology, precipitation, short-wave radiation, surface elevation, pressure gradients, and nutrient, oxygen and carbonate profiles |
-| `gotm.yaml`, `fabm.yaml` | The original physics set-up of the forcing package (MSI-ERGOM biogeochemistry, no FEISTY) |
+With this patch the three configurations are created correctly on FABM 87fb1b93 (Sep 2026); full runs were done on the pinned revision only.
 
-The station is in the central North Sea (56.43°N, 6.55°E), 41 m deep with 68 layers, run from 2003-01-01 to 2023-12-31 with a 300 s time step. ERSEM is not mass-conserving at the 1800 s time step of the original set-up: its detritus goes negative and the clipping by `repair_state` adds nutrients. The PISCES case relaxes nitrate, phosphate and silicate in the bottom 15 m to the observed profiles, which stands in for the nutrient inflow that PISCES's sediment losses would otherwise remove from this closed column. A full run takes 6-10 minutes; FEISTY writes its look-up tables to `matrix.dat` (78 MB) on the first run and reuses them afterwards. The fish need several years to build up from their initial biomass; for results near equilibrium, rerun with `restart: load: true` so that the run starts from the state in `restart.nc` at the end of the previous one.
+**Running the GOTM test cases.** See [`GOTM/README.md`](GOTM/README.md) for the station, the files, and how to run and switch between the three configurations.
 
 ## 3. Setting up the FEISTY section of `fabm.yaml`
 
@@ -137,10 +129,31 @@ Fishing is set per functional type, as in R `setFishing(p, Fmax, etaF, groupidx)
 
 | Parameter | Unit | Default | Description |
 |---|---|---|---|
-| `Fmax_<i>` | yr-1 | `Fmax` | Maximum fishing mortality of functional type `i` |
+| `Fsource_<i>` | - | 0 | Where the maximum fishing mortality of type `i` comes from: 0 = parameter `Fmax_<i>`, 1 = external input `F_<fft_short_name>` |
+| `Fmax_<i>` | yr-1 | `Fmax` | Maximum fishing mortality of functional type `i` (read only with `Fsource_<i>: 0`) |
 | `etaF_<i>` | - | `etaF` | Fraction of the maximum size of type `i` with 50% fishing selectivity |
 
-The fishing mortality of size class `m` is `Fmax_<i> / (1 + (m / (etaF_<i> * m_max))^-3)`, the trawl selectivity of the FEISTY library (`setFishing` in `src/setup.F90`). The test cases set all `Fmax_<i>` to 0 (no fishing). Each type has a catch diagnostic `<fft_short_name>_catch` in `g m-2 yr-1` (wet weight): fishing mortality times biomass, summed over the size classes of the type, as R `calcYield`. The catch is removed from the system, so it is not returned to the BGC model.
+The fishing mortality of size class `m` is `F / (1 + (m / (etaF_<i> * m_max))^-3)`, the trawl selectivity of the FEISTY library (`setFishing` in `src/setup.F90`), where `F` is `Fmax_<i>` or the external input. The test cases set all `Fsource_<i>` and `Fmax_<i>` to 0 (no fishing). With `Fsource_<i>: 1`, remove `Fmax_<i>` from the YAML, since FABM rejects parameters that are not read.
+
+With `Fsource_<i>: 1`, the instance has a horizontal dependency `F_<fft_short_name>` in yr-1 (e.g. `fish/F_dem`), which can vary in time and space. It can come from:
+
+- a file or constant in GOTM, in `gotm_*.yaml`:
+  ```yaml
+  fabm:
+     input:
+        fish/F_dem:
+           method: file          # or: method: constant, constant_value: 0.3
+           file: fishing_F.dat   # lines "yyyy-mm-dd HH:MM:SS value", linearly interpolated in time
+           column: 1
+  ```
+- another FABM model, by coupling in `fabm_*.yaml`: `coupling: F_dem: <fishing_instance>/<variable>`. Such a model must compute F without using FEISTY's `_catch`, `_totB` or `_F` diagnostics of the same time step, since those depend on F (FABM would see a circular dependency); FEISTY's state variables are fine.
+
+With a constant input equal to `Fmax_<i>`, `Fsource_<i>: 1` gives exactly the same result as `Fsource_<i>: 0`.
+
+Each type has two fishing diagnostics:
+
+- `<fft_short_name>_catch` in `g m-2 yr-1` (wet weight): fishing mortality times biomass, summed over the size classes of the type, as R `calcYield`. The catch is removed from the system, so it is not returned to the BGC model.
+- `<fft_short_name>_F` in yr-1: the fishing mortality applied to the largest size class of the type, to check that the input arrives.
 
 ### 3.5 Zooplankton prey
 
@@ -215,7 +228,7 @@ Respiration is normally returned to the inorganic pools (DIC, ammonium, phosphat
 
 ### 3.10 Examples
 
-All three are in the folder `setup`. Every line there is annotated with units and defaults, and the file headers explain the choices.
+All three are in the folder `GOTM`. Every line there is annotated with units and defaults, and the file headers explain the choices.
 
 **ERSEM, internal benthos** (`fabm_ersem_noben.yaml`). Z5 (micro) is small and Z4 (meso) is large prey. `det_c_scale` is 1/12.011 because ERSEM deposits carbon in mg C. The deposition not used by the benthos is returned to Q6.
 

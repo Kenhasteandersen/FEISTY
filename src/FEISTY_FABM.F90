@@ -58,7 +58,10 @@ module FEISTY_FABM
 
       type (type_bottom_diagnostic_variable_id)                 :: id_temp_vertmean_100m_diag, id_det_pool_c, id_det_pool_n, id_det_pool_p, id_det_pool_s
       type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_total_biomass(:)
-      type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_catch(:)
+      type (type_bottom_diagnostic_variable_id), allocatable    :: id_fish_catch(:), id_fish_F(:)
+      ! Fishing mortality source per functional type (0: Fmax_i parameter, 1: external maximum F via dependency F_<fft>)
+      integer,                                   allocatable    :: Fsource(:)
+      type (type_horizontal_dependency_id),      allocatable    :: id_Fext(:)
 
       real (rk)                              :: b_ini
       real (rk) ,    allocatable             :: ben_availability(:), depth_array(:) ! Array of depth values for pre-computed profiles
@@ -452,6 +455,9 @@ contains
 
       allocate(self%id_fish_total_biomass(nGroups))
       allocate(self%id_fish_catch(nGroups))
+      allocate(self%id_fish_F(nGroups))
+      allocate(self%Fsource(nGroups))
+      allocate(self%id_Fext(nGroups))
       allocate(self%fft_short_names(nGrid-nResources))
       allocate(self%size_numstr(nGrid-nResources))
 
@@ -472,9 +478,20 @@ contains
          call self%get_parameter(fft_short_name, 'fft_short_name_'//trim(i_str), units='', long_name='fish functional type short name', default="fft_"//trim(i_str))
          ! per functional type fishing; defaults to the global Fmax/etaF. Must come after initialize_theta_matrices,
          ! since setupVertical2 (called there) resets fishing mortality of all groups to the global values.
-         call self%get_parameter(Fmax_i, 'Fmax_'//trim(i_str), 'yr-1', 'maximum fishing mortality of '//trim(fft_short_name), default=Fmax)
+         call self%get_parameter(self%Fsource(i), 'Fsource_'//trim(i_str), '', 'source of fishing mortality for '//trim(fft_short_name)// &
+              ' (0: Fmax parameter, 1: external maximum fishing mortality F_'//trim(fft_short_name)//' with FEISTY selectivity)', default=0)
          call self%get_parameter(etaF_i, 'etaF_'//trim(i_str), '-', 'fraction of maximum size with 50% fishing selectivity for '//trim(fft_short_name), default=etaF)
-         call setFishing(Fmax_i, etaF_i, [i])
+         select case (self%Fsource(i))
+         case (0)
+            call self%get_parameter(Fmax_i, 'Fmax_'//trim(i_str), 'yr-1', 'maximum fishing mortality of '//trim(fft_short_name), default=Fmax)
+            call setFishing(Fmax_i, etaF_i, [i])
+         case (1)
+            ! store the selectivity curve only (Fmax = 1); do_bottom scales it by F_<fft> every time step
+            call setFishing(1._rk, etaF_i, [i])
+            call self%register_dependency(self%id_Fext(i), 'F_'//trim(fft_short_name), 'yr-1', 'maximum fishing mortality of '//trim(fft_short_name))
+         case default
+            call self%fatal_error('initialize', 'Fsource_'//trim(i_str)//' must be 0 or 1')
+         end select
          ! read the initial value of each functional type from yaml
          !call self%get_parameter(self%b_ini, 'b_ini_'//trim(i_str), 'g m-2', 'initial fish biomass of each size class', default=1.e-5_rk)  
 
@@ -491,6 +508,7 @@ contains
             
          call self%register_diagnostic_variable(self%id_fish_total_biomass(i), trim(fft_short_name)//'_totB', 'g m-2', trim(fft_short_name)//'_total_biomass')
          call self%register_diagnostic_variable(self%id_fish_catch(i), trim(fft_short_name)//'_catch', 'g m-2 yr-1', trim(fft_short_name)//'_catch (wet weight)')
+         call self%register_diagnostic_variable(self%id_fish_F(i), trim(fft_short_name)//'_F', 'yr-1', 'fishing mortality of the largest size class of '//trim(fft_short_name))
       end do 
       
       !sets up biogeochemical coupling and vertical distribution for each fish size class
@@ -534,6 +552,7 @@ contains
       real(rk),dimension(nGrid-nResources)       :: fish, pred_morts, w_sz, w_lz, w_ben
       real(rk),dimension(nGrid-nResources,n_flux) :: flux
       real(rk)                                   :: growth_frac
+      real(rk)                                   :: F_ext
       real(rk)                                   :: benthos_g_gww
       real(rk),dimension(nGrid)                  :: uin, dudt
       real(rk)                                   :: temp_100m,temp_bottom, temp_500to1500m, bottom_depth
@@ -647,6 +666,15 @@ contains
          end do
          call set2vec
          call scale_mortality_rates(self)
+
+         ! external fishing mortality (Fsource=1): group%spec%mortF holds the selectivity curve, scale it by F_<fft>.
+         ! Same operation order as the parameter path, (psiF*F)/seconds_per_year, so a constant input reproduces Fsource=0 exactly.
+         do iGroup = 1, nGroups
+            if (self%Fsource(iGroup) == 1) then
+               _GET_BOTTOM_(self%id_Fext(iGroup), F_ext)
+               mortF(ixStart(iGroup):ixEnd(iGroup)) = (group(iGroup)%spec%mortF*max(F_ext,0._rk))/seconds_per_year
+            end if
+         end do
 
          ! FEISTY derivatives
          uin= [smzoo_ww_tot,lgzoo_ww_tot ,ben_ww_tot,0._rk ,fish] ! NIAZ: at this point, zooplankton and benthos biomasses (in WW) must be calculated and aggregated.
@@ -819,6 +847,7 @@ contains
             _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_total_biomass(i), totBiomass(i))
             ! catch = fishing mortality x biomass (as in R calcYield); uin is clamped >= 0 above, mortF is in s-1
             _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_catch(i), sum(mortF(ixStart(i):ixEnd(i))*uin(ixStart(i):ixEnd(i)))*seconds_per_year)
+            _SET_BOTTOM_DIAGNOSTIC_(self%id_fish_F(i), mortF(ixEnd(i))*seconds_per_year)
          end do
       _BOTTOM_LOOP_END_
    end subroutine

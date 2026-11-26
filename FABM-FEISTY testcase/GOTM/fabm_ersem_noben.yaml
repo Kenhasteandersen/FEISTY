@@ -1,17 +1,6 @@
-# TMM-FEISTY test case (fabm_ersem_noben.yaml, run with run_ersem_noben.py through fabmos): ERSEM 15.06 L4 with simple benthic pools and FEISTY's internal benthos.
-# Adapted from testcases/GOTM/setup/fabm_ersem_noben.yaml, which was tested in GOTM at a 41 m North Sea station.
-# See testcases/GOTM/README.md for FABM-FEISTY and how its fabm.yaml section is set up, and testcases/TMM/readme.md for the TMM runs.
-#
-# Changes for TMM (everything else is identical to the GOTM file):
-#  - fish: max_depth 5000 -> 6000 m. FEISTY pre-computes its look-up tables for n_depth log-spaced water depths from 1 m to max_depth
-#    and, in every water column, uses the table closest to the local bottom depth; max_depth must therefore be at least the deepest
-#    cell of the TMM grid (about 5.5 km in the MITgcm 2.8deg grid). n_depth (50) is unchanged and must not exceed max_depth.
-#  - fish: depth 41 -> 100 m. This value is only used for FEISTY's initial set-up; in the run the tables above are selected
-#    from the actual bottom depth of each water column, so it does not need to match the grid.
-#  - Inputs that GOTM supplied through fabm: input: in gotm_ersem_noben.yaml are set in run_ersem_noben.py instead
-#    (CO2 400 ppm and absorption_of_silt 0.07 m-1).
-#    The nutrient profiles that GOTM read from file are not used here: the nutrients start from the uniform "initialization" values below
-#    (placeholders: replace them by observed fields, or spin up) and are then transported by TMM.
+# GOTM-ERSEM-FEISTY test case (GOTM/fabm_ersem_noben.yaml, run with gotm gotm_ersem_noben.yaml): ERSEM 15.06 L4 with simple benthic pools (fabm-ersem-15.06-L4-noben-docdyn-iop.yaml)
+# and FEISTY's internal benthos. North Sea station 56.43N 6.55E (41 m).
+# See FABM-FEISTY testcase/README.md for FABM-FEISTY and how its fabm.yaml section is set up.
 #
 # Changes to the ERSEM configuration: basal mortality sd of Z4 and Z5 = 1e-4 d-1 (ERSEM default 0.05); the labile
 # deposition (deposition_target1) of R4, R6, R8 and P1-P4 goes to FEISTY's deposition pools fish/det_pool_{c,n,p,s}
@@ -883,7 +872,7 @@ instances:
          mMin: 0.001                                         # Minimum fish mass (boundary of the grid) [g; default=0.001]
          bent_ini: 5.0                                       # initial benthos biomass [g m-2; default=5.0]
          b_ini: 1.0e-5                                       # initial fish biomass of each size class [g m-2; default=1.00000000E-05]
-         depth: 100.0                                        # water column depth [m; default=100.0]
+         depth: 41.0                                         # water column depth [m; default=100.0]
          Tp: 10.0                                            # pelagic layer averaged temperature [Celsius; default=10.0]
          Tb: 8.0                                             # bottom layer depth temperature (500m - up to 1500m) [Celsius; default=8.0]
          nStages: 9                                          # size number of large fish functional types [dimensionless; default=9]
@@ -896,7 +885,7 @@ instances:
          etaF: 0.05                                          # the coefficient determines the fish size with 50% fishing selectivity [dimensionless; default=0.05]
          ssigma: 10.0                                        # width of initial vertical distribution [dimensionless; default=10.0]
          tau: 10.0                                           # increase in width [dimensionless; default=10.0]
-         max_depth: 6000.0                                   # maximum depth of the model domain [m; default=5000.0]
+         max_depth: 5000.0                                   # maximum depth of the model domain [m; default=5000.0]
          n_depth: 50                                         # number of depth levels for vertical distribution matrices [dimensionless; default=50]
          gww_gc: 9.0                                         # gram wet weight to gram carbon ratio [dimensionless; default=9.0]
          qnc: 0.1509433962264151                             # Nitrogen to Carbon ratio [N/C; default=1.50943396E-01]
@@ -922,14 +911,19 @@ instances:
          fft_short_name_3: lgpel                             # fish functional type short name [default=fft_3]
          fft_short_name_4: bathypel                          # fish functional type short name [default=fft_4]
          fft_short_name_5: dem                               # fish functional type short name [default=fft_5]
+         Fsource_1: 0                                        # source of fishing mortality of type 1 (0: Fmax_1, 1: external F_smpel in yr-1 with etaF_1 selectivity) [default=0]
          Fmax_1: 0.0                                         # Maximum fishing mortality of smpel [yr-1; default=Fmax]
          etaF_1: 0.05                                        # fraction of smpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_2: 0                                        # source of fishing mortality of type 2 (0: Fmax_2, 1: external F_mesopel in yr-1 with etaF_2 selectivity) [default=0]
          Fmax_2: 0.0                                         # Maximum fishing mortality of mesopel [yr-1; default=Fmax]
          etaF_2: 0.05                                        # fraction of mesopel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_3: 0                                        # source of fishing mortality of type 3 (0: Fmax_3, 1: external F_lgpel in yr-1 with etaF_3 selectivity) [default=0]
          Fmax_3: 0.0                                         # Maximum fishing mortality of lgpel [yr-1; default=Fmax]
          etaF_3: 0.05                                        # fraction of lgpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_4: 0                                        # source of fishing mortality of type 4 (0: Fmax_4, 1: external F_bathypel in yr-1 with etaF_4 selectivity) [default=0]
          Fmax_4: 0.0                                         # Maximum fishing mortality of bathypel [yr-1; default=Fmax]
          etaF_4: 0.05                                        # fraction of bathypel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_5: 0                                        # source of fishing mortality of type 5 (0: Fmax_5, 1: external F_dem in yr-1 with etaF_5 selectivity) [default=0]
          Fmax_5: 0.0                                         # Maximum fishing mortality of dem [yr-1; default=Fmax]
          etaF_5: 0.05                                        # fraction of dem maximum size with 50% fishing selectivity [dimensionless; default=etaF]
       coupling:

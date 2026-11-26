@@ -1,5 +1,5 @@
-# GOTM-ERSEM-FEISTY test case (setup/fabm_ersem_ben.yaml, run with gotm gotm_ersem_ben.yaml): ERSEM 15.06 L4 with full benthic model, low basal mortality of the fish prey
-# North Sea station 56.43N 6.55E (41 m). See testcases/GOTM/README.md for FABM-FEISTY and how its fabm.yaml section is set up.
+# GOTM-ERSEM-FEISTY test case (GOTM/fabm_ersem_ben.yaml, run with gotm gotm_ersem_ben.yaml): ERSEM 15.06 L4 with full benthic model, low basal mortality of the fish prey
+# North Sea station 56.43N 6.55E (41 m). See FABM-FEISTY testcase/README.md for FABM-FEISTY and how its fabm.yaml section is set up.
 #
 # Differences from the standard ERSEM 15.06 benthic set-up: basal mortality sd = 1e-4 d-1 (ERSEM defaults 0.05, 0.001, 0.01) for the
 # zooplankton (Z4, Z5) and benthic fauna (Y2, Y3, Y4) that FEISTY eats, and meiofauna Y4 added as third benthic prey.
@@ -1449,14 +1449,19 @@ instances:
          fft_short_name_3: lgpel                              # fish functional type short name [default=fft_3]
          fft_short_name_4: bathypel                           # fish functional type short name [default=fft_4]
          fft_short_name_5: dem                                # fish functional type short name [default=fft_5]
+         Fsource_1: 0                                         # source of fishing mortality of type 1 (0: Fmax_1, 1: external F_smpel in yr-1 with etaF_1 selectivity) [default=0]
          Fmax_1: 0.0                                          # Maximum fishing mortality of smpel [yr-1; default=Fmax]
          etaF_1: 0.05                                         # fraction of smpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_2: 0                                         # source of fishing mortality of type 2 (0: Fmax_2, 1: external F_mesopel in yr-1 with etaF_2 selectivity) [default=0]
          Fmax_2: 0.0                                          # Maximum fishing mortality of mesopel [yr-1; default=Fmax]
          etaF_2: 0.05                                         # fraction of mesopel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_3: 0                                         # source of fishing mortality of type 3 (0: Fmax_3, 1: external F_lgpel in yr-1 with etaF_3 selectivity) [default=0]
          Fmax_3: 0.0                                          # Maximum fishing mortality of lgpel [yr-1; default=Fmax]
          etaF_3: 0.05                                         # fraction of lgpel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_4: 0                                         # source of fishing mortality of type 4 (0: Fmax_4, 1: external F_bathypel in yr-1 with etaF_4 selectivity) [default=0]
          Fmax_4: 0.0                                          # Maximum fishing mortality of bathypel [yr-1; default=Fmax]
          etaF_4: 0.05                                         # fraction of bathypel maximum size with 50% fishing selectivity [dimensionless; default=etaF]
+         Fsource_5: 0                                         # source of fishing mortality of type 5 (0: Fmax_5, 1: external F_dem in yr-1 with etaF_5 selectivity) [default=0]
          Fmax_5: 0.0                                          # Maximum fishing mortality of dem [yr-1; default=Fmax]
          etaF_5: 0.05                                         # fraction of dem maximum size with 50% fishing selectivity [dimensionless; default=etaF]
       coupling:
