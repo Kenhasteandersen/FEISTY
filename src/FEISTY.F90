@@ -328,8 +328,6 @@
       ir=ir+1
 
 !     Dec 2024 added for time-series input
-      if ( allocated (dr_fac_theta))deallocate(dr_fac_theta)
-      allocate(dr_fac_theta(nGrid,nGrid))
 
    end subroutine allocfeisty
 
@@ -339,14 +337,21 @@
       !real(dp), intent(in):: tsinput(*)
       real(dp), intent(inout):: u(nGrid) !state variable vector
 
-      integer:: i, ir
+      integer:: ir
 
+      ! Only update the rates when the forcings have changed
+      if (nint(forcidx(1)) .ne. kforc) then
+      kforc = nint(forcidx(1))
+      forcs = forcmat(:,kforc)
       ir=1
 
       call getVec(Cmax(idxF:nGrid),        forcs, ir, nFgrid)
       call getVec(V(idxF:nGrid),           forcs, ir, nFgrid)
       call getVec(metabolism(idxF:nGrid),  forcs, ir, nFgrid)
       call getVec(mortF(idxF:nGrid),       forcs, ir, nFgrid)
+      end if
+
+      ir = 4*nFGrid + 1
 
 !      do i = idxF, nGrid
 !        Cmax(i) = forcs(ir)
@@ -404,7 +409,7 @@
     use  setup
       real(dp), intent(in)    :: uin(nGrid)
       real(dp), intent(inout) :: dudt(nGrid)
-      real(dp):: u(nGrid)
+      real(dp):: u(nGrid), EncDr(nGrid)
 
       integer :: i, j, ii, istart, istop!, iGroup
 
@@ -434,37 +439,35 @@ if(bET .eqv. .TRUE. .and. depthET .lt. 200) call updateET(u)
       mortpred = Cmax*V/(Enc + Cmax)*u
       call checknan(mortpred, nGrid)
 
-      mortpred = matmul(transpose(theta), mortpred)      ! Predation mortality [/yr]
+      mortpred = matmul(mortpred, theta)      ! Predation mortality [/yr]
 
 ! down-regulation in time-series input
 if(bTS .eqv. .TRUE.)then
-    dr_fac_theta = 1._dp
 ! original zooplankton consumption by fish
     smzcsp = mortpred(1)*u(1)
     lgzcsp = mortpred(2)*u(2)
+! encounter rates with down-regulated zooplankton
+    EncDr = Enc
 ! small zooplankton consumption cannot beyond the production
-        if (mortpred(1)*u(1) > szprod) then
-          dr_fac_sz = szprod / (mortpred(1)*u(1))
-          do i = idxF, nGrid
-            dr_fac_theta(i, 1) = dr_fac_sz
-          end do
-          mortpred(1) = dr_fac_sz * mortpred(1)
-        end if
-       !print*,(mortpred(1)*u(1))
+    if (smzcsp > szprod) then
+      dr_fac_sz = szprod / smzcsp
+      EncDr(idxF:nGrid) = EncDr(idxF:nGrid) - &
+            (1._dp - dr_fac_sz) * V(idxF:nGrid)*theta(idxF:nGrid,1)*u(1)
+      mortpred(1) = dr_fac_sz * mortpred(1)
+    end if
 ! large zooplankton consumption cannot beyond the production
-        if (mortpred(2)*u(2) > lzprod) then
-         dr_fac_lz = lzprod / (mortpred(2)*u(2))
-          do i = idxF, nGrid
-            dr_fac_theta(i, 2) = dr_fac_lz
-          end do
-         mortpred(2) = dr_fac_lz * mortpred(2)
-        end if
+    if (lgzcsp > lzprod) then
+      dr_fac_lz = lzprod / lgzcsp
+      EncDr(idxF:nGrid) = EncDr(idxF:nGrid) - &
+            (1._dp - dr_fac_lz) * V(idxF:nGrid)*theta(idxF:nGrid,2)*u(2)
+      mortpred(2) = dr_fac_lz * mortpred(2)
+    end if
 ! down-regulated zooplankton consumption by fish
     smzcsp_dr = mortpred(1)*u(1)
     lgzcsp_dr = mortpred(2)*u(2)
 
 ! new Enc / (Cmax + original Enc)
-    flvl = (V * (matmul((theta*dr_fac_theta), u))) /(Cmax + Enc) ! food limitation     [-]
+    flvl = max(0._dp, EncDr) /(Cmax + Enc)                      ! food limitation     [-]
 else
 ! non-time-series input
     flvl = Enc/(Cmax + Enc)                                 ! food limitation     [-]
@@ -792,16 +795,30 @@ end if
 
    end subroutine initfeistysetupVertical2
 
-   subroutine passnforc(nforcsin)
+!--------------------------------------
+! Receive all forcings for a time-series simulation from R.
+! Must be called before ode() whenever the forcings have changed.
+!
+! input:
+! nforcsin: number of forcings (4*nFGrid+5)
+! ntimes:   number of times
+! forcin:   forcings (forcing, time)
+!--------------------------------------
+   subroutine passforcings(nforcsin, ntimes, forcin)
     use setup
-    integer, intent(in):: nforcsin
+    implicit none
+    integer, intent(in)  :: nforcsin, ntimes
+    real(dp), intent(in) :: forcin(nforcsin, ntimes)
 
-    nforcs = nforcsin
-
+      nforcs = nforcsin
       if (allocated (forcs))       deallocate (forcs)
       allocate (forcs(nforcs))
+      if (allocated (forcmat))     deallocate (forcmat)
+      allocate (forcmat(nforcs, ntimes))
+      forcmat = forcin
+      kforc = 0
 
-   end subroutine passnforc
+   end subroutine passforcings
 
 !subroutine passnforc(nforcsin) bind(C, name="passnforc")
 !  use iso_c_binding, only: c_int
@@ -824,9 +841,11 @@ end if
     external odeforcs  ! Declare external procedure
     integer :: N
 
-    N = nforcs !4*nFGrid+5
+    ! The only forcing seen by deSolve is the index to the current time in forcmat
+    N = 1
+    kforc = 0
 
-    call odeforcs(N, forcs)
+    call odeforcs(N, forcidx)
 
 !    return
    end subroutine initfeistyforc
@@ -852,6 +871,7 @@ end if
       if (.NOT. feistyinitialised) then
          call allocfeisty(ip, yout)
          feistyinitialised = .TRUE.
+         kforc = 0    ! the rates have been reset
       end if
 
       call calcderivatives(conc, dconc)

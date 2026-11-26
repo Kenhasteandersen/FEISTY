@@ -927,89 +927,135 @@ paramTeffect_vet = function (p){
   return(p)
 }
 
+# Rates of the fish stages in a time-series simulation at the time indices "it".
+# Straightforward loop over times.
+# Returns p at the last time, and a (time x fish stage) matrix per rate
+tsRatesLoop = function(p, it) {
+  ixStages = seq_along(p$stagenames[-p$ixR])
+  rates = lapply(setNames(nm = c("Cmax", "V", "metabolism", "mortF")), function(x){
+    matrix(0, nrow = length(it), ncol = length(ixStages))
+  })
+  
+  for (i in seq_along(it)) {
+    t = it[i]
+    if (all(!is.na(p$Tp_ts))) p$Tp=p$Tp_ts[t]
+    if (all(!is.na(p$Tm_ts))) p$Tm=p$Tm_ts[t]
+    if (all(!is.na(p$Tb_ts))) p$Tb=p$Tb_ts[t]
+    if (p$setup == "setupVertical2") {
+      p = paramTeffect_vet(p)
+      if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
+      if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$Fmesop_ts[t], etaF=p$etaF, groupidx=2)
+      if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=3)
+      if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$Fmidwp_ts[t], etaF=p$etaF, groupidx=4)
+      if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=5)
+    }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
+      p = paramTeffect(p=p, # only for setupbasic & 2
+                       Tref=p$Tref,
+                       Q10=p$Q10,
+                       Q10m=p$Q10m,
+                       pelgroupidx=c(1:(p$nGroups-1)),
+                       demgroupidx=p$nGroups)
+      if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
+      if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=2)
+      if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=3)
+    }
+    
+    for (x in names(rates)) rates[[x]][i, ] = p[[x]][-p$ixR][ixStages]
+  }
+  return(list(p = p, rates = rates))
+}
+
+# As tsRatesLoop, but calculated for all times 1:nt at once. Only for setupBasic, setupBasic2
+# and setupVertical2. Assumes that:
+#  - the log of Cmax, V and metabolism are linear functions of Tp, Tm and Tb (Q10 scaling with 
+#    effective temperatures being weighted means),
+#  - the fishing mortality is proportional to Fmax.
+tsRatesVectorized = function(p, nt) {
+  ixStages = seq_along(p$stagenames[-p$ixR])
+  has = function(x) all(!is.na(x))
+  
+  # Temperatures (time x temperature). Missing temperatures (Tm in setupBasic) are not used.
+  Tnames = c("Tp", "Tm", "Tb")
+  Temp = sapply(Tnames, function(x) {
+    series = p[[paste(x, "ts", sep = "_")]]
+    if (has(series)) return(series[1:nt])
+    if (is.null(p[[x]]) || is.na(p[[x]][1])) return(rep(0, nt))
+    rep(p[[x]][1], nt)
+  })
+  
+  # Rates for one set of temperatures:
+  ratesT = function(temps) {
+    p[Tnames] = as.list(temps)
+    if (p$setup == "setupVertical2") {
+      p = paramTeffect_vet(p)
+    } else {
+      p = paramTeffect(p=p, Tref=p$Tref, Q10=p$Q10, Q10m=p$Q10m,
+                       pelgroupidx=c(1:(p$nGroups-1)), demgroupidx=p$nGroups)
+    }
+    lapply(p[c("Cmax", "V", "metabolism")], function(x) x[-p$ixR][ixStages])
+  }
+  
+  base = ratesT(c(0,0,0))
+  unit = lapply(1:3, function(i) ratesT(replace(c(0,0,0), i, 1)))
+  rates = lapply(setNames(nm = names(base)), function(x) {
+    slope = sapply(unit, function(u) ifelse(base[[x]] > 0, log(u[[x]]/base[[x]]), 0))
+    sweep(exp(Temp %*% t(slope)), 2, base[[x]], "*")
+  })
+  
+  # Fishing:
+  rates$mortF = matrix(p$mortF[-p$ixR][ixStages], nt, length(ixStages), byrow = TRUE)
+  Fnames = if (p$setup == "setupVertical2") c("Fsmp_ts", "Fmesop_ts", "Flgp_ts", "Fmidwp_ts", "Fdem_ts") else
+    c("Fsmp_ts", "Flgp_ts", "Fdem_ts")
+  for (iGroup in seq_along(Fnames)) {
+    Fts = p[[Fnames[iGroup]]]
+    if (has(Fts)) {
+      ix = p$ix[[iGroup]]
+      psi = setFishing(p, Fmax=1, etaF=p$etaF, groupidx=iGroup)$mortF[ix]
+      rates$mortF[, ix - length(p$ixR)] = outer(Fts[1:nt], psi)
+    }
+  }
+  return(rates)
+}
+
 # Build forcings for time series simulations. 
-# A large matrix for the built-in deSolve function used coupeld with Fortran.
+# Returns p with p$forcings: a (forcing x time) matrix, which is passed to Fortran by passforcings.
 buildforcings = function (times,p) {
   
-  forc = lapply(p$stagenames[-p$ixR], function(x){
-    matrix(c(times, rep(0,length.out=length(times))), ncol = 2)
-  })
-  forc=setNames(forc,paste("Cmax_", p$stagenames[-p$ixR], sep = ""))
-  forcings=forc
-  forc=setNames(forc,paste("V_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-  forc=setNames(forc,paste("metabolism_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-  forc=setNames(forc,paste("mortF_", p$stagenames[-p$ixR], sep = ""))
-  forcings=c(forcings,forc)
-
-  indices_Cmax <- grep("Cmax_", names(forcings))
-  indices_V <- grep("V_", names(forcings))
-  indices_metabolism <- grep("metabolism_", names(forcings))
-  indices_mortF <- grep("mortF_", names(forcings))
-
-  for (t in 1:length(times)) {
-  if (all(!is.na(p$Tp_ts))) p$Tp=p$Tp_ts[t]
-  if (all(!is.na(p$Tm_ts))) p$Tm=p$Tm_ts[t]
-  if (all(!is.na(p$Tb_ts))) p$Tb=p$Tb_ts[t]
-  if (p$setup == "setupVertical2") {
-    p = paramTeffect_vet(p)
-    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
-    if (all(!is.na(p$Fmesop_ts))) p=setFishing(p, Fmax=p$Fmesop_ts[t], etaF=p$etaF, groupidx=2)
-    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=3)
-    if (all(!is.na(p$Fmidwp_ts))) p=setFishing(p, Fmax=p$Fmidwp_ts[t], etaF=p$etaF, groupidx=4)
-    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=5)
-  }else if(p$setup == "setupBasic" | p$setup == "setupBasic2") {
-    p = paramTeffect(p=p, # only for setupbasic & 2
-                     Tref=p$Tref,
-                     Q10=p$Q10,
-                     Q10m=p$Q10m,
-                     pelgroupidx=c(1:(p$nGroups-1)),
-                     demgroupidx=p$nGroups)
-    if (all(!is.na(p$Fsmp_ts))) p=setFishing(p, Fmax=p$Fsmp_ts[t], etaF=p$etaF, groupidx=1)
-    if (all(!is.na(p$Flgp_ts))) p=setFishing(p, Fmax=p$Flgp_ts[t], etaF=p$etaF, groupidx=2)
-    if (all(!is.na(p$Fdem_ts))) p=setFishing(p, Fmax=p$Fdem_ts[t], etaF=p$etaF, groupidx=3)
-  }
-
-  forcings[indices_Cmax]=lapply(1:length(indices_Cmax), function(i){
-    mat = forcings[[indices_Cmax[i]]]
-    mat[t, 2] = p$Cmax[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_V]=lapply(1:length(indices_V), function(i){
-    mat = forcings[[indices_V[i]]]
-    mat[t, 2] = p$V[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_metabolism]=lapply(1:length(indices_metabolism), function(i){
-    mat = forcings[[indices_metabolism[i]]]
-    mat[t, 2] = p$metabolism[-p$ixR][i]
-    return(mat)
-  })
-  forcings[indices_mortF]=lapply(1:length(indices_mortF), function(i){
-    mat = forcings[[indices_mortF[i]]]
-    mat[t, 2] = p$mortF[-p$ixR][i]
-    return(mat)
-  })
-  }
+  nt = length(times)
+  rates = NULL
   
-  # ts_names = c("szbio_ts", "lzbio_ts",
-  #               "szprod_ts", "lzprod_ts", "bprod_ts")
-  
-  ts_names = c("szbio_ts", "lzbio_ts", "szprod_ts", "lzprod_ts")
-  forc = lapply(ts_names, function(name) {
-    matrix(c(times, p[[name]]), ncol = 2)
-  })
-  names(forc) = ts_names
-  forcings = c(forcings,forc)
-  
-  if (all(!is.na(p$bprod_ts))) {
-    forc = list(matrix(c(times, p[["bprod_ts"]]), ncol = 2))
-  }else{
-    forc = list(matrix(c(times, rep(p$bprod,length.out=length(times))), ncol = 2))
+  if (p$setup %in% c("setupBasic", "setupBasic2", "setupVertical2")) {
+    # Check the vectorized rates against the loop at the extremes of the time series, 
+    # in the middle, and at the end:
+    ts = p[c("Tp_ts","Tm_ts","Tb_ts","Fsmp_ts","Fmesop_ts","Flgp_ts","Fmidwp_ts","Fdem_ts")]
+    it = unlist(lapply(ts, function(x) if (all(!is.na(x))) c(which.min(x[1:nt]), which.max(x[1:nt]))))
+    it = c(unique(c(1, it, ceiling(nt/2))), nt)
+    check = tsRatesLoop(p, it)
+    vec = tsRatesVectorized(p, nt)
+    ok = sapply(names(check$rates), function(x) {
+      isTRUE(all.equal(check$rates[[x]], vec[[x]][it, , drop=FALSE], tolerance = 1e-10,
+                       check.attributes = FALSE))
+    })
+    if (all(ok)) {
+      rates = vec
+      p = check$p
     }
-  names(forc) = "bprod_ts"
-  p$forcings = c(forcings,forc)
+  }
+  
+  if (is.null(rates)) { # other setups, or if the assumptions in tsRatesVectorized do not hold
+    loop = tsRatesLoop(p, 1:nt)
+    rates = loop$rates
+    p = loop$p
+  }
+  rates = rates[c("Cmax", "V", "metabolism", "mortF")]
+  
+  # benthos production
+  bprod = if (all(!is.na(p$bprod_ts))) p$bprod_ts else rep(p$bprod, length.out=length(times))
+  
+  # Matrix (forcing x time). The order must match allocfeisty_ts in Fortran.
+  p$forcings = unname(rbind(t(do.call(cbind, rates)),
+                            p$szbio_ts, p$lzbio_ts, p$szprod_ts, p$lzprod_ts, bprod))
+  storage.mode(p$forcings) = "double"
   
   return(p)
 }

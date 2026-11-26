@@ -116,11 +116,13 @@ Module setup
          real(dp) :: depthET
 
 !for time-series input (Dec 2024)
-         real(dp), allocatable :: dr_fac_theta(:, :)             ! down-regulation factor matrix
          real(dp) :: szprod, lzprod
          real(dp) :: dr_fac_sz, dr_fac_lz
          real(dp), allocatable :: forcs(:)
          integer :: nforcs
+         real(dp), allocatable :: forcmat(:,:)   ! all forcings for time-series input (forcing, time)
+         real(dp) :: forcidx(1) = 0._dp          ! index to current time in forcmat; updated by deSolve
+         integer  :: kforc = 0                   ! time index of the forcings currently in forcs
          logical :: bTS
          real(dp) :: smzcsp, lgzcsp, smzcsp_dr, lgzcsp_dr
 
