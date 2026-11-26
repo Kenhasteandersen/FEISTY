@@ -1,6 +1,8 @@
 # FEISTY R package
 
-The FEISTY model (FishErIes Size and functional TYpe model) is documented as an R package. The package includes four FEISTY model setups: two published FEISTY model setups ([Petrik et al., 2019](https://doi.org/10.1016/j.pocean.2019.102124); [van Denderen et al., 2021](https://doi.org/10.1111/geb.13348)) and their modified versions. Also, it allows researchers to customize and simulate new FEISTY model setups, for model development and other marine science research.  You can test FEISTY in the [online simulator](http://oceanlife.dtuaqua.dk/FEISTY). 
+FEISTY (FishErIes Size and functional TYpe model) models the fish community in the global ocean. It is built as a food-web model that resolves 3-5 functional groups: small and large pelagic fish, large demersal fish, and, for some setups, also meso-pelagic fish and bento-pelagic predators. The model is used to simulate how the fish community changes with climate change and under fishing pressures, and how fish contribution to the biological carbon pump.
+
+Here the model is implemented Fortran, with an R frontend. The R-package includes four FEISTY model setups: two published FEISTY model setups ([Petrik et al., 2019](https://doi.org/10.1016/j.pocean.2019.102124); [van Denderen et al., 2021](https://doi.org/10.1111/geb.13348)) and their modified versions. Also, it allows researchers to customize and simulate new FEISTY model setups, for model development and other marine science research.  You can test FEISTY in the [online simulator](http://oceanlife.dtuaqua.dk/FEISTY). 
 
 <img width="806" height="527" alt="image" src="https://github.com/user-attachments/assets/946884ec-cd9a-43a9-a7b4-54279c30ef99" />
 
