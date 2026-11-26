@@ -762,6 +762,15 @@ simulateFEISTY = function(p      = setupBasic(),
         dummy=.C("passpathv", length=nchar(file_path_V), file_path_in=charToRaw(file_path_V))
       }
       
+      # The fixed setups read input.nml / tempdata.dat with Fortran I/O, which crashes
+      # R >= 4.4 on Windows in a UTF-8 locale. Read them in the "C" locale and restore
+      # the user's locale when simulateFEISTY() returns (also after an error).
+      if (.Platform$OS.type == "windows") {
+        oldCtype <- Sys.getlocale("LC_CTYPE")
+        on.exit(Sys.setlocale("LC_CTYPE", oldCtype), add = TRUE)
+        invisible(Sys.setlocale("LC_CTYPE", "C"))
+      }
+
       # Call the Fortran subroutine to pass input file path
       passresult <- passpath()
       
