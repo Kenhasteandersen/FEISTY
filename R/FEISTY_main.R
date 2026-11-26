@@ -663,11 +663,15 @@ simulateFEISTY = function(p      = setupBasic(),
                 rep(p$Vsave,          length.out=nGrid), 
                 rep(p$Cmaxsave,       length.out=nGrid),
                 rep(p$metabolismsave, length.out=nGrid),
-                p$depth,
-                p$Q10,
-                p$Q10m,
-                p$Tp,
-                p$Tb)
+                if (is.null(p$depth)) 0 else p$depth,   # NULL in setupVertical/setupVertical2: c() would
+                if (is.null(p$Q10))   0 else p$Q10,     # drop it and Fortran would read past the end
+                if (is.null(p$Q10m))  0 else p$Q10m,    # of rpar (these 5 are only used when bET = TRUE)
+                if (is.null(p$Tp))    0 else p$Tp,
+                if (is.null(p$Tb))    0 else p$Tb)
+    
+    # Fortran (allocfeisty) reads exactly this many values from rpar
+    if (length(rpar) != 2*nR + nGroups + 2*nFGrid + nGrid^2 + 9*nGrid + 5)
+      stop("length of 'rpar' not ok; check parameters")
     
     # 
     # Run the simulation:
