@@ -545,6 +545,9 @@ simulateFEISTY = function(p      = setupBasic(),
   # Tolerances for time-series simulations with Fortran (solved with "adams")
   rtolTS = 1E-7
   atolTS = 1E-7
+  if (max(sapply(p$ix, length))>=15){ # with many stages, 1E-7 gives errors of up to a few % in single months
+    rtolTS = 1E-9                     # on shelf cells; 1E-9 keeps them below 0.1%
+    atolTS = 1E-9}
   if (max(sapply(p$ix, length))>27) stop("The size number cannot be more than 27 due to the low accuracy of integration.")
   
   # prepare output variable names
